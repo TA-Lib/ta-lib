@@ -105,1207 +105,1207 @@ internal static class NoPhantomIoBinder
     {
         ["AC"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AC_Impl(
+            RetCode rc = core.AcImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ACCBANDS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ACCBANDS_Impl(
+            RetCode rc = core.AccbandsImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["ACOS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ACOS_Impl(
+            RetCode rc = core.AcosImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["AD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AD_Impl(
+            RetCode rc = core.AdImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ADD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADD_Impl(
+            RetCode rc = core.AddImpl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ADOSC"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADOSC_Impl(
+            RetCode rc = core.AdoscImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ADR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADR_Impl(
+            RetCode rc = core.AdrImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ADX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADX_Impl(
+            RetCode rc = core.AdxImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ADXR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADXR_Impl(
+            RetCode rc = core.AdxrImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["AO"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AO_Impl(
+            RetCode rc = core.AoImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["APO"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.APO_Impl(
+            RetCode rc = core.ApoImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["AROON"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AROON_Impl(
+            RetCode rc = core.AroonImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["AROONOSC"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AROONOSC_Impl(
+            RetCode rc = core.AroonoscImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ASIN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ASIN_Impl(
+            RetCode rc = core.AsinImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ATAN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ATAN_Impl(
+            RetCode rc = core.AtanImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ATR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ATR_Impl(
+            RetCode rc = core.AtrImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["AVGDEV"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AVGDEV_Impl(
+            RetCode rc = core.AvgdevImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["AVGPRICE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AVGPRICE_Impl(
+            RetCode rc = core.AvgpriceImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["BBANDS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.BBANDS_Impl(
+            RetCode rc = core.BbandsImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["BETA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.BETA_Impl(
+            RetCode rc = core.BetaImpl(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["BOP"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.BOP_Impl(
+            RetCode rc = core.BopImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CCI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CCI_Impl(
+            RetCode rc = core.CciImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDL2CROWS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL2CROWS_Impl(
+            RetCode rc = core.Cdl2crowsImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDL3BLACKCROWS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3BLACKCROWS_Impl(
+            RetCode rc = core.Cdl3blackcrowsImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDL3INSIDE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3INSIDE_Impl(
+            RetCode rc = core.Cdl3insideImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDL3LINESTRIKE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3LINESTRIKE_Impl(
+            RetCode rc = core.Cdl3linestrikeImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDL3OUTSIDE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3OUTSIDE_Impl(
+            RetCode rc = core.Cdl3outsideImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDL3STARSINSOUTH"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3STARSINSOUTH_Impl(
+            RetCode rc = core.Cdl3starsinsouthImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDL3WHITESOLDIERS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3WHITESOLDIERS_Impl(
+            RetCode rc = core.Cdl3whitesoldiersImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLABANDONEDBABY"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLABANDONEDBABY_Impl(
+            RetCode rc = core.CdlabandonedbabyImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLADVANCEBLOCK"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLADVANCEBLOCK_Impl(
+            RetCode rc = core.CdladvanceblockImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLBELTHOLD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLBELTHOLD_Impl(
+            RetCode rc = core.CdlbeltholdImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLBREAKAWAY"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLBREAKAWAY_Impl(
+            RetCode rc = core.CdlbreakawayImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLCLOSINGMARUBOZU"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLCLOSINGMARUBOZU_Impl(
+            RetCode rc = core.CdlclosingmarubozuImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLCONCEALBABYSWALL"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLCONCEALBABYSWALL_Impl(
+            RetCode rc = core.CdlconcealbabyswallImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLCOUNTERATTACK"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLCOUNTERATTACK_Impl(
+            RetCode rc = core.CdlcounterattackImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLDARKCLOUDCOVER"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDARKCLOUDCOVER_Impl(
+            RetCode rc = core.CdldarkcloudcoverImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLDOJI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDOJI_Impl(
+            RetCode rc = core.CdldojiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLDOJISTAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDOJISTAR_Impl(
+            RetCode rc = core.CdldojistarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLDRAGONFLYDOJI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDRAGONFLYDOJI_Impl(
+            RetCode rc = core.CdldragonflydojiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLENGULFING"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLENGULFING_Impl(
+            RetCode rc = core.CdlengulfingImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLEVENINGDOJISTAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLEVENINGDOJISTAR_Impl(
+            RetCode rc = core.CdleveningdojistarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLEVENINGSTAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLEVENINGSTAR_Impl(
+            RetCode rc = core.CdleveningstarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLGAPSIDESIDEWHITE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLGAPSIDESIDEWHITE_Impl(
+            RetCode rc = core.CdlgapsidesidewhiteImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLGRAVESTONEDOJI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLGRAVESTONEDOJI_Impl(
+            RetCode rc = core.CdlgravestonedojiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHAMMER"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHAMMER_Impl(
+            RetCode rc = core.CdlhammerImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHANGINGMAN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHANGINGMAN_Impl(
+            RetCode rc = core.CdlhangingmanImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHARAMI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHARAMI_Impl(
+            RetCode rc = core.CdlharamiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHARAMICROSS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHARAMICROSS_Impl(
+            RetCode rc = core.CdlharamicrossImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHIGHWAVE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHIGHWAVE_Impl(
+            RetCode rc = core.CdlhighwaveImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHIKKAKE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHIKKAKE_Impl(
+            RetCode rc = core.CdlhikkakeImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHIKKAKEMOD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHIKKAKEMOD_Impl(
+            RetCode rc = core.CdlhikkakemodImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLHOMINGPIGEON"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHOMINGPIGEON_Impl(
+            RetCode rc = core.CdlhomingpigeonImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLIDENTICAL3CROWS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLIDENTICAL3CROWS_Impl(
+            RetCode rc = core.Cdlidentical3crowsImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLINNECK"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLINNECK_Impl(
+            RetCode rc = core.CdlinneckImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLINVERTEDHAMMER"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLINVERTEDHAMMER_Impl(
+            RetCode rc = core.CdlinvertedhammerImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLKICKING"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLKICKING_Impl(
+            RetCode rc = core.CdlkickingImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLKICKINGBYLENGTH"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLKICKINGBYLENGTH_Impl(
+            RetCode rc = core.CdlkickingbylengthImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLLADDERBOTTOM"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLLADDERBOTTOM_Impl(
+            RetCode rc = core.CdlladderbottomImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLLONGLEGGEDDOJI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLLONGLEGGEDDOJI_Impl(
+            RetCode rc = core.CdllongleggeddojiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLLONGLINE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLLONGLINE_Impl(
+            RetCode rc = core.CdllonglineImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLMARUBOZU"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMARUBOZU_Impl(
+            RetCode rc = core.CdlmarubozuImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLMATCHINGLOW"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMATCHINGLOW_Impl(
+            RetCode rc = core.CdlmatchinglowImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLMATHOLD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMATHOLD_Impl(
+            RetCode rc = core.CdlmatholdImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLMORNINGDOJISTAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMORNINGDOJISTAR_Impl(
+            RetCode rc = core.CdlmorningdojistarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLMORNINGSTAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMORNINGSTAR_Impl(
+            RetCode rc = core.CdlmorningstarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLONNECK"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLONNECK_Impl(
+            RetCode rc = core.CdlonneckImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLPIERCING"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLPIERCING_Impl(
+            RetCode rc = core.CdlpiercingImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLRICKSHAWMAN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLRICKSHAWMAN_Impl(
+            RetCode rc = core.CdlrickshawmanImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLRISEFALL3METHODS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLRISEFALL3METHODS_Impl(
+            RetCode rc = core.Cdlrisefall3methodsImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLSEPARATINGLINES"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSEPARATINGLINES_Impl(
+            RetCode rc = core.CdlseparatinglinesImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLSHOOTINGSTAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSHOOTINGSTAR_Impl(
+            RetCode rc = core.CdlshootingstarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLSHORTLINE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSHORTLINE_Impl(
+            RetCode rc = core.CdlshortlineImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLSPINNINGTOP"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSPINNINGTOP_Impl(
+            RetCode rc = core.CdlspinningtopImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLSTALLEDPATTERN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSTALLEDPATTERN_Impl(
+            RetCode rc = core.CdlstalledpatternImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLSTICKSANDWICH"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSTICKSANDWICH_Impl(
+            RetCode rc = core.CdlsticksandwichImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLTAKURI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTAKURI_Impl(
+            RetCode rc = core.CdltakuriImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLTASUKIGAP"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTASUKIGAP_Impl(
+            RetCode rc = core.CdltasukigapImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLTHRUSTING"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTHRUSTING_Impl(
+            RetCode rc = core.CdlthrustingImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLTRISTAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTRISTAR_Impl(
+            RetCode rc = core.CdltristarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLUNIQUE3RIVER"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLUNIQUE3RIVER_Impl(
+            RetCode rc = core.Cdlunique3riverImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLUPSIDEGAP2CROWS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLUPSIDEGAP2CROWS_Impl(
+            RetCode rc = core.Cdlupsidegap2crowsImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CDLXSIDEGAP3METHODS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLXSIDEGAP3METHODS_Impl(
+            RetCode rc = core.Cdlxsidegap3methodsImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CEIL"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CEIL_Impl(
+            RetCode rc = core.CeilImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CMF"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CMF_Impl(
+            RetCode rc = core.CmfImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CMO"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CMO_Impl(
+            RetCode rc = core.CmoImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CMOU"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CMOU_Impl(
+            RetCode rc = core.CmouImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["COPPOCK"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.COPPOCK_Impl(
+            RetCode rc = core.CoppockImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CORREL"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CORREL_Impl(
+            RetCode rc = core.CorrelImpl(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["COS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.COS_Impl(
+            RetCode rc = core.CosImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["COSH"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.COSH_Impl(
+            RetCode rc = core.CoshImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CUMSUM"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CUMSUM_Impl(
+            RetCode rc = core.CumsumImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["CVI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CVI_Impl(
+            RetCode rc = core.CviImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["DEMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DEMA_Impl(
+            RetCode rc = core.DemaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["DIV"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DIV_Impl(
+            RetCode rc = core.DivImpl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["DONCHIAN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DONCHIAN_Impl(
+            RetCode rc = core.DonchianImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["DPO"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DPO_Impl(
+            RetCode rc = core.DpoImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["DX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DX_Impl(
+            RetCode rc = core.DxImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["EFI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.EFI_Impl(
+            RetCode rc = core.EfiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["EMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.EMA_Impl(
+            RetCode rc = core.EmaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ER"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ER_Impl(
+            RetCode rc = core.ErImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ERI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ERI_Impl(
+            RetCode rc = core.EriImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["EXP"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.EXP_Impl(
+            RetCode rc = core.ExpImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["FLOOR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.FLOOR_Impl(
+            RetCode rc = core.FloorImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["FOSC"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.FOSC_Impl(
+            RetCode rc = core.FoscImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["FRACTAL"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.FRACTAL_Impl(
+            RetCode rc = core.FractalImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.IntOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["HA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HA_Impl(
+            RetCode rc = core.HaImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2), c.RealOut(3));
             return new CallOutcome(rc, b, n);
         },
         ["HMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HMA_Impl(
+            RetCode rc = core.HmaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["HT_DCPERIOD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_DCPERIOD_Impl(
+            RetCode rc = core.HtDcperiodImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["HT_DCPHASE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_DCPHASE_Impl(
+            RetCode rc = core.HtDcphaseImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["HT_PHASOR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_PHASOR_Impl(
+            RetCode rc = core.HtPhasorImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["HT_SINE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_SINE_Impl(
+            RetCode rc = core.HtSineImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["HT_TRENDLINE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_TRENDLINE_Impl(
+            RetCode rc = core.HtTrendlineImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["HT_TRENDMODE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_TRENDMODE_Impl(
+            RetCode rc = core.HtTrendmodeImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["IMI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.IMI_Impl(
+            RetCode rc = core.ImiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["KAMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.KAMA_Impl(
+            RetCode rc = core.KamaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["KC"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.KC_Impl(
+            RetCode rc = core.KcImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["KDJ"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.KDJ_Impl(
+            RetCode rc = core.KdjImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["LINEARREG"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_Impl(
+            RetCode rc = core.LinearregImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["LINEARREG_ANGLE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_ANGLE_Impl(
+            RetCode rc = core.LinearregAngleImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["LINEARREG_INTERCEPT"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_INTERCEPT_Impl(
+            RetCode rc = core.LinearregInterceptImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["LINEARREG_SLOPE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_SLOPE_Impl(
+            RetCode rc = core.LinearregSlopeImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["LN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LN_Impl(
+            RetCode rc = core.LnImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["LOG10"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LOG10_Impl(
+            RetCode rc = core.Log10Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MA_Impl(
+            RetCode rc = core.MaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MACD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MACD_Impl(
+            RetCode rc = core.MacdImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["MACDEXT"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MACDEXT_Impl(
+            RetCode rc = core.MacdextImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["MACDFIX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MACDFIX_Impl(
+            RetCode rc = core.MacdfixImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["MAMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAMA_Impl(
+            RetCode rc = core.MamaImpl(
                 startIdx, endIdx, c.Series(0), c.RealOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["MARKETFI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MARKETFI_Impl(
+            RetCode rc = core.MarketfiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MASSI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MASSI_Impl(
+            RetCode rc = core.MassiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MAVP"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAVP_Impl(
+            RetCode rc = core.MavpImpl(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MAX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAX_Impl(
+            RetCode rc = core.MaxImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MAXINDEX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAXINDEX_Impl(
+            RetCode rc = core.MaxindexImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MEDPRICE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MEDPRICE_Impl(
+            RetCode rc = core.MedpriceImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MFI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MFI_Impl(
+            RetCode rc = core.MfiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MIDPOINT"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MIDPOINT_Impl(
+            RetCode rc = core.MidpointImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MIDPRICE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MIDPRICE_Impl(
+            RetCode rc = core.MidpriceImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MIN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MIN_Impl(
+            RetCode rc = core.MinImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MININDEX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MININDEX_Impl(
+            RetCode rc = core.MinindexImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MINMAX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINMAX_Impl(
+            RetCode rc = core.MinmaxImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["MINMAXINDEX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINMAXINDEX_Impl(
+            RetCode rc = core.MinmaxindexImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["MINUS_DI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINUS_DI_Impl(
+            RetCode rc = core.MinusDiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MINUS_DM"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINUS_DM_Impl(
+            RetCode rc = core.MinusDmImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MOM"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MOM_Impl(
+            RetCode rc = core.MomImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MULT"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MULT_Impl(
+            RetCode rc = core.MultImpl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["NATR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.NATR_Impl(
+            RetCode rc = core.NatrImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["NVI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.NVI_Impl(
+            RetCode rc = core.NviImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["OBV"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.OBV_Impl(
+            RetCode rc = core.ObvImpl(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PERCENTILE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PERCENTILE_Impl(
+            RetCode rc = core.PercentileImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PERCENTRANK"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PERCENTRANK_Impl(
+            RetCode rc = core.PercentrankImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PLUS_DI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PLUS_DI_Impl(
+            RetCode rc = core.PlusDiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PLUS_DM"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PLUS_DM_Impl(
+            RetCode rc = core.PlusDmImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PPO"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PPO_Impl(
+            RetCode rc = core.PpoImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PVI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PVI_Impl(
+            RetCode rc = core.PviImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PVO"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PVO_Impl(
+            RetCode rc = core.PvoImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["PVT"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PVT_Impl(
+            RetCode rc = core.PvtImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["QSTICK"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.QSTICK_Impl(
+            RetCode rc = core.QstickImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["RMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RMA_Impl(
+            RetCode rc = core.RmaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ROC"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROC_Impl(
+            RetCode rc = core.RocImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ROCP"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROCP_Impl(
+            RetCode rc = core.RocpImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ROCR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROCR_Impl(
+            RetCode rc = core.RocrImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ROCR100"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROCR100_Impl(
+            RetCode rc = core.Rocr100Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["RSI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RSI_Impl(
+            RetCode rc = core.RsiImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["RVI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RVI_Impl(
+            RetCode rc = core.RviImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["RVOL"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RVOL_Impl(
+            RetCode rc = core.RvolImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SAR_Impl(
+            RetCode rc = core.SarImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SAREXT"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SAREXT_Impl(
+            RetCode rc = core.SarextImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SIN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SIN_Impl(
+            RetCode rc = core.SinImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SINH"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SINH_Impl(
+            RetCode rc = core.SinhImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SMA_Impl(
+            RetCode rc = core.SmaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SMI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SMI_Impl(
+            RetCode rc = core.SmiImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["SQRT"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SQRT_Impl(
+            RetCode rc = core.SqrtImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["STDDEV"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STDDEV_Impl(
+            RetCode rc = core.StddevImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["STOCH"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STOCH_Impl(
+            RetCode rc = core.StochImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["STOCHF"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STOCHF_Impl(
+            RetCode rc = core.StochfImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["STOCHRSI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STOCHRSI_Impl(
+            RetCode rc = core.StochrsiImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["SUB"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SUB_Impl(
+            RetCode rc = core.SubImpl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SUM"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SUM_Impl(
+            RetCode rc = core.SumImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SUPERTREND"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SUPERTREND_Impl(
+            RetCode rc = core.SupertrendImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["T3"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.T3_Impl(
+            RetCode rc = core.T3Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TAN"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TAN_Impl(
+            RetCode rc = core.TanImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TANH"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TANH_Impl(
+            RetCode rc = core.TanhImpl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TEMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TEMA_Impl(
+            RetCode rc = core.TemaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TRANGE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TRANGE_Impl(
+            RetCode rc = core.TrangeImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TRIMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TRIMA_Impl(
+            RetCode rc = core.TrimaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TRIX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TRIX_Impl(
+            RetCode rc = core.TrixImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TSF"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TSF_Impl(
+            RetCode rc = core.TsfImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TSI"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TSI_Impl(
+            RetCode rc = core.TsiImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TYPPRICE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TYPPRICE_Impl(
+            RetCode rc = core.TyppriceImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ULTOSC"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ULTOSC_Impl(
+            RetCode rc = core.UltoscImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["VAR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.VAR_Impl(
+            RetCode rc = core.VarImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["VHF"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.VHF_Impl(
+            RetCode rc = core.VhfImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["VORTEX"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.VORTEX_Impl(
+            RetCode rc = core.VortexImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         },
         ["VWAP"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.VWAP_Impl(
+            RetCode rc = core.VwapImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["VWMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.VWMA_Impl(
+            RetCode rc = core.VwmaImpl(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["WAD"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WAD_Impl(
+            RetCode rc = core.WadImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["WCLPRICE"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WCLPRICE_Impl(
+            RetCode rc = core.WclpriceImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["WILLR"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WILLR_Impl(
+            RetCode rc = core.WillrImpl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["WMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WMA_Impl(
+            RetCode rc = core.WmaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["ZLEMA"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ZLEMA_Impl(
+            RetCode rc = core.ZlemaImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },

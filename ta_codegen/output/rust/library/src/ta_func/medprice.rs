@@ -66,17 +66,17 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::MEDPRICE`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::medprice`]: the number of leading input values consumed before
     /// the first output value can be produced.
     #[doc(alias = "TA_MEDPRICE_Lookback")]
-    pub fn MEDPRICE_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn medprice_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
     }
-    /// C-shaped body behind [`Core::MEDPRICE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::medprice`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn MEDPRICE_Impl(
+    pub(crate) fn medprice_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -92,7 +92,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.MEDPRICE_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.medprice_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -156,7 +156,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.MEDPRICE(0, high.len() - 1, &high, &low, &mut out)?;
+    /// let out_range = core.medprice(0, high.len() - 1, &high, &low, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -164,10 +164,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::MIDPRICE`] · [`Core::AVGPRICE`] · [`Core::TYPPRICE`] · [`Core::WCLPRICE`]
+    /// [`MIDPRICE`](Core::midprice) · [`AVGPRICE`](Core::avgprice) · [`TYPPRICE`](Core::typprice)
+    /// · [`WCLPRICE`](Core::wclprice)
     #[doc(alias = "TA_MEDPRICE")]
     #[doc(alias = "MedianPrice")]
-    pub fn MEDPRICE(
+    pub fn medprice(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -181,7 +182,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MEDPRICE_Lookback()?;
+        let _guardLb = self.medprice_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -195,7 +196,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MEDPRICE_Impl(
+        let retCode = self.medprice_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -213,7 +214,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MEDPRICE stream: one value per closed bar, bit-identical to [`Core::MEDPRICE`]
+/// Live MEDPRICE stream: one value per closed bar, bit-identical to [`Core::medprice`]
 /// over the same series. Open with [`Core::medprice_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -302,7 +303,7 @@ impl Core {
     }
 
     /// Open a live MEDPRICE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MEDPRICE`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::medprice`] at that bar.
     ///
     /// # Errors
     ///
@@ -333,7 +334,7 @@ impl Core {
     }
 
     /// [`Core::medprice_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MEDPRICE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::medprice`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -351,7 +352,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.MEDPRICE(0, high.len() - 1, &high, &low, &mut batch_out)?;
+    /// let batch = core.medprice(0, high.len() - 1, &high, &low, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.medprice_open_and_fill(&high, &low, &mut out)?;
@@ -372,7 +373,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MEDPRICE_Lookback()?;
+        let _guardLb = self.medprice_lookback()?;
         if inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -478,7 +479,7 @@ impl MedpriceStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::MEDPRICE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::medprice`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

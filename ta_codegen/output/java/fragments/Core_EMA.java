@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#EMA} consumes before it can
+    * Number of leading input bars {@link Core#ema} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -30,7 +30,7 @@
     *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int EMA_Lookback( int optInTimePeriod )
+   public int emaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -40,13 +40,13 @@
       return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
 
    }
-   RetCode EMA_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode emaImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -70,7 +70,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = emaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -122,13 +122,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode EMA_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode emaImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -149,7 +149,7 @@
          return RetCode.BAD_PARAM;
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      lookbackTotal = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = emaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -202,7 +202,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#EMA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#emaLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -227,28 +227,28 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#MA
-    * @see Core#MACD
-    * @see Core#T3
+    * @see Core#sma
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#ma
+    * @see Core#macd
+    * @see Core#t3
     */
-   public OutRange EMA( int startIdx,
+   public OutRange ema( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("EMA", startIdx, endIdx);
-      int guardStart = clampedStart("EMA", startIdx, EMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("EMA", startIdx, emaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EMA", "inReal", inReal, guardInLen);
       requireLength("EMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = emaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("EMA", retCode);
       }
@@ -271,7 +271,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#EMA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#emaLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -296,28 +296,28 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#MA
-    * @see Core#MACD
-    * @see Core#T3
+    * @see Core#sma
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#ma
+    * @see Core#macd
+    * @see Core#t3
     */
-   public OutRange EMA( int startIdx,
+   public OutRange ema( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("EMA", startIdx, endIdx);
-      int guardStart = clampedStart("EMA", startIdx, EMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("EMA", startIdx, emaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("EMA", "inReal", inReal, guardInLen);
       requireLength("EMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = emaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("EMA", retCode);
       }
@@ -327,7 +327,7 @@
 
    /**
     * A live EMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#EMA} over the same series.
+    * closed bar, bit-identical to {@link Core#ema} over the same series.
     * Open with {@link Core#emaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -353,7 +353,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#EMA} reports over the same bars: the
+       * <p>It is what {@link Core#ema} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -510,7 +510,7 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = EMA_Lookback(optInTimePeriod);
+         int fillLb = emaLookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -534,7 +534,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = emaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -615,8 +615,8 @@
    /**
     * Open a live EMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#EMA} at that bar.
-    * <p>The history must hold at least {@code EMA_Lookback(...) + 1} bars
+    * to {@link Core#ema} at that bar.
+    * <p>The history must hold at least {@code emaLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -633,7 +633,7 @@
    }
    /**
     * {@link Core#emaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#EMA} over the whole history in the same single pass
+    * to {@link Core#ema} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -646,7 +646,7 @@
    {
       requireArgument("EMA openAndFill", "inReal", inReal);
       requireHistory("EMA openAndFill", inReal.length);
-      int guardOutLen = openFillCount("EMA openAndFill", inReal.length, EMA_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("EMA openAndFill", inReal.length, emaLookback(optInTimePeriod));
       requireLength("EMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("EMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

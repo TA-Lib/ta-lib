@@ -667,7 +667,6 @@ fn emit_handle_class_with_members(
     frame: Option<&PeekFrame>,
 ) {
     let class = stream_class_name(func);
-    let base = base_name(func);
     let jbase = method_base(func);
     let n = func.name.to_uppercase();
 
@@ -675,7 +674,7 @@ fn emit_handle_class_with_members(
         o,
         "   /**\n\
          \x20   * A live {n} stream (unrelated to {{@code java.util.stream}}): one value per\n\
-         \x20   * closed bar, bit-identical to {{@link Core#{base}}} over the same series.\n\
+         \x20   * closed bar, bit-identical to {{@link Core#{jbase}}} over the same series.\n\
          \x20   * Open with {{@link Core#{jbase}Open}}; there is no close — the handle is\n\
          \x20   * ordinary heap state, unreferenced handles are simply garbage-collected.\n\
          \x20   * <p>Concurrency: a handle is single-writer — {{@code update}}, {{@code peek}},\n\
@@ -706,7 +705,7 @@ fn emit_handle_class_with_members(
         "\n      /**\n\
          \x20      * The bars this stream has an output for, in the input series'\n\
          \x20      * coordinates: {{@code [begIdx, begIdx + count)}}.\n\
-         \x20      * <p>It is what {{@link Core#{base}}} reports over the same bars: the\n\
+         \x20      * <p>It is what {{@link Core#{jbase}}} reports over the same bars: the\n\
          \x20      * opener sets it to {{@code (lookback, historyLen - lookback)}}, every\n\
          \x20      * accepted {{@code update}} adds one to the count — a rejected one\n\
          \x20      * changes nothing, and neither does {{@code peek}} — and\n\
@@ -718,7 +717,7 @@ fn emit_handle_class_with_members(
          \x20      * {{@link IndexOutOfBoundsException}}.\n\
          \x20      */\n\
          \x20     public OutRange outRange() {{ return new OutRange(outRangeBegIdx, outRangeCount); }}",
-        base = base_name(func)
+        jbase = method_base(func)
     );
     let _ = writeln!(
         o,
@@ -1987,12 +1986,11 @@ fn emit_identity_fast_path(
     counter: &Cell<usize>,
 ) {
     let Some(idp) = &model.identity else { return };
-    let base = base_name(func);
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
     let cond = render_expr(&idp.condition, &ctx, registry, helpers);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let lb_call = format!("{base}_Lookback({})", lb_args.join(", "));
+    let lb_call = format!("{}Lookback({})", method_base(func), lb_args.join(", "));
     let _ = writeln!(o, "      if( {cond} ) {{");
     // batch( startIdx, .. ) begins at max(startIdx, lookback), and the anchored
     // `Open*Internal` variants are the batch call over that same range. The
@@ -2437,8 +2435,9 @@ fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outp
         let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
         let _ = writeln!(
             o,
-            "      int guardOutLen = openFillCount(\"{n} {verb}\", {}.length, {n}_Lookback({}));",
+            "      int guardOutLen = openFillCount(\"{n} {verb}\", {}.length, {}Lookback({}));",
             history,
+            method_base(func),
             lb_args.join(", ")
         );
         // Rule S5, input half before output half — B5 states the two as one
@@ -2520,7 +2519,7 @@ fn emit_public_open_doc(
          \x20   * Open a live {n} stream over the warm-up history; the handle's\n\
          \x20   * {{@code value()}} starts at the last history bar's value — bit-identical\n\
          \x20   * to {{@link Core#{base}}} at that bar.\n\
-         \x20   * <p>The history must hold at least {{@code {base}_Lookback(...) + 1}} bars\n\
+         \x20   * <p>The history must hold at least {{@code {base}Lookback(...) + 1}} bars\n\
          \x20   * (unstable-period aware), or {{@link InsufficientHistoryException}} is\n\
          \x20   * thrown.{params} An EMPTY history throws\n\
          \x20   * {{@link IndexOutOfBoundsException}} — its implied {{@code startIdx}} of 0\n\
@@ -2600,7 +2599,6 @@ fn emit_open_wrappers(
     merged: bool,
     enums: &HashMap<String, EnumDef>,
 ) {
-    let base = base_name(func);
     let jbase = method_base(func);
     let class = stream_class_name(func);
     let n = func.name.to_uppercase();
@@ -2622,7 +2620,7 @@ fn emit_open_wrappers(
 
     emit_open_internal_seam(o, func, merged, &in_sig, &in_fwd, &opt_sig_str, &opt_fwd_str);
 
-    emit_public_open_doc(o, func, enums, &n, &base);
+    emit_public_open_doc(o, func, enums, &n, &jbase);
     let _ = writeln!(
         o,
         "   public {class} {jbase}Open( {}{opt_sig_str} )\n   {{",
@@ -2657,7 +2655,7 @@ fn emit_open_wrappers(
         o,
         "   /**\n\
          \x20   * {{@link Core#{jbase}Open}} that also fills the output array(s) bit-identically\n\
-         \x20   * to {{@link Core#{base}}} over the whole history in the same single pass\n\
+         \x20   * to {{@link Core#{jbase}}} over the whole history in the same single pass\n\
          \x20   * (no separate batch call needed for the warm-up plot). Output arrays must\n\
          \x20   * not alias the inputs or each other, and must hold\n\
          \x20   * {{@code historyLen - lookback}} values — both checked before anything is\n\
@@ -2989,14 +2987,13 @@ fn emit_dispatch(
     let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
     let inputs = streaming::input_array_names(func);
     let bar_args = inputs.join(", ");
-    let base = base_name(func);
     let empty = HashSet::new();
     let mut ctx = stream_ctx(&empty, counter, stream_fma);
     // The dispatch identity guard can compare `optInMAType == TA_MAType_*`
     // (TA_MAType_DISABLED, #93); resolve those to their constant like batch.
     ctx.matype_map = build_matype_map(enums);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let lb_call = format!("{base}_Lookback({})", lb_args.join(", "));
+    let lb_call = format!("{}Lookback({})", method_base(func), lb_args.join(", "));
 
     // --- handle class -------------------------------------------------------
     let fields = base_fields(func);
@@ -3367,8 +3364,7 @@ fn emit_period_bank(
 
     // --- open body (Scalar) -------------------------------------------------
     let own_lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let base = base_name(func);
-    let own_lb_call = format!("{base}_Lookback({})", own_lb_args.join(", "));
+    let own_lb_call = format!("{}Lookback({})", method_base(func), own_lb_args.join(", "));
     emit_open_body_sig(o, func, OutMode::Scalar);
     let _ = writeln!(o, "      int historyLen = {price}.length;");
     emit_open_validation(o, func, OutMode::Scalar, enums);
@@ -3390,7 +3386,7 @@ fn emit_period_bank(
          \x20      * (smaller) lookback would seed the recurrence from a different bar and\n\
          \x20      * diverge for every period < maxPeriod. */"
     );
-    let _ = writeln!(o, "      int lookbackTotal = {callee_base}_Lookback({lb_args});");
+    let _ = writeln!(o, "      int lookbackTotal = {callee_camel}Lookback({lb_args});");
     let _ = writeln!(o, "      int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;");
     // The bank is opened at `subStart`, so the history has to reach it.
     let _ = writeln!(o, "      if( historyLen < subStart + 1 ) {{");
@@ -3430,7 +3426,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      if( {min} > {max} ) {{");
     let _ = writeln!(o, "         return RetCode.BAD_PARAM;");
     let _ = writeln!(o, "      }}");
-    let _ = writeln!(o, "      int lookbackTotal = {callee_base}_Lookback({lb_args});");
+    let _ = writeln!(o, "      int lookbackTotal = {callee_camel}Lookback({lb_args});");
     let _ = writeln!(o, "      if( historyLen < lookbackTotal + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.INSUFFICIENT_HISTORY;");
     let _ = writeln!(o, "      }}");
@@ -3950,7 +3946,7 @@ fn emit_composed_open(
     {
         let lb_args: Vec<String> =
             func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-        let lb_call = format!("{}_Lookback({})", base_name(func), lb_args.join(", "));
+        let lb_call = format!("{}Lookback({})", method_base(func), lb_args.join(", "));
         let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
         let _ = writeln!(o, "         return RetCode.INSUFFICIENT_HISTORY;");
         let _ = writeln!(o, "      }}");

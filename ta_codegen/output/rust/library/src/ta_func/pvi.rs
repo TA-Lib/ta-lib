@@ -65,17 +65,17 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::PVI`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::pvi`]: the number of leading input values consumed before the
     /// first output value can be produced.
     #[doc(alias = "TA_PVI_Lookback")]
-    pub fn PVI_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn pvi_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
     }
-    /// C-shaped body behind [`Core::PVI`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::pvi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn PVI_Impl(
+    pub(crate) fn pvi_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -91,7 +91,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.PVI_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.pvi_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -191,7 +191,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.PVI(0, close.len() - 1, &close, &volume, &mut out)?;
+    /// let out_range = core.pvi(0, close.len() - 1, &close, &volume, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -203,7 +203,7 @@ impl Core {
     ///   0917604482)
     #[doc(alias = "TA_PVI")]
     #[doc(alias = "PositiveVolumeIndex")]
-    pub fn PVI(
+    pub fn pvi(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -217,7 +217,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PVI_Lookback()?;
+        let _guardLb = self.pvi_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inClose.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -231,7 +231,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.PVI_Impl(
+        let retCode = self.pvi_impl(
             startIdx,
             endIdx,
             inClose,
@@ -249,7 +249,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PVI stream: one value per closed bar, bit-identical to [`Core::PVI`]
+/// Live PVI stream: one value per closed bar, bit-identical to [`Core::pvi`]
 /// over the same series. Open with [`Core::pvi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -401,7 +401,7 @@ impl Core {
     }
 
     /// Open a live PVI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::PVI`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::pvi`] at that bar.
     ///
     /// # Errors
     ///
@@ -436,7 +436,7 @@ impl Core {
     }
 
     /// [`Core::pvi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::PVI`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::pvi`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -458,7 +458,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.PVI(0, close.len() - 1, &close, &volume, &mut batch_out)?;
+    /// let batch = core.pvi(0, close.len() - 1, &close, &volume, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.pvi_open_and_fill(&close, &volume, &mut out)?;
@@ -479,7 +479,7 @@ impl Core {
         if inClose.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PVI_Lookback()?;
+        let _guardLb = self.pvi_lookback()?;
         if inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -612,7 +612,7 @@ impl PviStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::PVI`] reports over the same bars: the opener sets it
+    /// It is what [`Core::pvi`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

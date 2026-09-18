@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#PPO} consumes before it can
+    * Number of leading input bars {@link Core#ppo} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -35,7 +35,7 @@
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int PPO_Lookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public int ppoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 12;
@@ -51,18 +51,18 @@
          optInMAType = MAType.EMA;
       }
       /* Lookback is driven by the slowest MA. */
-      return MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
+      return maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
-   RetCode PPO_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInFastPeriod,
-                     int optInSlowPeriod,
-                     MAType optInMAType,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode ppoImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInFastPeriod,
+                    int optInSlowPeriod,
+                    MAType optInMAType,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -103,7 +103,7 @@
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
        */
-      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+      if( maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
@@ -120,12 +120,12 @@
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      OutRange _xr0 = MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, tempBuffer);
+      OutRange _xr0 = ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, tempBuffer);
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
       /* Calculate the slow MA into the output. */
-      OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
+      OutRange _xr1 = ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
@@ -145,15 +145,15 @@
       }
       return RetCode.SUCCESS ;
    }
-   RetCode PPO_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInFastPeriod,
-                     int optInSlowPeriod,
-                     MAType optInMAType,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode ppoImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInFastPeriod,
+                    int optInSlowPeriod,
+                    MAType optInMAType,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -182,7 +182,7 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
-      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+      if( maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
@@ -193,11 +193,11 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      OutRange _xr0 = MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, tempBuffer);
+      OutRange _xr0 = ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, tempBuffer);
       fastBeg.value = _xr0.begIdx();
       fastNb.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
+      OutRange _xr1 = ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
       outBegIdx.value = _xr1.begIdx();
       outNBElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
@@ -227,7 +227,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PPO_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#ppoLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -257,11 +257,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#APO
-    * @see Core#MACD
-    * @see Core#MA
+    * @see Core#apo
+    * @see Core#macd
+    * @see Core#ma
     */
-   public OutRange PPO( int startIdx,
+   public OutRange ppo( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInFastPeriod,
@@ -271,14 +271,14 @@
    {
       requireIndexRange("PPO", startIdx, endIdx);
       requireArgument("PPO", "optInMAType", optInMAType);
-      int guardStart = clampedStart("PPO", startIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardStart = clampedStart("PPO", startIdx, ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PPO", "inReal", inReal, guardInLen);
       requireLength("PPO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PPO_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ppoImpl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PPO", retCode);
       }
@@ -302,7 +302,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PPO_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#ppoLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -332,11 +332,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#APO
-    * @see Core#MACD
-    * @see Core#MA
+    * @see Core#apo
+    * @see Core#macd
+    * @see Core#ma
     */
-   public OutRange PPO( int startIdx,
+   public OutRange ppo( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInFastPeriod,
@@ -346,14 +346,14 @@
    {
       requireIndexRange("PPO", startIdx, endIdx);
       requireArgument("PPO", "optInMAType", optInMAType);
-      int guardStart = clampedStart("PPO", startIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardStart = clampedStart("PPO", startIdx, ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PPO", "inReal", inReal, guardInLen);
       requireLength("PPO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PPO_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ppoImpl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PPO", retCode);
       }
@@ -363,7 +363,7 @@
 
    /**
     * A live PPO stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#PPO} over the same series.
+    * closed bar, bit-identical to {@link Core#ppo} over the same series.
     * Open with {@link Core#ppoOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -391,7 +391,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#PPO} reports over the same bars: the
+       * <p>It is what {@link Core#ppo} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -571,7 +571,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      if( historyLen < PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+      if( historyLen < ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
@@ -587,7 +587,7 @@
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
        */
-      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+      if( maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
@@ -681,8 +681,8 @@
    /**
     * Open a live PPO stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#PPO} at that bar.
-    * <p>The history must hold at least {@code PPO_Lookback(...) + 1} bars
+    * to {@link Core#ppo} at that bar.
+    * <p>The history must hold at least {@code ppoLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
@@ -700,7 +700,7 @@
    }
    /**
     * {@link Core#ppoOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#PPO} over the whole history in the same single pass
+    * to {@link Core#ppo} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -714,7 +714,7 @@
       requireArgument("PPO openAndFill", "inReal", inReal);
       requireHistory("PPO openAndFill", inReal.length);
       requireArgument("PPO openAndFill", "optInMAType", optInMAType);
-      int guardOutLen = openFillCount("PPO openAndFill", inReal.length, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      int guardOutLen = openFillCount("PPO openAndFill", inReal.length, ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("PPO openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

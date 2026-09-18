@@ -65,17 +65,17 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::HT_PHASOR`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::ht_phasor`]: the number of leading input values consumed before
     /// the first output value can be produced.
     #[doc(alias = "TA_HT_PHASOR_Lookback")]
-    pub fn HT_PHASOR_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn ht_phasor_lookback(&self) -> Result<usize, RetCode> {
         // See mama_lookback for an explanation of these
         return Ok((32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize);
     }
-    /// C-shaped body behind [`Core::HT_PHASOR`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::ht_phasor`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn HT_PHASOR_Impl(
+    pub(crate) fn ht_phasor_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -86,13 +86,13 @@ impl Core {
         outQuadrature: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, HT_PHASOR_Impl_fma, HT_PHASOR_Impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
+        return ta_lib_dispatch::dispatch_fma!(self, ht_phasor_impl_fma, ht_phasor_impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
         #[cfg(not(target_arch = "x86_64"))]
-        self.HT_PHASOR_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.ht_phasor_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn HT_PHASOR_Impl_fma(
+    fn ht_phasor_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -102,10 +102,10 @@ impl Core {
         outInPhase: &mut [f64],
         outQuadrature: &mut [f64],
     ) -> RetCode {
-        self.HT_PHASOR_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.ht_phasor_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[inline(always)]
-    fn HT_PHASOR_Impl_impl(
+    fn ht_phasor_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -121,7 +121,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.HT_PHASOR_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.ht_phasor_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInPhase.len());
@@ -498,7 +498,7 @@ impl Core {
     /// let mut in_phase = vec![0.0; 252];
     /// let mut quadrature = vec![0.0; 252];
     ///
-    /// let out_range = core.HT_PHASOR(0, data.len() - 1, &data, &mut in_phase, &mut quadrature)?;
+    /// let out_range = core.ht_phasor(0, data.len() - 1, &data, &mut in_phase, &mut quadrature)?;
     /// assert!(out_range.count > 0);
     /// assert!(in_phase[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -506,8 +506,9 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::HT_DCPERIOD`] · [`Core::HT_DCPHASE`] · [`Core::HT_SINE`] · [`Core::HT_TRENDMODE`]
-    /// · [`Core::MAMA`] · [`Core::WMA`]
+    /// [`HT_DCPERIOD`](Core::ht_dcperiod) · [`HT_DCPHASE`](Core::ht_dcphase) ·
+    /// [`HT_SINE`](Core::ht_sine) · [`HT_TRENDMODE`](Core::ht_trendmode) · [`MAMA`](Core::mama)
+    /// · [`WMA`](Core::wma)
     ///
     /// # References
     ///
@@ -516,7 +517,7 @@ impl Core {
     #[doc(alias = "TA_HT_PHASOR")]
     #[doc(alias = "HilbertTransformPhasor")]
     #[doc(alias = "InPhaseQuadrature")]
-    pub fn HT_PHASOR(
+    pub fn ht_phasor(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -530,7 +531,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HT_PHASOR_Lookback()?;
+        let _guardLb = self.ht_phasor_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -544,7 +545,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.HT_PHASOR_Impl(
+        let retCode = self.ht_phasor_impl(
             startIdx,
             endIdx,
             inReal,
@@ -562,7 +563,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_PHASOR stream: one value per closed bar, bit-identical to [`Core::HT_PHASOR`]
+/// Live HT_PHASOR stream: one value per closed bar, bit-identical to [`Core::ht_phasor`]
 /// over the same series. Open with [`Core::ht_phasor_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -1208,7 +1209,7 @@ impl Core {
     }
 
     /// Open a live HT_PHASOR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::HT_PHASOR`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ht_phasor`] at that bar.
     ///
     /// # Errors
     ///
@@ -1239,7 +1240,7 @@ impl Core {
     }
 
     /// [`Core::ht_phasor_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::HT_PHASOR`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::ht_phasor`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1257,7 +1258,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_in_phase = vec![0.0; 252];
     /// let mut batch_quadrature = vec![0.0; 252];
-    /// let batch = core.HT_PHASOR(0, data.len() - 1, &data, &mut batch_in_phase, &mut batch_quadrature)?;
+    /// let batch = core.ht_phasor(0, data.len() - 1, &data, &mut batch_in_phase, &mut batch_quadrature)?;
     ///
     /// let mut in_phase = vec![0.0; 252];
     /// let mut quadrature = vec![0.0; 252];
@@ -1281,7 +1282,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HT_PHASOR_Lookback()?;
+        let _guardLb = self.ht_phasor_lookback()?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outInPhase.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -1504,7 +1505,7 @@ impl HtPhasorStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::HT_PHASOR`] reports over the same bars: the opener sets it
+    /// It is what [`Core::ht_phasor`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

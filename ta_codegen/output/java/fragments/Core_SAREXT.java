@@ -20,7 +20,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#SAREXT} consumes before it can
+    * Number of leading input bars {@link Core#sarext} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -46,7 +46,7 @@
     *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   public int sarextLookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
@@ -94,21 +94,21 @@
       return 1 ;
 
    }
-   RetCode SAREXT_Impl( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double optInStartValue,
-                        double optInOffsetOnReverse,
-                        double optInAccelerationInitLong,
-                        double optInAccelerationLong,
-                        double optInAccelerationMaxLong,
-                        double optInAccelerationInitShort,
-                        double optInAccelerationShort,
-                        double optInAccelerationMaxShort,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode sarextImpl( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double optInStartValue,
+                       double optInOffsetOnReverse,
+                       double optInAccelerationInitLong,
+                       double optInAccelerationLong,
+                       double optInAccelerationMaxLong,
+                       double optInAccelerationInitShort,
+                       double optInAccelerationShort,
+                       double optInAccelerationMaxShort,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -271,7 +271,7 @@
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         OutRange _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.SUCCESS;
@@ -441,21 +441,21 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode SAREXT_Impl( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        double optInStartValue,
-                        double optInOffsetOnReverse,
-                        double optInAccelerationInitLong,
-                        double optInAccelerationLong,
-                        double optInAccelerationMaxLong,
-                        double optInAccelerationInitShort,
-                        double optInAccelerationShort,
-                        double optInAccelerationMaxShort,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode sarextImpl( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       double optInStartValue,
+                       double optInOffsetOnReverse,
+                       double optInAccelerationInitLong,
+                       double optInAccelerationLong,
+                       double optInAccelerationMaxLong,
+                       double optInAccelerationInitShort,
+                       double optInAccelerationShort,
+                       double optInAccelerationMaxShort,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -542,7 +542,7 @@
          optInAccelerationShort = optInAccelerationMaxShort;
       }
       if( optInStartValue == 0 ) {
-         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         OutRange _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.SUCCESS;
@@ -678,7 +678,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#SAREXT_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#sarextLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -719,10 +719,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SAR
-    * @see Core#MINUS_DM
+    * @see Core#sar
+    * @see Core#minusDm
     */
-   public OutRange SAREXT( int startIdx,
+   public OutRange sarext( int startIdx,
                            int endIdx,
                            double inHigh[],
                            double inLow[],
@@ -737,7 +737,7 @@
                            double outReal[] )
    {
       requireIndexRange("SAREXT", startIdx, endIdx);
-      int guardStart = clampedStart("SAREXT", startIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardStart = clampedStart("SAREXT", startIdx, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAREXT", "inHigh", inHigh, guardInLen);
@@ -745,7 +745,7 @@
       requireLength("SAREXT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      RetCode retCode = sarextImpl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("SAREXT", retCode);
       }
@@ -765,7 +765,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#SAREXT_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#sarextLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -806,10 +806,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SAR
-    * @see Core#MINUS_DM
+    * @see Core#sar
+    * @see Core#minusDm
     */
-   public OutRange SAREXT( int startIdx,
+   public OutRange sarext( int startIdx,
                            int endIdx,
                            float inHigh[],
                            float inLow[],
@@ -824,7 +824,7 @@
                            double outReal[] )
    {
       requireIndexRange("SAREXT", startIdx, endIdx);
-      int guardStart = clampedStart("SAREXT", startIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardStart = clampedStart("SAREXT", startIdx, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAREXT", "inHigh", inHigh, guardInLen);
@@ -832,7 +832,7 @@
       requireLength("SAREXT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      RetCode retCode = sarextImpl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("SAREXT", retCode);
       }
@@ -842,7 +842,7 @@
 
    /**
     * A live SAREXT stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#SAREXT} over the same series.
+    * closed bar, bit-identical to {@link Core#sarext} over the same series.
     * Open with {@link Core#sarextOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -880,7 +880,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#SAREXT} reports over the same bars: the
+       * <p>It is what {@link Core#sarext} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1430,7 +1430,7 @@
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         OutRange _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt.value = _xr0.begIdx();
          tempInt.value = _xr0.count();
          retCode = RetCode.SUCCESS;
@@ -1659,8 +1659,8 @@
    /**
     * Open a live SAREXT stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#SAREXT} at that bar.
-    * <p>The history must hold at least {@code SAREXT_Lookback(...) + 1} bars
+    * to {@link Core#sarext} at that bar.
+    * <p>The history must hold at least {@code sarextLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
@@ -1679,7 +1679,7 @@
    }
    /**
     * {@link Core#sarextOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#SAREXT} over the whole history in the same single pass
+    * to {@link Core#sarext} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1693,7 +1693,7 @@
       requireArgument("SAREXT openAndFill", "inHigh", inHigh);
       requireHistory("SAREXT openAndFill", inHigh.length);
       requireArgument("SAREXT openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("SAREXT openAndFill", inHigh.length, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardOutLen = openFillCount("SAREXT openAndFill", inHigh.length, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       requireHistoryLength("SAREXT openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAREXT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

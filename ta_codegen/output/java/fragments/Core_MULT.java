@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MULT} consumes before it can
+    * Number of leading input bars {@link Core#mult} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,18 +20,18 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MULT_Lookback( )
+   public int multLookback( )
    {
       return 0 ;
 
    }
-   RetCode MULT_Impl( int startIdx,
-                      int endIdx,
-                      double inReal0[],
-                      double inReal1[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode multImpl( int startIdx,
+                     int endIdx,
+                     double inReal0[],
+                     double inReal1[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -52,13 +52,13 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MULT_Impl( int startIdx,
-                      int endIdx,
-                      float inReal0[],
-                      float inReal1[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode multImpl( int startIdx,
+                     int endIdx,
+                     float inReal0[],
+                     float inReal1[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -86,8 +86,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MULT_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#multLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -109,18 +109,18 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ADD
-    * @see Core#SUB
-    * @see Core#DIV
+    * @see Core#add
+    * @see Core#sub
+    * @see Core#div
     */
-   public OutRange MULT( int startIdx,
+   public OutRange mult( int startIdx,
                          int endIdx,
                          double inReal0[],
                          double inReal1[],
                          double outReal[] )
    {
       requireIndexRange("MULT", startIdx, endIdx);
-      int guardStart = clampedStart("MULT", startIdx, MULT_Lookback());
+      int guardStart = clampedStart("MULT", startIdx, multLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MULT", "inReal0", inReal0, guardInLen);
@@ -128,7 +128,7 @@
       requireLength("MULT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MULT_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = multImpl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MULT", retCode);
       }
@@ -144,8 +144,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MULT_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#multLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -167,18 +167,18 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ADD
-    * @see Core#SUB
-    * @see Core#DIV
+    * @see Core#add
+    * @see Core#sub
+    * @see Core#div
     */
-   public OutRange MULT( int startIdx,
+   public OutRange mult( int startIdx,
                          int endIdx,
                          float inReal0[],
                          float inReal1[],
                          double outReal[] )
    {
       requireIndexRange("MULT", startIdx, endIdx);
-      int guardStart = clampedStart("MULT", startIdx, MULT_Lookback());
+      int guardStart = clampedStart("MULT", startIdx, multLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MULT", "inReal0", inReal0, guardInLen);
@@ -186,7 +186,7 @@
       requireLength("MULT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MULT_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = multImpl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MULT", retCode);
       }
@@ -196,7 +196,7 @@
 
    /**
     * A live MULT stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MULT} over the same series.
+    * closed bar, bit-identical to {@link Core#mult} over the same series.
     * Open with {@link Core#multOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -219,7 +219,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MULT} reports over the same bars: the
+       * <p>It is what {@link Core#mult} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -409,8 +409,8 @@
    /**
     * Open a live MULT stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MULT} at that bar.
-    * <p>The history must hold at least {@code MULT_Lookback(...) + 1} bars
+    * to {@link Core#mult} at that bar.
+    * <p>The history must hold at least {@code multLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -427,7 +427,7 @@
    }
    /**
     * {@link Core#multOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MULT} over the whole history in the same single pass
+    * to {@link Core#mult} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -441,7 +441,7 @@
       requireArgument("MULT openAndFill", "inReal0", inReal0);
       requireHistory("MULT openAndFill", inReal0.length);
       requireArgument("MULT openAndFill", "inReal1", inReal1);
-      int guardOutLen = openFillCount("MULT openAndFill", inReal0.length, MULT_Lookback());
+      int guardOutLen = openFillCount("MULT openAndFill", inReal0.length, multLookback());
       requireHistoryLength("MULT openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("MULT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {

@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#VHF} consumes before it can
+    * Number of leading input bars {@link Core#vhf} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int VHF_Lookback( int optInTimePeriod )
+   public int vhfLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 28;
@@ -34,13 +34,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode VHF_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode vhfImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -64,7 +64,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = VHF_Lookback(optInTimePeriod);
+      lookbackTotal = vhfLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -114,13 +114,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode VHF_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode vhfImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -144,7 +144,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = VHF_Lookback(optInTimePeriod);
+      lookbackTotal = vhfLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -202,7 +202,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VHF_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#vhfLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -227,25 +227,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ADX
-    * @see Core#CMO
-    * @see Core#CMOU
+    * @see Core#adx
+    * @see Core#cmo
+    * @see Core#cmou
     */
-   public OutRange VHF( int startIdx,
+   public OutRange vhf( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("VHF", startIdx, endIdx);
-      int guardStart = clampedStart("VHF", startIdx, VHF_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("VHF", startIdx, vhfLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VHF", "inReal", inReal, guardInLen);
       requireLength("VHF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VHF_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = vhfImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VHF", retCode);
       }
@@ -273,7 +273,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VHF_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#vhfLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -298,25 +298,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ADX
-    * @see Core#CMO
-    * @see Core#CMOU
+    * @see Core#adx
+    * @see Core#cmo
+    * @see Core#cmou
     */
-   public OutRange VHF( int startIdx,
+   public OutRange vhf( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("VHF", startIdx, endIdx);
-      int guardStart = clampedStart("VHF", startIdx, VHF_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("VHF", startIdx, vhfLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VHF", "inReal", inReal, guardInLen);
       requireLength("VHF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VHF_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = vhfImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VHF", retCode);
       }
@@ -326,7 +326,7 @@
 
    /**
     * A live VHF stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#VHF} over the same series.
+    * closed bar, bit-identical to {@link Core#vhf} over the same series.
     * Open with {@link Core#vhfOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -353,7 +353,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#VHF} reports over the same bars: the
+       * <p>It is what {@link Core#vhf} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -586,7 +586,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = VHF_Lookback(optInTimePeriod);
+      lookbackTotal = vhfLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -690,8 +690,8 @@
    /**
     * Open a live VHF stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#VHF} at that bar.
-    * <p>The history must hold at least {@code VHF_Lookback(...) + 1} bars
+    * to {@link Core#vhf} at that bar.
+    * <p>The history must hold at least {@code vhfLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -708,7 +708,7 @@
    }
    /**
     * {@link Core#vhfOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#VHF} over the whole history in the same single pass
+    * to {@link Core#vhf} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -721,7 +721,7 @@
    {
       requireArgument("VHF openAndFill", "inReal", inReal);
       requireHistory("VHF openAndFill", inReal.length);
-      int guardOutLen = openFillCount("VHF openAndFill", inReal.length, VHF_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("VHF openAndFill", inReal.length, vhfLookback(optInTimePeriod));
       requireLength("VHF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("VHF openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

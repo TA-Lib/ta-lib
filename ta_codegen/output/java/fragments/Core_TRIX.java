@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#TRIX} consumes before it can
+    * Number of leading input bars {@link Core#trix} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -30,7 +30,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int TRIX_Lookback( int optInTimePeriod )
+   public int trixLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -38,17 +38,17 @@
          return -1;
       }
       int emaLookback;
-      emaLookback = EMA_Lookback(optInTimePeriod);
-      return emaLookback * 3 + ROCR_Lookback(1) ;
+      emaLookback = emaLookback(optInTimePeriod);
+      return emaLookback * 3 + rocrLookback(1) ;
 
    }
-   RetCode TRIX_Impl( int startIdx,
-                      int endIdx,
-                      double inReal[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode trixImpl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -76,8 +76,8 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
+      lookbackEMA = emaLookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + rocrLookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -170,13 +170,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode TRIX_Impl( int startIdx,
-                      int endIdx,
-                      float inReal[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode trixImpl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -201,8 +201,8 @@
       }
       outNBElement.value = 0;
       outBegIdx.value = 0;
-      lookbackEMA = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
+      lookbackEMA = emaLookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + rocrLookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -276,8 +276,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TRIX_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#trixLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -301,26 +301,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#ROC
-    * @see Core#ROCR
-    * @see Core#TEMA
+    * @see Core#ema
+    * @see Core#roc
+    * @see Core#rocr
+    * @see Core#tema
     */
-   public OutRange TRIX( int startIdx,
+   public OutRange trix( int startIdx,
                          int endIdx,
                          double inReal[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("TRIX", startIdx, endIdx);
-      int guardStart = clampedStart("TRIX", startIdx, TRIX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("TRIX", startIdx, trixLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIX", "inReal", inReal, guardInLen);
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = trixImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TRIX", retCode);
       }
@@ -343,8 +343,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TRIX_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#trixLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -368,26 +368,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#ROC
-    * @see Core#ROCR
-    * @see Core#TEMA
+    * @see Core#ema
+    * @see Core#roc
+    * @see Core#rocr
+    * @see Core#tema
     */
-   public OutRange TRIX( int startIdx,
+   public OutRange trix( int startIdx,
                          int endIdx,
                          float inReal[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("TRIX", startIdx, endIdx);
-      int guardStart = clampedStart("TRIX", startIdx, TRIX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("TRIX", startIdx, trixLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TRIX", "inReal", inReal, guardInLen);
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = trixImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TRIX", retCode);
       }
@@ -397,7 +397,7 @@
 
    /**
     * A live TRIX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#TRIX} over the same series.
+    * closed bar, bit-identical to {@link Core#trix} over the same series.
     * Open with {@link Core#trixOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -425,7 +425,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#TRIX} reports over the same bars: the
+       * <p>It is what {@link Core#trix} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -601,8 +601,8 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
+      lookbackEMA = emaLookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + rocrLookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -744,8 +744,8 @@
    /**
     * Open a live TRIX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#TRIX} at that bar.
-    * <p>The history must hold at least {@code TRIX_Lookback(...) + 1} bars
+    * to {@link Core#trix} at that bar.
+    * <p>The history must hold at least {@code trixLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -762,7 +762,7 @@
    }
    /**
     * {@link Core#trixOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#TRIX} over the whole history in the same single pass
+    * to {@link Core#trix} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -775,7 +775,7 @@
    {
       requireArgument("TRIX openAndFill", "inReal", inReal);
       requireHistory("TRIX openAndFill", inReal.length);
-      int guardOutLen = openFillCount("TRIX openAndFill", inReal.length, TRIX_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("TRIX openAndFill", inReal.length, trixLookback(optInTimePeriod));
       requireLength("TRIX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("TRIX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

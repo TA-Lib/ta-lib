@@ -65,7 +65,7 @@ public partial class Core
     *  090426 MF,CC Add RMA (issue #348).
     */
    /// <summary>
-   /// Number of leading input bars <c>MA</c> consumes before it can produce its
+   /// Number of leading input bars <c>Ma</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -80,7 +80,7 @@ public partial class Core
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MA_Lookback( int optInTimePeriod, MAType optInMAType )
+   public int MaLookback( int optInTimePeriod, MAType optInMAType )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -99,40 +99,40 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA:
-         retValue = SMA_Lookback(optInTimePeriod);
+         retValue = SmaLookback(optInTimePeriod);
          break;
       case MAType.EMA:
-         retValue = EMA_Lookback(optInTimePeriod);
+         retValue = EmaLookback(optInTimePeriod);
          break;
       case MAType.WMA:
-         retValue = WMA_Lookback(optInTimePeriod);
+         retValue = WmaLookback(optInTimePeriod);
          break;
       case MAType.DEMA:
-         retValue = DEMA_Lookback(optInTimePeriod);
+         retValue = DemaLookback(optInTimePeriod);
          break;
       case MAType.TEMA:
-         retValue = TEMA_Lookback(optInTimePeriod);
+         retValue = TemaLookback(optInTimePeriod);
          break;
       case MAType.TRIMA:
-         retValue = TRIMA_Lookback(optInTimePeriod);
+         retValue = TrimaLookback(optInTimePeriod);
          break;
       case MAType.KAMA:
-         retValue = KAMA_Lookback(optInTimePeriod);
+         retValue = KamaLookback(optInTimePeriod);
          break;
       case MAType.MAMA:
-         retValue = MAMA_Lookback(0.5, 0.05);
+         retValue = MamaLookback(0.5, 0.05);
          break;
       case MAType.T3:
-         retValue = T3_Lookback(optInTimePeriod, 0.7);
+         retValue = T3Lookback(optInTimePeriod, 0.7);
          break;
       case MAType.HMA:
-         retValue = HMA_Lookback(optInTimePeriod);
+         retValue = HmaLookback(optInTimePeriod);
          break;
       case MAType.ZLEMA:
-         retValue = ZLEMA_Lookback(optInTimePeriod);
+         retValue = ZlemaLookback(optInTimePeriod);
          break;
       case MAType.RMA:
-         retValue = RMA_Lookback(optInTimePeriod);
+         retValue = RmaLookback(optInTimePeriod);
          break;
       default:
          retValue = 0;
@@ -141,14 +141,14 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode MA_Impl( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inReal,
-                             int optInTimePeriod,
-                             MAType optInMAType,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
+   internal RetCode MaImpl( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<double> inReal,
+                            int optInTimePeriod,
+                            MAType optInMAType,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -156,10 +156,10 @@ public partial class Core
       int nbElement = 0;
       int outIdx = 0;
       int todayIdx = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -200,7 +200,7 @@ public partial class Core
        * the switch and still answers TA_BAD_PARAM. The identity path below is out
        * of the guard's reach for the same reason - its lookback is 0.
        */
-      if( MA_Lookback(optInTimePeriod, optInMAType) > endIdx ) {
+      if( MaLookback(optInTimePeriod, optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
@@ -221,43 +221,43 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA:
-         OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr0 = Sma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr0.BegIdx;
          outNBElement = _xr0.Count;
          retCode = RetCode.Success;
          break;
       case MAType.EMA:
-         OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr1 = Ema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr1.BegIdx;
          outNBElement = _xr1.Count;
          retCode = RetCode.Success;
          break;
       case MAType.WMA:
-         OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr2 = Wma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr2.BegIdx;
          outNBElement = _xr2.Count;
          retCode = RetCode.Success;
          break;
       case MAType.DEMA:
-         OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr3 = Dema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr3.BegIdx;
          outNBElement = _xr3.Count;
          retCode = RetCode.Success;
          break;
       case MAType.TEMA:
-         OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr4 = Tema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr4.BegIdx;
          outNBElement = _xr4.Count;
          retCode = RetCode.Success;
          break;
       case MAType.TRIMA:
-         OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr5 = Trima(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr5.BegIdx;
          outNBElement = _xr5.Count;
          retCode = RetCode.Success;
          break;
       case MAType.KAMA:
-         OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr6 = Kama(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr6.BegIdx;
          outNBElement = _xr6.Count;
          retCode = RetCode.Success;
@@ -266,7 +266,7 @@ public partial class Core
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
+         OutRange _xr7 = Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
          outBegIdx = _xr7.BegIdx;
          outNBElement = _xr7.Count;
          retCode = RetCode.Success;
@@ -278,19 +278,19 @@ public partial class Core
          retCode = RetCode.Success;
          break;
       case MAType.HMA:
-         OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr9 = Hma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr9.BegIdx;
          outNBElement = _xr9.Count;
          retCode = RetCode.Success;
          break;
       case MAType.ZLEMA:
-         OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr10 = Zlema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr10.BegIdx;
          outNBElement = _xr10.Count;
          retCode = RetCode.Success;
          break;
       case MAType.RMA:
-         OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr11 = Rma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr11.BegIdx;
          outNBElement = _xr11.Count;
          retCode = RetCode.Success;
@@ -301,14 +301,14 @@ public partial class Core
       }
       return retCode ;
    }
-   internal RetCode MA_Impl( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inReal,
-                             int optInTimePeriod,
-                             MAType optInMAType,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
+   internal RetCode MaImpl( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<float> inReal,
+                            int optInTimePeriod,
+                            MAType optInMAType,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -316,10 +316,10 @@ public partial class Core
       int nbElement = 0;
       int outIdx = 0;
       int todayIdx = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -335,7 +335,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
-      if( MA_Lookback(optInTimePeriod, optInMAType) > endIdx ) {
+      if( MaLookback(optInTimePeriod, optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
@@ -352,49 +352,49 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA:
-         OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr0 = Sma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr0.BegIdx;
          outNBElement = _xr0.Count;
          retCode = RetCode.Success;
          break;
       case MAType.EMA:
-         OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr1 = Ema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr1.BegIdx;
          outNBElement = _xr1.Count;
          retCode = RetCode.Success;
          break;
       case MAType.WMA:
-         OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr2 = Wma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr2.BegIdx;
          outNBElement = _xr2.Count;
          retCode = RetCode.Success;
          break;
       case MAType.DEMA:
-         OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr3 = Dema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr3.BegIdx;
          outNBElement = _xr3.Count;
          retCode = RetCode.Success;
          break;
       case MAType.TEMA:
-         OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr4 = Tema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr4.BegIdx;
          outNBElement = _xr4.Count;
          retCode = RetCode.Success;
          break;
       case MAType.TRIMA:
-         OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr5 = Trima(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr5.BegIdx;
          outNBElement = _xr5.Count;
          retCode = RetCode.Success;
          break;
       case MAType.KAMA:
-         OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr6 = Kama(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr6.BegIdx;
          outNBElement = _xr6.Count;
          retCode = RetCode.Success;
          break;
       case MAType.MAMA:
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
+         OutRange _xr7 = Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default);
          outBegIdx = _xr7.BegIdx;
          outNBElement = _xr7.Count;
          retCode = RetCode.Success;
@@ -406,19 +406,19 @@ public partial class Core
          retCode = RetCode.Success;
          break;
       case MAType.HMA:
-         OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr9 = Hma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr9.BegIdx;
          outNBElement = _xr9.Count;
          retCode = RetCode.Success;
          break;
       case MAType.ZLEMA:
-         OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr10 = Zlema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr10.BegIdx;
          outNBElement = _xr10.Count;
          retCode = RetCode.Success;
          break;
       case MAType.RMA:
-         OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr11 = Rma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx = _xr11.BegIdx;
          outNBElement = _xr11.Count;
          retCode = RetCode.Success;
@@ -448,7 +448,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MA_Lookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>MaLookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -466,7 +466,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -481,19 +481,19 @@ public partial class Core
    /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
-   public OutRange MA( int startIdx,
+   public OutRange Ma( int startIdx,
                        int endIdx,
                        ReadOnlySpan<double> inReal,
                        int optInTimePeriod,
                        MAType optInMAType,
                        Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, MA_Lookback(optInTimePeriod, optInMAType));
+      int guardStart = ClampedStart(startIdx, endIdx, MaLookback(optInTimePeriod, optInMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MA", "inReal", inReal.Length, guardInLen);
       RequireLength("MA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
@@ -524,7 +524,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MA_Lookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>MaLookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -542,7 +542,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -559,19 +559,19 @@ public partial class Core
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
    /// overlap of their byte ranges is rejected.</exception>
-   public OutRange MA( int startIdx,
+   public OutRange Ma( int startIdx,
                        int endIdx,
                        ReadOnlySpan<float> inReal,
                        int optInTimePeriod,
                        MAType optInMAType,
                        Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, MA_Lookback(optInTimePeriod, optInMAType));
+      int guardStart = ClampedStart(startIdx, endIdx, MaLookback(optInTimePeriod, optInMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MA", "inReal", inReal.Length, guardInLen);
       RequireLength("MA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MaImpl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
@@ -617,7 +617,7 @@ public partial class Core
       /// <c>Peek</c> — and <c>Clone</c> carries it verbatim. A plain <c>Open</c>
       /// hands back only the last value, a subset of this range, because the caller
       /// chose not to take the fill.</para>
-      /// <para>The last bar it can reach is <see cref="Core.MAX_INDEX"/>; past that
+      /// <para>The last bar it can reach is <see cref="Core.MaxIndex"/>; past that
       /// <c>Update</c> and <c>Advance</c> throw.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
@@ -630,13 +630,13 @@ public partial class Core
       /// rejected and that will not be re-fed, or a session with no print. Without
       /// it two handles on one feed drift a bar apart when only one of them skips.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, the last one the batch tier
+      /// has reached bar <see cref="Core.MaxIndex"/>, the last one the batch tier
       /// can address and the last this handle will count. <c>Update</c> throws the
       /// same there.</para>
       /// </remarks>
       public void Advance()
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("MA", "advance", RetCode.OutOfRangeEndIndex);
          outRangeCount++;
       }
@@ -709,7 +709,7 @@ public partial class Core
       /// which computes on whatever it is given: a handle retains its state, so a
       /// single non-finite bar would poison every later value it produces.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, which no re-feed clears: the
+      /// has reached bar <see cref="Core.MaxIndex"/>, which no re-feed clears: the
       /// handle has run out of index domain and only a shorter history can start a
       /// new one.</para>
       /// </remarks>
@@ -717,7 +717,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal )
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("MA", "update", RetCode.OutOfRangeEndIndex);
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MA", "update", RetCode.BadParam);
          core.MaStepImpl(this, inReal);
@@ -733,7 +733,7 @@ public partial class Core
       /// concurrently with each other.</para>
       /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
-      /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
+      /// <see cref="Core.MaxIndex"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value <see cref="Update"/> would return for this bar, when it takes
@@ -889,7 +889,7 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -902,18 +902,18 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+      if( historyLen < MaLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
-         if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+         if( historyLen < MaLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
          sp.sub = null;
          sp.cur_outReal = inReal[historyLen - 1];
-         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         int fillLb = MaLookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.InsufficientHistory;
@@ -1036,7 +1036,7 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -1052,17 +1052,17 @@ public partial class Core
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+      if( historyLen < MaLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
-         if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+         if( historyLen < MaLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
          sp.sub = null;
-         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         int fillLb = MaLookback(optInTimePeriod, optInMAType);
          outBegIdx = fillLb;
          outNBElement = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
@@ -1185,7 +1185,7 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -1198,17 +1198,17 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+      if( historyLen < MaLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.InsufficientHistory;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
-         if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+         if( historyLen < MaLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
          sp.sub = null;
-         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         int fillLb = MaLookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.InsufficientHistory;
@@ -1318,25 +1318,25 @@ public partial class Core
    /// <remarks>
    /// <para>The handle's <see cref="MaStream.Value"/> starts at the last history bar's
    /// value — bit-identical to what <c>MA</c> reports for that bar.</para>
-   /// <para>The history must hold at least <c>MA_Lookback(...) + 1</c> bars
+   /// <para>The history must hold at least <c>MaLookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>MaOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Series to average. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MA_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MaLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInMAType">As in the batch call; see <see cref="MA_Lookback"/> for its default and
+   /// <param name="optInMAType">As in the batch call; see <see cref="MaLookback"/> for its default and
    /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MaLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public MaStream MaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA open: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       return MaOpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
 
@@ -1345,7 +1345,7 @@ public partial class Core
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>MA</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
-   /// <para>Output arrays must hold <c>historyLen - MA_Lookback(...)</c> values and
+   /// <para>Output arrays must hold <c>historyLen - MaLookback(...)</c> values and
    /// must not alias the inputs or each other — this path writes the outputs and
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here. Both are checked before anything is
@@ -1355,25 +1355,25 @@ public partial class Core
    /// <see cref="MaStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Series to average. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MA_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MaLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInMAType">As in the batch call; see <see cref="MA_Lookback"/> for its default and
+   /// <param name="optInMAType">As in the batch call; see <see cref="MaLookback"/> for its default and
    /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>historyLen -
-   /// MA_Lookback(...)</c> values.</param>
+   /// MaLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MaLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public MaStream MaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      int guardOutLen = OpenFillCount("MA", "openAndFill", inReal.Length, MA_Lookback(optInTimePeriod, optInMAType));
+      if( inReal.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
+      int guardOutLen = OpenFillCount("MA", "openAndFill", inReal.Length, MaLookback(optInTimePeriod, optInMAType));
       RequireFillLength("MA", "openAndFill", "outReal", outReal.Length, guardOutLen);
       MaStream sp = new MaStream(this);
       RetCode retCode = MaOpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);

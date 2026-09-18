@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#PERCENTILE} consumes before it
+    * Number of leading input bars {@link Core#percentile} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,7 +25,7 @@
     *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int PERCENTILE_Lookback( int optInTimePeriod, double optInPercentile )
+   public int percentileLookback( int optInTimePeriod, double optInPercentile )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -40,14 +40,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode PERCENTILE_Impl( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            double optInPercentile,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode percentileImpl( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           double optInPercentile,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       double newValue = 0;
       double oldValue = 0;
@@ -178,14 +178,14 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode PERCENTILE_Impl( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            double optInPercentile,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode percentileImpl( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           double optInPercentile,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       double newValue = 0;
       double oldValue = 0;
@@ -317,7 +317,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PERCENTILE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#percentileLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -343,12 +343,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MIN
-    * @see Core#MAX
-    * @see Core#MEDPRICE
-    * @see Core#STDDEV
+    * @see Core#min
+    * @see Core#max
+    * @see Core#medprice
+    * @see Core#stddev
     */
-   public OutRange PERCENTILE( int startIdx,
+   public OutRange percentile( int startIdx,
                                int endIdx,
                                double inReal[],
                                int optInTimePeriod,
@@ -356,14 +356,14 @@
                                double outReal[] )
    {
       requireIndexRange("PERCENTILE", startIdx, endIdx);
-      int guardStart = clampedStart("PERCENTILE", startIdx, PERCENTILE_Lookback(optInTimePeriod, optInPercentile));
+      int guardStart = clampedStart("PERCENTILE", startIdx, percentileLookback(optInTimePeriod, optInPercentile));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PERCENTILE", "inReal", inReal, guardInLen);
       requireLength("PERCENTILE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PERCENTILE_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal);
+      RetCode retCode = percentileImpl(startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PERCENTILE", retCode);
       }
@@ -390,7 +390,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PERCENTILE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#percentileLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -416,12 +416,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MIN
-    * @see Core#MAX
-    * @see Core#MEDPRICE
-    * @see Core#STDDEV
+    * @see Core#min
+    * @see Core#max
+    * @see Core#medprice
+    * @see Core#stddev
     */
-   public OutRange PERCENTILE( int startIdx,
+   public OutRange percentile( int startIdx,
                                int endIdx,
                                float inReal[],
                                int optInTimePeriod,
@@ -429,14 +429,14 @@
                                double outReal[] )
    {
       requireIndexRange("PERCENTILE", startIdx, endIdx);
-      int guardStart = clampedStart("PERCENTILE", startIdx, PERCENTILE_Lookback(optInTimePeriod, optInPercentile));
+      int guardStart = clampedStart("PERCENTILE", startIdx, percentileLookback(optInTimePeriod, optInPercentile));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PERCENTILE", "inReal", inReal, guardInLen);
       requireLength("PERCENTILE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PERCENTILE_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal);
+      RetCode retCode = percentileImpl(startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PERCENTILE", retCode);
       }
@@ -446,7 +446,7 @@
 
    /**
     * A live PERCENTILE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#PERCENTILE} over the same series.
+    * closed bar, bit-identical to {@link Core#percentile} over the same series.
     * Open with {@link Core#percentileOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -481,7 +481,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#PERCENTILE} reports over the same bars: the
+       * <p>It is what {@link Core#percentile} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -866,8 +866,8 @@
    /**
     * Open a live PERCENTILE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#PERCENTILE} at that bar.
-    * <p>The history must hold at least {@code PERCENTILE_Lookback(...) + 1} bars
+    * to {@link Core#percentile} at that bar.
+    * <p>The history must hold at least {@code percentileLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
@@ -884,7 +884,7 @@
    }
    /**
     * {@link Core#percentileOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#PERCENTILE} over the whole history in the same single pass
+    * to {@link Core#percentile} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -897,7 +897,7 @@
    {
       requireArgument("PERCENTILE openAndFill", "inReal", inReal);
       requireHistory("PERCENTILE openAndFill", inReal.length);
-      int guardOutLen = openFillCount("PERCENTILE openAndFill", inReal.length, PERCENTILE_Lookback(optInTimePeriod, optInPercentile));
+      int guardOutLen = openFillCount("PERCENTILE openAndFill", inReal.length, percentileLookback(optInTimePeriod, optInPercentile));
       requireLength("PERCENTILE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("PERCENTILE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

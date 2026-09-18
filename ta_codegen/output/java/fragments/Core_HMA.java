@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#HMA} consumes before it can
+    * Number of leading input bars {@link Core#hma} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -28,7 +28,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int HMA_Lookback( int optInTimePeriod )
+   public int hmaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
@@ -37,16 +37,16 @@
       }
       int sqrtPeriod;
       sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
-      return WMA_Lookback(optInTimePeriod) + WMA_Lookback(sqrtPeriod) ;
+      return wmaLookback(optInTimePeriod) + wmaLookback(sqrtPeriod) ;
 
    }
-   RetCode HMA_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode hmaImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int lookbackTotal = 0;
       int lookbackSqrt = 0;
@@ -137,8 +137,8 @@
       }
       halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
-      lookbackSqrt = WMA_Lookback(sqrtPeriod);
-      lookbackTotal = WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+      lookbackSqrt = wmaLookback(sqrtPeriod);
+      lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -390,13 +390,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode HMA_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode hmaImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int lookbackTotal = 0;
       int lookbackSqrt = 0;
@@ -463,8 +463,8 @@
       }
       halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
-      lookbackSqrt = WMA_Lookback(sqrtPeriod);
-      lookbackTotal = WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+      lookbackSqrt = wmaLookback(sqrtPeriod);
+      lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -699,7 +699,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HMA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#hmaLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -724,26 +724,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#WMA
-    * @see Core#MA
-    * @see Core#SMA
-    * @see Core#EMA
+    * @see Core#wma
+    * @see Core#ma
+    * @see Core#sma
+    * @see Core#ema
     */
-   public OutRange HMA( int startIdx,
+   public OutRange hma( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("HMA", startIdx, endIdx);
-      int guardStart = clampedStart("HMA", startIdx, HMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("HMA", startIdx, hmaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HMA", "inReal", inReal, guardInLen);
       requireLength("HMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = hmaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HMA", retCode);
       }
@@ -779,7 +779,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HMA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#hmaLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -804,26 +804,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#WMA
-    * @see Core#MA
-    * @see Core#SMA
-    * @see Core#EMA
+    * @see Core#wma
+    * @see Core#ma
+    * @see Core#sma
+    * @see Core#ema
     */
-   public OutRange HMA( int startIdx,
+   public OutRange hma( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("HMA", startIdx, endIdx);
-      int guardStart = clampedStart("HMA", startIdx, HMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("HMA", startIdx, hmaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HMA", "inReal", inReal, guardInLen);
       requireLength("HMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = hmaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HMA", retCode);
       }
@@ -833,7 +833,7 @@
 
    /**
     * A live HMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#HMA} over the same series.
+    * closed bar, bit-identical to {@link Core#hma} over the same series.
     * Open with {@link Core#hmaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -893,7 +893,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#HMA} reports over the same bars: the
+       * <p>It is what {@link Core#hma} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1383,7 +1383,7 @@
          return RetCode.BAD_PARAM;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = HMA_Lookback(optInTimePeriod);
+         int fillLb = hmaLookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -1501,8 +1501,8 @@
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
-         lookbackSqrt = WMA_Lookback(sqrtPeriod);
-         lookbackTotal = WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+         lookbackSqrt = wmaLookback(sqrtPeriod);
+         lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -1689,8 +1689,8 @@
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
-         lookbackSqrt = WMA_Lookback(sqrtPeriod);
-         lookbackTotal = WMA_Lookback(optInTimePeriod) + lookbackSqrt;
+         lookbackSqrt = wmaLookback(sqrtPeriod);
+         lookbackTotal = wmaLookback(optInTimePeriod) + lookbackSqrt;
          /* Move up the start index if there is not
           * enough initial data.
           */
@@ -2019,8 +2019,8 @@
    /**
     * Open a live HMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#HMA} at that bar.
-    * <p>The history must hold at least {@code HMA_Lookback(...) + 1} bars
+    * to {@link Core#hma} at that bar.
+    * <p>The history must hold at least {@code hmaLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -2037,7 +2037,7 @@
    }
    /**
     * {@link Core#hmaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#HMA} over the whole history in the same single pass
+    * to {@link Core#hma} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -2050,7 +2050,7 @@
    {
       requireArgument("HMA openAndFill", "inReal", inReal);
       requireHistory("HMA openAndFill", inReal.length);
-      int guardOutLen = openFillCount("HMA openAndFill", inReal.length, HMA_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("HMA openAndFill", inReal.length, hmaLookback(optInTimePeriod));
       requireLength("HMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("HMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

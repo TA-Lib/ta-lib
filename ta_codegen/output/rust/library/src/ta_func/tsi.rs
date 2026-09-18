@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::TSI`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::tsi`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -80,7 +80,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_TSI_Lookback")]
     #[inline]
-    pub fn TSI_Lookback(&self, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32) -> Result<usize, RetCode> {
+    pub fn tsi_lookback(&self, mut optInFirstPeriod: i32, mut optInSecondPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFirstPeriod) as i32) == (i32::MIN) {
             optInFirstPeriod = 25;
         } else if (((optInFirstPeriod) as i32) < 2) || (((optInFirstPeriod) as i32) > 100000) {
@@ -95,12 +95,12 @@ impl Core {
         // the pipeline stacks on it. Each term is exactly the lookback of the
         // function it comes from, which is also what makes TSI inherit
         // TA_FUNC_UNST_EMA from its callee.
-        return Ok((1 + self.EMA_Lookback(optInFirstPeriod)? + self.EMA_Lookback(optInSecondPeriod)?) as usize);
+        return Ok((1 + self.ema_lookback(optInFirstPeriod)? + self.ema_lookback(optInSecondPeriod)?) as usize);
     }
-    /// C-shaped body behind [`Core::TSI`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::tsi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn TSI_Impl(
+    pub(crate) fn tsi_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -112,13 +112,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, TSI_Impl_fma, TSI_Impl_impl, (startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, tsi_impl_fma, tsi_impl_impl, (startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.TSI_Impl_impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
+        self.tsi_impl_impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn TSI_Impl_fma(
+    fn tsi_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -129,10 +129,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.TSI_Impl_impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
+        self.tsi_impl_impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn TSI_Impl_impl(
+    fn tsi_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -159,7 +159,7 @@ impl Core {
         } else if (((optInSecondPeriod) as i32) < 2) || (((optInSecondPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.TSI_Lookback(optInFirstPeriod, optInSecondPeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.tsi_lookback(optInFirstPeriod, optInSecondPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -184,7 +184,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut nBar: usize = 0_usize;
         let mut nSecond: usize = 0_usize;
-        lookbackTotal = self.TSI_Lookback(optInFirstPeriod, optInSecondPeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.tsi_lookback(optInFirstPeriod, optInSecondPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -213,7 +213,7 @@ impl Core {
         // hold an output written a bar earlier.
         kFirst = 2.0 / ((optInFirstPeriod + 1) as f64);
         kSecond = 2.0 / ((optInSecondPeriod + 1) as f64);
-        lookbackFirst = self.EMA_Lookback(optInFirstPeriod).unwrap_or(usize::MAX);
+        lookbackFirst = self.ema_lookback(optInFirstPeriod).unwrap_or(usize::MAX);
         emaFirstNum = 0.0;
         emaFirstDen = 0.0;
         emaSecondNum = 0.0;
@@ -363,7 +363,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.TSI(0, data.len() - 1, &data, 25, 13, &mut out)?;
+    /// let out_range = core.tsi(0, data.len() - 1, &data, 25, 13, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -371,7 +371,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::SMI`] · [`Core::MACD`] · [`Core::CMO`] · [`Core::RSI`]
+    /// [`SMI`](Core::smi) · [`MACD`](Core::macd) · [`CMO`](Core::cmo) · [`RSI`](Core::rsi)
     ///
     /// # References
     ///
@@ -383,7 +383,7 @@ impl Core {
     #[doc(alias = "TA_TSI")]
     #[doc(alias = "truestrengthindex")]
     #[doc(alias = "Blautruestrengthindex")]
-    pub fn TSI(
+    pub fn tsi(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -398,7 +398,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.TSI_Lookback(optInFirstPeriod, optInSecondPeriod)?;
+        let _guardLb = self.tsi_lookback(optInFirstPeriod, optInSecondPeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -409,7 +409,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.TSI_Impl(
+        let retCode = self.tsi_impl(
             startIdx,
             endIdx,
             inReal,
@@ -428,7 +428,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TSI stream: one value per closed bar, bit-identical to [`Core::TSI`]
+/// Live TSI stream: one value per closed bar, bit-identical to [`Core::tsi`]
 /// over the same series. Open with [`Core::tsi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -534,7 +534,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut nBar: usize = 0_usize;
         let mut nSecond: usize = 0_usize;
-        lookbackTotal = self.TSI_Lookback(optInFirstPeriod, optInSecondPeriod)?;
+        lookbackTotal = self.tsi_lookback(optInFirstPeriod, optInSecondPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -563,7 +563,7 @@ impl Core {
         // hold an output written a bar earlier.
         kFirst = 2.0 / ((optInFirstPeriod + 1) as f64);
         kSecond = 2.0 / ((optInSecondPeriod + 1) as f64);
-        lookbackFirst = self.EMA_Lookback(optInFirstPeriod)?;
+        lookbackFirst = self.ema_lookback(optInFirstPeriod)?;
         emaFirstNum = 0.0;
         emaFirstDen = 0.0;
         emaSecondNum = 0.0;
@@ -684,7 +684,7 @@ impl Core {
     }
 
     /// Open a live TSI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::TSI`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::tsi`] at that bar.
     ///
     /// # Errors
     ///
@@ -714,7 +714,7 @@ impl Core {
     }
 
     /// [`Core::tsi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::TSI`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::tsi`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -731,7 +731,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.TSI(0, data.len() - 1, &data, 25, 13, &mut batch_out)?;
+    /// let batch = core.tsi(0, data.len() - 1, &data, 25, 13, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.tsi_open_and_fill(&data, 25, 13, &mut out)?;
@@ -752,7 +752,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.TSI_Lookback(optInFirstPeriod, optInSecondPeriod)?;
+        let _guardLb = self.tsi_lookback(optInFirstPeriod, optInSecondPeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -876,7 +876,7 @@ impl TsiStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::TSI`] reports over the same bars: the opener sets it
+    /// It is what [`Core::tsi`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

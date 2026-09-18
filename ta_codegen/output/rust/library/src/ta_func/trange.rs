@@ -65,16 +65,16 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::TRANGE`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::trange`]: the number of leading input values consumed before the
     /// first output value can be produced.
     #[doc(alias = "TA_TRANGE_Lookback")]
-    pub fn TRANGE_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn trange_lookback(&self) -> Result<usize, RetCode> {
         return Ok((1) as usize);
     }
-    /// C-shaped body behind [`Core::TRANGE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::trange`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn TRANGE_Impl(
+    pub(crate) fn trange_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -91,7 +91,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.TRANGE_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.trange_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -200,7 +200,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.TRANGE(0, high.len() - 1, &high, &low, &close, &mut out)?;
+    /// let out_range = core.trange(0, high.len() - 1, &high, &low, &close, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -208,7 +208,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ATR`] · [`Core::NATR`]
+    /// [`ATR`](Core::atr) · [`NATR`](Core::natr)
     ///
     /// # References
     ///
@@ -217,7 +217,7 @@ impl Core {
     #[doc(alias = "TA_TRANGE")]
     #[doc(alias = "TrueRange")]
     #[doc(alias = "TR")]
-    pub fn TRANGE(
+    pub fn trange(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -232,7 +232,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.TRANGE_Lookback()?;
+        let _guardLb = self.trange_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -249,7 +249,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.TRANGE_Impl(
+        let retCode = self.trange_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -268,7 +268,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TRANGE stream: one value per closed bar, bit-identical to [`Core::TRANGE`]
+/// Live TRANGE stream: one value per closed bar, bit-identical to [`Core::trange`]
 /// over the same series. Open with [`Core::trange_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -419,7 +419,7 @@ impl Core {
     }
 
     /// Open a live TRANGE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::TRANGE`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::trange`] at that bar.
     ///
     /// # Errors
     ///
@@ -453,7 +453,7 @@ impl Core {
     }
 
     /// [`Core::trange_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::TRANGE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::trange`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -474,7 +474,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.TRANGE(0, high.len() - 1, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.trange(0, high.len() - 1, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.trange_open_and_fill(&high, &low, &close, &mut out)?;
@@ -495,7 +495,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.TRANGE_Lookback()?;
+        let _guardLb = self.trange_lookback()?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -622,7 +622,7 @@ impl TrangeStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::TRANGE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::trange`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

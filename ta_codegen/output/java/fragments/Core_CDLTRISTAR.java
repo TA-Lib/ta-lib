@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLTRISTAR} consumes before it
+    * Number of leading input bars {@link Core#cdltristar} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,7 +22,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLTRISTAR_Lookback( )
+   public int cdltristarLookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].rangeType.ordinal();
       int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].avgPeriod;
@@ -30,15 +30,15 @@
       return BodyDoji_avgPeriod + 2 ;
 
    }
-   RetCode CDLTRISTAR_Impl( int startIdx,
-                            int endIdx,
-                            double inOpen[],
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode cdltristarImpl( int startIdx,
+                           int endIdx,
+                           double inOpen[],
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -57,7 +57,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLTRISTAR_Lookback();
+      lookbackTotal = cdltristarLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -120,15 +120,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLTRISTAR_Impl( int startIdx,
-                            int endIdx,
-                            float inOpen[],
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode cdltristarImpl( int startIdx,
+                           int endIdx,
+                           float inOpen[],
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -144,7 +144,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLTRISTAR_Lookback();
+      lookbackTotal = cdltristarLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -197,7 +197,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLTRISTAR_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdltristarLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -223,12 +223,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJI
-    * @see Core#CDLDOJISTAR
-    * @see Core#CDLMORNINGDOJISTAR
-    * @see Core#CDLEVENINGDOJISTAR
+    * @see Core#cdldoji
+    * @see Core#cdldojistar
+    * @see Core#cdlmorningdojistar
+    * @see Core#cdleveningdojistar
     */
-   public OutRange CDLTRISTAR( int startIdx,
+   public OutRange cdltristar( int startIdx,
                                int endIdx,
                                double inOpen[],
                                double inHigh[],
@@ -237,7 +237,7 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLTRISTAR", startIdx, endIdx);
-      int guardStart = clampedStart("CDLTRISTAR", startIdx, CDLTRISTAR_Lookback());
+      int guardStart = clampedStart("CDLTRISTAR", startIdx, cdltristarLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
@@ -247,7 +247,7 @@
       requireLength("CDLTRISTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTRISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdltristarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLTRISTAR", retCode);
       }
@@ -270,7 +270,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLTRISTAR_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdltristarLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -296,12 +296,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJI
-    * @see Core#CDLDOJISTAR
-    * @see Core#CDLMORNINGDOJISTAR
-    * @see Core#CDLEVENINGDOJISTAR
+    * @see Core#cdldoji
+    * @see Core#cdldojistar
+    * @see Core#cdlmorningdojistar
+    * @see Core#cdleveningdojistar
     */
-   public OutRange CDLTRISTAR( int startIdx,
+   public OutRange cdltristar( int startIdx,
                                int endIdx,
                                float inOpen[],
                                float inHigh[],
@@ -310,7 +310,7 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLTRISTAR", startIdx, endIdx);
-      int guardStart = clampedStart("CDLTRISTAR", startIdx, CDLTRISTAR_Lookback());
+      int guardStart = clampedStart("CDLTRISTAR", startIdx, cdltristarLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
@@ -320,7 +320,7 @@
       requireLength("CDLTRISTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTRISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdltristarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLTRISTAR", retCode);
       }
@@ -330,7 +330,7 @@
 
    /**
     * A live CDLTRISTAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLTRISTAR} over the same series.
+    * closed bar, bit-identical to {@link Core#cdltristar} over the same series.
     * Open with {@link Core#cdltristarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -368,7 +368,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLTRISTAR} reports over the same bars: the
+       * <p>It is what {@link Core#cdltristar} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -587,7 +587,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLTRISTAR_Lookback();
+      lookbackTotal = cdltristarLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -718,8 +718,8 @@
    /**
     * Open a live CDLTRISTAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLTRISTAR} at that bar.
-    * <p>The history must hold at least {@code CDLTRISTAR_Lookback(...) + 1} bars
+    * to {@link Core#cdltristar} at that bar.
+    * <p>The history must hold at least {@code cdltristarLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -740,7 +740,7 @@
    }
    /**
     * {@link Core#cdltristarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLTRISTAR} over the whole history in the same single pass
+    * to {@link Core#cdltristar} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -756,7 +756,7 @@
       requireArgument("CDLTRISTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLTRISTAR openAndFill", "inLow", inLow);
       requireArgument("CDLTRISTAR openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLTRISTAR openAndFill", inOpen.length, CDLTRISTAR_Lookback());
+      int guardOutLen = openFillCount("CDLTRISTAR openAndFill", inOpen.length, cdltristarLookback());
       requireHistoryLength("CDLTRISTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLTRISTAR openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLTRISTAR openAndFill", "inClose", inClose.length, inOpen.length);

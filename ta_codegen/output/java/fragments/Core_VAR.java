@@ -18,7 +18,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#VAR} consumes before it can
+    * Number of leading input bars {@link Core#var} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -31,7 +31,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int VAR_Lookback( int optInTimePeriod, double optInNbDev )
+   public int varLookback( int optInTimePeriod, double optInNbDev )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 5;
@@ -46,14 +46,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode VAR_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     double optInNbDev,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode varImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    double optInNbDev,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double tempReal = 0;
       double shift = 0;
@@ -236,14 +236,14 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode VAR_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     double optInNbDev,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode varImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    double optInNbDev,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double tempReal = 0;
       double shift = 0;
@@ -358,7 +358,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VAR_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#varLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -385,9 +385,9 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STDDEV
+    * @see Core#stddev
     */
-   public OutRange VAR( int startIdx,
+   public OutRange var( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -395,14 +395,14 @@
                         double outReal[] )
    {
       requireIndexRange("VAR", startIdx, endIdx);
-      int guardStart = clampedStart("VAR", startIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
+      int guardStart = clampedStart("VAR", startIdx, varLookback(optInTimePeriod, optInNbDev));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VAR", "inReal", inReal, guardInLen);
       requireLength("VAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = varImpl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VAR", retCode);
       }
@@ -425,7 +425,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VAR_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#varLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -452,9 +452,9 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STDDEV
+    * @see Core#stddev
     */
-   public OutRange VAR( int startIdx,
+   public OutRange var( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -462,14 +462,14 @@
                         double outReal[] )
    {
       requireIndexRange("VAR", startIdx, endIdx);
-      int guardStart = clampedStart("VAR", startIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
+      int guardStart = clampedStart("VAR", startIdx, varLookback(optInTimePeriod, optInNbDev));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VAR", "inReal", inReal, guardInLen);
       requireLength("VAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VAR_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = varImpl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VAR", retCode);
       }
@@ -479,7 +479,7 @@
 
    /**
     * A live VAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#VAR} over the same series.
+    * closed bar, bit-identical to {@link Core#var} over the same series.
     * Open with {@link Core#varOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -516,7 +516,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#VAR} reports over the same bars: the
+       * <p>It is what {@link Core#var} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1134,8 +1134,8 @@
    /**
     * Open a live VAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#VAR} at that bar.
-    * <p>The history must hold at least {@code VAR_Lookback(...) + 1} bars
+    * to {@link Core#var} at that bar.
+    * <p>The history must hold at least {@code varLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
@@ -1152,7 +1152,7 @@
    }
    /**
     * {@link Core#varOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#VAR} over the whole history in the same single pass
+    * to {@link Core#var} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1165,7 +1165,7 @@
    {
       requireArgument("VAR openAndFill", "inReal", inReal);
       requireHistory("VAR openAndFill", inReal.length);
-      int guardOutLen = openFillCount("VAR openAndFill", inReal.length, VAR_Lookback(optInTimePeriod, optInNbDev));
+      int guardOutLen = openFillCount("VAR openAndFill", inReal.length, varLookback(optInTimePeriod, optInNbDev));
       requireLength("VAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("VAR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

@@ -928,15 +928,15 @@ fn rust_cross_indicator_call_via_generate() {
 
     // Cross-indicator calls resolve to the callee's PUBLIC entry point (#267)
     assert!(
-        rust_out.contains("match self.SMA("),
-        "MA Rust should call the public self.SMA(): {rust_out}"
+        rust_out.contains("match self.sma("),
+        "MA Rust should call the public self.sma(): {rust_out}"
     );
     assert!(
-        rust_out.contains("match self.EMA("),
-        "MA Rust should call the public self.EMA(): {rust_out}"
+        rust_out.contains("match self.ema("),
+        "MA Rust should call the public self.ema(): {rust_out}"
     );
     assert!(
-        !rust_out.contains("self.SMA_Impl(") && !rust_out.contains("self.EMA_Impl("),
+        !rust_out.contains("self.sma_impl(") && !rust_out.contains("self.ema_impl("),
         "MA Rust must not call a callee's numerics tier: {rust_out}"
     );
     // `self.` makes this a call, not a definition, so the negative is real.
@@ -969,8 +969,8 @@ fn rust_cross_indicator_lookback_with_pascal_case() {
         };
         let rendered = render_rust_stmt(&stmt);
         assert!(
-            rendered.contains("self.SMA_Lookback("),
-            "`{fname}` must render as self.SMA_Lookback(), got: {rendered}"
+            rendered.contains("self.sma_lookback("),
+            "`{fname}` must render as self.sma_lookback(), got: {rendered}"
         );
     }
 }
@@ -988,16 +988,16 @@ fn rust_private_cross_indicator_call() {
     let (func, enums) = load_indicator("ma");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
-        rust_out.contains("match self.EMA("),
-        "MA Rust dispatch should call the public self.EMA(): {rust_out}"
+        rust_out.contains("match self.ema("),
+        "MA Rust dispatch should call the public self.ema(): {rust_out}"
     );
 
     let synth_registry = make_synth_registry();
     let (func, enums) = load_synth("synth4");
     let rust_out = backends::rust_lang::generate(&func, &enums, &synth_registry, &helpers);
     assert!(
-        rust_out.contains("self.SYNTH4_Private("),
-        "SYNTH4 Rust guarded body should delegate to self.SYNTH4_Private(): {rust_out}"
+        rust_out.contains("self.synth4_private("),
+        "SYNTH4 Rust guarded body should delegate to self.synth4_private(): {rust_out}"
     );
 }
 
@@ -1027,7 +1027,7 @@ fn rust_public_entry_documents_exactly_its_parameters() {
         let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
         // The public wrapper is the only fn returning Result<OutRange, RetCode>.
-        let sig_open = format!("    pub fn {}(\n", func.name);
+        let sig_open = format!("    pub fn {}(\n", backends::common::snake_words(&func.name));
         let at = out
             .find(&sig_open)
             .unwrap_or_else(|| panic!("{name}: no public entry `{sig_open}`"));
@@ -1168,8 +1168,8 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
     assert!(
-        rust_out.contains("self.MA(") && rust_out.contains("&tempBuffer"),
-        "STOCH Rust should pass &tempBuffer into self.MA(): {rust_out}"
+        rust_out.contains("self.ma(") && rust_out.contains("&tempBuffer"),
+        "STOCH Rust should pass &tempBuffer into self.ma(): {rust_out}"
     );
 }
 
@@ -1186,9 +1186,9 @@ fn rust_is_ta_function_renders_self_call() {
     }));
     if let Ok(rust_out) = result {
         // Should contain self.rsi or self.stochf calls
-        let has_cross_call = rust_out.contains("self.RSI")
-            || rust_out.contains("self.STOCHF")
-            || rust_out.contains("self.SMA");
+        let has_cross_call = rust_out.contains("self.rsi")
+            || rust_out.contains("self.stochf")
+            || rust_out.contains("self.sma");
         assert!(
             has_cross_call,
             "STOCHRSI Rust should contain cross-indicator self.xxx calls: {rust_out}"
@@ -1211,7 +1211,7 @@ fn rust_lookback_code_rendering_cdlkicking() {
 
     // Lookback function should exist
     assert!(
-        rust_out.contains("_Lookback("),
+        rust_out.contains("_lookback("),
         "CDL indicator should have lookback function: {rust_out}"
     );
     // Candle settings should be unpacked
@@ -1231,7 +1231,7 @@ fn rust_lookback_code_with_vars() {
 
     // CDL indicators have local vars in their lookback body (e.g., lookbackTotal)
     // They should be declared as `let mut` or `let`
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn CDLKICKING_Impl(");
+    let lookback_section = extract_section(&rust_out, "_lookback(", "pub(crate) fn cdlkicking_impl(");
     assert!(
         lookback_section.contains("let ") || lookback_section.contains("let mut "),
         "Lookback code should declare local variables: {lookback_section}"
@@ -1246,7 +1246,7 @@ fn rust_lookback_literal_renders_return() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn MULT_Impl(");
+    let lookback_section = extract_section(&rust_out, "_lookback(", "pub(crate) fn mult_impl(");
     assert!(
         lookback_section.contains("return"),
         "Lookback should have return statement: {lookback_section}"
@@ -1988,7 +1988,7 @@ fn rust_lookback_none() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Impl(");
+    let lookback_section = extract_section(&rust_out, "_lookback(", "pub(crate) fn test_impl(");
     assert!(
         lookback_section.contains("return Ok(0)"),
         "None lookback should return Ok(0): {lookback_section}"
@@ -2192,7 +2192,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Impl(");
+    let lookback_section = extract_section(&rust_out, "_lookback(", "pub(crate) fn test_impl(");
     // sum has no assignments in the body, so count_assignments returns 0 => `let` not `let mut`
     assert!(
         lookback_section.contains("let sum: f64 = 0.0_f64"),
@@ -2288,7 +2288,7 @@ fn rust_lookback_body_never_fuses_multiply_add() {
     };
     let enums = HashMap::new();
     let out = backends::rust_lang::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
-    let section = extract_section(&out, "_Lookback(", "pub fn TEST(");
+    let section = extract_section(&out, "_lookback(", "pub fn test(");
     let section = &section[..section.find("\n    }").expect("lookback body must close")];
     assert!(
         section.contains("acc = acc + scale * bias"),
@@ -2377,7 +2377,7 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
         let registry = make_registry();
         let helpers = HelperRegistry::empty();
         let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-        let section = extract_section(&out, "_Lookback(", "pub fn TEST(");
+        let section = extract_section(&out, "_lookback(", "pub fn test(");
         // Stop at the lookback's own closing brace — the tail of that slice is
         // the guarded function's rustdoc, whose doctest mentions `as f64`.
         let end = section.find("\n    }").expect("lookback body must close");

@@ -71,7 +71,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::APO`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::apo`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -88,7 +88,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_APO_Lookback")]
     #[inline]
-    pub fn APO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
+    pub fn apo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -103,12 +103,12 @@ impl Core {
             optInMAType = MAType::EMA;
         }
         // The slow MA is the key factor determining the lookback period.
-        return Ok(self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
+        return Ok(self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
     }
-    /// C-shaped body behind [`Core::APO`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::apo`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn APO_Impl(
+    pub(crate) fn apo_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -139,7 +139,7 @@ impl Core {
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::EMA;
         }
-        let _assertLb = self.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
+        let _assertLb = self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -162,7 +162,7 @@ impl Core {
         // being false: with a caller-supplied inReal that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
+        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
@@ -178,12 +178,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        let _xr0 = match self.MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         fastBeg = _xr0.beg_idx;
         fastNb = _xr0.count;
         retCode = RetCode::Success;
         // Calculate the slow MA into the output.
-        let _xr1 = match self.MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr1 = match self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
@@ -248,7 +248,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.APO(0, data.len() - 1, &data, 12, 26, MAType::EMA, &mut out)?;
+    /// let out_range = core.apo(0, data.len() - 1, &data, 12, 26, MAType::EMA, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -256,7 +256,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::PPO`] · [`Core::MACD`] · [`Core::MA`] · [`Core::EMA`] · [`Core::SMA`]
+    /// [`PPO`](Core::ppo) · [`MACD`](Core::macd) · [`MA`](Core::ma) · [`EMA`](Core::ema) ·
+    /// [`SMA`](Core::sma)
     ///
     /// # References
     ///
@@ -266,7 +267,7 @@ impl Core {
     ///   MACD line. Appel's original definition uses **exponential** moving averages.
     #[doc(alias = "TA_APO")]
     #[doc(alias = "AbsolutePriceOscillator")]
-    pub fn APO(
+    pub fn apo(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -282,7 +283,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
+        let _guardLb = self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -293,7 +294,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.APO_Impl(
+        let retCode = self.apo_impl(
             startIdx,
             endIdx,
             inReal,
@@ -313,7 +314,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live APO stream: one value per closed bar, bit-identical to [`Core::APO`]
+/// Live APO stream: one value per closed bar, bit-identical to [`Core::apo`]
 /// over the same series. Open with [`Core::apo_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -413,7 +414,7 @@ impl Core {
         // being false: with a caller-supplied inReal that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)? > endIdx {
+        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)? > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
@@ -482,7 +483,7 @@ impl Core {
     }
 
     /// Open a live APO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::APO`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::apo`] at that bar.
     ///
     /// # Errors
     ///
@@ -512,7 +513,7 @@ impl Core {
     }
 
     /// [`Core::apo_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::APO`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::apo`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -529,7 +530,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.APO(0, data.len() - 1, &data, 12, 26, MAType::EMA, &mut batch_out)?;
+    /// let batch = core.apo(0, data.len() - 1, &data, 12, 26, MAType::EMA, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.apo_open_and_fill(&data, 12, 26, MAType::EMA, &mut out)?;
@@ -550,7 +551,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
+        let _guardLb = self.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -663,7 +664,7 @@ impl ApoStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::APO`] reports over the same bars: the opener sets it
+    /// It is what [`Core::apo`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

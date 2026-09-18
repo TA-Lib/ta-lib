@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CMOU} consumes before it can
+    * Number of leading input bars {@link Core#cmou} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CMOU_Lookback( int optInTimePeriod )
+   public int cmouLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -43,13 +43,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode CMOU_Impl( int startIdx,
-                      int endIdx,
-                      double inReal[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode cmouImpl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -88,7 +88,7 @@
        */
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = CMOU_Lookback(optInTimePeriod);
+      lookbackTotal = cmouLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -201,13 +201,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CMOU_Impl( int startIdx,
-                      int endIdx,
-                      float inReal[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode cmouImpl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -235,7 +235,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = CMOU_Lookback(optInTimePeriod);
+      lookbackTotal = cmouLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -328,8 +328,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CMOU_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#cmouLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -352,24 +352,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CMO
-    * @see Core#RSI
+    * @see Core#cmo
+    * @see Core#rsi
     */
-   public OutRange CMOU( int startIdx,
+   public OutRange cmou( int startIdx,
                          int endIdx,
                          double inReal[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("CMOU", startIdx, endIdx);
-      int guardStart = clampedStart("CMOU", startIdx, CMOU_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("CMOU", startIdx, cmouLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMOU", "inReal", inReal, guardInLen);
       requireLength("CMOU", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = cmouImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CMOU", retCode);
       }
@@ -393,8 +393,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CMOU_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#cmouLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -417,24 +417,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CMO
-    * @see Core#RSI
+    * @see Core#cmo
+    * @see Core#rsi
     */
-   public OutRange CMOU( int startIdx,
+   public OutRange cmou( int startIdx,
                          int endIdx,
                          float inReal[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("CMOU", startIdx, endIdx);
-      int guardStart = clampedStart("CMOU", startIdx, CMOU_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("CMOU", startIdx, cmouLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CMOU", "inReal", inReal, guardInLen);
       requireLength("CMOU", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = cmouImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CMOU", retCode);
       }
@@ -444,7 +444,7 @@
 
    /**
     * A live CMOU stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CMOU} over the same series.
+    * closed bar, bit-identical to {@link Core#cmou} over the same series.
     * Open with {@link Core#cmouOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -476,7 +476,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CMOU} reports over the same bars: the
+       * <p>It is what {@link Core#cmou} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -753,7 +753,7 @@
        */
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = CMOU_Lookback(optInTimePeriod);
+      lookbackTotal = cmouLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -926,8 +926,8 @@
    /**
     * Open a live CMOU stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CMOU} at that bar.
-    * <p>The history must hold at least {@code CMOU_Lookback(...) + 1} bars
+    * to {@link Core#cmou} at that bar.
+    * <p>The history must hold at least {@code cmouLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -944,7 +944,7 @@
    }
    /**
     * {@link Core#cmouOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CMOU} over the whole history in the same single pass
+    * to {@link Core#cmou} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -957,7 +957,7 @@
    {
       requireArgument("CMOU openAndFill", "inReal", inReal);
       requireHistory("CMOU openAndFill", inReal.length);
-      int guardOutLen = openFillCount("CMOU openAndFill", inReal.length, CMOU_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("CMOU openAndFill", inReal.length, cmouLookback(optInTimePeriod));
       requireLength("CMOU openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("CMOU openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

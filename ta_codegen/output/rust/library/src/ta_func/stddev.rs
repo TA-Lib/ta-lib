@@ -68,7 +68,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::STDDEV`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::stddev`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -83,7 +83,7 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_STDDEV_Lookback")]
     #[inline]
-    pub fn STDDEV_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
+    pub fn stddev_lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -95,12 +95,12 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         // Lookback is driven by the variance.
-        return Ok(self.VAR_Lookback(optInTimePeriod, optInNbDev)?);
+        return Ok(self.var_lookback(optInTimePeriod, optInNbDev)?);
     }
-    /// C-shaped body behind [`Core::STDDEV`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::stddev`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn STDDEV_Impl(
+    pub(crate) fn stddev_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -127,7 +127,7 @@ impl Core {
         } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
+        let _assertLb = self.stddev_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -142,13 +142,13 @@ impl Core {
         // without reading. Observably identical, but it makes "a range shorter than
         // the lookback reads nothing" true of stddev itself rather than only of var.
         // Pinned by the zero-length no-I/O probe over every guarded core.
-        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX) > endIdx {
+        if self.stddev_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
         }
         // Calculate the variance.
-        let _xr0 = match self.VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
@@ -228,7 +228,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.STDDEV(0, data.len() - 1, &data, 5, 1.0, &mut out)?;
+    /// let out_range = core.stddev(0, data.len() - 1, &data, 5, 1.0, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -236,12 +236,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::VAR`] · [`Core::BBANDS`] · [`Core::SMA`]
+    /// [`VAR`](Core::var) · [`BBANDS`](Core::bbands) · [`SMA`](Core::sma)
     #[doc(alias = "TA_STDDEV")]
     #[doc(alias = "StandardDeviation")]
     #[doc(alias = "SD")]
     #[doc(alias = "sigma")]
-    pub fn STDDEV(
+    pub fn stddev(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -256,7 +256,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev)?;
+        let _guardLb = self.stddev_lookback(optInTimePeriod, optInNbDev)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -267,7 +267,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.STDDEV_Impl(
+        let retCode = self.stddev_impl(
             startIdx,
             endIdx,
             inReal,
@@ -286,7 +286,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live STDDEV stream: one value per closed bar, bit-identical to [`Core::STDDEV`]
+/// Live STDDEV stream: one value per closed bar, bit-identical to [`Core::stddev`]
 /// over the same series. Open with [`Core::stddev_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -375,7 +375,7 @@ impl Core {
         // without reading. Observably identical, but it makes "a range shorter than
         // the lookback reads nothing" true of stddev itself rather than only of var.
         // Pinned by the zero-length no-I/O probe over every guarded core.
-        if self.STDDEV_Lookback(optInTimePeriod, optInNbDev)? > endIdx {
+        if self.stddev_lookback(optInTimePeriod, optInNbDev)? > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
@@ -445,7 +445,7 @@ impl Core {
     }
 
     /// Open a live STDDEV stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::STDDEV`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::stddev`] at that bar.
     ///
     /// # Errors
     ///
@@ -475,7 +475,7 @@ impl Core {
     }
 
     /// [`Core::stddev_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::STDDEV`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::stddev`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -492,7 +492,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.STDDEV(0, data.len() - 1, &data, 5, 1.0, &mut batch_out)?;
+    /// let batch = core.stddev(0, data.len() - 1, &data, 5, 1.0, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.stddev_open_and_fill(&data, 5, 1.0, &mut out)?;
@@ -513,7 +513,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev)?;
+        let _guardLb = self.stddev_lookback(optInTimePeriod, optInNbDev)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -628,7 +628,7 @@ impl StddevStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::STDDEV`] reports over the same bars: the opener sets it
+    /// It is what [`Core::stddev`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

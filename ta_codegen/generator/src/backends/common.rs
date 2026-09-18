@@ -57,10 +57,18 @@ pub(crate) fn real_range_reject(name: &str, lo: &str, hi: &str, paren: bool) -> 
 #[must_use]
 #[allow(clippy::float_cmp)] // these are exact sentinel values, not measurements
 pub fn real_bound_literal(v: f64, prefix: &str) -> String {
+    real_bound_named(v, prefix, "REAL_MIN", "REAL_MAX")
+}
+
+/// `real_bound_literal` for a backend that spells the two sentinels its own way
+/// (C# has `RealMin`/`RealMax`).
+#[must_use]
+#[allow(clippy::float_cmp)] // these are exact sentinel values, not measurements
+pub fn real_bound_named(v: f64, prefix: &str, min: &str, max: &str) -> String {
     if v == TA_REAL_MIN {
-        format!("{prefix}REAL_MIN")
+        format!("{prefix}{min}")
     } else if v == TA_REAL_MAX {
-        format!("{prefix}REAL_MAX")
+        format!("{prefix}{max}")
     } else {
         format!("{v:e}")
     }

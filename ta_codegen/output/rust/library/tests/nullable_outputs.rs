@@ -46,14 +46,14 @@ fn declining_an_output_changes_nothing_else() {
     let mut mama_ref = vec![0.0; 252];
     let mut fama_ref = vec![0.0; 252];
     let r_ref = core
-        .MAMA(0, 251, &data, 0.5, 0.05, &mut mama_ref, Some(&mut fama_ref))
+        .mama(0, 251, &data, 0.5, 0.05, &mut mama_ref, Some(&mut fama_ref))
         .expect("the reference call");
     assert!(r_ref.count > 0, "the reference call must produce values");
 
     const CANARY: f64 = -1.2345678901234e300;
     let mut mama = vec![CANARY; 252];
     let r = core
-        .MAMA(0, 251, &data, 0.5, 0.05, &mut mama, None)
+        .mama(0, 251, &data, 0.5, 0.05, &mut mama, None)
         .expect("declining outFAMA is legal — rule B6a");
 
     assert_eq!((r.beg_idx, r.count), (r_ref.beg_idx, r_ref.count));
@@ -79,9 +79,9 @@ fn a_declined_output_needs_no_capacity() {
     let core = Core::new();
 
     // Nothing at all for FAMA, and MAMA sized to the produced count exactly.
-    let lookback = core.MAMA_Lookback(0.5, 0.05).expect("a valid lookback");
+    let lookback = core.mama_lookback(0.5, 0.05).expect("a valid lookback");
     let mut mama = vec![0.0; 252 - lookback];
-    core.MAMA(0, 251, &data, 0.5, 0.05, &mut mama, None)
+    core.mama(0, 251, &data, 0.5, 0.05, &mut mama, None)
         .expect("a declined output imposes no size");
 
     // Control: the supplied output is still bounded. One short must be rejected
@@ -89,7 +89,7 @@ fn a_declined_output_needs_no_capacity() {
     // same bound and is unreachable through here.
     let mut short = vec![0.0; 252 - lookback - 1];
     assert_eq!(
-        core.MAMA(0, 251, &data, 0.5, 0.05, &mut short, None),
+        core.mama(0, 251, &data, 0.5, 0.05, &mut short, None),
         Err(RetCode::BadParam),
         "an undersized supplied output must still be rejected"
     );
@@ -97,7 +97,7 @@ fn a_declined_output_needs_no_capacity() {
         !panics(|| {
             let core = Core::new();
             let mut short = vec![0.0; 252 - lookback - 1];
-            let _ = core.MAMA(0, 251, &data, 0.5, 0.05, &mut short, None);
+            let _ = core.mama(0, 251, &data, 0.5, 0.05, &mut short, None);
         }),
         "and rejected rather than panicked: the public tier answers before the assert"
     );
@@ -118,7 +118,7 @@ fn distinct_empty_outputs_are_not_aliases() {
     let core = Core::new();
     let period = 253; // longer than the range, so nothing is produced
     assert!(
-        core.ACCBANDS_Lookback(period).expect("a valid lookback") > 251,
+        core.accbands_lookback(period).expect("a valid lookback") > 251,
         "the probe needs a lookback past the range, or it proves nothing"
     );
 
@@ -131,7 +131,7 @@ fn distinct_empty_outputs_are_not_aliases() {
         "the probe is only interesting while empty Vecs share one dangling pointer"
     );
     let r = core
-        .ACCBANDS(0, 251, &data, &data, &data, period, &mut a, &mut b, &mut c)
+        .accbands(0, 251, &data, &data, &data, period, &mut a, &mut b, &mut c)
         .expect("a sub-lookback range needs no output space — rules N1 and B5");
     assert_eq!(r, OutRange { beg_idx: 0, count: 0 });
 
@@ -140,7 +140,7 @@ fn distinct_empty_outputs_are_not_aliases() {
     let (x, rest) = buf.split_at_mut(1);
     let (y, z) = rest.split_at_mut(1);
     let r = core
-        .ACCBANDS(0, 251, &data, &data, &data, period, &mut x[..0], &mut y[..0], &mut z[..0])
+        .accbands(0, 251, &data, &data, &data, period, &mut x[..0], &mut y[..0], &mut z[..0])
         .expect("distinct empty subslices are distinct buffers too");
     assert_eq!(r, OutRange { beg_idx: 0, count: 0 });
 }
@@ -156,7 +156,7 @@ fn empty_outputs_on_a_producing_range_still_fault() {
     let mut b: Vec<f64> = Vec::new();
     let mut c: Vec<f64> = Vec::new();
     assert_eq!(
-        core.ACCBANDS(0, 251, &data, &data, &data, 20, &mut a, &mut b, &mut c),
+        core.accbands(0, 251, &data, &data, &data, 20, &mut a, &mut b, &mut c),
         Err(RetCode::BadParam),
         "B5 must still bound an output that has to hold values"
     );
@@ -178,7 +178,7 @@ fn a_short_input_is_refused_on_every_range() {
     // A range that produces values.
     let mut out = vec![0.0; 252];
     assert_eq!(
-        core.SMA(0, 251, &short, 30, &mut out),
+        core.sma(0, 251, &short, 30, &mut out),
         Err(RetCode::BadParam),
         "an input that does not reach endIdx is a caller bug"
     );
@@ -188,11 +188,11 @@ fn a_short_input_is_refused_on_every_range() {
     // anyway.
     let mut none: Vec<f64> = Vec::new();
     assert!(
-        core.SMA_Lookback(30).expect("a valid lookback") > 10,
+        core.sma_lookback(30).expect("a valid lookback") > 10,
         "the probe needs a sub-lookback range, or it repeats the case above"
     );
     assert_eq!(
-        core.SMA(0, 10, &short[..5], 30, &mut none),
+        core.sma(0, 10, &short[..5], 30, &mut none),
         Err(RetCode::BadParam),
         "the input bound takes no sub-lookback escape"
     );
@@ -200,7 +200,7 @@ fn a_short_input_is_refused_on_every_range() {
     // Control: the same call with the input one element longer succeeds, so the
     // rejections above are the length and not the fixture.
     assert_eq!(
-        core.SMA(0, 10, &short[..11], 30, &mut none),
+        core.sma(0, 10, &short[..11], 30, &mut none),
         Ok(OutRange { beg_idx: 0, count: 0 })
     );
 }
@@ -214,12 +214,12 @@ fn ma_routes_only_the_mama_line() {
 
     let mut direct = vec![0.0; 252];
     let r_direct = core
-        .MAMA(0, 251, &data, 0.5, 0.05, &mut direct, None)
+        .mama(0, 251, &data, 0.5, 0.05, &mut direct, None)
         .expect("MAMA");
 
     let mut viaMa = vec![0.0; 252];
     let r_ma = core
-        .MA(0, 251, &data, 30, ta_lib::MAType::MAMA, &mut viaMa)
+        .ma(0, 251, &data, 30, ta_lib::MAType::MAMA, &mut viaMa)
         .expect("MA(MAMA)");
 
     assert_eq!((r_ma.beg_idx, r_ma.count), (r_direct.beg_idx, r_direct.count));

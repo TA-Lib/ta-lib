@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ZLEMA`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::zlema`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ZLEMA_Lookback")]
     #[inline]
-    pub fn ZLEMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn zlema_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -86,12 +86,12 @@ impl Core {
         }
         // ZLEMA owns no TA_FUNC_UNST_ id. It borrows EMA's through this call, which
         // is why zlema.yaml must not declare `unstable_period`.
-        return Ok(((((optInTimePeriod - 1) / 2) as usize) + self.EMA_Lookback(optInTimePeriod)?) as usize);
+        return Ok(((((optInTimePeriod - 1) / 2) as usize) + self.ema_lookback(optInTimePeriod)?) as usize);
     }
-    /// C-shaped body behind [`Core::ZLEMA`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::zlema`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn ZLEMA_Impl(
+    pub(crate) fn zlema_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -102,13 +102,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ZLEMA_Impl_fma, ZLEMA_Impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, zlema_impl_fma, zlema_impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ZLEMA_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.zlema_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ZLEMA_Impl_fma(
+    fn zlema_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -118,10 +118,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.ZLEMA_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.zlema_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn ZLEMA_Impl_impl(
+    fn zlema_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -142,7 +142,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ZLEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.zlema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -165,7 +165,7 @@ impl Core {
         // the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
         // twice, which is 5e-12 relative where 2c - l cancels.
         lag = ((optInTimePeriod - 1) / 2) as usize;
-        lookbackTotal = self.ZLEMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.zlema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -279,7 +279,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.ZLEMA(0, data.len() - 1, &data, 30, &mut out)?;
+    /// let out_range = core.zlema(0, data.len() - 1, &data, 30, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -287,7 +287,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::EMA`] · [`Core::DEMA`] · [`Core::TEMA`] · [`Core::HMA`] · [`Core::MA`]
+    /// [`EMA`](Core::ema) · [`DEMA`](Core::dema) · [`TEMA`](Core::tema) · [`HMA`](Core::hma) ·
+    /// [`MA`](Core::ma)
     ///
     /// # References
     ///
@@ -301,7 +302,7 @@ impl Core {
     #[doc(alias = "ZeroLagExponentialMovingAverage")]
     #[doc(alias = "Zero-LagEMA")]
     #[doc(alias = "ZLMA")]
-    pub fn ZLEMA(
+    pub fn zlema(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -315,7 +316,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ZLEMA_Lookback(optInTimePeriod)?;
+        let _guardLb = self.zlema_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -326,7 +327,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ZLEMA_Impl(
+        let retCode = self.zlema_impl(
             startIdx,
             endIdx,
             inReal,
@@ -344,7 +345,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ZLEMA stream: one value per closed bar, bit-identical to [`Core::ZLEMA`]
+/// Live ZLEMA stream: one value per closed bar, bit-identical to [`Core::zlema`]
 /// over the same series. Open with [`Core::zlema_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -422,7 +423,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            let fillLb: usize = self.ZLEMA_Lookback(optInTimePeriod)?;
+            let fillLb: usize = self.zlema_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
@@ -467,7 +468,7 @@ impl Core {
         // the de-lag spelling is worth more than rounding noise: c + (c - l) rounds
         // twice, which is 5e-12 relative where 2c - l cancels.
         lag = ((optInTimePeriod - 1) / 2) as usize;
-        lookbackTotal = self.ZLEMA_Lookback(optInTimePeriod)?;
+        lookbackTotal = self.zlema_lookback(optInTimePeriod)?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -541,7 +542,7 @@ impl Core {
     }
 
     /// Open a live ZLEMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ZLEMA`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::zlema`] at that bar.
     ///
     /// # Errors
     ///
@@ -571,7 +572,7 @@ impl Core {
     }
 
     /// [`Core::zlema_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ZLEMA`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::zlema`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -588,7 +589,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.ZLEMA(0, data.len() - 1, &data, 30, &mut batch_out)?;
+    /// let batch = core.zlema(0, data.len() - 1, &data, 30, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.zlema_open_and_fill(&data, 30, &mut out)?;
@@ -609,7 +610,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ZLEMA_Lookback(optInTimePeriod)?;
+        let _guardLb = self.zlema_lookback(optInTimePeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -725,7 +726,7 @@ impl ZlemaStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::ZLEMA`] reports over the same bars: the opener sets it
+    /// It is what [`Core::zlema`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

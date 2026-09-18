@@ -22,7 +22,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MA} consumes before it can
+    * Number of leading input bars {@link Core#ma} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -36,7 +36,7 @@
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MA_Lookback( int optInTimePeriod, MAType optInMAType )
+   public int maLookback( int optInTimePeriod, MAType optInMAType )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -53,40 +53,40 @@
       switch( optInMAType )
       {
       case SMA:
-         retValue = SMA_Lookback(optInTimePeriod);
+         retValue = smaLookback(optInTimePeriod);
          break;
       case EMA:
-         retValue = EMA_Lookback(optInTimePeriod);
+         retValue = emaLookback(optInTimePeriod);
          break;
       case WMA:
-         retValue = WMA_Lookback(optInTimePeriod);
+         retValue = wmaLookback(optInTimePeriod);
          break;
       case DEMA:
-         retValue = DEMA_Lookback(optInTimePeriod);
+         retValue = demaLookback(optInTimePeriod);
          break;
       case TEMA:
-         retValue = TEMA_Lookback(optInTimePeriod);
+         retValue = temaLookback(optInTimePeriod);
          break;
       case TRIMA:
-         retValue = TRIMA_Lookback(optInTimePeriod);
+         retValue = trimaLookback(optInTimePeriod);
          break;
       case KAMA:
-         retValue = KAMA_Lookback(optInTimePeriod);
+         retValue = kamaLookback(optInTimePeriod);
          break;
       case MAMA:
-         retValue = MAMA_Lookback(0.5, 0.05);
+         retValue = mamaLookback(0.5, 0.05);
          break;
       case T3:
-         retValue = T3_Lookback(optInTimePeriod, 0.7);
+         retValue = t3Lookback(optInTimePeriod, 0.7);
          break;
       case HMA:
-         retValue = HMA_Lookback(optInTimePeriod);
+         retValue = hmaLookback(optInTimePeriod);
          break;
       case ZLEMA:
-         retValue = ZLEMA_Lookback(optInTimePeriod);
+         retValue = zlemaLookback(optInTimePeriod);
          break;
       case RMA:
-         retValue = RMA_Lookback(optInTimePeriod);
+         retValue = rmaLookback(optInTimePeriod);
          break;
       default:
          retValue = 0;
@@ -95,14 +95,14 @@
       return retValue ;
 
    }
-   RetCode MA_Impl( int startIdx,
-                    int endIdx,
-                    double inReal[],
-                    int optInTimePeriod,
-                    MAType optInMAType,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode maImpl( int startIdx,
+                   int endIdx,
+                   double inReal[],
+                   int optInTimePeriod,
+                   MAType optInMAType,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       RetCode retCode;
       int nbElement = 0;
@@ -147,7 +147,7 @@
        * the switch and still answers TA_BAD_PARAM. The identity path below is out
        * of the guard's reach for the same reason - its lookback is 0.
        */
-      if( MA_Lookback(optInTimePeriod, optInMAType) > endIdx ) {
+      if( maLookback(optInTimePeriod, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
@@ -168,43 +168,43 @@
       switch( optInMAType )
       {
       case SMA:
-         OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr0 = sma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr0.begIdx();
          outNBElement.value = _xr0.count();
          retCode = RetCode.SUCCESS;
          break;
       case EMA:
-         OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr1 = ema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr1.begIdx();
          outNBElement.value = _xr1.count();
          retCode = RetCode.SUCCESS;
          break;
       case WMA:
-         OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr2 = wma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr2.begIdx();
          outNBElement.value = _xr2.count();
          retCode = RetCode.SUCCESS;
          break;
       case DEMA:
-         OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr3 = dema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr3.begIdx();
          outNBElement.value = _xr3.count();
          retCode = RetCode.SUCCESS;
          break;
       case TEMA:
-         OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr4 = tema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr4.begIdx();
          outNBElement.value = _xr4.count();
          retCode = RetCode.SUCCESS;
          break;
       case TRIMA:
-         OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr5 = trima(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr5.begIdx();
          outNBElement.value = _xr5.count();
          retCode = RetCode.SUCCESS;
          break;
       case KAMA:
-         OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr6 = kama(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr6.begIdx();
          outNBElement.value = _xr6.count();
          retCode = RetCode.SUCCESS;
@@ -213,31 +213,31 @@
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
+         OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
          retCode = RetCode.SUCCESS;
          break;
       case T3:
-         OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
+         OutRange _xr8 = t3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
          outBegIdx.value = _xr8.begIdx();
          outNBElement.value = _xr8.count();
          retCode = RetCode.SUCCESS;
          break;
       case HMA:
-         OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr9 = hma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr9.begIdx();
          outNBElement.value = _xr9.count();
          retCode = RetCode.SUCCESS;
          break;
       case ZLEMA:
-         OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr10 = zlema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr10.begIdx();
          outNBElement.value = _xr10.count();
          retCode = RetCode.SUCCESS;
          break;
       case RMA:
-         OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr11 = rma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr11.begIdx();
          outNBElement.value = _xr11.count();
          retCode = RetCode.SUCCESS;
@@ -248,14 +248,14 @@
       }
       return retCode ;
    }
-   RetCode MA_Impl( int startIdx,
-                    int endIdx,
-                    float inReal[],
-                    int optInTimePeriod,
-                    MAType optInMAType,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode maImpl( int startIdx,
+                   int endIdx,
+                   float inReal[],
+                   int optInTimePeriod,
+                   MAType optInMAType,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       RetCode retCode;
       int nbElement = 0;
@@ -275,7 +275,7 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
-      if( MA_Lookback(optInTimePeriod, optInMAType) > endIdx ) {
+      if( maLookback(optInTimePeriod, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
@@ -292,73 +292,73 @@
       switch( optInMAType )
       {
       case SMA:
-         OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr0 = sma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr0.begIdx();
          outNBElement.value = _xr0.count();
          retCode = RetCode.SUCCESS;
          break;
       case EMA:
-         OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr1 = ema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr1.begIdx();
          outNBElement.value = _xr1.count();
          retCode = RetCode.SUCCESS;
          break;
       case WMA:
-         OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr2 = wma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr2.begIdx();
          outNBElement.value = _xr2.count();
          retCode = RetCode.SUCCESS;
          break;
       case DEMA:
-         OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr3 = dema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr3.begIdx();
          outNBElement.value = _xr3.count();
          retCode = RetCode.SUCCESS;
          break;
       case TEMA:
-         OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr4 = tema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr4.begIdx();
          outNBElement.value = _xr4.count();
          retCode = RetCode.SUCCESS;
          break;
       case TRIMA:
-         OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr5 = trima(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr5.begIdx();
          outNBElement.value = _xr5.count();
          retCode = RetCode.SUCCESS;
          break;
       case KAMA:
-         OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr6 = kama(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr6.begIdx();
          outNBElement.value = _xr6.count();
          retCode = RetCode.SUCCESS;
          break;
       case MAMA:
-         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
+         OutRange _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null);
          outBegIdx.value = _xr7.begIdx();
          outNBElement.value = _xr7.count();
          retCode = RetCode.SUCCESS;
          break;
       case T3:
-         OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
+         OutRange _xr8 = t3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
          outBegIdx.value = _xr8.begIdx();
          outNBElement.value = _xr8.count();
          retCode = RetCode.SUCCESS;
          break;
       case HMA:
-         OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr9 = hma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr9.begIdx();
          outNBElement.value = _xr9.count();
          retCode = RetCode.SUCCESS;
          break;
       case ZLEMA:
-         OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr10 = zlema(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr10.begIdx();
          outNBElement.value = _xr10.count();
          retCode = RetCode.SUCCESS;
          break;
       case RMA:
-         OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         OutRange _xr11 = rma(startIdx, endIdx, inReal, optInTimePeriod, outReal);
          outBegIdx.value = _xr11.begIdx();
          outNBElement.value = _xr11.count();
          retCode = RetCode.SUCCESS;
@@ -384,7 +384,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#maLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -412,20 +412,20 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMA
-    * @see Core#EMA
-    * @see Core#WMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#TRIMA
-    * @see Core#KAMA
-    * @see Core#MAMA
-    * @see Core#T3
-    * @see Core#HMA
-    * @see Core#ZLEMA
-    * @see Core#RMA
+    * @see Core#sma
+    * @see Core#ema
+    * @see Core#wma
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#trima
+    * @see Core#kama
+    * @see Core#mama
+    * @see Core#t3
+    * @see Core#hma
+    * @see Core#zlema
+    * @see Core#rma
     */
-   public OutRange MA( int startIdx,
+   public OutRange ma( int startIdx,
                        int endIdx,
                        double inReal[],
                        int optInTimePeriod,
@@ -434,14 +434,14 @@
    {
       requireIndexRange("MA", startIdx, endIdx);
       requireArgument("MA", "optInMAType", optInMAType);
-      int guardStart = clampedStart("MA", startIdx, MA_Lookback(optInTimePeriod, optInMAType));
+      int guardStart = clampedStart("MA", startIdx, maLookback(optInTimePeriod, optInMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MA", "inReal", inReal, guardInLen);
       requireLength("MA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = maImpl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MA", retCode);
       }
@@ -465,7 +465,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#maLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -493,20 +493,20 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMA
-    * @see Core#EMA
-    * @see Core#WMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#TRIMA
-    * @see Core#KAMA
-    * @see Core#MAMA
-    * @see Core#T3
-    * @see Core#HMA
-    * @see Core#ZLEMA
-    * @see Core#RMA
+    * @see Core#sma
+    * @see Core#ema
+    * @see Core#wma
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#trima
+    * @see Core#kama
+    * @see Core#mama
+    * @see Core#t3
+    * @see Core#hma
+    * @see Core#zlema
+    * @see Core#rma
     */
-   public OutRange MA( int startIdx,
+   public OutRange ma( int startIdx,
                        int endIdx,
                        float inReal[],
                        int optInTimePeriod,
@@ -515,14 +515,14 @@
    {
       requireIndexRange("MA", startIdx, endIdx);
       requireArgument("MA", "optInMAType", optInMAType);
-      int guardStart = clampedStart("MA", startIdx, MA_Lookback(optInTimePeriod, optInMAType));
+      int guardStart = clampedStart("MA", startIdx, maLookback(optInTimePeriod, optInMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MA", "inReal", inReal, guardInLen);
       requireLength("MA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = maImpl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MA", retCode);
       }
@@ -532,7 +532,7 @@
 
    /**
     * A live MA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MA} over the same series.
+    * closed bar, bit-identical to {@link Core#ma} over the same series.
     * Open with {@link Core#maOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -559,7 +559,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MA} reports over the same bars: the
+       * <p>It is what {@link Core#ma} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -839,18 +839,18 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
-      if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+      if( historyLen < maLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
-         if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+         if( historyLen < maLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
          sp.sub = null;
          sp.cur_outReal = inReal[historyLen - 1];
-         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         int fillLb = maLookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -984,17 +984,17 @@
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BAD_PARAM;
       }
-      if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+      if( historyLen < maLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
-         if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+         if( historyLen < maLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
          sp.sub = null;
-         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         int fillLb = maLookback(optInTimePeriod, optInMAType);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
@@ -1125,17 +1125,17 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
-      if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+      if( historyLen < maLookback(optInTimePeriod, optInMAType) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
-         if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+         if( historyLen < maLookback(optInTimePeriod, optInMAType) + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
          sp.sub = null;
-         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         int fillLb = maLookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -1248,8 +1248,8 @@
    /**
     * Open a live MA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MA} at that bar.
-    * <p>The history must hold at least {@code MA_Lookback(...) + 1} bars
+    * to {@link Core#ma} at that bar.
+    * <p>The history must hold at least {@code maLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
@@ -1267,7 +1267,7 @@
    }
    /**
     * {@link Core#maOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MA} over the whole history in the same single pass
+    * to {@link Core#ma} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1281,7 +1281,7 @@
       requireArgument("MA openAndFill", "inReal", inReal);
       requireHistory("MA openAndFill", inReal.length);
       requireArgument("MA openAndFill", "optInMAType", optInMAType);
-      int guardOutLen = openFillCount("MA openAndFill", inReal.length, MA_Lookback(optInTimePeriod, optInMAType));
+      int guardOutLen = openFillCount("MA openAndFill", inReal.length, maLookback(optInTimePeriod, optInMAType));
       requireLength("MA openAndFill", "outReal", outReal, guardOutLen);
       MaStream sp = new MaStream(this);
       MInteger outBegIdx = new MInteger();

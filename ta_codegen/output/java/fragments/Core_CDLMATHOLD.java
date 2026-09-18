@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLMATHOLD} consumes before it
+    * Number of leading input bars {@link Core#cdlmathold} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLMATHOLD_Lookback( double optInPenetration )
+   public int cdlmatholdLookback( double optInPenetration )
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
@@ -40,16 +40,16 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
    }
-   RetCode CDLMATHOLD_Impl( int startIdx,
-                            int endIdx,
-                            double inOpen[],
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            double optInPenetration,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode cdlmatholdImpl( int startIdx,
+                           int endIdx,
+                           double inOpen[],
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           double optInPenetration,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -78,7 +78,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMATHOLD_Lookback(optInPenetration);
+      lookbackTotal = cdlmatholdLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -167,16 +167,16 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLMATHOLD_Impl( int startIdx,
-                            int endIdx,
-                            float inOpen[],
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            double optInPenetration,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode cdlmatholdImpl( int startIdx,
+                           int endIdx,
+                           float inOpen[],
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           double optInPenetration,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -202,7 +202,7 @@
       } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = CDLMATHOLD_Lookback(optInPenetration);
+      lookbackTotal = cdlmatholdLookback(optInPenetration);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -267,7 +267,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLMATHOLD_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlmatholdLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -295,10 +295,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLRISEFALL3METHODS
-    * @see Core#CDLXSIDEGAP3METHODS
+    * @see Core#cdlrisefall3methods
+    * @see Core#cdlxsidegap3methods
     */
-   public OutRange CDLMATHOLD( int startIdx,
+   public OutRange cdlmathold( int startIdx,
                                int endIdx,
                                double inOpen[],
                                double inHigh[],
@@ -308,7 +308,7 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLMATHOLD", startIdx, endIdx);
-      int guardStart = clampedStart("CDLMATHOLD", startIdx, CDLMATHOLD_Lookback(optInPenetration));
+      int guardStart = clampedStart("CDLMATHOLD", startIdx, cdlmatholdLookback(optInPenetration));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
@@ -318,7 +318,7 @@
       requireLength("CDLMATHOLD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlmatholdImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLMATHOLD", retCode);
       }
@@ -344,7 +344,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLMATHOLD_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlmatholdLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -372,10 +372,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLRISEFALL3METHODS
-    * @see Core#CDLXSIDEGAP3METHODS
+    * @see Core#cdlrisefall3methods
+    * @see Core#cdlxsidegap3methods
     */
-   public OutRange CDLMATHOLD( int startIdx,
+   public OutRange cdlmathold( int startIdx,
                                int endIdx,
                                float inOpen[],
                                float inHigh[],
@@ -385,7 +385,7 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLMATHOLD", startIdx, endIdx);
-      int guardStart = clampedStart("CDLMATHOLD", startIdx, CDLMATHOLD_Lookback(optInPenetration));
+      int guardStart = clampedStart("CDLMATHOLD", startIdx, cdlmatholdLookback(optInPenetration));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
@@ -395,7 +395,7 @@
       requireLength("CDLMATHOLD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlmatholdImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLMATHOLD", retCode);
       }
@@ -405,7 +405,7 @@
 
    /**
     * A live CDLMATHOLD stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLMATHOLD} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlmathold} over the same series.
     * Open with {@link Core#cdlmatholdOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -460,7 +460,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLMATHOLD} reports over the same bars: the
+       * <p>It is what {@link Core#cdlmathold} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -732,7 +732,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMATHOLD_Lookback(optInPenetration);
+      lookbackTotal = cdlmatholdLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -917,8 +917,8 @@
    /**
     * Open a live CDLMATHOLD stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLMATHOLD} at that bar.
-    * <p>The history must hold at least {@code CDLMATHOLD_Lookback(...) + 1} bars
+    * to {@link Core#cdlmathold} at that bar.
+    * <p>The history must hold at least {@code cdlmatholdLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
@@ -941,7 +941,7 @@
    }
    /**
     * {@link Core#cdlmatholdOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLMATHOLD} over the whole history in the same single pass
+    * to {@link Core#cdlmathold} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -957,7 +957,7 @@
       requireArgument("CDLMATHOLD openAndFill", "inHigh", inHigh);
       requireArgument("CDLMATHOLD openAndFill", "inLow", inLow);
       requireArgument("CDLMATHOLD openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLMATHOLD openAndFill", inOpen.length, CDLMATHOLD_Lookback(optInPenetration));
+      int guardOutLen = openFillCount("CDLMATHOLD openAndFill", inOpen.length, cdlmatholdLookback(optInPenetration));
       requireHistoryLength("CDLMATHOLD openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMATHOLD openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMATHOLD openAndFill", "inClose", inClose.length, inOpen.length);

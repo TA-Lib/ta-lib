@@ -208,7 +208,7 @@ internal static class NoPhantomIoBinder
         }
         let _ = writeln!(s, "        [\"{}\"] = static (core, c, startIdx, endIdx) =>", r.name);
         s.push_str("        {\n");
-        let _ = writeln!(s, "            RetCode rc = core.{}_Impl(", r.name);
+        let _ = writeln!(s, "            RetCode rc = core.{}Impl(", super::common::pascal_words(&r.name));
         let _ = writeln!(s, "                {});", args.join(", "));
         s.push_str("            return new CallOutcome(rc, b, n);\n");
         s.push_str("        },\n");
@@ -797,7 +797,7 @@ fn opt_expr(opt: &OptRow) -> String {
 /// expression as the parameter lists they index.
 fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) {
     let def = by_name[r.name.as_str()];
-    let method = r.name.clone();
+    let method = super::common::pascal_words(&r.name);
 
     let _ = writeln!(s, "    private static FuncInfo {}() => new(", factory_name(&r.name));
     let _ = writeln!(s, "        name: {},", cs(&r.name));
@@ -819,7 +819,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     let opt_args = opt_arg_exprs(def);
     let _ = writeln!(
         s,
-        "        lookback: static (core, c) => core.{method}_Lookback({}),",
+        "        lookback: static (core, c) => core.{method}Lookback({}),",
         opt_args.join(", ")
     );
 

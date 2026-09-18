@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::EFI`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::efi`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -77,7 +77,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_EFI_Lookback")]
     #[inline]
-    pub fn EFI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn efi_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 13;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -89,10 +89,10 @@ impl Core {
         //  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
         return Ok((optInTimePeriod + self.unstable_period[FuncUnstId::EMA as usize]) as usize);
     }
-    /// C-shaped body behind [`Core::EFI`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::efi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn EFI_Impl(
+    pub(crate) fn efi_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -104,13 +104,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, EFI_Impl_fma, EFI_Impl_impl, (startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, efi_impl_fma, efi_impl_impl, (startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.EFI_Impl_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.efi_impl_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn EFI_Impl_fma(
+    fn efi_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -121,10 +121,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.EFI_Impl_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.efi_impl_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn EFI_Impl_impl(
+    fn efi_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -146,7 +146,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.EFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.efi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -189,7 +189,7 @@ impl Core {
         // reason.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.EFI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.efi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -314,7 +314,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.EFI(0, close.len() - 1, &close, &volume, 13, &mut out)?;
+    /// let out_range = core.efi(0, close.len() - 1, &close, &volume, 13, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -322,7 +322,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::AD`] · [`Core::EMA`] · [`Core::MFI`] · [`Core::OBV`] · [`Core::PVO`]
+    /// [`AD`](Core::ad) · [`EMA`](Core::ema) · [`MFI`](Core::mfi) · [`OBV`](Core::obv) ·
+    /// [`PVO`](Core::pvo)
     ///
     /// # References
     ///
@@ -333,7 +334,7 @@ impl Core {
     /// * MotiveWave, *Elder's Force Index*: `rawForce = vol * (price - prevP)`, smoothed by a
     ///   moving average whose default method is EMA, at 2 and 13. No competing formula was found.
     #[doc(alias = "TA_EFI")]
-    pub fn EFI(
+    pub fn efi(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -348,7 +349,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.EFI_Lookback(optInTimePeriod)?;
+        let _guardLb = self.efi_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inClose.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -362,7 +363,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.EFI_Impl(
+        let retCode = self.efi_impl(
             startIdx,
             endIdx,
             inClose,
@@ -381,7 +382,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live EFI stream: one value per closed bar, bit-identical to [`Core::EFI`]
+/// Live EFI stream: one value per closed bar, bit-identical to [`Core::efi`]
 /// over the same series. Open with [`Core::efi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -495,7 +496,7 @@ impl Core {
             // reason.
             // Identify the minimum number of price bar needed
             // to calculate at least one output.
-            lookbackTotal = self.EFI_Lookback(optInTimePeriod)?;
+            lookbackTotal = self.efi_lookback(optInTimePeriod)?;
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {
@@ -573,7 +574,7 @@ impl Core {
             // reason.
             // Identify the minimum number of price bar needed
             // to calculate at least one output.
-            lookbackTotal = self.EFI_Lookback(optInTimePeriod)?;
+            lookbackTotal = self.efi_lookback(optInTimePeriod)?;
             // Move up the start index if there is not
             // enough initial data.
             if startIdx < lookbackTotal {
@@ -648,7 +649,7 @@ impl Core {
     }
 
     /// Open a live EFI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::EFI`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::efi`] at that bar.
     ///
     /// # Errors
     ///
@@ -683,7 +684,7 @@ impl Core {
     }
 
     /// [`Core::efi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::EFI`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::efi`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -705,7 +706,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.EFI(0, close.len() - 1, &close, &volume, 13, &mut batch_out)?;
+    /// let batch = core.efi(0, close.len() - 1, &close, &volume, 13, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.efi_open_and_fill(&close, &volume, 13, &mut out)?;
@@ -726,7 +727,7 @@ impl Core {
         if inClose.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.EFI_Lookback(optInTimePeriod)?;
+        let _guardLb = self.efi_lookback(optInTimePeriod)?;
         if inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -847,7 +848,7 @@ impl EfiStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::EFI`] reports over the same bars: the opener sets it
+    /// It is what [`Core::efi`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

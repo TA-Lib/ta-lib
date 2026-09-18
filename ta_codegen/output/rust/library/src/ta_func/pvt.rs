@@ -64,17 +64,17 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::PVT`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::pvt`]: the number of leading input values consumed before the
     /// first output value can be produced.
     #[doc(alias = "TA_PVT_Lookback")]
-    pub fn PVT_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn pvt_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
     }
-    /// C-shaped body behind [`Core::PVT`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::pvt`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn PVT_Impl(
+    pub(crate) fn pvt_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -90,7 +90,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.PVT_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.pvt_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -171,7 +171,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.PVT(0, close.len() - 1, &close, &volume, &mut out)?;
+    /// let out_range = core.pvt(0, close.len() - 1, &close, &volume, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -179,7 +179,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::OBV`] · [`Core::NVI`] · [`Core::PVI`] · [`Core::PVO`] · [`Core::AD`]
+    /// [`OBV`](Core::obv) · [`NVI`](Core::nvi) · [`PVI`](Core::pvi) · [`PVO`](Core::pvo) ·
+    /// [`AD`](Core::ad)
     ///
     /// # References
     ///
@@ -191,7 +192,7 @@ impl Core {
     #[doc(alias = "PriceVolumeTrend")]
     #[doc(alias = "VolumePriceTrend")]
     #[doc(alias = "VPT")]
-    pub fn PVT(
+    pub fn pvt(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -205,7 +206,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PVT_Lookback()?;
+        let _guardLb = self.pvt_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inClose.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -219,7 +220,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.PVT_Impl(
+        let retCode = self.pvt_impl(
             startIdx,
             endIdx,
             inClose,
@@ -237,7 +238,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PVT stream: one value per closed bar, bit-identical to [`Core::PVT`]
+/// Live PVT stream: one value per closed bar, bit-identical to [`Core::pvt`]
 /// over the same series. Open with [`Core::pvt_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -347,7 +348,7 @@ impl Core {
     }
 
     /// Open a live PVT stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::PVT`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::pvt`] at that bar.
     ///
     /// # Errors
     ///
@@ -382,7 +383,7 @@ impl Core {
     }
 
     /// [`Core::pvt_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::PVT`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::pvt`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -404,7 +405,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.PVT(0, close.len() - 1, &close, &volume, &mut batch_out)?;
+    /// let batch = core.pvt(0, close.len() - 1, &close, &volume, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.pvt_open_and_fill(&close, &volume, &mut out)?;
@@ -425,7 +426,7 @@ impl Core {
         if inClose.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PVT_Lookback()?;
+        let _guardLb = self.pvt_lookback()?;
         if inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -541,7 +542,7 @@ impl PvtStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::PVT`] reports over the same bars: the opener sets it
+    /// It is what [`Core::pvt`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

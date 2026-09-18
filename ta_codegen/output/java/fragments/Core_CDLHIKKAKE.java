@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLHIKKAKE} consumes before it
+    * Number of leading input bars {@link Core#cdlhikkake} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,20 +27,20 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLHIKKAKE_Lookback( )
+   public int cdlhikkakeLookback( )
    {
       return 5 ;
 
    }
-   RetCode CDLHIKKAKE_Impl( int startIdx,
-                            int endIdx,
-                            double inOpen[],
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode cdlhikkakeImpl( int startIdx,
+                           int endIdx,
+                           double inOpen[],
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -63,7 +63,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLHIKKAKE_Lookback();
+      lookbackTotal = cdlhikkakeLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -154,15 +154,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLHIKKAKE_Impl( int startIdx,
-                            int endIdx,
-                            float inOpen[],
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            int outInteger[] )
+   RetCode cdlhikkakeImpl( int startIdx,
+                           int endIdx,
+                           float inOpen[],
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -179,7 +179,7 @@
       }
       savedHigh = 0.0;
       savedLow = 0.0;
-      lookbackTotal = CDLHIKKAKE_Lookback();
+      lookbackTotal = cdlhikkakeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -244,7 +244,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLHIKKAKE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlhikkakeLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -270,10 +270,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHIKKAKEMOD
-    * @see Core#CDLHARAMI
+    * @see Core#cdlhikkakemod
+    * @see Core#cdlharami
     */
-   public OutRange CDLHIKKAKE( int startIdx,
+   public OutRange cdlhikkake( int startIdx,
                                int endIdx,
                                double inOpen[],
                                double inHigh[],
@@ -282,7 +282,7 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKE", startIdx, endIdx);
-      int guardStart = clampedStart("CDLHIKKAKE", startIdx, CDLHIKKAKE_Lookback());
+      int guardStart = clampedStart("CDLHIKKAKE", startIdx, cdlhikkakeLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKE", "inOpen", inOpen, guardInLen);
@@ -292,7 +292,7 @@
       requireLength("CDLHIKKAKE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIKKAKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlhikkakeImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLHIKKAKE", retCode);
       }
@@ -316,7 +316,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLHIKKAKE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlhikkakeLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -342,10 +342,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHIKKAKEMOD
-    * @see Core#CDLHARAMI
+    * @see Core#cdlhikkakemod
+    * @see Core#cdlharami
     */
-   public OutRange CDLHIKKAKE( int startIdx,
+   public OutRange cdlhikkake( int startIdx,
                                int endIdx,
                                float inOpen[],
                                float inHigh[],
@@ -354,7 +354,7 @@
                                int outInteger[] )
    {
       requireIndexRange("CDLHIKKAKE", startIdx, endIdx);
-      int guardStart = clampedStart("CDLHIKKAKE", startIdx, CDLHIKKAKE_Lookback());
+      int guardStart = clampedStart("CDLHIKKAKE", startIdx, cdlhikkakeLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIKKAKE", "inOpen", inOpen, guardInLen);
@@ -364,7 +364,7 @@
       requireLength("CDLHIKKAKE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIKKAKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlhikkakeImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLHIKKAKE", retCode);
       }
@@ -374,7 +374,7 @@
 
    /**
     * A live CDLHIKKAKE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLHIKKAKE} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlhikkake} over the same series.
     * Open with {@link Core#cdlhikkakeOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -405,7 +405,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLHIKKAKE} reports over the same bars: the
+       * <p>It is what {@link Core#cdlhikkake} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -616,7 +616,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLHIKKAKE_Lookback();
+      lookbackTotal = cdlhikkakeLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -759,8 +759,8 @@
    /**
     * Open a live CDLHIKKAKE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLHIKKAKE} at that bar.
-    * <p>The history must hold at least {@code CDLHIKKAKE_Lookback(...) + 1} bars
+    * to {@link Core#cdlhikkake} at that bar.
+    * <p>The history must hold at least {@code cdlhikkakeLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -781,7 +781,7 @@
    }
    /**
     * {@link Core#cdlhikkakeOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLHIKKAKE} over the whole history in the same single pass
+    * to {@link Core#cdlhikkake} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -797,7 +797,7 @@
       requireArgument("CDLHIKKAKE openAndFill", "inHigh", inHigh);
       requireArgument("CDLHIKKAKE openAndFill", "inLow", inLow);
       requireArgument("CDLHIKKAKE openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLHIKKAKE openAndFill", inOpen.length, CDLHIKKAKE_Lookback());
+      int guardOutLen = openFillCount("CDLHIKKAKE openAndFill", inOpen.length, cdlhikkakeLookback());
       requireHistoryLength("CDLHIKKAKE openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHIKKAKE openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHIKKAKE openAndFill", "inClose", inClose.length, inOpen.length);

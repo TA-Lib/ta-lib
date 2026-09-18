@@ -56,7 +56,7 @@ public partial class Core
     *  100304 AC   Creation
     */
    /// <summary>
-   /// Number of leading input bars <c>CDLMORNINGSTAR</c> consumes before it can
+   /// Number of leading input bars <c>Cdlmorningstar</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -66,13 +66,13 @@ public partial class Core
    /// </remarks>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CDLMORNINGSTAR_Lookback( double optInPenetration )
+   public int CdlmorningstarLookback( double optInPenetration )
    {
-      if( optInPenetration == REAL_DEFAULT ) {
+      if( optInPenetration == RealDefault ) {
          optInPenetration = 3e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= RealMax) ) {
          return -1;
       }
       int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
@@ -84,16 +84,16 @@ public partial class Core
       return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   internal RetCode CDLMORNINGSTAR_Impl( int startIdx,
-                                         int endIdx,
-                                         ReadOnlySpan<double> inOpen,
-                                         ReadOnlySpan<double> inHigh,
-                                         ReadOnlySpan<double> inLow,
-                                         ReadOnlySpan<double> inClose,
-                                         double optInPenetration,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         Span<int> outInteger )
+   internal RetCode CdlmorningstarImpl( int startIdx,
+                                        int endIdx,
+                                        ReadOnlySpan<double> inOpen,
+                                        ReadOnlySpan<double> inHigh,
+                                        ReadOnlySpan<double> inLow,
+                                        ReadOnlySpan<double> inClose,
+                                        double optInPenetration,
+                                        out int outBegIdx,
+                                        out int outNBElement,
+                                        Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -111,15 +111,15 @@ public partial class Core
       int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
       int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
       double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == REAL_DEFAULT ) {
+      if( optInPenetration == RealDefault ) {
          optInPenetration = 3e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= RealMax) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -128,7 +128,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMORNINGSTAR_Lookback(optInPenetration);
+      lookbackTotal = CdlmorningstarLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -202,16 +202,16 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLMORNINGSTAR_Impl( int startIdx,
-                                         int endIdx,
-                                         ReadOnlySpan<float> inOpen,
-                                         ReadOnlySpan<float> inHigh,
-                                         ReadOnlySpan<float> inLow,
-                                         ReadOnlySpan<float> inClose,
-                                         double optInPenetration,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         Span<int> outInteger )
+   internal RetCode CdlmorningstarImpl( int startIdx,
+                                        int endIdx,
+                                        ReadOnlySpan<float> inOpen,
+                                        ReadOnlySpan<float> inHigh,
+                                        ReadOnlySpan<float> inLow,
+                                        ReadOnlySpan<float> inClose,
+                                        double optInPenetration,
+                                        out int outBegIdx,
+                                        out int outNBElement,
+                                        Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -229,21 +229,21 @@ public partial class Core
       int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
       int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
       double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == REAL_DEFAULT ) {
+      if( optInPenetration == RealDefault ) {
          optInPenetration = 3e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= RealMax) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
-      lookbackTotal = CDLMORNINGSTAR_Lookback(optInPenetration);
+      lookbackTotal = CdlmorningstarLookback(optInPenetration);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -308,7 +308,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CDLMORNINGSTAR_Lookback</c> is a
+   /// NaN. A valid range shorter than <c>CdlmorningstarLookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -320,14 +320,14 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outInteger">+100 when the morning star is detected, 0 otherwise. Never negative
    /// (pattern is exclusively bullish) Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -342,7 +342,7 @@ public partial class Core
    /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
-   public OutRange CDLMORNINGSTAR( int startIdx,
+   public OutRange Cdlmorningstar( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<double> inOpen,
                                    ReadOnlySpan<double> inHigh,
@@ -351,7 +351,7 @@ public partial class Core
                                    double optInPenetration,
                                    Span<int> outInteger )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
+      int guardStart = ClampedStart(startIdx, endIdx, CdlmorningstarLookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CDLMORNINGSTAR", "inOpen", inOpen.Length, guardInLen);
@@ -359,7 +359,7 @@ public partial class Core
       RequireLength("CDLMORNINGSTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMORNINGSTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMORNINGSTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMORNINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CdlmorningstarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMORNINGSTAR", retCode);
       }
@@ -392,7 +392,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CDLMORNINGSTAR_Lookback</c> is a
+   /// NaN. A valid range shorter than <c>CdlmorningstarLookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -404,14 +404,14 @@ public partial class Core
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's body the 3rd close must exceed above the 1st
    /// close; larger = deeper penetration required (default 0.3; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outInteger">+100 when the morning star is detected, 0 otherwise. Never negative
    /// (pattern is exclusively bullish) Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -428,7 +428,7 @@ public partial class Core
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
    /// overlap of their byte ranges is rejected.</exception>
-   public OutRange CDLMORNINGSTAR( int startIdx,
+   public OutRange Cdlmorningstar( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<float> inOpen,
                                    ReadOnlySpan<float> inHigh,
@@ -437,7 +437,7 @@ public partial class Core
                                    double optInPenetration,
                                    Span<int> outInteger )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
+      int guardStart = ClampedStart(startIdx, endIdx, CdlmorningstarLookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CDLMORNINGSTAR", "inOpen", inOpen.Length, guardInLen);
@@ -445,7 +445,7 @@ public partial class Core
       RequireLength("CDLMORNINGSTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMORNINGSTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMORNINGSTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMORNINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CdlmorningstarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMORNINGSTAR", retCode);
       }
@@ -512,7 +512,7 @@ public partial class Core
       /// neither does <c>Peek</c> — and <c>Clone</c> carries it verbatim. A plain
       /// <c>Open</c> hands back only the last value, a subset of this range,
       /// because the caller chose not to take the fill.</para>
-      /// <para>The last bar it can reach is <see cref="Core.MAX_INDEX"/>; past that
+      /// <para>The last bar it can reach is <see cref="Core.MaxIndex"/>; past that
       /// <c>Update</c> and <c>Advance</c> throw.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
@@ -525,13 +525,13 @@ public partial class Core
       /// rejected and that will not be re-fed, or a session with no print. Without
       /// it two handles on one feed drift a bar apart when only one of them skips.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, the last one the batch tier
+      /// has reached bar <see cref="Core.MaxIndex"/>, the last one the batch tier
       /// can address and the last this handle will count. <c>Update</c> throws the
       /// same there.</para>
       /// </remarks>
       public void Advance()
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("CDLMORNINGSTAR", "advance", RetCode.OutOfRangeEndIndex);
          outRangeCount++;
       }
@@ -584,7 +584,7 @@ public partial class Core
       /// which computes on whatever it is given: a handle retains its state, so a
       /// single non-finite bar would poison every later value it produces.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, which no re-feed clears: the
+      /// has reached bar <see cref="Core.MaxIndex"/>, which no re-feed clears: the
       /// handle has run out of index domain and only a shorter history can start a
       /// new one.</para>
       /// </remarks>
@@ -595,7 +595,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("CDLMORNINGSTAR", "update", RetCode.OutOfRangeEndIndex);
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMORNINGSTAR", "update", RetCode.BadParam);
          core.CdlmorningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
@@ -611,7 +611,7 @@ public partial class Core
       /// concurrently with each other.</para>
       /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
-      /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
+      /// <see cref="Core.MaxIndex"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -728,15 +728,15 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
          return RetCode.BadParam;
       }
-      if( optInPenetration == REAL_DEFAULT ) {
+      if( optInPenetration == RealDefault ) {
          optInPenetration = 3e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= RealMax) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -753,7 +753,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMORNINGSTAR_Lookback(optInPenetration);
+      lookbackTotal = CdlmorningstarLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -906,27 +906,27 @@ public partial class Core
    /// <para>The handle's <see cref="CdlmorningstarStream.Value"/> starts at the last
    /// history bar's value — bit-identical to what <c>CDLMORNINGSTAR</c> reports
    /// for that bar.</para>
-   /// <para>The history must hold at least <c>CDLMORNINGSTAR_Lookback(...) + 1</c>
-   /// bars (unstable-period aware). Nothing is written to any caller array; use
+   /// <para>The history must hold at least <c>CdlmorningstarLookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>CdlmorningstarOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
-   /// <param name="optInPenetration">As in the batch call; see <see cref="CDLMORNINGSTAR_Lookback"/> for its
-   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInPenetration">As in the batch call; see <see cref="CdlmorningstarLookback"/> for its
+   /// default and range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLMORNINGSTAR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdlmorningstarLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public CdlmorningstarStream CdlmorningstarOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
       if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLMORNINGSTAR open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLMORNINGSTAR open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inOpen.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLMORNINGSTAR open: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLMORNINGSTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TALibArgumentException("CDLMORNINGSTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("CDLMORNINGSTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
@@ -942,7 +942,7 @@ public partial class Core
    /// <para>The values written are bit-identical to what <c>CDLMORNINGSTAR</c>
    /// produces over the same series, so no separate batch call is needed for the
    /// warm-up plot.</para>
-   /// <para>Output arrays must hold <c>historyLen - CDLMORNINGSTAR_Lookback(...)</c>
+   /// <para>Output arrays must hold <c>historyLen - CdlmorningstarLookback(...)</c>
    /// values and must not alias the inputs or each other — this path writes the
    /// outputs and then reads the input tail to seed its rings, so the batch
    /// tier's in-place allowance does not carry over here. Both are checked
@@ -956,27 +956,27 @@ public partial class Core
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
-   /// <param name="optInPenetration">As in the batch call; see <see cref="CDLMORNINGSTAR_Lookback"/> for its
-   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInPenetration">As in the batch call; see <see cref="CdlmorningstarLookback"/> for its
+   /// default and range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outInteger">+100 when the morning star is detected, 0 otherwise. Never negative
    /// (pattern is exclusively bullish) Must hold at least <c>historyLen -
-   /// CDLMORNINGSTAR_Lookback(...)</c> values.</param>
+   /// CdlmorningstarLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLMORNINGSTAR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdlmorningstarLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public CdlmorningstarStream CdlmorningstarOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLMORNINGSTAR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inOpen.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLMORNINGSTAR openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inOpen.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLMORNINGSTAR openAndFill: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
-      int guardOutLen = OpenFillCount("CDLMORNINGSTAR", "openAndFill", inOpen.Length, CDLMORNINGSTAR_Lookback(optInPenetration));
+      int guardOutLen = OpenFillCount("CDLMORNINGSTAR", "openAndFill", inOpen.Length, CdlmorningstarLookback(optInPenetration));
       RequireHistoryLength("CDLMORNINGSTAR", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLMORNINGSTAR", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLMORNINGSTAR", "openAndFill", "inClose", inClose.Length, inOpen.Length);

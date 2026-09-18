@@ -64,10 +64,10 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CDLHAMMER`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::cdlhammer`]: the number of leading input values consumed before
     /// the first output value can be produced.
     #[doc(alias = "TA_CDLHAMMER_Lookback")]
-    pub fn CDLHAMMER_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn cdlhammer_lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
         #[allow(non_snake_case)]
@@ -94,10 +94,10 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         return Ok(((((BodyShort_avgPeriod).max(ShadowLong_avgPeriod)).max(ShadowVeryShort_avgPeriod)).max(Near_avgPeriod) + 1) as usize);
     }
-    /// C-shaped body behind [`Core::CDLHAMMER`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::cdlhammer`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CDLHAMMER_Impl(
+    pub(crate) fn cdlhammer_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -115,7 +115,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLHAMMER_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.cdlhammer_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -160,7 +160,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLHAMMER_Lookback().unwrap_or(usize::MAX);
+        lookbackTotal = self.cdlhammer_lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -475,7 +475,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0i32; 252];
     ///
-    /// let out_range = core.CDLHAMMER(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
+    /// let out_range = core.cdlhammer(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert_eq!(out_range.beg_idx + out_range.count, open.len());
     /// // a candlestick pattern reports 0 where it does not fire, and a signed
@@ -486,10 +486,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::CDLINVERTEDHAMMER`] · [`Core::CDLHANGINGMAN`] · [`Core::CDLTAKURI`]
+    /// [`CDLINVERTEDHAMMER`](Core::cdlinvertedhammer) · [`CDLHANGINGMAN`](Core::cdlhangingman) ·
+    /// [`CDLTAKURI`](Core::cdltakuri)
     #[doc(alias = "TA_CDLHAMMER")]
     #[doc(alias = "Hammer")]
-    pub fn CDLHAMMER(
+    pub fn cdlhammer(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -505,7 +506,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLHAMMER_Lookback()?;
+        let _guardLb = self.cdlhammer_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -525,7 +526,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDLHAMMER_Impl(
+        let retCode = self.cdlhammer_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -545,7 +546,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLHAMMER stream: one value per closed bar, bit-identical to [`Core::CDLHAMMER`]
+/// Live CDLHAMMER stream: one value per closed bar, bit-identical to [`Core::cdlhammer`]
 /// over the same series. Open with [`Core::cdlhammer_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -919,7 +920,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLHAMMER_Lookback()?;
+        lookbackTotal = self.cdlhammer_lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1270,7 +1271,7 @@ impl Core {
     }
 
     /// Open a live CDLHAMMER stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLHAMMER`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::cdlhammer`] at that bar.
     ///
     /// # Errors
     ///
@@ -1307,7 +1308,7 @@ impl Core {
     }
 
     /// [`Core::cdlhammer_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLHAMMER`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::cdlhammer`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1331,7 +1332,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0_i32; 252];
-    /// let batch = core.CDLHAMMER(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.cdlhammer(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0_i32; 252];
     /// let (_stream, filled) = core.cdlhammer_open_and_fill(&open, &high, &low, &close, &mut out)?;
@@ -1351,7 +1352,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLHAMMER_Lookback()?;
+        let _guardLb = self.cdlhammer_lookback()?;
         if inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1490,7 +1491,7 @@ impl CdlhammerStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CDLHAMMER`] reports over the same bars: the opener sets it
+    /// It is what [`Core::cdlhammer`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

@@ -64,7 +64,7 @@ A function never writes more elements than you request, so the output slice only
 
 As an example, let's walk through `MA`, a method to calculate a moving average.
 
-<pre>fn MA( &amp;self,
+<pre>fn ma( &amp;self,
        <span class="ta-arg-range">startIdx: usize,</span>
        <span class="ta-arg-range">endIdx: usize,</span>
        <span class="ta-arg-in">inReal: &amp;[f64],</span>
@@ -94,7 +94,7 @@ let core = Core::new();
 let close: Vec&lt;f64&gt; = vec![0.0; 400];
 let mut out = vec![0.0; 400];
 
-let range = core.MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">399</span>,
+let range = core.ma( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">399</span>,
                      <span class="ta-arg-in">&amp;close</span>,
                      <span class="ta-arg-opt">30</span>, <span class="ta-arg-opt">MAType::SMA</span>,
                      <span class="ta-arg-out">&amp;mut out</span> )?;
@@ -111,7 +111,7 @@ As another example, if you had requested only the range 125 to 225, `range.beg_i
 
 Here is another example. This time we calculate a 14-bar exponential moving average for a single price bar (say, the last one, at index 299):
 
-<pre>let range = core.MA( <span class="ta-arg-range">299</span>, <span class="ta-arg-range">299</span>,
+<pre>let range = core.ma( <span class="ta-arg-range">299</span>, <span class="ta-arg-range">299</span>,
                      <span class="ta-arg-in">&amp;close</span>,
                      <span class="ta-arg-opt">14</span>, <span class="ta-arg-opt">MAType::EMA</span>,
                      <span class="ta-arg-out">&amp;mut out</span> )?;
@@ -135,12 +135,12 @@ It is important that the output slice is large enough — an undersized slice is
 | Range Matching   | `allocation_size = endIdx - startIdx + 1;` <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: with startIdx = 0, a 30-period SMA wastes 29 elements because of the lookback. |
 | Exact Allocation | Derived from the function's lookback — see the example below. <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex, and the only one that has to handle an out-of-range parameter. |
 
-Each TA function has a matching `<NAME>_Lookback` method, taking the same optional parameters as the function itself. Example: for `SMA` it is `SMA_Lookback`.
+Each TA function has a matching `<name>_lookback` method, taking the same optional parameters as the function itself. Example: for `SMA` it is `sma_lookback`.
 
 The lookback is the number of input elements consumed before the first output can be calculated. Example: a simple moving average (SMA) of period 10 has a lookback of 9.
 
 ```rust
-let lookback = core.SMA_Lookback(30)?;   // 29 for a 30-period SMA
+let lookback = core.sma_lookback(30)?;   // 29 for a 30-period SMA
 ```
 
 A lookback method returns `Result<usize, RetCode>`, carrying `RetCode::BadParam` when a parameter is out of range — the same code the function itself would answer for it.
@@ -148,7 +148,7 @@ A lookback method returns `Result<usize, RetCode>`, carrying `RetCode::BadParam`
 Putting it together, the exact allocation for any TA function:
 
 ```rust
-let lookback = core.<NAME>_Lookback(..)?;
+let lookback = core.<name>_lookback(..)?;
 
 let temp = lookback.max(startIdx);
 let allocation_size = if temp > endIdx { 0 } else { endIdx - temp + 1 };

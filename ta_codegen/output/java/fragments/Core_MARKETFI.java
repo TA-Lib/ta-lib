@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MARKETFI} consumes before it can
+    * Number of leading input bars {@link Core#marketfi} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,7 +20,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MARKETFI_Lookback( )
+   public int marketfiLookback( )
    {
       /* Each output depends only on its own bar, so nothing is consumed
        * before the first one can be produced.
@@ -28,14 +28,14 @@
       return 0 ;
 
    }
-   RetCode MARKETFI_Impl( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          double inVolume[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode marketfiImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -81,14 +81,14 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MARKETFI_Impl( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          float inVolume[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode marketfiImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -127,7 +127,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MARKETFI_Lookback} is a <b>success
+    * valid range shorter than {@link Core#marketfiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -151,13 +151,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AD
-    * @see Core#ADOSC
-    * @see Core#NVI
-    * @see Core#OBV
-    * @see Core#PVI
+    * @see Core#ad
+    * @see Core#adosc
+    * @see Core#nvi
+    * @see Core#obv
+    * @see Core#pvi
     */
-   public OutRange MARKETFI( int startIdx,
+   public OutRange marketfi( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
@@ -165,7 +165,7 @@
                              double outReal[] )
    {
       requireIndexRange("MARKETFI", startIdx, endIdx);
-      int guardStart = clampedStart("MARKETFI", startIdx, MARKETFI_Lookback());
+      int guardStart = clampedStart("MARKETFI", startIdx, marketfiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MARKETFI", "inHigh", inHigh, guardInLen);
@@ -174,7 +174,7 @@
       requireLength("MARKETFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = marketfiImpl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MARKETFI", retCode);
       }
@@ -200,7 +200,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MARKETFI_Lookback} is a <b>success
+    * valid range shorter than {@link Core#marketfiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -224,13 +224,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AD
-    * @see Core#ADOSC
-    * @see Core#NVI
-    * @see Core#OBV
-    * @see Core#PVI
+    * @see Core#ad
+    * @see Core#adosc
+    * @see Core#nvi
+    * @see Core#obv
+    * @see Core#pvi
     */
-   public OutRange MARKETFI( int startIdx,
+   public OutRange marketfi( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
@@ -238,7 +238,7 @@
                              double outReal[] )
    {
       requireIndexRange("MARKETFI", startIdx, endIdx);
-      int guardStart = clampedStart("MARKETFI", startIdx, MARKETFI_Lookback());
+      int guardStart = clampedStart("MARKETFI", startIdx, marketfiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MARKETFI", "inHigh", inHigh, guardInLen);
@@ -247,7 +247,7 @@
       requireLength("MARKETFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = marketfiImpl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MARKETFI", retCode);
       }
@@ -257,7 +257,7 @@
 
    /**
     * A live MARKETFI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MARKETFI} over the same series.
+    * closed bar, bit-identical to {@link Core#marketfi} over the same series.
     * Open with {@link Core#marketfiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -280,7 +280,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MARKETFI} reports over the same bars: the
+       * <p>It is what {@link Core#marketfi} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -523,8 +523,8 @@
    /**
     * Open a live MARKETFI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MARKETFI} at that bar.
-    * <p>The history must hold at least {@code MARKETFI_Lookback(...) + 1} bars
+    * to {@link Core#marketfi} at that bar.
+    * <p>The history must hold at least {@code marketfiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -543,7 +543,7 @@
    }
    /**
     * {@link Core#marketfiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MARKETFI} over the whole history in the same single pass
+    * to {@link Core#marketfi} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -558,7 +558,7 @@
       requireHistory("MARKETFI openAndFill", inHigh.length);
       requireArgument("MARKETFI openAndFill", "inLow", inLow);
       requireArgument("MARKETFI openAndFill", "inVolume", inVolume);
-      int guardOutLen = openFillCount("MARKETFI openAndFill", inHigh.length, MARKETFI_Lookback());
+      int guardOutLen = openFillCount("MARKETFI openAndFill", inHigh.length, marketfiLookback());
       requireHistoryLength("MARKETFI openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("MARKETFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MARKETFI openAndFill", "outReal", outReal, guardOutLen);

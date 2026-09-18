@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLMORNINGDOJISTAR} consumes
+    * Number of leading input bars {@link Core#cdlmorningdojistar} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,7 +25,7 @@
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLMORNINGDOJISTAR_Lookback( double optInPenetration )
+   public int cdlmorningdojistarLookback( double optInPenetration )
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
@@ -44,16 +44,16 @@
       return Math.max(Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod), BodyShort_avgPeriod) + 2 ;
 
    }
-   RetCode CDLMORNINGDOJISTAR_Impl( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    double optInPenetration,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlmorningdojistarImpl( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   double optInPenetration,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -87,7 +87,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMORNINGDOJISTAR_Lookback(optInPenetration);
+      lookbackTotal = cdlmorningdojistarLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -167,16 +167,16 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLMORNINGDOJISTAR_Impl( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    double optInPenetration,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlmorningdojistarImpl( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   double optInPenetration,
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -207,7 +207,7 @@
       } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = CDLMORNINGDOJISTAR_Lookback(optInPenetration);
+      lookbackTotal = cdlmorningdojistarLookback(optInPenetration);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -273,7 +273,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLMORNINGDOJISTAR_Lookback} is a
+    * valid range shorter than {@link Core#cdlmorningdojistarLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -303,12 +303,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMORNINGSTAR
-    * @see Core#CDLEVENINGDOJISTAR
-    * @see Core#CDLEVENINGSTAR
-    * @see Core#CDLDOJISTAR
+    * @see Core#cdlmorningstar
+    * @see Core#cdleveningdojistar
+    * @see Core#cdleveningstar
+    * @see Core#cdldojistar
     */
-   public OutRange CDLMORNINGDOJISTAR( int startIdx,
+   public OutRange cdlmorningdojistar( int startIdx,
                                        int endIdx,
                                        double inOpen[],
                                        double inHigh[],
@@ -318,7 +318,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, cdlmorningdojistarLookback(optInPenetration));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
@@ -328,7 +328,7 @@
       requireLength("CDLMORNINGDOJISTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMORNINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlmorningdojistarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLMORNINGDOJISTAR", retCode);
       }
@@ -353,7 +353,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLMORNINGDOJISTAR_Lookback} is a
+    * valid range shorter than {@link Core#cdlmorningdojistarLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -383,12 +383,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMORNINGSTAR
-    * @see Core#CDLEVENINGDOJISTAR
-    * @see Core#CDLEVENINGSTAR
-    * @see Core#CDLDOJISTAR
+    * @see Core#cdlmorningstar
+    * @see Core#cdleveningdojistar
+    * @see Core#cdleveningstar
+    * @see Core#cdldojistar
     */
-   public OutRange CDLMORNINGDOJISTAR( int startIdx,
+   public OutRange cdlmorningdojistar( int startIdx,
                                        int endIdx,
                                        float inOpen[],
                                        float inHigh[],
@@ -398,7 +398,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
-      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      int guardStart = clampedStart("CDLMORNINGDOJISTAR", startIdx, cdlmorningdojistarLookback(optInPenetration));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
@@ -408,7 +408,7 @@
       requireLength("CDLMORNINGDOJISTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMORNINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlmorningdojistarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLMORNINGDOJISTAR", retCode);
       }
@@ -418,7 +418,7 @@
 
    /**
     * A live CDLMORNINGDOJISTAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLMORNINGDOJISTAR} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlmorningdojistar} over the same series.
     * Open with {@link Core#cdlmorningdojistarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -471,7 +471,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLMORNINGDOJISTAR} reports over the same bars: the
+       * <p>It is what {@link Core#cdlmorningdojistar} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -738,7 +738,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMORNINGDOJISTAR_Lookback(optInPenetration);
+      lookbackTotal = cdlmorningdojistarLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -919,8 +919,8 @@
    /**
     * Open a live CDLMORNINGDOJISTAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLMORNINGDOJISTAR} at that bar.
-    * <p>The history must hold at least {@code CDLMORNINGDOJISTAR_Lookback(...) + 1} bars
+    * to {@link Core#cdlmorningdojistar} at that bar.
+    * <p>The history must hold at least {@code cdlmorningdojistarLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
@@ -943,7 +943,7 @@
    }
    /**
     * {@link Core#cdlmorningdojistarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLMORNINGDOJISTAR} over the whole history in the same single pass
+    * to {@link Core#cdlmorningdojistar} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -959,7 +959,7 @@
       requireArgument("CDLMORNINGDOJISTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLMORNINGDOJISTAR openAndFill", "inLow", inLow);
       requireArgument("CDLMORNINGDOJISTAR openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLMORNINGDOJISTAR openAndFill", inOpen.length, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+      int guardOutLen = openFillCount("CDLMORNINGDOJISTAR openAndFill", inOpen.length, cdlmorningdojistarLookback(optInPenetration));
       requireHistoryLength("CDLMORNINGDOJISTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMORNINGDOJISTAR openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMORNINGDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);

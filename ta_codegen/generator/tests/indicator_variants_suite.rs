@@ -149,21 +149,21 @@ fn test_ma_java_cross_calls() {
     let j = &out.java;
 
     assert!(
-        j.contains("SMA_Lookback("),
-        "Java: MA should call SMA_Lookback"
+        j.contains("smaLookback("),
+        "Java: MA should call smaLookback"
     );
     assert!(
-        j.contains("EMA_Lookback("),
-        "Java: MA should call EMA_Lookback"
+        j.contains("emaLookback("),
+        "Java: MA should call emaLookback"
     );
     // Bare cross-indicator calls resolve to the callee's PUBLIC entry point
     // (#236 step 3), which returns an OutRange rather than writing the C-shaped
     // MInteger out-params. `= SMA(` anchors the call site so the dispatch arms
     // cannot substring-shadow one another.
-    assert!(j.contains("= SMA("), "Java: MA should call the public SMA");
-    assert!(j.contains("= EMA("), "Java: MA should call the public EMA");
+    assert!(j.contains("= sma("), "Java: MA should call the public sma");
+    assert!(j.contains("= ema("), "Java: MA should call the public ema");
     assert!(
-        !j.contains("SMA_Impl(") && !j.contains("EMA_Impl("),
+        !j.contains("smaImpl(") && !j.contains("emaImpl("),
         "Java: MA must not call a callee's C-shaped tier"
     );
     assert!(
@@ -180,12 +180,12 @@ fn test_ma_rust_cross_calls() {
 
     // Lookback calls remain the same.
     assert!(
-        r.contains("self.SMA_Lookback("),
-        "Rust: MA should call self.SMA_Lookback"
+        r.contains("self.sma_lookback("),
+        "Rust: MA should call self.sma_lookback"
     );
     assert!(
-        r.contains("self.EMA_Lookback("),
-        "Rust: MA should call self.EMA_Lookback"
+        r.contains("self.ema_lookback("),
+        "Rust: MA should call self.ema_lookback"
     );
     // Bare cross-indicator calls resolve to the callee's PUBLIC entry point
     // (#267), as they do in C, Java and C#: the returned OutRange is bound to a
@@ -194,15 +194,15 @@ fn test_ma_rust_cross_calls() {
     // another, and `self.` makes these calls rather than definitions, so the
     // negatives below are real.
     assert!(
-        r.contains("match self.SMA("),
-        "Rust: MA should call the public self.SMA"
+        r.contains("match self.sma("),
+        "Rust: MA should call the public self.sma"
     );
     assert!(
-        r.contains("match self.EMA("),
-        "Rust: MA should call the public self.EMA"
+        r.contains("match self.ema("),
+        "Rust: MA should call the public self.ema"
     );
     assert!(
-        !r.contains("self.SMA_Impl(") && !r.contains("self.EMA_Impl("),
+        !r.contains("self.sma_impl(") && !r.contains("self.ema_impl("),
         "Rust: MA must not call a callee's C-shaped tier"
     );
     assert!(
@@ -477,8 +477,8 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
         // no prologue, so the markers below still land in `_Impl_impl`.
         let section = extract_section(
             &out.rust,
-            &format!("pub(crate) fn {}_Impl(", func.name),
-            &format!("pub fn {}(", func.name),
+            &format!("pub(crate) fn {}_impl(", backends::common::snake_words(&func.name)),
+            &format!("pub fn {}(", backends::common::snake_words(&func.name)),
         );
         scanned += 1;
         let where_ = format!("{}: {section}", func.name);
@@ -609,11 +609,11 @@ fn rust_public_entry_orders_the_argument_contract() {
         };
         // Everything the public entry does BEFORE handing over to the numerics.
         // Bounded by that call, so a check emitted after it cannot satisfy this.
-        let snake = func.name.clone();
+        let snake = backends::common::snake_words(&func.name);
         let section = extract_section(
             &out.rust,
             &format!("    pub fn {snake}(\n"),
-            &format!("        let retCode = self.{snake}_Impl("),
+            &format!("        let retCode = self.{snake}_impl("),
         );
         scanned += 1;
         let where_ = format!("{snake}: {section}");
@@ -630,7 +630,7 @@ fn rust_public_entry_orders_the_argument_contract() {
         // parameter decision this tier's own, so one call buys the check and the
         // clamp. It has to sit below B2 and above every buffer bound.
         let b3 = section
-            .find(&format!("let _guardLb = self.{snake}_Lookback("))
+            .find(&format!("let _guardLb = self.{snake}_lookback("))
             .unwrap_or_else(|| panic!("{where_}\nno lookback call to carry B3 and the clamp"));
         assert!(b2 < b3, "{where_}\nB2 must precede B3");
         if !func.optional_inputs.is_empty() {
@@ -698,8 +698,9 @@ fn rust_binder_calls_the_public_tier() {
     let mut guarded = 0usize;
     for f in &funcs {
         let n = &f.name;
+        let fold = backends::common::snake_words(n);
         assert!(
-            out.contains(&format!("let res = self.core.{n}(")),
+            out.contains(&format!("let res = self.core.{fold}(")),
             "{n}: the binder arm does not call the public entry point"
         );
         assert!(
@@ -1297,7 +1298,7 @@ fn test_java_sma_guarded_has_validation() {
     // Extract the double-precision core, bounded before the float overload
     // Bounded to the DOUBLE core alone: the float twin is an overload with the
     // same name, so a marker that spans both would let it satisfy the assertion.
-    let guarded = extract_section(&out.java, "RetCode SMA_Impl( int startIdx", "double inReal[]");
+    let guarded = extract_section(&out.java, "RetCode smaImpl( int startIdx", "double inReal[]");
     let guarded = format!("{guarded}{}", extract_section(&out.java, "double inReal[]", "float inReal[]"));
     assert!(
         guarded.contains("OUT_OF_RANGE_START_INDEX"),
@@ -1310,10 +1311,10 @@ fn test_java_synth_private_omits_validation() {
     let (func, enums) = load_synth("synth4");
     let out = generate_all(&func, &enums);
 
-    let private = extract_section(&out.java, "RetCode SYNTH4_Private(", "RetCode SYNTH4_Impl(");
+    let private = extract_section(&out.java, "RetCode synth4Private(", "RetCode synth4Impl(");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
-        "Java SYNTH4_Private should NOT have start index validation"
+        "Java synth4Private should NOT have start index validation"
     );
 }
 
@@ -1324,7 +1325,7 @@ fn test_rust_sma_guarded_has_validation() {
 
     // The guarded Rust function holds the algorithm and validates first, bounded
     // by the end of the impl block.
-    let guarded = extract_section(&out.rust, "pub(crate) fn SMA_Impl(", "\n}\n");
+    let guarded = extract_section(&out.rust, "pub(crate) fn sma_impl(", "\n}\n");
     assert!(
         guarded.contains("endIdx < startIdx"),
         "Rust guarded SMA should have endIdx < startIdx check"
@@ -1338,13 +1339,13 @@ fn test_rust_synth_private_omits_validation() {
 
     // `pub(crate)`, matching C's file-`static` TA_SYNTH4_Private (#180): skipping
     // validation is only sound while the callers are the guarded bodies.
-    let private = extract_section(&out.rust, "pub(crate) fn SYNTH4_Private(", "\n}\n");
+    let private = extract_section(&out.rust, "pub(crate) fn synth4_private(", "\n}\n");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
-        "Rust SYNTH4_Private should NOT have range validation"
+        "Rust synth4_private should NOT have range validation"
     );
     assert!(
-        !out.rust.contains("pub fn SYNTH4_Private("),
+        !out.rust.contains("pub fn synth4_private("),
         "Rust synth4_private must not be crate-public: it is the one entry point with no \
          validation prologue, so a `pub` here bypasses the TA_MAX_INDEX bound (#180)"
     );

@@ -66,7 +66,7 @@ pub fn guarded_docs(
         "Values are written only where the indicator is defined. The returned \
          {{@link OutRange}} says where they start and how many there are; nothing outside \
          that range is touched, and the library never pads with NaN. A valid range shorter \
-         than {{@link Core#{java_name}_Lookback}} is a <b>success with no values</b> \
+         than {{@link Core#{java_name}Lookback}} is a <b>success with no values</b> \
          ({{@code count() == 0}}), not an error."
     ));
 
@@ -287,7 +287,7 @@ fn see_also_link(entry: &str, func: &FuncDef, registry: &Registry) -> Option<Str
     if !registry.contains(&key) {
         return None;
     }
-    Some(format!("Core#{}", registry.name_of(&key)))
+    Some(format!("Core#{}", super::common::camel_words(&registry.name_of(&key))))
 }
 
 // ---------------------------------------------------------------------------

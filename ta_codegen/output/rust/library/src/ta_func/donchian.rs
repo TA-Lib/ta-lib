@@ -65,7 +65,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::DONCHIAN`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::donchian`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_DONCHIAN_Lookback")]
     #[inline]
-    pub fn DONCHIAN_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn donchian_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -86,10 +86,10 @@ impl Core {
         }
         return Ok((optInTimePeriod - 1) as usize);
     }
-    /// C-shaped body behind [`Core::DONCHIAN`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::donchian`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn DONCHIAN_Impl(
+    pub(crate) fn donchian_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -113,7 +113,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.DONCHIAN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.donchian_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -276,7 +276,7 @@ impl Core {
     /// let mut middle_band = vec![0.0; 252];
     /// let mut lower_band = vec![0.0; 252];
     ///
-    /// let out_range = core.DONCHIAN(
+    /// let out_range = core.donchian(
     ///     0, high.len() - 1, &high, &low, 20,
     ///     &mut upper_band, &mut middle_band, &mut lower_band,
     /// )?;
@@ -285,7 +285,7 @@ impl Core {
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     #[doc(alias = "TA_DONCHIAN")]
-    pub fn DONCHIAN(
+    pub fn donchian(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -302,7 +302,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.DONCHIAN_Lookback(optInTimePeriod)?;
+        let _guardLb = self.donchian_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -322,7 +322,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.DONCHIAN_Impl(
+        let retCode = self.donchian_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -343,7 +343,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live DONCHIAN stream: one value per closed bar, bit-identical to [`Core::DONCHIAN`]
+/// Live DONCHIAN stream: one value per closed bar, bit-identical to [`Core::donchian`]
 /// over the same series. Open with [`Core::donchian_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -608,7 +608,7 @@ impl Core {
     }
 
     /// Open a live DONCHIAN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::DONCHIAN`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::donchian`] at that bar.
     ///
     /// # Errors
     ///
@@ -641,7 +641,7 @@ impl Core {
     }
 
     /// [`Core::donchian_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::DONCHIAN`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::donchian`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -661,7 +661,7 @@ impl Core {
     /// let mut batch_upper_band = vec![0.0; 252];
     /// let mut batch_middle_band = vec![0.0; 252];
     /// let mut batch_lower_band = vec![0.0; 252];
-    /// let batch = core.DONCHIAN(0, high.len() - 1, &high, &low, 20, &mut batch_upper_band, &mut batch_middle_band, &mut batch_lower_band)?;
+    /// let batch = core.donchian(0, high.len() - 1, &high, &low, 20, &mut batch_upper_band, &mut batch_middle_band, &mut batch_lower_band)?;
     ///
     /// let mut upper_band = vec![0.0; 252];
     /// let mut middle_band = vec![0.0; 252];
@@ -688,7 +688,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.DONCHIAN_Lookback(optInTimePeriod)?;
+        let _guardLb = self.donchian_lookback(optInTimePeriod)?;
         if inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -856,7 +856,7 @@ impl DonchianStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::DONCHIAN`] reports over the same bars: the opener sets it
+    /// It is what [`Core::donchian`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

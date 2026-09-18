@@ -1709,7 +1709,9 @@ fn check_java_jars(
             continue;
         }
         if entry.path().join(format!("{name}.yaml")).exists() {
-            expected.push(name.to_uppercase());
+            // The jar spells the batch entry point as Java does; the directory
+            // name is the canonical one it is folded from.
+            expected.push(backends::common::camel_words(&name.to_uppercase()));
         }
     }
     expected.sort();
@@ -2408,7 +2410,7 @@ const EXAMPLE_QUICK_START: FrontPageExample = FrontPageExample {
 let core = Core::new();
 let mut sma = vec![0.0; close.len()];
 
-let out = core.SMA(0, close.len() - 1, &close, 3, &mut sma)?;
+let out = core.sma(0, close.len() - 1, &close, 3, &mut sma)?;
 
 // The first 3-period average lands at input index 2 (the lookback):
 assert_eq!((out.beg_idx, out.count), (2, 8));
@@ -2733,7 +2735,7 @@ $EX_QUICK_START_DOC
 //! * Inputs are `&[f64]` slices, computed over the range `startIdx..=endIdx`.
 //! * Outputs are written into caller-provided `&mut` slices. An indicator consumes a
 //!   number of leading values (its *lookback*) before producing output — query it with
-//!   the matching `*_Lookback` method (e.g. [`Core::SMA_Lookback`]).
+//!   the matching `*_lookback` method (e.g. [`Core::sma_lookback`]).
 //! * Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters
 //!   [`Core::REAL_DEFAULT`], to select their default value; a moving-average type takes
 //!   [`MAType::DEFAULT`] instead, the sentinel being unrepresentable at a typed enum.

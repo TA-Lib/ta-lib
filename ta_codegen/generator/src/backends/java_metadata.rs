@@ -300,9 +300,11 @@ fn clean_stale(dir: &Path, keep: &[&str]) {
         return;
     };
     for entry in entries.flatten() {
+        let path = entry.path();
+        let is_java = path.extension().is_some_and(|e| e.eq_ignore_ascii_case("java"));
         let name = entry.file_name().to_string_lossy().to_string();
-        if name.ends_with(".java") && !keep.contains(&name.as_str()) {
-            std::fs::remove_file(entry.path()).ok();
+        if is_java && !keep.contains(&name.as_str()) {
+            std::fs::remove_file(&path).ok();
             println!("  removed stale Java metadata file {name}");
         }
     }
@@ -1212,7 +1214,7 @@ final class Dispatch {
     );
 
     for f in rows {
-        let camel = f.name.clone();
+        let camel = super::common::camel_words(&f.name);
 
         // Argument order comes STRAIGHT from the row the registry publishes:
         // a price bundle is one slot, and `signature_components` is the order
@@ -1270,7 +1272,7 @@ final class Dispatch {
     );
 
     for f in rows {
-        let camel = f.name.clone();
+        let camel = super::common::camel_words(&f.name);
         let mut args: Vec<String> = Vec::new();
         for (k, opt) in f.opt_inputs.iter().enumerate() {
             match &opt.domain {
@@ -1282,7 +1284,7 @@ final class Dispatch {
             }
         }
         let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}_Lookback({});", args.join(", "));
+        let _ = writeln!(s, "            return core.{camel}Lookback({});", args.join(", "));
     }
 
     s.push_str(

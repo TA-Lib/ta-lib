@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#TSF} consumes before it can
+    * Number of leading input bars {@link Core#tsf} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -29,7 +29,7 @@
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int TSF_Lookback( int optInTimePeriod )
+   public int tsfLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -39,13 +39,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode TSF_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode tsfImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -95,7 +95,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = TSF_Lookback(optInTimePeriod);
+      lookbackTotal = tsfLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -233,13 +233,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode TSF_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode tsfImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -272,7 +272,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = TSF_Lookback(optInTimePeriod);
+      lookbackTotal = tsfLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -344,7 +344,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TSF_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#tsfLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -368,26 +368,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#LINEARREG
-    * @see Core#LINEARREG_SLOPE
-    * @see Core#LINEARREG_INTERCEPT
-    * @see Core#LINEARREG_ANGLE
+    * @see Core#linearreg
+    * @see Core#linearregSlope
+    * @see Core#linearregIntercept
+    * @see Core#linearregAngle
     */
-   public OutRange TSF( int startIdx,
+   public OutRange tsf( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("TSF", startIdx, endIdx);
-      int guardStart = clampedStart("TSF", startIdx, TSF_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("TSF", startIdx, tsfLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TSF", "inReal", inReal, guardInLen);
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = tsfImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TSF", retCode);
       }
@@ -405,7 +405,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TSF_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#tsfLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -429,26 +429,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#LINEARREG
-    * @see Core#LINEARREG_SLOPE
-    * @see Core#LINEARREG_INTERCEPT
-    * @see Core#LINEARREG_ANGLE
+    * @see Core#linearreg
+    * @see Core#linearregSlope
+    * @see Core#linearregIntercept
+    * @see Core#linearregAngle
     */
-   public OutRange TSF( int startIdx,
+   public OutRange tsf( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("TSF", startIdx, endIdx);
-      int guardStart = clampedStart("TSF", startIdx, TSF_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("TSF", startIdx, tsfLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TSF", "inReal", inReal, guardInLen);
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = tsfImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TSF", retCode);
       }
@@ -458,7 +458,7 @@
 
    /**
     * A live TSF stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#TSF} over the same series.
+    * closed bar, bit-identical to {@link Core#tsf} over the same series.
     * Open with {@link Core#tsfOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -495,7 +495,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#TSF} reports over the same bars: the
+       * <p>It is what {@link Core#tsf} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -872,7 +872,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = TSF_Lookback(optInTimePeriod);
+      lookbackTotal = tsfLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1080,8 +1080,8 @@
    /**
     * Open a live TSF stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#TSF} at that bar.
-    * <p>The history must hold at least {@code TSF_Lookback(...) + 1} bars
+    * to {@link Core#tsf} at that bar.
+    * <p>The history must hold at least {@code tsfLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1098,7 +1098,7 @@
    }
    /**
     * {@link Core#tsfOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#TSF} over the whole history in the same single pass
+    * to {@link Core#tsf} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1111,7 +1111,7 @@
    {
       requireArgument("TSF openAndFill", "inReal", inReal);
       requireHistory("TSF openAndFill", inReal.length);
-      int guardOutLen = openFillCount("TSF openAndFill", inReal.length, TSF_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("TSF openAndFill", inReal.length, tsfLookback(optInTimePeriod));
       requireLength("TSF openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("TSF openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

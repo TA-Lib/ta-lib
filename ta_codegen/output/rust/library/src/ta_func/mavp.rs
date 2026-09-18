@@ -70,7 +70,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::MAVP`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::mavp`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -87,7 +87,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MAVP_Lookback")]
     #[inline]
-    pub fn MAVP_Lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
+    pub fn mavp_lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
         } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
@@ -107,12 +107,12 @@ impl Core {
         if optInMinPeriod > optInMaxPeriod {
             return Err(RetCode::BadParam);
         }
-        return Ok(self.MA_Lookback(optInMaxPeriod, optInMAType)?);
+        return Ok(self.ma_lookback(optInMaxPeriod, optInMAType)?);
     }
-    /// C-shaped body behind [`Core::MAVP`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::mavp`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn MAVP_Impl(
+    pub(crate) fn mavp_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -144,7 +144,7 @@ impl Core {
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::SMA;
         }
-        let _assertLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
+        let _assertLb = self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx < inPeriods.len());
@@ -185,7 +185,7 @@ impl Core {
         }
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.MA_Lookback(optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
+        lookbackTotal = self.ma_lookback(optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -308,7 +308,7 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            let _xr0 = match self.MA(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localFinalArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
+            let _xr0 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localFinalArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
             localBegIdx = _xr0.beg_idx;
             localNbElement = _xr0.count;
             retCode = RetCode::Success;
@@ -361,7 +361,7 @@ impl Core {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
                     // Calculation of the MA required.
-                    let _xr1 = match self.MA(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
+                    let _xr1 = match self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
                     localBegIdx = _xr1.beg_idx;
                     localNbElement = _xr1.count;
                     retCode = RetCode::Success;
@@ -452,7 +452,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.MAVP(
+    /// let out_range = core.mavp(
     ///     0, data.len() - 1, &data, &periods, 2, 30, MAType::SMA,
     ///     &mut out,
     /// )?;
@@ -463,11 +463,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::MA`] · [`Core::SMA`] · [`Core::MAMA`] · [`Core::T3`]
+    /// [`MA`](Core::ma) · [`SMA`](Core::sma) · [`MAMA`](Core::mama) · [`T3`](Core::t3)
     #[doc(alias = "TA_MAVP")]
     #[doc(alias = "MovingAverageVariablePeriod")]
     #[doc(alias = "VariablePeriodMovingAverage")]
-    pub fn MAVP(
+    pub fn mavp(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -484,7 +484,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType)?;
+        let _guardLb = self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -498,7 +498,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MAVP_Impl(
+        let retCode = self.mavp_impl(
             startIdx,
             endIdx,
             inReal,
@@ -519,7 +519,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MAVP stream: one value per closed bar, bit-identical to [`Core::MAVP`]
+/// Live MAVP stream: one value per closed bar, bit-identical to [`Core::mavp`]
 /// over the same series. Open with [`Core::mavp_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -604,7 +604,7 @@ impl Core {
         // OWN (smaller) lookback would seed the recurrence from a different bar
         // and diverge for every period < maxPeriod (order-1 for recursive MAs,
         // running-sum residue for stable ones).
-        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType)?;
+        let lookbackTotal: usize = self.ma_lookback(optInMaxPeriod, optInMAType)?;
         let subStart: usize = if startIdx < lookbackTotal { lookbackTotal } else { startIdx };
         if historyLen < subStart + 1 {
             return Err(RetCode::InsufficientHistory);
@@ -629,7 +629,7 @@ impl Core {
     }
 
     /// Open a live MAVP stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MAVP`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::mavp`] at that bar.
     ///
     /// # Errors
     ///
@@ -660,7 +660,7 @@ impl Core {
     }
 
     /// [`Core::mavp_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MAVP`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::mavp`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -678,7 +678,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.MAVP(0, data.len() - 1, &data, &periods, 2, 30, MAType::SMA, &mut batch_out)?;
+    /// let batch = core.mavp(0, data.len() - 1, &data, &periods, 2, 30, MAType::SMA, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.mavp_open_and_fill(&data, &periods, 2, 30, MAType::SMA, &mut out)?;
@@ -715,7 +715,7 @@ impl Core {
         if inPeriods.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
-        let _guardLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType)?;
+        let _guardLb = self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -725,7 +725,7 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
-        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType)?;
+        let lookbackTotal: usize = self.ma_lookback(optInMaxPeriod, optInMAType)?;
         if historyLen < lookbackTotal + 1 {
             return Err(RetCode::InsufficientHistory);
         }
@@ -856,7 +856,7 @@ impl MavpStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::MAVP`] reports over the same bars: the opener sets it
+    /// It is what [`Core::mavp`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

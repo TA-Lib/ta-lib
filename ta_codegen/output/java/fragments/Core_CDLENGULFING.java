@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLENGULFING} consumes before it
+    * Number of leading input bars {@link Core#cdlengulfing} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,20 +23,20 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLENGULFING_Lookback( )
+   public int cdlengulfingLookback( )
    {
       return 2 ;
 
    }
-   RetCode CDLENGULFING_Impl( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdlengulfingImpl( int startIdx,
+                             int endIdx,
+                             double inOpen[],
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -50,7 +50,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLENGULFING_Lookback();
+      lookbackTotal = cdlengulfingLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -107,15 +107,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLENGULFING_Impl( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode cdlengulfingImpl( int startIdx,
+                             int endIdx,
+                             float inOpen[],
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -126,7 +126,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLENGULFING_Lookback();
+      lookbackTotal = cdlengulfingLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -168,8 +168,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLENGULFING_Lookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#cdlengulfingLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -196,11 +196,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHARAMI
-    * @see Core#CDLCOUNTERATTACK
-    * @see Core#CDLHARAMICROSS
+    * @see Core#cdlharami
+    * @see Core#cdlcounterattack
+    * @see Core#cdlharamicross
     */
-   public OutRange CDLENGULFING( int startIdx,
+   public OutRange cdlengulfing( int startIdx,
                                  int endIdx,
                                  double inOpen[],
                                  double inHigh[],
@@ -209,7 +209,7 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLENGULFING", startIdx, endIdx);
-      int guardStart = clampedStart("CDLENGULFING", startIdx, CDLENGULFING_Lookback());
+      int guardStart = clampedStart("CDLENGULFING", startIdx, cdlengulfingLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
@@ -219,7 +219,7 @@
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLENGULFING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlengulfingImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLENGULFING", retCode);
       }
@@ -243,8 +243,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLENGULFING_Lookback} is a
-    * <b>success with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#cdlengulfingLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -271,11 +271,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHARAMI
-    * @see Core#CDLCOUNTERATTACK
-    * @see Core#CDLHARAMICROSS
+    * @see Core#cdlharami
+    * @see Core#cdlcounterattack
+    * @see Core#cdlharamicross
     */
-   public OutRange CDLENGULFING( int startIdx,
+   public OutRange cdlengulfing( int startIdx,
                                  int endIdx,
                                  float inOpen[],
                                  float inHigh[],
@@ -284,7 +284,7 @@
                                  int outInteger[] )
    {
       requireIndexRange("CDLENGULFING", startIdx, endIdx);
-      int guardStart = clampedStart("CDLENGULFING", startIdx, CDLENGULFING_Lookback());
+      int guardStart = clampedStart("CDLENGULFING", startIdx, cdlengulfingLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
@@ -294,7 +294,7 @@
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLENGULFING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlengulfingImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLENGULFING", retCode);
       }
@@ -304,7 +304,7 @@
 
    /**
     * A live CDLENGULFING stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLENGULFING} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlengulfing} over the same series.
     * Open with {@link Core#cdlengulfingOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -329,7 +329,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLENGULFING} reports over the same bars: the
+       * <p>It is what {@link Core#cdlengulfing} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -512,7 +512,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLENGULFING_Lookback();
+      lookbackTotal = cdlengulfingLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -615,8 +615,8 @@
    /**
     * Open a live CDLENGULFING stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLENGULFING} at that bar.
-    * <p>The history must hold at least {@code CDLENGULFING_Lookback(...) + 1} bars
+    * to {@link Core#cdlengulfing} at that bar.
+    * <p>The history must hold at least {@code cdlengulfingLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -637,7 +637,7 @@
    }
    /**
     * {@link Core#cdlengulfingOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLENGULFING} over the whole history in the same single pass
+    * to {@link Core#cdlengulfing} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -653,7 +653,7 @@
       requireArgument("CDLENGULFING openAndFill", "inHigh", inHigh);
       requireArgument("CDLENGULFING openAndFill", "inLow", inLow);
       requireArgument("CDLENGULFING openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLENGULFING openAndFill", inOpen.length, CDLENGULFING_Lookback());
+      int guardOutLen = openFillCount("CDLENGULFING openAndFill", inOpen.length, cdlengulfingLookback());
       requireHistoryLength("CDLENGULFING openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLENGULFING openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLENGULFING openAndFill", "inClose", inClose.length, inOpen.length);

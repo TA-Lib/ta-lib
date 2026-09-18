@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#SAR} consumes before it can
+    * Number of leading input bars {@link Core#sar} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -30,7 +30,7 @@
     *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int SAR_Lookback( double optInAcceleration, double optInMaximum )
+   public int sarLookback( double optInAcceleration, double optInMaximum )
    {
       if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
@@ -48,15 +48,15 @@
       return 1 ;
 
    }
-   RetCode SAR_Impl( int startIdx,
-                     int endIdx,
-                     double inHigh[],
-                     double inLow[],
-                     double optInAcceleration,
-                     double optInMaximum,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode sarImpl( int startIdx,
+                    int endIdx,
+                    double inHigh[],
+                    double inLow[],
+                    double optInAcceleration,
+                    double optInMaximum,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -155,7 +155,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      OutRange _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.SUCCESS;
@@ -301,15 +301,15 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode SAR_Impl( int startIdx,
-                     int endIdx,
-                     float inHigh[],
-                     float inLow[],
-                     double optInAcceleration,
-                     double optInMaximum,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode sarImpl( int startIdx,
+                    int endIdx,
+                    float inHigh[],
+                    float inLow[],
+                    double optInAcceleration,
+                    double optInMaximum,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -353,7 +353,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      OutRange _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.SUCCESS;
@@ -469,7 +469,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#SAR_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#sarLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -497,11 +497,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SAREXT
-    * @see Core#MINUS_DM
-    * @see Core#PLUS_DM
+    * @see Core#sarext
+    * @see Core#minusDm
+    * @see Core#plusDm
     */
-   public OutRange SAR( int startIdx,
+   public OutRange sar( int startIdx,
                         int endIdx,
                         double inHigh[],
                         double inLow[],
@@ -510,7 +510,7 @@
                         double outReal[] )
    {
       requireIndexRange("SAR", startIdx, endIdx);
-      int guardStart = clampedStart("SAR", startIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+      int guardStart = clampedStart("SAR", startIdx, sarLookback(optInAcceleration, optInMaximum));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAR", "inHigh", inHigh, guardInLen);
@@ -518,7 +518,7 @@
       requireLength("SAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAR_Impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = sarImpl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("SAR", retCode);
       }
@@ -537,7 +537,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#SAR_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#sarLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -565,11 +565,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SAREXT
-    * @see Core#MINUS_DM
-    * @see Core#PLUS_DM
+    * @see Core#sarext
+    * @see Core#minusDm
+    * @see Core#plusDm
     */
-   public OutRange SAR( int startIdx,
+   public OutRange sar( int startIdx,
                         int endIdx,
                         float inHigh[],
                         float inLow[],
@@ -578,7 +578,7 @@
                         double outReal[] )
    {
       requireIndexRange("SAR", startIdx, endIdx);
-      int guardStart = clampedStart("SAR", startIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+      int guardStart = clampedStart("SAR", startIdx, sarLookback(optInAcceleration, optInMaximum));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("SAR", "inHigh", inHigh, guardInLen);
@@ -586,7 +586,7 @@
       requireLength("SAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAR_Impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = sarImpl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("SAR", retCode);
       }
@@ -596,7 +596,7 @@
 
    /**
     * A live SAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#SAR} over the same series.
+    * closed bar, bit-identical to {@link Core#sar} over the same series.
     * Open with {@link Core#sarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -627,7 +627,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#SAR} reports over the same bars: the
+       * <p>It is what {@link Core#sar} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1093,7 +1093,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      OutRange _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
       tempInt.value = _xr0.begIdx();
       tempInt.value = _xr0.count();
       retCode = RetCode.SUCCESS;
@@ -1291,8 +1291,8 @@
    /**
     * Open a live SAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#SAR} at that bar.
-    * <p>The history must hold at least {@code SAR_Lookback(...) + 1} bars
+    * to {@link Core#sar} at that bar.
+    * <p>The history must hold at least {@code sarLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
@@ -1311,7 +1311,7 @@
    }
    /**
     * {@link Core#sarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#SAR} over the whole history in the same single pass
+    * to {@link Core#sar} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1325,7 +1325,7 @@
       requireArgument("SAR openAndFill", "inHigh", inHigh);
       requireHistory("SAR openAndFill", inHigh.length);
       requireArgument("SAR openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("SAR openAndFill", inHigh.length, SAR_Lookback(optInAcceleration, optInMaximum));
+      int guardOutLen = openFillCount("SAR openAndFill", inHigh.length, sarLookback(optInAcceleration, optInMaximum));
       requireHistoryLength("SAR openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

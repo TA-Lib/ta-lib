@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#KC} consumes before it can
+    * Number of leading input bars {@link Core#kc} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -28,7 +28,7 @@
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
+   public int kcLookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
@@ -54,24 +54,24 @@
        * callees. Reporting the honest max keeps outBegIdx == lookback (issue #99),
        * which streaming's Open depends on.
        */
-      emaLookback = EMA_Lookback(optInTimePeriod);
-      atrLookback = ATR_Lookback(optInATRPeriod);
+      emaLookback = emaLookback(optInTimePeriod);
+      atrLookback = atrLookback(optInATRPeriod);
       return (emaLookback > atrLookback) ? emaLookback : atrLookback ;
 
    }
-   RetCode KC_Impl( int startIdx,
-                    int endIdx,
-                    double inHigh[],
-                    double inLow[],
-                    double inClose[],
-                    int optInTimePeriod,
-                    int optInATRPeriod,
-                    double optInNbDev,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outRealUpperBand[],
-                    double outRealMiddleBand[],
-                    double outRealLowerBand[] )
+   RetCode kcImpl( int startIdx,
+                   int endIdx,
+                   double inHigh[],
+                   double inLow[],
+                   double inClose[],
+                   int optInTimePeriod,
+                   int optInATRPeriod,
+                   double optInNbDev,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outRealUpperBand[],
+                   double outRealMiddleBand[],
+                   double outRealLowerBand[] )
    {
       RetCode retCode;
       int i = 0;
@@ -108,8 +108,8 @@
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BAD_PARAM ;
       }
-      emaLookback = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+      emaLookback = emaLookback(optInTimePeriod);
+      lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       /* Nothing to produce: the range is shorter than the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
        * endIdx is never read past its end.
@@ -131,21 +131,21 @@
       tpStartIdx = startIdx - emaLookback;
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
-      OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
+      OutRange _xr0 = typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
       /* The ATR consumes the price inputs before the moving average below writes
        * the middle band, which may be aliased onto one of them.
        */
-      OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
+      OutRange _xr1 = atr(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
       /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
        * own lookback puts its first output on startIdx, where the ATR's already is.
        */
-      OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
+      OutRange _xr2 = ema(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
       outBegIdx.value = _xr2.begIdx();
       outNBElement.value = _xr2.count();
       retCode = RetCode.SUCCESS;
@@ -162,19 +162,19 @@
       }
       return RetCode.SUCCESS ;
    }
-   RetCode KC_Impl( int startIdx,
-                    int endIdx,
-                    float inHigh[],
-                    float inLow[],
-                    float inClose[],
-                    int optInTimePeriod,
-                    int optInATRPeriod,
-                    double optInNbDev,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outRealUpperBand[],
-                    double outRealMiddleBand[],
-                    double outRealLowerBand[] )
+   RetCode kcImpl( int startIdx,
+                   int endIdx,
+                   float inHigh[],
+                   float inLow[],
+                   float inClose[],
+                   int optInTimePeriod,
+                   int optInATRPeriod,
+                   double optInNbDev,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outRealUpperBand[],
+                   double outRealMiddleBand[],
+                   double outRealLowerBand[] )
    {
       RetCode retCode;
       int i = 0;
@@ -211,8 +211,8 @@
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BAD_PARAM ;
       }
-      emaLookback = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+      emaLookback = emaLookback(optInTimePeriod);
+      lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       if( lookbackTotal > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -224,15 +224,15 @@
       tpStartIdx = startIdx - emaLookback;
       tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
       tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
-      OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
+      OutRange _xr0 = typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx.value = _xr0.begIdx();
       tempNbElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
+      OutRange _xr1 = atr(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
       tempBegIdx.value = _xr1.begIdx();
       tempNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
+      OutRange _xr2 = ema(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
       outBegIdx.value = _xr2.begIdx();
       outNBElement.value = _xr2.count();
       retCode = RetCode.SUCCESS;
@@ -267,7 +267,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#KC_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#kcLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -302,13 +302,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#ATR
-    * @see Core#TYPPRICE
-    * @see Core#BBANDS
-    * @see Core#ACCBANDS
+    * @see Core#ema
+    * @see Core#atr
+    * @see Core#typprice
+    * @see Core#bbands
+    * @see Core#accbands
     */
-   public OutRange KC( int startIdx,
+   public OutRange kc( int startIdx,
                        int endIdx,
                        double inHigh[],
                        double inLow[],
@@ -321,7 +321,7 @@
                        double outRealLowerBand[] )
    {
       requireIndexRange("KC", startIdx, endIdx);
-      int guardStart = clampedStart("KC", startIdx, KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev));
+      int guardStart = clampedStart("KC", startIdx, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("KC", "inHigh", inHigh, guardInLen);
@@ -332,7 +332,7 @@
       requireLength("KC", "outRealLowerBand", outRealLowerBand, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = kcImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("KC", retCode);
       }
@@ -359,7 +359,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#KC_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#kcLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -394,13 +394,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#ATR
-    * @see Core#TYPPRICE
-    * @see Core#BBANDS
-    * @see Core#ACCBANDS
+    * @see Core#ema
+    * @see Core#atr
+    * @see Core#typprice
+    * @see Core#bbands
+    * @see Core#accbands
     */
-   public OutRange KC( int startIdx,
+   public OutRange kc( int startIdx,
                        int endIdx,
                        float inHigh[],
                        float inLow[],
@@ -413,7 +413,7 @@
                        double outRealLowerBand[] )
    {
       requireIndexRange("KC", startIdx, endIdx);
-      int guardStart = clampedStart("KC", startIdx, KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev));
+      int guardStart = clampedStart("KC", startIdx, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("KC", "inHigh", inHigh, guardInLen);
@@ -424,7 +424,7 @@
       requireLength("KC", "outRealLowerBand", outRealLowerBand, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = kcImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("KC", retCode);
       }
@@ -434,7 +434,7 @@
 
    /**
     * A live KC stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#KC} over the same series.
+    * closed bar, bit-identical to {@link Core#kc} over the same series.
     * Open with {@link Core#kcOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -465,7 +465,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#KC} reports over the same bars: the
+       * <p>It is what {@link Core#kc} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -697,14 +697,14 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      if( historyLen < KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev) + 1 ) {
+      if( historyLen < kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
       double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
-      emaLookback = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+      emaLookback = emaLookback(optInTimePeriod);
+      lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       /* Nothing to produce: the range is shorter than the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
        * endIdx is never read past its end.
@@ -814,8 +814,8 @@
    /**
     * Open a live KC stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#KC} at that bar.
-    * <p>The history must hold at least {@code KC_Lookback(...) + 1} bars
+    * to {@link Core#kc} at that bar.
+    * <p>The history must hold at least {@code kcLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
@@ -836,7 +836,7 @@
    }
    /**
     * {@link Core#kcOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#KC} over the whole history in the same single pass
+    * to {@link Core#kc} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -851,7 +851,7 @@
       requireHistory("KC openAndFill", inHigh.length);
       requireArgument("KC openAndFill", "inLow", inLow);
       requireArgument("KC openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("KC openAndFill", inHigh.length, KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev));
+      int guardOutLen = openFillCount("KC openAndFill", inHigh.length, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev));
       requireHistoryLength("KC openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("KC openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("KC openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);

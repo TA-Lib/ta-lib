@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use crate::backends::common::{camel_words, pascal_words, snake_words};
+
 /// Target language for cross-call resolution — the same enum `PRAGMA TA_ALT`
 /// resolves against, re-exported here for the many `registry::Lang` call sites.
 /// One type: a second copy would be a second answer to "what are the backends".
@@ -120,7 +122,9 @@ impl Registry {
         if self.contains(func_name) {
             let name = self.name_of(func_name);
             return match lang {
-                Lang::Rust | Lang::CSharp | Lang::Java => name,
+                Lang::Rust => snake_words(&name),
+                Lang::Java => camel_words(&name),
+                Lang::CSharp => pascal_words(&name),
                 Lang::C => format!("TA_{name}"),
             };
         }
@@ -143,12 +147,14 @@ impl Registry {
              for the tier and language being generated."
         );
 
-        // One rule for every backend: `<NAME>_<Suffix>`, and C alone prefixes
-        // `TA_`.
-        let base = format!("{}_{}", self.name_of(&indicator), capitalize(&suffix));
+        // C keeps `TA_<NAME>_<Suffix>`; the other three fold the stem and the
+        // suffix into one identifier their own convention would have written.
+        let name = self.name_of(&indicator);
         match lang {
-            Lang::C => format!("TA_{base}"),
-            Lang::Rust | Lang::Java | Lang::CSharp => base,
+            Lang::C => format!("TA_{name}_{}", capitalize(&suffix)),
+            Lang::Rust => format!("{}_{}", snake_words(&name), suffix.to_lowercase()),
+            Lang::Java => format!("{}{}", camel_words(&name), capitalize(&suffix)),
+            Lang::CSharp => format!("{}{}", pascal_words(&name), capitalize(&suffix)),
         }
     }
 
@@ -207,11 +213,11 @@ mod tests {
             registry.resolve_call("sma_lookback", Lang::C),
             "TA_SMA_Lookback"
         );
-        assert_eq!(registry.resolve_call("sma_lookback", Lang::Rust), "SMA_Lookback");
-        assert_eq!(registry.resolve_call("sma_lookback", Lang::Java), "SMA_Lookback");
+        assert_eq!(registry.resolve_call("sma_lookback", Lang::Rust), "sma_lookback");
+        assert_eq!(registry.resolve_call("sma_lookback", Lang::Java), "smaLookback");
         assert_eq!(
             registry.resolve_call("sma_lookback", Lang::CSharp),
-            "SMA_Lookback"
+            "SmaLookback"
         );
 
         // Bare indicator names resolve to the PUBLIC entry point — the one a
@@ -221,42 +227,41 @@ mod tests {
         // needs no name change at all: its two tiers are overloads, and dropping
         // the two `out int` arguments is what selects the public one.
         assert_eq!(registry.resolve_call("ema", Lang::C), "TA_EMA");
-        assert_eq!(registry.resolve_call("ema", Lang::Rust), "EMA");
-        assert_eq!(registry.resolve_call("ema", Lang::Java), "EMA");
-        assert_eq!(registry.resolve_call("ema", Lang::CSharp), "EMA");
+        assert_eq!(registry.resolve_call("ema", Lang::Rust), "ema");
+        assert_eq!(registry.resolve_call("ema", Lang::Java), "ema");
+        assert_eq!(registry.resolve_call("ema", Lang::CSharp), "Ema");
 
         // `_private` is resolved by the same rule as any other suffix. Spelled
         // against `ema` because this is a pure name transformation and every
         // indicator is a valid subject; the construct itself is carried by the
         // SYNTH4 gate fixture (input_synth/README.md).
         assert_eq!(registry.resolve_call("ema_private", Lang::C), "TA_EMA_Private");
-        assert_eq!(registry.resolve_call("ema_private", Lang::Rust), "EMA_Private");
-        assert_eq!(registry.resolve_call("ema_private", Lang::Java), "EMA_Private");
+        assert_eq!(registry.resolve_call("ema_private", Lang::Rust), "ema_private");
+        assert_eq!(registry.resolve_call("ema_private", Lang::Java), "emaPrivate");
         assert_eq!(
             registry.resolve_call("ema_private", Lang::CSharp),
-            "EMA_Private"
+            "EmaPrivate"
         );
 
-        // The names that used to be hand-mangled per backend are now verbatim.
-        assert_eq!(registry.resolve_call("ma", Lang::Java), "MA");
-        assert_eq!(registry.resolve_call("willr", Lang::Java), "WILLR");
-        assert_eq!(registry.resolve_call("stochf", Lang::Java), "STOCHF");
-        assert_eq!(registry.resolve_call("ma_lookback", Lang::Java), "MA_Lookback");
-        assert_eq!(registry.resolve_call("willr", Lang::CSharp), "WILLR");
+        assert_eq!(registry.resolve_call("ma", Lang::Java), "ma");
+        assert_eq!(registry.resolve_call("willr", Lang::Java), "willr");
+        assert_eq!(registry.resolve_call("stochf", Lang::Java), "stochf");
+        assert_eq!(registry.resolve_call("ma_lookback", Lang::Java), "maLookback");
+        assert_eq!(registry.resolve_call("willr", Lang::CSharp), "Willr");
         assert_eq!(
             registry.resolve_call("ht_dcperiod", Lang::Rust),
-            "HT_DCPERIOD"
+            "ht_dcperiod"
         );
 
         // `stochrsi` and `stoch` are distinct identifiers in every backend —
         // longest-match parsing must not fold one into the other.
         assert_eq!(
             registry.resolve_call("stochrsi_lookback", Lang::CSharp),
-            "STOCHRSI_Lookback"
+            "StochrsiLookback"
         );
         assert_eq!(
             registry.resolve_call("stoch_lookback", Lang::CSharp),
-            "STOCH_Lookback"
+            "StochLookback"
         );
     }
 
@@ -277,9 +282,9 @@ mod tests {
         // Bare indicator names resolve to the PUBLIC entry point, in every
         // backend, which is what C has always done (#236 step 3).
         assert_eq!(registry.resolve_call("sma", Lang::C), "TA_SMA");
-        assert_eq!(registry.resolve_call("sma", Lang::Rust), "SMA");
-        assert_eq!(registry.resolve_call("sma", Lang::Java), "SMA");
-        assert_eq!(registry.resolve_call("sma", Lang::CSharp), "SMA");
+        assert_eq!(registry.resolve_call("sma", Lang::Rust), "sma");
+        assert_eq!(registry.resolve_call("sma", Lang::Java), "sma");
+        assert_eq!(registry.resolve_call("sma", Lang::CSharp), "Sma");
         // `sma` declares no Private variant, but the suffix rule is uniform.
         assert_eq!(registry.resolve_call("sma_private", Lang::C), "TA_SMA_Private");
     }

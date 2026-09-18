@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#FRACTAL} consumes before it can
+    * Number of leading input bars {@link Core#fractal} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int FRACTAL_Lookback( int optInLeftBars, int optInRightBars )
+   public int fractalLookback( int optInLeftBars, int optInRightBars )
    {
       if( optInLeftBars == Integer.MIN_VALUE ) {
          optInLeftBars = 2;
@@ -42,16 +42,16 @@
       return optInLeftBars + optInRightBars ;
 
    }
-   RetCode FRACTAL_Impl( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         int optInLeftBars,
-                         int optInRightBars,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         int outSwingHigh[],
-                         int outSwingLow[] )
+   RetCode fractalImpl( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        int optInLeftBars,
+                        int optInRightBars,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        int outSwingHigh[],
+                        int outSwingLow[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -84,7 +84,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = FRACTAL_Lookback(optInLeftBars, optInRightBars);
+      lookbackTotal = fractalLookback(optInLeftBars, optInRightBars);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -137,16 +137,16 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode FRACTAL_Impl( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         int optInLeftBars,
-                         int optInRightBars,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         int outSwingHigh[],
-                         int outSwingLow[] )
+   RetCode fractalImpl( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        int optInLeftBars,
+                        int optInRightBars,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        int outSwingHigh[],
+                        int outSwingLow[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -179,7 +179,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = FRACTAL_Lookback(optInLeftBars, optInRightBars);
+      lookbackTotal = fractalLookback(optInLeftBars, optInRightBars);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -252,8 +252,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#FRACTAL_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#fractalLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -285,12 +285,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AROON
-    * @see Core#MAXINDEX
-    * @see Core#MININDEX
-    * @see Core#MINMAXINDEX
+    * @see Core#aroon
+    * @see Core#maxindex
+    * @see Core#minindex
+    * @see Core#minmaxindex
     */
-   public OutRange FRACTAL( int startIdx,
+   public OutRange fractal( int startIdx,
                             int endIdx,
                             double inHigh[],
                             double inLow[],
@@ -300,7 +300,7 @@
                             int outSwingLow[] )
    {
       requireIndexRange("FRACTAL", startIdx, endIdx);
-      int guardStart = clampedStart("FRACTAL", startIdx, FRACTAL_Lookback(optInLeftBars, optInRightBars));
+      int guardStart = clampedStart("FRACTAL", startIdx, fractalLookback(optInLeftBars, optInRightBars));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("FRACTAL", "inHigh", inHigh, guardInLen);
@@ -309,7 +309,7 @@
       requireLength("FRACTAL", "outSwingLow", outSwingLow, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
+      RetCode retCode = fractalImpl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("FRACTAL", retCode);
       }
@@ -342,8 +342,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#FRACTAL_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#fractalLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -375,12 +375,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AROON
-    * @see Core#MAXINDEX
-    * @see Core#MININDEX
-    * @see Core#MINMAXINDEX
+    * @see Core#aroon
+    * @see Core#maxindex
+    * @see Core#minindex
+    * @see Core#minmaxindex
     */
-   public OutRange FRACTAL( int startIdx,
+   public OutRange fractal( int startIdx,
                             int endIdx,
                             float inHigh[],
                             float inLow[],
@@ -390,7 +390,7 @@
                             int outSwingLow[] )
    {
       requireIndexRange("FRACTAL", startIdx, endIdx);
-      int guardStart = clampedStart("FRACTAL", startIdx, FRACTAL_Lookback(optInLeftBars, optInRightBars));
+      int guardStart = clampedStart("FRACTAL", startIdx, fractalLookback(optInLeftBars, optInRightBars));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("FRACTAL", "inHigh", inHigh, guardInLen);
@@ -399,7 +399,7 @@
       requireLength("FRACTAL", "outSwingLow", outSwingLow, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
+      RetCode retCode = fractalImpl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("FRACTAL", retCode);
       }
@@ -409,7 +409,7 @@
 
    /**
     * A live FRACTAL stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#FRACTAL} over the same series.
+    * closed bar, bit-identical to {@link Core#fractal} over the same series.
     * Open with {@link Core#fractalOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -439,7 +439,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#FRACTAL} reports over the same bars: the
+       * <p>It is what {@link Core#fractal} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -726,7 +726,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = FRACTAL_Lookback(optInLeftBars, optInRightBars);
+      lookbackTotal = fractalLookback(optInLeftBars, optInRightBars);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -839,8 +839,8 @@
    /**
     * Open a live FRACTAL stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#FRACTAL} at that bar.
-    * <p>The history must hold at least {@code FRACTAL_Lookback(...) + 1} bars
+    * to {@link Core#fractal} at that bar.
+    * <p>The history must hold at least {@code fractalLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -859,7 +859,7 @@
    }
    /**
     * {@link Core#fractalOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#FRACTAL} over the whole history in the same single pass
+    * to {@link Core#fractal} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -873,7 +873,7 @@
       requireArgument("FRACTAL openAndFill", "inHigh", inHigh);
       requireHistory("FRACTAL openAndFill", inHigh.length);
       requireArgument("FRACTAL openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("FRACTAL openAndFill", inHigh.length, FRACTAL_Lookback(optInLeftBars, optInRightBars));
+      int guardOutLen = openFillCount("FRACTAL openAndFill", inHigh.length, fractalLookback(optInLeftBars, optInRightBars));
       requireHistoryLength("FRACTAL openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("FRACTAL openAndFill", "outSwingHigh", outSwingHigh, guardOutLen);
       requireLength("FRACTAL openAndFill", "outSwingLow", outSwingLow, guardOutLen);

@@ -319,7 +319,7 @@ fn test_java_mavp_period_bank() {
     // Lockstep advance + clamp-select.
     assert!(s.contains("for( int bankIdx = 0; bankIdx < sp.bank.length; bankIdx++ ) {"));
     // Shared max-period seeding anchor.
-    assert!(s.contains("MA_Lookback(optInMaxPeriod, optInMAType)"));
+    assert!(s.contains("maLookback(optInMaxPeriod, optInMAType)"));
     // Fill replays history (no per-bar array exists to un-discard).
     assert!(s.contains("java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1)"));
 }

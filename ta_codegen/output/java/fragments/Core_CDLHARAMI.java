@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLHARAMI} consumes before it can
+    * Number of leading input bars {@link Core#cdlharami} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,7 +23,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLHARAMI_Lookback( )
+   public int cdlharamiLookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
@@ -34,15 +34,15 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   RetCode CDLHARAMI_Impl( int startIdx,
-                           int endIdx,
-                           double inOpen[],
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           int outInteger[] )
+   RetCode cdlharamiImpl( int startIdx,
+                          int endIdx,
+                          double inOpen[],
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -66,7 +66,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLHARAMI_Lookback();
+      lookbackTotal = cdlharamiLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -146,15 +146,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLHARAMI_Impl( int startIdx,
-                           int endIdx,
-                           float inOpen[],
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           int outInteger[] )
+   RetCode cdlharamiImpl( int startIdx,
+                          int endIdx,
+                          float inOpen[],
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -175,7 +175,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLHARAMI_Lookback();
+      lookbackTotal = cdlharamiLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -240,7 +240,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLHARAMI_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlharamiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -267,10 +267,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHARAMICROSS
-    * @see Core#CDLENGULFING
+    * @see Core#cdlharamicross
+    * @see Core#cdlengulfing
     */
-   public OutRange CDLHARAMI( int startIdx,
+   public OutRange cdlharami( int startIdx,
                               int endIdx,
                               double inOpen[],
                               double inHigh[],
@@ -279,7 +279,7 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLHARAMI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLHARAMI", startIdx, CDLHARAMI_Lookback());
+      int guardStart = clampedStart("CDLHARAMI", startIdx, cdlharamiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMI", "inOpen", inOpen, guardInLen);
@@ -289,7 +289,7 @@
       requireLength("CDLHARAMI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHARAMI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlharamiImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLHARAMI", retCode);
       }
@@ -312,7 +312,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLHARAMI_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlharamiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -339,10 +339,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHARAMICROSS
-    * @see Core#CDLENGULFING
+    * @see Core#cdlharamicross
+    * @see Core#cdlengulfing
     */
-   public OutRange CDLHARAMI( int startIdx,
+   public OutRange cdlharami( int startIdx,
                               int endIdx,
                               float inOpen[],
                               float inHigh[],
@@ -351,7 +351,7 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLHARAMI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLHARAMI", startIdx, CDLHARAMI_Lookback());
+      int guardStart = clampedStart("CDLHARAMI", startIdx, cdlharamiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHARAMI", "inOpen", inOpen, guardInLen);
@@ -361,7 +361,7 @@
       requireLength("CDLHARAMI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHARAMI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlharamiImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLHARAMI", retCode);
       }
@@ -371,7 +371,7 @@
 
    /**
     * A live CDLHARAMI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLHARAMI} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlharami} over the same series.
     * Open with {@link Core#cdlharamiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -412,7 +412,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLHARAMI} reports over the same bars: the
+       * <p>It is what {@link Core#cdlharami} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -658,7 +658,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLHARAMI_Lookback();
+      lookbackTotal = cdlharamiLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -818,8 +818,8 @@
    /**
     * Open a live CDLHARAMI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLHARAMI} at that bar.
-    * <p>The history must hold at least {@code CDLHARAMI_Lookback(...) + 1} bars
+    * to {@link Core#cdlharami} at that bar.
+    * <p>The history must hold at least {@code cdlharamiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -840,7 +840,7 @@
    }
    /**
     * {@link Core#cdlharamiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLHARAMI} over the whole history in the same single pass
+    * to {@link Core#cdlharami} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -856,7 +856,7 @@
       requireArgument("CDLHARAMI openAndFill", "inHigh", inHigh);
       requireArgument("CDLHARAMI openAndFill", "inLow", inLow);
       requireArgument("CDLHARAMI openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLHARAMI openAndFill", inOpen.length, CDLHARAMI_Lookback());
+      int guardOutLen = openFillCount("CDLHARAMI openAndFill", inOpen.length, cdlharamiLookback());
       requireHistoryLength("CDLHARAMI openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHARAMI openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHARAMI openAndFill", "inClose", inClose.length, inOpen.length);

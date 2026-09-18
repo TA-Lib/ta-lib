@@ -161,6 +161,7 @@ fn vectors(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<Vector> {
 /// Emit the two probe functions for one indicator.
 fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let name = &func.name;
+    let sname = super::common::snake_words(&func.name);
     let vecs = vectors(func, enums);
     let opt_args: Vec<&str> = func.optional_inputs.iter().map(|p| p.name.as_str()).collect();
     let opt_tys: Vec<String> = func
@@ -198,7 +199,7 @@ fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let _ = writeln!(o, "fn sub_{name}(r: &mut Report) {{");
     let _ = writeln!(o, "    let core = Core::new();");
     let _ = writeln!(o, "    for &{destructure} in V_{name} {{");
-    let _ = writeln!(o, "        let Ok(lb) = core.{name}_Lookback({lookback_args}) else {{ continue; }};");
+    let _ = writeln!(o, "        let Ok(lb) = core.{sname}_lookback({lookback_args}) else {{ continue; }};");
     // Control arm: one bar longer than the quiet range produces exactly one
     // value, so it must index an array; with zero-length arrays that is a panic.
     let _ = writeln!(o, "        r.control(\"{name}\", label, run(|| {{");
@@ -225,7 +226,7 @@ fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     for (k, opt) in func.optional_inputs.iter().enumerate() {
         let _ = writeln!(o, "    let {} = {};", opt.name, first.values[k]);
     }
-    let _ = writeln!(o, "    let Ok(lb) = core.{name}_Lookback({lookback_args}) else {{ r.no_legs(\"{name}\"); return; }};");
+    let _ = writeln!(o, "    let Ok(lb) = core.{sname}_lookback({lookback_args}) else {{ r.no_legs(\"{name}\"); return; }};");
     let _ = writeln!(o, "    let (startIdx, endIdx) = (lb, lb + 4);");
     // Control arm first: the same call with EVERY leg correctly sized must succeed
     // and produce values. Without it "every leg tripped the preamble" is satisfiable
@@ -313,8 +314,8 @@ fn impl_call(
     let _ = writeln!(s, "{pad}let mut _n: usize = 0;");
     let _ = writeln!(
         s,
-        "{pad}let rc = core.{}_Impl({start_expr}, {end_expr}, {});",
-        func.name,
+        "{pad}let rc = core.{}_impl({start_expr}, {end_expr}, {});",
+        super::common::snake_words(&func.name),
         call_args(func, call_opts)
     );
     let _ = writeln!(s, "{pad}(rc, _n)");

@@ -62,7 +62,7 @@ public partial class Core
     *                output was mislabeled by up to one EMA lookback.
     */
    /// <summary>
-   /// Number of leading input bars <c>TRIX</c> consumes before it can produce
+   /// Number of leading input bars <c>Trix</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -73,7 +73,7 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period used at each of the three smoothing passes (default 30; range
    /// 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int TRIX_Lookback( int optInTimePeriod )
+   public int TrixLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -81,17 +81,17 @@ public partial class Core
          return -1;
       }
       int emaLookback = 0;
-      emaLookback = EMA_Lookback(optInTimePeriod);
-      return emaLookback * 3 + ROCR_Lookback(1) ;
+      emaLookback = EmaLookback(optInTimePeriod);
+      return emaLookback * 3 + RocrLookback(1) ;
 
    }
-   internal RetCode TRIX_Impl( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<double> inReal,
-                               int optInTimePeriod,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outReal )
+   internal RetCode TrixImpl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -105,10 +105,10 @@ public partial class Core
       int outIdx = 0;
       int lookbackEMA = 0;
       int lookbackTotal = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -124,8 +124,8 @@ public partial class Core
       outNBElement = 0;
       outBegIdx = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
+      lookbackEMA = EmaLookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + RocrLookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -218,13 +218,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode TRIX_Impl( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<float> inReal,
-                               int optInTimePeriod,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outReal )
+   internal RetCode TrixImpl( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -238,10 +238,10 @@ public partial class Core
       int outIdx = 0;
       int lookbackEMA = 0;
       int lookbackTotal = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -254,8 +254,8 @@ public partial class Core
       }
       outNBElement = 0;
       outBegIdx = 0;
-      lookbackEMA = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
+      lookbackEMA = EmaLookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + RocrLookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -333,7 +333,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TRIX_Lookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>TrixLookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -347,7 +347,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -362,18 +362,18 @@ public partial class Core
    /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
-   public OutRange TRIX( int startIdx,
+   public OutRange Trix( int startIdx,
                          int endIdx,
                          ReadOnlySpan<double> inReal,
                          int optInTimePeriod,
                          Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
+      int guardStart = ClampedStart(startIdx, endIdx, TrixLookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TRIX", "inReal", inReal.Length, guardInLen);
       RequireLength("TRIX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TrixImpl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
@@ -403,7 +403,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TRIX_Lookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>TrixLookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -417,7 +417,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -434,18 +434,18 @@ public partial class Core
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
    /// overlap of their byte ranges is rejected.</exception>
-   public OutRange TRIX( int startIdx,
+   public OutRange Trix( int startIdx,
                          int endIdx,
                          ReadOnlySpan<float> inReal,
                          int optInTimePeriod,
                          Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
+      int guardStart = ClampedStart(startIdx, endIdx, TrixLookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TRIX", "inReal", inReal.Length, guardInLen);
       RequireLength("TRIX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TrixImpl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
@@ -492,7 +492,7 @@ public partial class Core
       /// <c>Peek</c> — and <c>Clone</c> carries it verbatim. A plain <c>Open</c>
       /// hands back only the last value, a subset of this range, because the caller
       /// chose not to take the fill.</para>
-      /// <para>The last bar it can reach is <see cref="Core.MAX_INDEX"/>; past that
+      /// <para>The last bar it can reach is <see cref="Core.MaxIndex"/>; past that
       /// <c>Update</c> and <c>Advance</c> throw.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
@@ -505,13 +505,13 @@ public partial class Core
       /// rejected and that will not be re-fed, or a session with no print. Without
       /// it two handles on one feed drift a bar apart when only one of them skips.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, the last one the batch tier
+      /// has reached bar <see cref="Core.MaxIndex"/>, the last one the batch tier
       /// can address and the last this handle will count. <c>Update</c> throws the
       /// same there.</para>
       /// </remarks>
       public void Advance()
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("TRIX", "advance", RetCode.OutOfRangeEndIndex);
          outRangeCount++;
       }
@@ -542,7 +542,7 @@ public partial class Core
       /// which computes on whatever it is given: a handle retains its state, so a
       /// single non-finite bar would poison every later value it produces.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, which no re-feed clears: the
+      /// has reached bar <see cref="Core.MaxIndex"/>, which no re-feed clears: the
       /// handle has run out of index domain and only a shorter history can start a
       /// new one.</para>
       /// </remarks>
@@ -550,7 +550,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal )
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("TRIX", "update", RetCode.OutOfRangeEndIndex);
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIX", "update", RetCode.BadParam);
          core.TrixStepImpl(this, inReal);
@@ -566,7 +566,7 @@ public partial class Core
       /// concurrently with each other.</para>
       /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
-      /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
+      /// <see cref="Core.MaxIndex"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value <see cref="Update"/> would return for this bar, when it takes
@@ -642,7 +642,7 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -660,8 +660,8 @@ public partial class Core
       outNBElement = 0;
       outBegIdx = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = EMA_Lookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
+      lookbackEMA = EmaLookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + RocrLookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -793,23 +793,23 @@ public partial class Core
    /// <remarks>
    /// <para>The handle's <see cref="TrixStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>TRIX</c> reports for that bar.</para>
-   /// <para>The history must hold at least <c>TRIX_Lookback(...) + 1</c> bars
+   /// <para>The history must hold at least <c>TrixLookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>TrixOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TRIX_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TrixLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TRIX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TrixLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public TrixStream TrixOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TRIX open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TRIX open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TRIX open: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       return TrixOpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -818,7 +818,7 @@ public partial class Core
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>TRIX</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
-   /// <para>Output arrays must hold <c>historyLen - TRIX_Lookback(...)</c> values and
+   /// <para>Output arrays must hold <c>historyLen - TrixLookback(...)</c> values and
    /// must not alias the inputs or each other — this path writes the outputs and
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here. Both are checked before anything is
@@ -828,23 +828,23 @@ public partial class Core
    /// <see cref="TrixStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TRIX_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TrixLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">1-day percent ROC of the triple EMA. Must hold at least <c>historyLen -
-   /// TRIX_Lookback(...)</c> values.</param>
+   /// TrixLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TRIX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TrixLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public TrixStream TrixOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TRIX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TRIX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      int guardOutLen = OpenFillCount("TRIX", "openAndFill", inReal.Length, TRIX_Lookback(optInTimePeriod));
+      if( inReal.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TRIX openAndFill: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
+      int guardOutLen = OpenFillCount("TRIX", "openAndFill", inReal.Length, TrixLookback(optInTimePeriod));
       RequireFillLength("TRIX", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("TRIX", "openAndFill", RetCode.BadParam);

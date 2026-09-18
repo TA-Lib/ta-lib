@@ -73,7 +73,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::IMI`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::imi`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -87,7 +87,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_IMI_Lookback")]
     #[inline]
-    pub fn IMI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn imi_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -95,10 +95,10 @@ impl Core {
         }
         return Ok((optInTimePeriod - 1) as usize);
     }
-    /// C-shaped body behind [`Core::IMI`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::imi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn IMI_Impl(
+    pub(crate) fn imi_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -120,7 +120,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.IMI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.imi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
@@ -129,7 +129,7 @@ impl Core {
         let mut lookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         outIdx = 0;
-        lookback = self.IMI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookback = self.imi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookback {
             startIdx = lookback;
         }
@@ -215,7 +215,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.IMI(0, open.len() - 1, &open, &close, 14, &mut out)?;
+    /// let out_range = core.imi(0, open.len() - 1, &open, &close, 14, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -223,10 +223,10 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::RSI`]
+    /// [`RSI`](Core::rsi)
     #[doc(alias = "TA_IMI")]
     #[doc(alias = "IntradayMomentumIndex")]
-    pub fn IMI(
+    pub fn imi(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -241,7 +241,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.IMI_Lookback(optInTimePeriod)?;
+        let _guardLb = self.imi_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -255,7 +255,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.IMI_Impl(
+        let retCode = self.imi_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -274,7 +274,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live IMI stream: one value per closed bar, bit-identical to [`Core::IMI`]
+/// Live IMI stream: one value per closed bar, bit-identical to [`Core::imi`]
 /// over the same series. Open with [`Core::imi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -371,7 +371,7 @@ impl Core {
         let mut lookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         outIdx = 0;
-        lookback = self.IMI_Lookback(optInTimePeriod)?;
+        lookback = self.imi_lookback(optInTimePeriod)?;
         if startIdx < lookback {
             startIdx = lookback;
         }
@@ -437,7 +437,7 @@ impl Core {
     }
 
     /// Open a live IMI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::IMI`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::imi`] at that bar.
     ///
     /// # Errors
     ///
@@ -472,7 +472,7 @@ impl Core {
     }
 
     /// [`Core::imi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::IMI`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::imi`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -494,7 +494,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.IMI(0, open.len() - 1, &open, &close, 14, &mut batch_out)?;
+    /// let batch = core.imi(0, open.len() - 1, &open, &close, 14, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.imi_open_and_fill(&open, &close, 14, &mut out)?;
@@ -515,7 +515,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.IMI_Lookback(optInTimePeriod)?;
+        let _guardLb = self.imi_lookback(optInTimePeriod)?;
         if inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -653,7 +653,7 @@ impl ImiStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::IMI`] reports over the same bars: the opener sets it
+    /// It is what [`Core::imi`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

@@ -63,16 +63,16 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::MULT`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::mult`]: the number of leading input values consumed before the
     /// first output value can be produced.
     #[doc(alias = "TA_MULT_Lookback")]
-    pub fn MULT_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn mult_lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
-    /// C-shaped body behind [`Core::MULT`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::mult`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn MULT_Impl(
+    pub(crate) fn mult_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -88,7 +88,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.MULT_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.mult_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -149,7 +149,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.MULT(0, data0.len() - 1, &data0, &data1, &mut out)?;
+    /// let out_range = core.mult(0, data0.len() - 1, &data0, &data1, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -157,12 +157,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ADD`] · [`Core::SUB`] · [`Core::DIV`]
+    /// [`ADD`](Core::add) · [`SUB`](Core::sub) · [`DIV`](Core::div)
     #[doc(alias = "TA_MULT")]
     #[doc(alias = "VectorMultiply")]
     #[doc(alias = "VectorArithmeticMult")]
     #[doc(alias = "Element-wiseProduct")]
-    pub fn MULT(
+    pub fn mult(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -176,7 +176,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MULT_Lookback()?;
+        let _guardLb = self.mult_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal0.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -190,7 +190,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MULT_Impl(
+        let retCode = self.mult_impl(
             startIdx,
             endIdx,
             inReal0,
@@ -208,7 +208,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MULT stream: one value per closed bar, bit-identical to [`Core::MULT`]
+/// Live MULT stream: one value per closed bar, bit-identical to [`Core::mult`]
 /// over the same series. Open with [`Core::mult_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -294,7 +294,7 @@ impl Core {
     }
 
     /// Open a live MULT stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MULT`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::mult`] at that bar.
     ///
     /// # Errors
     ///
@@ -327,7 +327,7 @@ impl Core {
     }
 
     /// [`Core::mult_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MULT`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::mult`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -347,7 +347,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.MULT(0, data0.len() - 1, &data0, &data1, &mut batch_out)?;
+    /// let batch = core.mult(0, data0.len() - 1, &data0, &data1, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.mult_open_and_fill(&data0, &data1, &mut out)?;
@@ -368,7 +368,7 @@ impl Core {
         if inReal0.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MULT_Lookback()?;
+        let _guardLb = self.mult_lookback()?;
         if inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -474,7 +474,7 @@ impl MultStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::MULT`] reports over the same bars: the opener sets it
+    /// It is what [`Core::mult`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

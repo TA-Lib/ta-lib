@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#NVI} consumes before it can
+    * Number of leading input bars {@link Core#nvi} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,19 +22,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int NVI_Lookback( )
+   public int nviLookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode NVI_Impl( int startIdx,
-                     int endIdx,
-                     double inClose[],
-                     double inVolume[],
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode nviImpl( int startIdx,
+                    int endIdx,
+                    double inClose[],
+                    double inVolume[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -90,13 +90,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode NVI_Impl( int startIdx,
-                     int endIdx,
-                     float inClose[],
-                     float inVolume[],
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode nviImpl( int startIdx,
+                    int endIdx,
+                    float inClose[],
+                    float inVolume[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -149,7 +149,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#NVI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#nviLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -172,14 +172,14 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     */
-   public OutRange NVI( int startIdx,
+   public OutRange nvi( int startIdx,
                         int endIdx,
                         double inClose[],
                         double inVolume[],
                         double outReal[] )
    {
       requireIndexRange("NVI", startIdx, endIdx);
-      int guardStart = clampedStart("NVI", startIdx, NVI_Lookback());
+      int guardStart = clampedStart("NVI", startIdx, nviLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NVI", "inClose", inClose, guardInLen);
@@ -187,7 +187,7 @@
       requireLength("NVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = nviImpl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("NVI", retCode);
       }
@@ -211,7 +211,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#NVI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#nviLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -234,14 +234,14 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     */
-   public OutRange NVI( int startIdx,
+   public OutRange nvi( int startIdx,
                         int endIdx,
                         float inClose[],
                         float inVolume[],
                         double outReal[] )
    {
       requireIndexRange("NVI", startIdx, endIdx);
-      int guardStart = clampedStart("NVI", startIdx, NVI_Lookback());
+      int guardStart = clampedStart("NVI", startIdx, nviLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("NVI", "inClose", inClose, guardInLen);
@@ -249,7 +249,7 @@
       requireLength("NVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = nviImpl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("NVI", retCode);
       }
@@ -259,7 +259,7 @@
 
    /**
     * A live NVI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#NVI} over the same series.
+    * closed bar, bit-identical to {@link Core#nvi} over the same series.
     * Open with {@link Core#nviOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -285,7 +285,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#NVI} reports over the same bars: the
+       * <p>It is what {@link Core#nvi} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -573,8 +573,8 @@
    /**
     * Open a live NVI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#NVI} at that bar.
-    * <p>The history must hold at least {@code NVI_Lookback(...) + 1} bars
+    * to {@link Core#nvi} at that bar.
+    * <p>The history must hold at least {@code nviLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -591,7 +591,7 @@
    }
    /**
     * {@link Core#nviOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#NVI} over the whole history in the same single pass
+    * to {@link Core#nvi} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -605,7 +605,7 @@
       requireArgument("NVI openAndFill", "inClose", inClose);
       requireHistory("NVI openAndFill", inClose.length);
       requireArgument("NVI openAndFill", "inVolume", inVolume);
-      int guardOutLen = openFillCount("NVI openAndFill", inClose.length, NVI_Lookback());
+      int guardOutLen = openFillCount("NVI openAndFill", inClose.length, nviLookback());
       requireHistoryLength("NVI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("NVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {

@@ -132,7 +132,7 @@ public static class DivZeroTest
         OutRange r;
         try
         {
-            r = core.DIV(0, Num.Length - 1, Num, Den, outReal);
+            r = core.Div(0, Num.Length - 1, Num, Den, outReal);
         }
         catch (Exception e)
         {
@@ -159,7 +159,7 @@ public static class DivZeroTest
         // would land on the NaN rows and fail rather than looking right.
         var core = new Core();
         double[] outReal = new double[Num.Length];
-        OutRange r = core.DIV(4, 7, Num, Den, outReal);
+        OutRange r = core.Div(4, 7, Num, Den, outReal);
         _checks++;
         if (r.BegIdx != 4 || r.Count != 4)
         {
@@ -182,7 +182,7 @@ public static class DivZeroTest
         float[] n = new float[Num.Length], d = new float[Den.Length];
         for (int i = 0; i < Num.Length; i++) { n[i] = (float)Num[i]; d[i] = (float)Den[i]; }
         double[] outReal = new double[Num.Length];
-        core.DIV(0, Num.Length - 1, n, d, outReal);
+        core.Div(0, Num.Length - 1, n, d, outReal);
         for (int i = 0; i < Num.Length; i++)
         {
             Check("float", i, outReal[i]);

@@ -547,11 +547,11 @@ fn test_mama_nullable_fama_is_declinable_in_every_backend() {
     let (ma, ma_enums) = load_indicator("ma");
     for (lang, out, want) in [
         ("Rust", backends::rust_lang::generate(&ma, &ma_enums, &registry, &helpers),
-         "MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, None)"),
+         "mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, None)"),
         ("Java", backends::java::generate(&ma, &ma_enums, &registry, &helpers),
-         "MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null)"),
+         "mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, null)"),
         ("C#", backends::csharp::generate(&ma, &ma_enums, &registry, &helpers),
-         "MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
+         "Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
     ] {
         assert!(out.contains(want), "{lang}: MA's MAMA arm must decline FAMA ({want})");
         assert!(

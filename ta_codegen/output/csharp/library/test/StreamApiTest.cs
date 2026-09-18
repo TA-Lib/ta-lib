@@ -134,13 +134,13 @@ public static class StreamApiTest
         double[] closes = Closes(300);
         const int period = 14;
 
-        int lookback = core.SMA_Lookback(period);
+        int lookback = core.SmaLookback(period);
         var history = closes[..(lookback + 1)];
         Core.SmaStream s = core.SmaOpen(history, period);
 
         // Open seeds the value at the last history bar.
         var batch0 = new double[closes.Length];
-        OutRange r0 = core.SMA(0, lookback, closes, period, batch0);
+        OutRange r0 = core.Sma(0, lookback, closes, period, batch0);
         Check(Bits(s.Value) == Bits(batch0[r0.Count - 1]), "open seeds Value from the last history bar");
 
         int moved = 0;
@@ -149,7 +149,7 @@ public static class StreamApiTest
             double streamed = s.Update(closes[t]);
 
             var batch = new double[closes.Length];
-            OutRange r = core.SMA(0, t, closes, period, batch);
+            OutRange r = core.Sma(0, t, closes, period, batch);
             double expected = batch[r.Count - 1];
 
             if (Bits(streamed) != Bits(expected))
@@ -174,7 +174,7 @@ public static class StreamApiTest
         var core = new Core();
         double[] closes = Closes(120);
         const int period = 10;
-        int lookback = core.SMA_Lookback(period);
+        int lookback = core.SmaLookback(period);
 
         Core.SmaStream s = core.SmaOpen(closes[..(lookback + 1)], period);
         double before = s.Value;
@@ -199,7 +199,7 @@ public static class StreamApiTest
         var core = new Core();
         double[] closes = Closes(160);
         const int period = 12;
-        int lookback = core.SMA_Lookback(period);
+        int lookback = core.SmaLookback(period);
 
         Core.SmaStream a = core.SmaOpen(closes[..(lookback + 1)], period);
         for (int t = lookback + 1; t < 60; t++)
@@ -241,7 +241,7 @@ public static class StreamApiTest
         const int period = 20;
 
         var batch = new double[closes.Length];
-        OutRange br = core.SMA(0, closes.Length - 1, closes, period, batch);
+        OutRange br = core.Sma(0, closes.Length - 1, closes, period, batch);
 
         var filled = new double[closes.Length];
         Core.SmaStream s = core.SmaOpenAndFill(closes, period, filled);
@@ -276,7 +276,7 @@ public static class StreamApiTest
         var core = new Core();
         double[] closes = Closes(200);
         const int period = 20;
-        int lb = core.SMA_Lookback(period);
+        int lb = core.SmaLookback(period);
 
         // Every warm-up length from the shortest legal one up, each brought to
         // the full series by Update: the range must not depend on where the
@@ -284,7 +284,7 @@ public static class StreamApiTest
         foreach (int warm in new[] { lb + 1, lb + 7, closes.Length / 2, closes.Length })
         {
             var batch = new double[closes.Length];
-            OutRange br = core.SMA(0, closes.Length - 1, closes, period, batch);
+            OutRange br = core.Sma(0, closes.Length - 1, closes, period, batch);
             Core.SmaStream s = core.SmaOpen(closes[..warm], period);
             Check(s.OutRange.BegIdx == lb && s.OutRange.Count == warm - lb,
                   $"Open({warm}) reports (lookback, {warm} - lookback)");
@@ -321,7 +321,7 @@ public static class StreamApiTest
         }
         // The positive half, so this is not a rejection sweep.
         {
-            int mavpLb = core.MAVP_Lookback(1, 30, MAType.SMA);
+            int mavpLb = core.MavpLookback(1, 30, MAType.SMA);
             var px = closes[..(mavpLb + 3)];
             Core.MavpStream mv = core.MavpOpen(px, px, 1, 30, MAType.SMA);
             Check(mv.OutRange.BegIdx == mavpLb && mv.OutRange.Count == 3,
@@ -343,7 +343,7 @@ public static class StreamApiTest
         var core = new Core();
         double[] closes = Closes(100);
         const int period = 30;
-        int lookback = core.SMA_Lookback(period);
+        int lookback = core.SmaLookback(period);
 
         // Exactly `lookback` bars is one short: no output is defined.
         CheckThrows<InsufficientHistoryException>(
@@ -526,7 +526,7 @@ public static class StreamApiTest
     {
         var core = new Core();
         double[] closes = Closes(252);
-        int produced = closes.Length - core.MAMA_Lookback(0.5, 0.05);
+        int produced = closes.Length - core.MamaLookback(0.5, 0.05);
 
         var refMama = new double[produced];
         var refFama = new double[produced];
@@ -574,7 +574,7 @@ public static class StreamApiTest
     {
         var core = new Core();
         double[] closes = Closes(252);
-        int lookback = core.SMA_Lookback(30);
+        int lookback = core.SmaLookback(30);
         int produced = closes.Length - lookback;
 
         Check(lookback == 29, "the probe needs a lookback it can be one short of");
@@ -640,7 +640,7 @@ public static class StreamApiTest
 
         foreach (int period in new[] { 30, 1 })
         {
-            int lb = core.MA_Lookback(period, MAType.EMA);
+            int lb = core.MaLookback(period, MAType.EMA);
             int produced = closes.Length - lb;
             core.MaOpenAndFill(closes, period, MAType.EMA, new double[produced]);
             CheckThrows<ArgumentException>(
@@ -649,7 +649,7 @@ public static class StreamApiTest
             _s5++;
         }
 
-        int mavpLb = core.MAVP_Lookback(2, 30, MAType.SMA);
+        int mavpLb = core.MavpLookback(2, 30, MAType.SMA);
         int mavpProduced = closes.Length - mavpLb;
         core.MavpOpenAndFill(closes, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
         CheckThrows<ArgumentException>(
@@ -658,7 +658,7 @@ public static class StreamApiTest
             "MAVP one short of the bound");
         _s5++;
 
-        int bbLb = core.BBANDS_Lookback(20, 2.0, 2.0, MAType.SMA);
+        int bbLb = core.BbandsLookback(20, 2.0, 2.0, MAType.SMA);
         int bbProduced = closes.Length - bbLb;
         core.BbandsOpenAndFill(closes, 20, 2.0, 2.0, MAType.SMA,
             new double[bbProduced], new double[bbProduced], new double[bbProduced]);
@@ -732,12 +732,12 @@ public static class StreamApiTest
 
         // ...and each still tracks ITS OWN core's batch call.
         var batch = new int[closes.Length];
-        OutRange r = tuned.CDLDOJI(0, closes.Length - 1, open, high, low, closes, batch);
+        OutRange r = tuned.Cdldoji(0, closes.Length - 1, open, high, low, closes, batch);
         Check(b.Value == batch[r.Count - 1],
               "a handle tracks the batch call on the Core it was opened from");
 
         var batchPlain = new int[closes.Length];
-        OutRange rp = plain.CDLDOJI(0, closes.Length - 1, open, high, low, closes, batchPlain);
+        OutRange rp = plain.Cdldoji(0, closes.Length - 1, open, high, low, closes, batchPlain);
         Check(a.Value == batchPlain[rp.Count - 1],
               "the default-settings handle tracks the default-settings batch call");
     }
@@ -1427,9 +1427,9 @@ public static class StreamApiTest
     private static int _u4Rejects;
     private static int _u4Holds;
 
-    /// <summary>Rule U4: the last bar a stream can count is <c>MAX_INDEX</c>.</summary>
+    /// <summary>Rule U4: the last bar a stream can count is <c>MaxIndex</c>.</summary>
     /// <remarks>
-    /// <para>No feed reaches it — <c>MAX_INDEX</c> is 100 million bars — and
+    /// <para>No feed reaches it — <c>MaxIndex</c> is 100 million bars — and
     /// <c>Advance()</c> is the only call that moves the count without O(period) work
     /// per bar.</para>
     /// <para>What this adds over the generator's source-text gate is the throw itself:
@@ -1443,13 +1443,13 @@ public static class StreamApiTest
         var core = new Core();
         Core.SmaStream s = core.SmaOpen(Closes(60), 14);
         OutRange at = s.OutRange;
-        for (int i = at.BegIdx + at.Count; i <= Core.MAX_INDEX; i++)
+        for (int i = at.BegIdx + at.Count; i <= Core.MaxIndex; i++)
         {
             s.Advance();
         }
         OutRange full = s.OutRange;
-        Check(full.BegIdx == at.BegIdx && full.BegIdx + full.Count == Core.MAX_INDEX + 1,
-              $"the last bar a stream counts is MAX_INDEX, reached ({full.BegIdx},{full.Count})");
+        Check(full.BegIdx == at.BegIdx && full.BegIdx + full.Count == Core.MaxIndex + 1,
+              $"the last bar a stream counts is MaxIndex, reached ({full.BegIdx},{full.Count})");
         _u4Ceilings++;
 
         /* Terminal, unlike a non-finite bar: the repeat is what proves no call
@@ -1457,7 +1457,7 @@ public static class StreamApiTest
         Check(RefusesPastTheCeiling(() => s.Advance())
                   && RefusesPastTheCeiling(() => s.Update(1.0))
                   && RefusesPastTheCeiling(() => s.Advance()),
-              "every counting call past MAX_INDEX must throw OutOfRangeEndIndex");
+              "every counting call past MaxIndex must throw OutOfRangeEndIndex");
         Check(double.IsFinite(s.Peek(1.0)),
               "Peek counts no bar, so it stays answerable past the ceiling");
         _u4Rejects++;

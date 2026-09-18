@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#ZLEMA} consumes before it can
+    * Number of leading input bars {@link Core#zlema} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int ZLEMA_Lookback( int optInTimePeriod )
+   public int zlemaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -34,16 +34,16 @@
       /* ZLEMA owns no TA_FUNC_UNST_ id. It borrows EMA's through this call, which
        * is why zlema.yaml must not declare `unstable_period`.
        */
-      return (optInTimePeriod - 1) / 2 + EMA_Lookback(optInTimePeriod) ;
+      return (optInTimePeriod - 1) / 2 + emaLookback(optInTimePeriod) ;
 
    }
-   RetCode ZLEMA_Impl( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode zlemaImpl( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -75,7 +75,7 @@
        * twice, which is 5e-12 relative where 2c - l cancels.
        */
       lag = (optInTimePeriod - 1) / 2;
-      lookbackTotal = ZLEMA_Lookback(optInTimePeriod);
+      lookbackTotal = zlemaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -136,13 +136,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode ZLEMA_Impl( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode zlemaImpl( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -166,7 +166,7 @@
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       lag = (optInTimePeriod - 1) / 2;
-      lookbackTotal = ZLEMA_Lookback(optInTimePeriod);
+      lookbackTotal = zlemaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -242,7 +242,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ZLEMA_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#zlemaLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -267,27 +267,27 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#HMA
-    * @see Core#MA
+    * @see Core#ema
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#hma
+    * @see Core#ma
     */
-   public OutRange ZLEMA( int startIdx,
+   public OutRange zlema( int startIdx,
                           int endIdx,
                           double inReal[],
                           int optInTimePeriod,
                           double outReal[] )
    {
       requireIndexRange("ZLEMA", startIdx, endIdx);
-      int guardStart = clampedStart("ZLEMA", startIdx, ZLEMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("ZLEMA", startIdx, zlemaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ZLEMA", "inReal", inReal, guardInLen);
       requireLength("ZLEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ZLEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = zlemaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ZLEMA", retCode);
       }
@@ -326,7 +326,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ZLEMA_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#zlemaLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -351,27 +351,27 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#HMA
-    * @see Core#MA
+    * @see Core#ema
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#hma
+    * @see Core#ma
     */
-   public OutRange ZLEMA( int startIdx,
+   public OutRange zlema( int startIdx,
                           int endIdx,
                           float inReal[],
                           int optInTimePeriod,
                           double outReal[] )
    {
       requireIndexRange("ZLEMA", startIdx, endIdx);
-      int guardStart = clampedStart("ZLEMA", startIdx, ZLEMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("ZLEMA", startIdx, zlemaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ZLEMA", "inReal", inReal, guardInLen);
       requireLength("ZLEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ZLEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = zlemaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ZLEMA", retCode);
       }
@@ -381,7 +381,7 @@
 
    /**
     * A live ZLEMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#ZLEMA} over the same series.
+    * closed bar, bit-identical to {@link Core#zlema} over the same series.
     * Open with {@link Core#zlemaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -410,7 +410,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#ZLEMA} reports over the same bars: the
+       * <p>It is what {@link Core#zlema} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -586,7 +586,7 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = ZLEMA_Lookback(optInTimePeriod);
+         int fillLb = zlemaLookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -619,7 +619,7 @@
        * twice, which is 5e-12 relative where 2c - l cancels.
        */
       lag = (optInTimePeriod - 1) / 2;
-      lookbackTotal = ZLEMA_Lookback(optInTimePeriod);
+      lookbackTotal = zlemaLookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -720,8 +720,8 @@
    /**
     * Open a live ZLEMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#ZLEMA} at that bar.
-    * <p>The history must hold at least {@code ZLEMA_Lookback(...) + 1} bars
+    * to {@link Core#zlema} at that bar.
+    * <p>The history must hold at least {@code zlemaLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -738,7 +738,7 @@
    }
    /**
     * {@link Core#zlemaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#ZLEMA} over the whole history in the same single pass
+    * to {@link Core#zlema} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -751,7 +751,7 @@
    {
       requireArgument("ZLEMA openAndFill", "inReal", inReal);
       requireHistory("ZLEMA openAndFill", inReal.length);
-      int guardOutLen = openFillCount("ZLEMA openAndFill", inReal.length, ZLEMA_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("ZLEMA openAndFill", inReal.length, zlemaLookback(optInTimePeriod));
       requireLength("ZLEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("ZLEMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

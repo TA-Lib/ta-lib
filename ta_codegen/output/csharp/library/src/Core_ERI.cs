@@ -55,7 +55,7 @@ public partial class Core
     *  090626 KL     First version (issue #361).
     */
    /// <summary>
-   /// Number of leading input bars <c>ERI</c> consumes before it can produce its
+   /// Number of leading input bars <c>Eri</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -66,7 +66,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the EMA of close (default 13; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int ERI_Lookback( int optInTimePeriod )
+   public int EriLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 13;
@@ -76,19 +76,19 @@ public partial class Core
       /* Exactly the EMA of close underneath: its lookback, unstable period
        * included, is this function's lookback.
        */
-      return EMA_Lookback(optInTimePeriod) ;
+      return EmaLookback(optInTimePeriod) ;
 
    }
-   internal RetCode ERI_Impl( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              ReadOnlySpan<double> inClose,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outBullPower,
-                              Span<double> outBearPower )
+   internal RetCode EriImpl( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             ReadOnlySpan<double> inClose,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outBullPower,
+                             Span<double> outBearPower )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -101,10 +101,10 @@ public partial class Core
       double k = 0;
       double tempHT = 0;
       double tempLT = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -134,7 +134,7 @@ public partial class Core
        * No division in the per-bar map: no 0/0, no NaN path (#112 by
        * construction). Bull >= Bear on every bar since high >= low.
        */
-      lookbackTotal = ERI_Lookback(optInTimePeriod);
+      lookbackTotal = EriLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -203,16 +203,16 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode ERI_Impl( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              ReadOnlySpan<float> inClose,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outBullPower,
-                              Span<double> outBearPower )
+   internal RetCode EriImpl( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             ReadOnlySpan<float> inClose,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outBullPower,
+                             Span<double> outBearPower )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -225,10 +225,10 @@ public partial class Core
       double k = 0;
       double tempHT = 0;
       double tempLT = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -242,7 +242,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBullPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBullPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBullPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBearPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBearPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outBearPower).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
-      lookbackTotal = ERI_Lookback(optInTimePeriod);
+      lookbackTotal = EriLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -316,8 +316,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>ERI_Lookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>EriLookback</c> is a <b>success with no
+   /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -334,7 +334,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -349,7 +349,7 @@ public partial class Core
    /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
-   public OutRange ERI( int startIdx,
+   public OutRange Eri( int startIdx,
                         int endIdx,
                         ReadOnlySpan<double> inHigh,
                         ReadOnlySpan<double> inLow,
@@ -358,7 +358,7 @@ public partial class Core
                         Span<double> outBullPower,
                         Span<double> outBearPower )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, ERI_Lookback(optInTimePeriod));
+      int guardStart = ClampedStart(startIdx, endIdx, EriLookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ERI", "inHigh", inHigh.Length, guardInLen);
@@ -366,7 +366,7 @@ public partial class Core
       RequireLength("ERI", "inClose", inClose.Length, guardInLen);
       RequireLength("ERI", "outBullPower", outBullPower.Length, guardOutLen);
       RequireLength("ERI", "outBearPower", outBearPower.Length, guardOutLen);
-      RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outBullPower, outBearPower);
+      RetCode retCode = EriImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outBullPower, outBearPower);
       if( retCode != RetCode.Success ) {
          throw Failure("ERI", retCode);
       }
@@ -398,8 +398,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>ERI_Lookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>EriLookback</c> is a <b>success with no
+   /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -416,7 +416,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -433,7 +433,7 @@ public partial class Core
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
    /// overlap of their byte ranges is rejected.</exception>
-   public OutRange ERI( int startIdx,
+   public OutRange Eri( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inHigh,
                         ReadOnlySpan<float> inLow,
@@ -442,7 +442,7 @@ public partial class Core
                         Span<double> outBullPower,
                         Span<double> outBearPower )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, ERI_Lookback(optInTimePeriod));
+      int guardStart = ClampedStart(startIdx, endIdx, EriLookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ERI", "inHigh", inHigh.Length, guardInLen);
@@ -450,7 +450,7 @@ public partial class Core
       RequireLength("ERI", "inClose", inClose.Length, guardInLen);
       RequireLength("ERI", "outBullPower", outBullPower.Length, guardOutLen);
       RequireLength("ERI", "outBearPower", outBearPower.Length, guardOutLen);
-      RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outBullPower, outBearPower);
+      RetCode retCode = EriImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outBullPower, outBearPower);
       if( retCode != RetCode.Success ) {
          throw Failure("ERI", retCode);
       }
@@ -509,7 +509,7 @@ public partial class Core
       /// <c>Peek</c> — and <c>Clone</c> carries it verbatim. A plain <c>Open</c>
       /// hands back only the last value, a subset of this range, because the caller
       /// chose not to take the fill.</para>
-      /// <para>The last bar it can reach is <see cref="Core.MAX_INDEX"/>; past that
+      /// <para>The last bar it can reach is <see cref="Core.MaxIndex"/>; past that
       /// <c>Update</c> and <c>Advance</c> throw.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
@@ -522,13 +522,13 @@ public partial class Core
       /// rejected and that will not be re-fed, or a session with no print. Without
       /// it two handles on one feed drift a bar apart when only one of them skips.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, the last one the batch tier
+      /// has reached bar <see cref="Core.MaxIndex"/>, the last one the batch tier
       /// can address and the last this handle will count. <c>Update</c> throws the
       /// same there.</para>
       /// </remarks>
       public void Advance()
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("ERI", "advance", RetCode.OutOfRangeEndIndex);
          outRangeCount++;
       }
@@ -558,7 +558,7 @@ public partial class Core
       /// which computes on whatever it is given: a handle retains its state, so a
       /// single non-finite bar would poison every later value it produces.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, which no re-feed clears: the
+      /// has reached bar <see cref="Core.MaxIndex"/>, which no re-feed clears: the
       /// handle has run out of index domain and only a shorter history can start a
       /// new one.</para>
       /// </remarks>
@@ -568,7 +568,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public EriValue Update( double inHigh, double inLow, double inClose )
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("ERI", "update", RetCode.OutOfRangeEndIndex);
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ERI", "update", RetCode.BadParam);
          core.EriStepImpl(this, inHigh, inLow, inClose);
@@ -584,7 +584,7 @@ public partial class Core
       /// concurrently with each other.</para>
       /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
-      /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
+      /// <see cref="Core.MaxIndex"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -667,7 +667,7 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
@@ -704,7 +704,7 @@ public partial class Core
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.
           */
-         lookbackTotal = ERI_Lookback(optInTimePeriod);
+         lookbackTotal = EriLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -767,7 +767,7 @@ public partial class Core
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.
           */
-         lookbackTotal = ERI_Lookback(optInTimePeriod);
+         lookbackTotal = EriLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -860,26 +860,26 @@ public partial class Core
    /// <remarks>
    /// <para>The handle's <see cref="EriStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>ERI</c> reports for that bar.</para>
-   /// <para>The history must hold at least <c>ERI_Lookback(...) + 1</c> bars
+   /// <para>The history must hold at least <c>EriLookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>EriOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price series. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price series. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price series. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="ERI_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="EriLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ERI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>EriLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public EriStream EriOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ERI open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ERI open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ERI open: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("ERI open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("ERI open: inClose is empty", nameof(inClose), RetCode.BadParam);
       RequireHistoryLength("ERI", "open", "inLow", inLow.Length, inHigh.Length);
@@ -892,7 +892,7 @@ public partial class Core
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>ERI</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
-   /// <para>Output arrays must hold <c>historyLen - ERI_Lookback(...)</c> values and
+   /// <para>Output arrays must hold <c>historyLen - EriLookback(...)</c> values and
    /// must not alias the inputs or each other — this path writes the outputs and
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here. Both are checked before anything is
@@ -904,27 +904,27 @@ public partial class Core
    /// <param name="inHigh">High price series. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price series. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price series. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="ERI_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="EriLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="outBullPower">High minus the EMA of close. Must hold at least <c>historyLen -
-   /// ERI_Lookback(...)</c> values.</param>
+   /// EriLookback(...)</c> values.</param>
    /// <param name="outBearPower">Low minus the EMA of close. Must hold at least <c>historyLen -
-   /// ERI_Lookback(...)</c> values.</param>
+   /// EriLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ERI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>EriLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public EriStream EriOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outBullPower, Span<double> outBearPower )
    {
       if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ERI openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ERI openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ERI openAndFill: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("ERI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("ERI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
-      int guardOutLen = OpenFillCount("ERI", "openAndFill", inHigh.Length, ERI_Lookback(optInTimePeriod));
+      int guardOutLen = OpenFillCount("ERI", "openAndFill", inHigh.Length, EriLookback(optInTimePeriod));
       RequireHistoryLength("ERI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ERI", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("ERI", "openAndFill", "outBullPower", outBullPower.Length, guardOutLen);

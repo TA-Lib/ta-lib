@@ -31,22 +31,22 @@ using TALib;
 
 var core = new Core();
 
-// Seed with warm-up history (>= SMA_Lookback(period) + 1 bars).
+// Seed with warm-up history (>= SmaLookback(period) + 1 bars).
 double[] history = /* ...your closing prices... */;
 Core.SmaStream s = core.SmaOpen(history, 30);  // Value starts at the last history bar
 
 // Each time a bar closes:
-double v = s.Update(newClose);                   // throws on a non-finite bar, or past MAX_INDEX
+double v = s.Update(newClose);                   // throws on a non-finite bar, or past MaxIndex
 
 // Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
 double provisional = s.Peek(formingClose);       // state left unchanged
 ```
 
-`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, what `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `Update` also rejects a bar past `Core.MAX_INDEX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
+`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, what `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `Update` also rejects a bar past `Core.MaxIndex`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
-- **Warm-up.** `Open` succeeds only if `history.Length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
+- **Warm-up.** `Open` succeeds only if `history.Length >= <Name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns exactly the value the next `Update` would, without committing — call it as often as the forming bar ticks. `Value` re-reads the last committed value without recomputing.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/csharp/#numerical_stability) and [candle settings](/api/csharp/#candle_settings) are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer: `Update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
@@ -85,7 +85,7 @@ var outReal = new double[history.Length];
 Core.SmaStream s = core.SmaOpenAndFill(history, 30, outReal);
 
 OutRange r = s.OutRange;    // the bars it has an output for
-// outReal[0 .. r.Count - 1] == what core.SMA(0, history.Length - 1, ...) writes
+// outReal[0 .. r.Count - 1] == what core.Sma(0, history.Length - 1, ...) writes
 // ...and s is live, ready for Update.
 ```
 
@@ -116,18 +116,18 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, or a bar past `Core.MAX_INDEX`. A rejection changes nothing at all — no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `MAX_INDEX` ceiling.
+`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, or a bar past `Core.MaxIndex`. A rejection changes nothing at all — no state, no value, and no range. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `MaxIndex` ceiling.
 
 | Condition | Exception |
 |---|---|
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
 | An optional parameter outside its documented range | `ArgumentException` |
 | A non-finite bar (NaN or ±Inf), or a non-finite real parameter | `ArgumentException` |
-| A bar past `Core.MAX_INDEX`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
+| A bar past `Core.MaxIndex`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 
 `InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> open: "` prefix, and it is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 
-Insufficient history is knowable in advance, so it need not be exceptional in your code: compare against `<NAME>_Lookback(params) + 1` before opening.
+Insufficient history is knowable in advance, so it need not be exceptional in your code: compare against `<Name>Lookback(params) + 1` before opening.
 
 ## Absolute-index outputs
 

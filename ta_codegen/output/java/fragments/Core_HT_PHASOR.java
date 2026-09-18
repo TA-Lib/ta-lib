@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#HT_PHASOR} consumes before it can
+    * Number of leading input bars {@link Core#htPhasor} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,19 +25,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int HT_PHASOR_Lookback( )
+   public int htPhasorLookback( )
    {
       /* See mama_lookback for an explanation of these */
       return 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()] ;
 
    }
-   RetCode HT_PHASOR_Impl( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outInPhase[],
-                           double outQuadrature[] )
+   RetCode htPhasorImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outInPhase[],
+                         double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -378,13 +378,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode HT_PHASOR_Impl( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outInPhase[],
-                           double outQuadrature[] )
+   RetCode htPhasorImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outInPhase[],
+                         double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -683,7 +683,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HT_PHASOR_Lookback} is a <b>success
+    * valid range shorter than {@link Core#htPhasorLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -707,21 +707,21 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#HT_DCPERIOD
-    * @see Core#HT_DCPHASE
-    * @see Core#HT_SINE
-    * @see Core#HT_TRENDMODE
-    * @see Core#MAMA
-    * @see Core#WMA
+    * @see Core#htDcperiod
+    * @see Core#htDcphase
+    * @see Core#htSine
+    * @see Core#htTrendmode
+    * @see Core#mama
+    * @see Core#wma
     */
-   public OutRange HT_PHASOR( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              double outInPhase[],
-                              double outQuadrature[] )
+   public OutRange htPhasor( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             double outInPhase[],
+                             double outQuadrature[] )
    {
       requireIndexRange("HT_PHASOR", startIdx, endIdx);
-      int guardStart = clampedStart("HT_PHASOR", startIdx, HT_PHASOR_Lookback());
+      int guardStart = clampedStart("HT_PHASOR", startIdx, htPhasorLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_PHASOR", "inReal", inReal, guardInLen);
@@ -729,7 +729,7 @@
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = htPhasorImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -749,7 +749,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HT_PHASOR_Lookback} is a <b>success
+    * valid range shorter than {@link Core#htPhasorLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -773,21 +773,21 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#HT_DCPERIOD
-    * @see Core#HT_DCPHASE
-    * @see Core#HT_SINE
-    * @see Core#HT_TRENDMODE
-    * @see Core#MAMA
-    * @see Core#WMA
+    * @see Core#htDcperiod
+    * @see Core#htDcphase
+    * @see Core#htSine
+    * @see Core#htTrendmode
+    * @see Core#mama
+    * @see Core#wma
     */
-   public OutRange HT_PHASOR( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              double outInPhase[],
-                              double outQuadrature[] )
+   public OutRange htPhasor( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             double outInPhase[],
+                             double outQuadrature[] )
    {
       requireIndexRange("HT_PHASOR", startIdx, endIdx);
-      int guardStart = clampedStart("HT_PHASOR", startIdx, HT_PHASOR_Lookback());
+      int guardStart = clampedStart("HT_PHASOR", startIdx, htPhasorLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_PHASOR", "inReal", inReal, guardInLen);
@@ -795,7 +795,7 @@
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = htPhasorImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -805,7 +805,7 @@
 
    /**
     * A live HT_PHASOR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#HT_PHASOR} over the same series.
+    * closed bar, bit-identical to {@link Core#htPhasor} over the same series.
     * Open with {@link Core#htPhasorOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -873,7 +873,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#HT_PHASOR} reports over the same bars: the
+       * <p>It is what {@link Core#htPhasor} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1775,8 +1775,8 @@
    /**
     * Open a live HT_PHASOR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#HT_PHASOR} at that bar.
-    * <p>The history must hold at least {@code HT_PHASOR_Lookback(...) + 1} bars
+    * to {@link Core#htPhasor} at that bar.
+    * <p>The history must hold at least {@code htPhasorLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -1791,7 +1791,7 @@
    }
    /**
     * {@link Core#htPhasorOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#HT_PHASOR} over the whole history in the same single pass
+    * to {@link Core#htPhasor} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1804,7 +1804,7 @@
    {
       requireArgument("HT_PHASOR openAndFill", "inReal", inReal);
       requireHistory("HT_PHASOR openAndFill", inReal.length);
-      int guardOutLen = openFillCount("HT_PHASOR openAndFill", inReal.length, HT_PHASOR_Lookback());
+      int guardOutLen = openFillCount("HT_PHASOR openAndFill", inReal.length, htPhasorLookback());
       requireLength("HT_PHASOR openAndFill", "outInPhase", outInPhase, guardOutLen);
       requireLength("HT_PHASOR openAndFill", "outQuadrature", outQuadrature, guardOutLen);
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {

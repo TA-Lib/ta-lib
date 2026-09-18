@@ -66,7 +66,7 @@ public partial class Core
     *               catch -- or a perfect correlation from a degenerate window.
     */
    /// <summary>
-   /// Number of leading input bars <c>CORREL</c> consumes before it can produce
+   /// Number of leading input bars <c>Correl</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -77,7 +77,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Rolling window length (default 30; range 1..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CORREL_Lookback( int optInTimePeriod )
+   public int CorrelLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -87,14 +87,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode CORREL_Impl( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<double> inReal0,
-                                 ReadOnlySpan<double> inReal1,
-                                 int optInTimePeriod,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<double> outReal )
+   internal RetCode CorrelImpl( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inReal0,
+                                ReadOnlySpan<double> inReal1,
+                                int optInTimePeriod,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -123,10 +123,10 @@ public partial class Core
       int j = 0;
       int windowStart = 0;
       int barsSinceReseed = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -341,14 +341,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode CORREL_Impl( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<float> inReal0,
-                                 ReadOnlySpan<float> inReal1,
-                                 int optInTimePeriod,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<double> outReal )
+   internal RetCode CorrelImpl( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inReal0,
+                                ReadOnlySpan<float> inReal1,
+                                int optInTimePeriod,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -377,10 +377,10 @@ public partial class Core
       int j = 0;
       int windowStart = 0;
       int barsSinceReseed = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -515,8 +515,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CORREL_Lookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CorrelLookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -530,7 +530,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -545,20 +545,20 @@ public partial class Core
    /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
-   public OutRange CORREL( int startIdx,
+   public OutRange Correl( int startIdx,
                            int endIdx,
                            ReadOnlySpan<double> inReal0,
                            ReadOnlySpan<double> inReal1,
                            int optInTimePeriod,
                            Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, CORREL_Lookback(optInTimePeriod));
+      int guardStart = ClampedStart(startIdx, endIdx, CorrelLookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CORREL", "inReal0", inReal0.Length, guardInLen);
       RequireLength("CORREL", "inReal1", inReal1.Length, guardInLen);
       RequireLength("CORREL", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CorrelImpl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CORREL", retCode);
       }
@@ -588,8 +588,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CORREL_Lookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CorrelLookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -603,7 +603,7 @@ public partial class Core
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -620,20 +620,20 @@ public partial class Core
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
    /// overlap of their byte ranges is rejected.</exception>
-   public OutRange CORREL( int startIdx,
+   public OutRange Correl( int startIdx,
                            int endIdx,
                            ReadOnlySpan<float> inReal0,
                            ReadOnlySpan<float> inReal1,
                            int optInTimePeriod,
                            Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, CORREL_Lookback(optInTimePeriod));
+      int guardStart = ClampedStart(startIdx, endIdx, CorrelLookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CORREL", "inReal0", inReal0.Length, guardInLen);
       RequireLength("CORREL", "inReal1", inReal1.Length, guardInLen);
       RequireLength("CORREL", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CorrelImpl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CORREL", retCode);
       }
@@ -694,7 +694,7 @@ public partial class Core
       /// neither does <c>Peek</c> — and <c>Clone</c> carries it verbatim. A plain
       /// <c>Open</c> hands back only the last value, a subset of this range,
       /// because the caller chose not to take the fill.</para>
-      /// <para>The last bar it can reach is <see cref="Core.MAX_INDEX"/>; past that
+      /// <para>The last bar it can reach is <see cref="Core.MaxIndex"/>; past that
       /// <c>Update</c> and <c>Advance</c> throw.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
@@ -707,13 +707,13 @@ public partial class Core
       /// rejected and that will not be re-fed, or a session with no print. Without
       /// it two handles on one feed drift a bar apart when only one of them skips.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, the last one the batch tier
+      /// has reached bar <see cref="Core.MaxIndex"/>, the last one the batch tier
       /// can address and the last this handle will count. <c>Update</c> throws the
       /// same there.</para>
       /// </remarks>
       public void Advance()
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("CORREL", "advance", RetCode.OutOfRangeEndIndex);
          outRangeCount++;
       }
@@ -760,7 +760,7 @@ public partial class Core
       /// which computes on whatever it is given: a handle retains its state, so a
       /// single non-finite bar would poison every later value it produces.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, which no re-feed clears: the
+      /// has reached bar <see cref="Core.MaxIndex"/>, which no re-feed clears: the
       /// handle has run out of index domain and only a shorter history can start a
       /// new one.</para>
       /// </remarks>
@@ -769,7 +769,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal0, double inReal1 )
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("CORREL", "update", RetCode.OutOfRangeEndIndex);
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("CORREL", "update", RetCode.BadParam);
          core.CorrelStepImpl(this, inReal0, inReal1);
@@ -785,7 +785,7 @@ public partial class Core
       /// concurrently with each other.</para>
       /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
-      /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
+      /// <see cref="Core.MaxIndex"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
       /// <param name="inReal0">This bar's value for <c>inReal0</c>.</param>
       /// <param name="inReal1">This bar's value for <c>inReal1</c>.</param>
@@ -1166,7 +1166,7 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inReal1.Length != inReal0.Length ) {
@@ -1453,25 +1453,25 @@ public partial class Core
    /// <remarks>
    /// <para>The handle's <see cref="CorrelStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>CORREL</c> reports for that bar.</para>
-   /// <para>The history must hold at least <c>CORREL_Lookback(...) + 1</c> bars
+   /// <para>The history must hold at least <c>CorrelLookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>CorrelOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal0">First data series (X) The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Second data series (Y) The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CORREL_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CorrelLookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CORREL_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CorrelLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public CorrelStream CorrelOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
    {
       if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal0.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL open: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TALibArgumentException("CORREL open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("CORREL", "open", "inReal1", inReal1.Length, inReal0.Length);
       return CorrelOpenInternal(inReal0, inReal1, 0, optInTimePeriod);
@@ -1482,35 +1482,35 @@ public partial class Core
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>CORREL</c> produces over
    /// the same series, so no separate batch call is needed for the warm-up plot.</para>
-   /// <para>Output arrays must hold <c>historyLen - CORREL_Lookback(...)</c> values
-   /// and must not alias the inputs or each other — this path writes the outputs
-   /// and then reads the input tail to seed its rings, so the batch tier's
-   /// in-place allowance does not carry over here. Both are checked before
-   /// anything is written, so an undersized span is an <c>ArgumentException</c>
-   /// naming it rather than a fault from inside the fill.</para>
+   /// <para>Output arrays must hold <c>historyLen - CorrelLookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here. Both are checked before anything is
+   /// written, so an undersized span is an <c>ArgumentException</c> naming it
+   /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
    /// <see cref="CorrelStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal0">First data series (X) The warm-up history, oldest bar first.</param>
    /// <param name="inReal1">Second data series (Y) The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CORREL_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CorrelLookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Correlation coefficient r in [-1, 1]. Must hold at least <c>historyLen -
-   /// CORREL_Lookback(...)</c> values.</param>
+   /// CorrelLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CORREL_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CorrelLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public CorrelStream CorrelOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal0.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal0.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "CORREL openAndFill: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TALibArgumentException("CORREL openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
-      int guardOutLen = OpenFillCount("CORREL", "openAndFill", inReal0.Length, CORREL_Lookback(optInTimePeriod));
+      int guardOutLen = OpenFillCount("CORREL", "openAndFill", inReal0.Length, CorrelLookback(optInTimePeriod));
       RequireHistoryLength("CORREL", "openAndFill", "inReal1", inReal1.Length, inReal0.Length);
       RequireFillLength("CORREL", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {

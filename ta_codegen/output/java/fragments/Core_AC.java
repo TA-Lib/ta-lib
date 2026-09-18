@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#AC} consumes before it can
+    * Number of leading input bars {@link Core#ac} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -30,7 +30,7 @@
     *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int AC_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   public int acLookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
@@ -51,19 +51,19 @@
        * the oscillator itself. Both terms are exactly the lookback of the
        * function they come from, so neither is restated here.
        */
-      return AO_Lookback(optInFastPeriod, optInSlowPeriod) + SMA_Lookback(optInSignalPeriod) ;
+      return aoLookback(optInFastPeriod, optInSlowPeriod) + smaLookback(optInSignalPeriod) ;
 
    }
-   RetCode AC_Impl( int startIdx,
-                    int endIdx,
-                    double inHigh[],
-                    double inLow[],
-                    int optInFastPeriod,
-                    int optInSlowPeriod,
-                    int optInSignalPeriod,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode acImpl( int startIdx,
+                   int endIdx,
+                   double inHigh[],
+                   double inLow[],
+                   int optInFastPeriod,
+                   int optInSlowPeriod,
+                   int optInSignalPeriod,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -130,7 +130,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      lookbackTotal = acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -242,16 +242,16 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode AC_Impl( int startIdx,
-                    int endIdx,
-                    float inHigh[],
-                    float inLow[],
-                    int optInFastPeriod,
-                    int optInSlowPeriod,
-                    int optInSignalPeriod,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode acImpl( int startIdx,
+                   int endIdx,
+                   float inHigh[],
+                   float inLow[],
+                   int optInFastPeriod,
+                   int optInSlowPeriod,
+                   int optInSignalPeriod,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -289,7 +289,7 @@
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      lookbackTotal = acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -380,7 +380,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AC_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#acLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -414,13 +414,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AO
-    * @see Core#MACD
-    * @see Core#MEDPRICE
-    * @see Core#PPO
-    * @see Core#SMA
+    * @see Core#ao
+    * @see Core#macd
+    * @see Core#medprice
+    * @see Core#ppo
+    * @see Core#sma
     */
-   public OutRange AC( int startIdx,
+   public OutRange ac( int startIdx,
                        int endIdx,
                        double inHigh[],
                        double inLow[],
@@ -430,7 +430,7 @@
                        double outReal[] )
    {
       requireIndexRange("AC", startIdx, endIdx);
-      int guardStart = clampedStart("AC", startIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardStart = clampedStart("AC", startIdx, acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AC", "inHigh", inHigh, guardInLen);
@@ -438,7 +438,7 @@
       requireLength("AC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = acImpl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AC", retCode);
       }
@@ -469,7 +469,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AC_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#acLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -503,13 +503,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AO
-    * @see Core#MACD
-    * @see Core#MEDPRICE
-    * @see Core#PPO
-    * @see Core#SMA
+    * @see Core#ao
+    * @see Core#macd
+    * @see Core#medprice
+    * @see Core#ppo
+    * @see Core#sma
     */
-   public OutRange AC( int startIdx,
+   public OutRange ac( int startIdx,
                        int endIdx,
                        float inHigh[],
                        float inLow[],
@@ -519,7 +519,7 @@
                        double outReal[] )
    {
       requireIndexRange("AC", startIdx, endIdx);
-      int guardStart = clampedStart("AC", startIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardStart = clampedStart("AC", startIdx, acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AC", "inHigh", inHigh, guardInLen);
@@ -527,7 +527,7 @@
       requireLength("AC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AC_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = acImpl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AC", retCode);
       }
@@ -537,7 +537,7 @@
 
    /**
     * A live AC stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#AC} over the same series.
+    * closed bar, bit-identical to {@link Core#ac} over the same series.
     * Open with {@link Core#acOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -576,7 +576,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#AC} reports over the same bars: the
+       * <p>It is what {@link Core#ac} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -885,7 +885,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      lookbackTotal = acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1079,8 +1079,8 @@
    /**
     * Open a live AC stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#AC} at that bar.
-    * <p>The history must hold at least {@code AC_Lookback(...) + 1} bars
+    * to {@link Core#ac} at that bar.
+    * <p>The history must hold at least {@code acLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1099,7 +1099,7 @@
    }
    /**
     * {@link Core#acOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#AC} over the whole history in the same single pass
+    * to {@link Core#ac} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1113,7 +1113,7 @@
       requireArgument("AC openAndFill", "inHigh", inHigh);
       requireHistory("AC openAndFill", inHigh.length);
       requireArgument("AC openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("AC openAndFill", inHigh.length, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+      int guardOutLen = openFillCount("AC openAndFill", inHigh.length, acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       requireHistoryLength("AC openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

@@ -1371,8 +1371,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // it is there: a `switch` with a `default:` arm reported a member nobody had
     // added an arm for as TA_INTERNAL_ERROR, on the wire, silently.
     s.push_str("enum RetCode {\n");
-    s.push_str("    Success(0), BadParam(2), AllocErr(3), OutOfRangeStartIndex(12),\n");
-    s.push_str("    OutOfRangeEndIndex(13), InsufficientHistory(17), InternalError(5000);\n");
+    s.push_str("    SUCCESS(0), BAD_PARAM(2), ALLOC_ERR(3), OUT_OF_RANGE_START_INDEX(12),\n");
+    s.push_str("    OUT_OF_RANGE_END_INDEX(13), INSUFFICIENT_HISTORY(17), INTERNAL_ERROR(5000);\n");
     s.push_str("    private final int cValue;\n");
     s.push_str("    RetCode(int cValue) { this.cValue = cValue; }\n");
     s.push_str("    public int toInt() { return cValue; }\n");
@@ -1422,10 +1422,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("}\n\n");
 
-    // RangeType — mirrors the shipped enum (RealBody=0, HighLow=1, Shadows=2) so the
+    // RangeType — mirrors the shipped enum (REAL_BODY=0, HIGH_LOW=1, SHADOWS=2) so the
     // canonical candle access (`rangeType.ordinal()`) compiles here as in Core.java.
     s.push_str("enum RangeType {\n");
-    s.push_str("    RealBody, HighLow, Shadows;\n");
+    s.push_str("    REAL_BODY, HIGH_LOW, SHADOWS;\n");
     s.push_str("}\n\n");
 
     // CandleSetting holds rangeType, avgPeriod, factor for one candle setting
@@ -1443,9 +1443,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // the canonical shipped Core.java access form emitted by emit_java_unpacking()
     // (`candleSettings[CandleSettingType.X.ordinal()]`).
     s.push_str("enum CandleSettingType {\n");
-    s.push_str("    BodyLong, BodyVeryLong, BodyShort, BodyDoji,\n");
-    s.push_str("    ShadowLong, ShadowVeryLong, ShadowShort, ShadowVeryShort,\n");
-    s.push_str("    Near, Far, Equal, AllCandleSettings;\n");
+    s.push_str("    BODY_LONG, BODY_VERY_LONG, BODY_SHORT, BODY_DOJI,\n");
+    s.push_str("    SHADOW_LONG, SHADOW_VERY_LONG, SHADOW_SHORT, SHADOW_VERY_SHORT,\n");
+    s.push_str("    NEAR, FAR, EQUAL, ALL_CANDLE_SETTINGS;\n");
     s.push_str("}\n\n");
 
     // Core class — method bodies are inlined by the caller via inline_java_core_methods()
@@ -1894,7 +1894,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // Per-function handler methods — each is small enough for C2 JIT compilation.
     for func in funcs {
-        let func_base = func.name.clone();
+        let func_base = crate::backends::common::camel_words(&func.name);
         let func_base_camel = crate::backends::common::camel_words(&func.name);
         let func_stream_class = crate::backends::java_stream::stream_class_name(func);
 
@@ -1994,7 +1994,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 func.optional_inputs.iter().map(|o| o.name.clone()).collect();
             s.push_str(&doc_produced_extent("        ", "//"));
             s.push_str(&format!(
-                "        int _lb = core.{func_base}_Lookback({});\n",
+                "        int _lb = core.{func_base}Lookback({});\n",
                 lb_args.join(", ")
             ));
             s.push_str("        int _cs = startIdx > _lb ? startIdx : _lb;\n");
@@ -2082,7 +2082,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("                outNBElement.value = 0;\n");
             s.push_str("            } else {\n");
             s.push_str("            try {\n");
-            s.push_str(&format!("                rc = core.{func_base}_Impl({core_args});\n"));
+            s.push_str(&format!("                rc = core.{func_base}Impl({core_args});\n"));
             s.push_str("            } catch (RuntimeException _e) {\n");
             s.push_str("                if (!(_e instanceof TALibFailure)) throw _e;\n");
             s.push_str("                rc = ((TALibFailure) _e).retCode();\n");
@@ -2239,7 +2239,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             for opt in &func.optional_inputs {
                 let _ = write!(ride_args, "{}, ", opt.name);
             }
-            s.push_str(&format!("            ride{}(core, json, endIdx, {}hb);\n", func.name, ride_args));
+            s.push_str(&format!(
+                "            ride{}(core, json, endIdx, {}hb);\n",
+                crate::backends::common::camel_words(&func.name),
+                ride_args
+            ));
         }
         s.push_str("            hb.append(\"}\");\n");
         s.push_str("            return hb.toString();\n");
@@ -2285,7 +2289,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             }
             s.push_str(&format!(
                 "        ride{}(core, json, endIdx, {}sb);\n",
-                func.name, ride_args
+                crate::backends::common::camel_words(&func.name),
+                ride_args
             ));
         }
         s.push_str("        sb.append(\"}\");\n");
@@ -2677,9 +2682,9 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                rideGen++;\n");
     s.push_str("                int id = GetInt(p, \"id\", -1);\n");
     s.push_str("                int period = GetInt(p, \"period\", 0);\n");
-    // The same 0..=MAX_INDEX domain the C library enforces. Checked before any
+    // The same 0..=MaxIndex domain the C library enforces. Checked before any
     // store, so a rejected call leaves every slot as it was (#186).
-    s.push_str("                if (period < 0 || period > Core.MAX_INDEX) {\n");
+    s.push_str("                if (period < 0 || period > Core.MaxIndex) {\n");
     s.push_str("                    return \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\";\n");
     s.push_str("                }\n");
     s.push_str("                if (id == (int)FuncUnstId.ALL) {\n");
@@ -2824,7 +2829,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("    static long ComputeLookback(string funcName, JsonElement p) {\n");
     s.push_str("        switch (funcName) {\n");
     for func in funcs {
-        let base = func.name.clone();
+        let base = crate::backends::common::pascal_words(&func.name);
         s.push_str(&format!("        case \"{}\": {{\n", func.name));
         for opt in &func.optional_inputs {
             match &opt.param_type {
@@ -2845,7 +2850,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         }
         let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
         s.push_str(&format!(
-            "            return core.{base}_Lookback({});\n",
+            "            return core.{base}Lookback({});\n",
             args.join(", ")
         ));
         s.push_str("        }\n");
@@ -2856,7 +2861,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
 
     // Per-function handler methods.
     for func in funcs {
-        let base = func.name.clone();
+        let base = crate::backends::common::pascal_words(&func.name);
         let base_pascal = crate::backends::common::pascal_words(&func.name);
         let stream_class = crate::backends::csharp_stream::stream_class_name(func);
         let input_names = expand_input_names(&func.inputs);
@@ -2966,7 +2971,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
                 func.optional_inputs.iter().map(|o| o.name.clone()).collect();
             s.push_str(&doc_produced_extent("        ", "//"));
             s.push_str(&format!(
-                "        int _lb = core.{base}_Lookback({});\n",
+                "        int _lb = core.{base}Lookback({});\n",
                 lb_args.join(", ")
             ));
             s.push_str("        int _cs = startIdx > _lb ? startIdx : _lb;\n");
@@ -3017,7 +3022,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("            if (bench_mode == 0) {\n");
             s.push_str("            if (GetInt(p, \"timed\", 0) != 0) {\n");
             s.push_str("                try {\n");
-            s.push_str(&format!("                    rc = core.{base}_Impl({call_args});\n"));
+            s.push_str(&format!("                    rc = core.{base}Impl({call_args});\n"));
             s.push_str("                } catch (Exception _e2) when (_e2 is ITALibFailure) {\n");
             s.push_str("                    rc = ((ITALibFailure)_e2).RetCode;\n");
             s.push_str("                    outBegIdx = 0;\n");
@@ -3156,7 +3161,11 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             for opt in &func.optional_inputs {
                 let _ = write!(ride_args, "{}, ", opt.name);
             }
-            s.push_str(&format!("            Ride{}(core, p, endIdx, {}hb);\n", func.name, ride_args));
+            s.push_str(&format!(
+                "            Ride{}(core, p, endIdx, {}hb);\n",
+                crate::backends::common::pascal_words(&func.name),
+                ride_args
+            ));
         }
         s.push_str("            hb.Append(\"}\");\n");
         s.push_str("            return hb.ToString();\n");
@@ -3194,7 +3203,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             }
             s.push_str(&format!(
                 "        Ride{}(core, p, endIdx, {}sb);\n",
-                func.name, ride_args
+                crate::backends::common::pascal_words(&func.name),
+                ride_args
             ));
         }
         s.push_str("        sb.Append(\"}\");\n");
@@ -3606,7 +3616,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // Per-function dispatch
     for func in funcs {
         let method_name = format!("TA_{}", func.name);
-        let fn_name = func.name.clone();
+        let fn_name = crate::backends::common::snake_words(&func.name);
 
         s.push_str(&format!("        \"{method_name}\" => {{\n"));
 
@@ -3768,8 +3778,8 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 func.optional_inputs.iter().map(|o| o.name.clone()).collect();
             s.push_str(&doc_produced_extent("            ", "//"));
             s.push_str(&format!(
-                "            let _lb = core.{}_Lookback({}).unwrap_or(usize::MAX);\n",
-                func.name,
+                "            let _lb = core.{}_lookback({}).unwrap_or(usize::MAX);\n",
+                crate::backends::common::snake_words(&func.name),
                 lb_args.join(", ")
             ));
             s.push_str("            let _cs = if startIdx > _lb { startIdx } else { _lb };\n");
@@ -3920,10 +3930,10 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // cannot reproduce it. Report the driver's "rejected" marker rather than
         // a fabricated number, which is also what the abstract tier returns.
         if enum_opts.is_empty() {
-            s.push_str(&format!("            let lookback: i64 = core.{fn_name}_Lookback("));
+            s.push_str(&format!("            let lookback: i64 = core.{fn_name}_lookback("));
         } else {
             s.push_str(&format!(
-                "            let lookback: i64 = if _enum_bad {{ -1 }} else {{ core.{fn_name}_Lookback("
+                "            let lookback: i64 = if _enum_bad {{ -1 }} else {{ core.{fn_name}_lookback("
             ));
         }
         let lb_args: Vec<String> = func
@@ -4363,11 +4373,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
         for (k, opt) in info.opt_inputs.iter().enumerate() {
             match opt.kind {
                 OptInputType::RealRange { .. } | OptInputType::RealList { .. } => {
-                    if let Some(v) = params[opt.param_name].as_f64() { note(h.set_opt(k, v)); }
+                    if let Some(v) = params[opt.param_name].as_f64() { note(h.set_opt_input(k, v)); }
                 }
                 _ => {
                     if let Some(v) = params[opt.param_name].as_i64() {
-                        note(h.set_opt(k, v as i32));
+                        note(h.set_opt_input(k, v as i32));
                     }
                 }
             }
@@ -4435,10 +4445,10 @@ fn abs_lookback(core: &Core, params: &Value) -> Option<i64> {
     for (k, opt) in id.info().opt_inputs.iter().enumerate() {
         match opt.kind {
             OptInputType::RealRange { .. } | OptInputType::RealList { .. } => {
-                if let Some(v) = params[opt.param_name].as_f64() { let _ = h.set_opt(k, v); }
+                if let Some(v) = params[opt.param_name].as_f64() { let _ = h.set_opt_input(k, v); }
             }
             _ => {
-                if let Some(v) = params[opt.param_name].as_i64() { let _ = h.set_opt(k, v as i32); }
+                if let Some(v) = params[opt.param_name].as_i64() { let _ = h.set_opt_input(k, v as i32); }
             }
         }
     }
@@ -4738,9 +4748,9 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         // `n` below drives every output allocation, so validating after it
         // would turn an out-of-range request into an 800MB-per-output
         // allocation and take the server down instead of returning a code.
-        if (startIdx < 0 || startIdx > Core.MAX_INDEX)
+        if (startIdx < 0 || startIdx > Core.MaxIndex)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":12,\"outBegIdx\":0,\"outNBElement\":0}";
-        if (endIdx < 0 || endIdx > Core.MAX_INDEX || endIdx < startIdx)
+        if (endIdx < 0 || endIdx > Core.MaxIndex || endIdx < startIdx)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":13,\"outBegIdx\":0,\"outNBElement\":0}";
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;

@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MIN} consumes before it can
+    * Number of leading input bars {@link Core#min} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -26,7 +26,7 @@
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MIN_Lookback( int optInTimePeriod )
+   public int minLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -36,13 +36,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MIN_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode minImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double[] sufLowest;
       int sufLowest_Idx = 0;
@@ -183,13 +183,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MIN_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode minImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double[] sufLowest;
       int sufLowest_Idx = 0;
@@ -298,7 +298,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MIN_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#minLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -322,25 +322,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MAX
-    * @see Core#MININDEX
-    * @see Core#MINMAX
+    * @see Core#max
+    * @see Core#minindex
+    * @see Core#minmax
     */
-   public OutRange MIN( int startIdx,
+   public OutRange min( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("MIN", startIdx, endIdx);
-      int guardStart = clampedStart("MIN", startIdx, MIN_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MIN", startIdx, minLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIN", "inReal", inReal, guardInLen);
       requireLength("MIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = minImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MIN", retCode);
       }
@@ -356,7 +356,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MIN_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#minLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -380,25 +380,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MAX
-    * @see Core#MININDEX
-    * @see Core#MINMAX
+    * @see Core#max
+    * @see Core#minindex
+    * @see Core#minmax
     */
-   public OutRange MIN( int startIdx,
+   public OutRange min( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("MIN", startIdx, endIdx);
-      int guardStart = clampedStart("MIN", startIdx, MIN_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MIN", startIdx, minLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIN", "inReal", inReal, guardInLen);
       requireLength("MIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = minImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MIN", retCode);
       }
@@ -410,7 +410,7 @@
 
    /**
     * A live MIN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MIN} over the same series.
+    * closed bar, bit-identical to {@link Core#min} over the same series.
     * Open with {@link Core#minOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -441,7 +441,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MIN} reports over the same bars: the
+       * <p>It is what {@link Core#min} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -762,8 +762,8 @@
    /**
     * Open a live MIN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MIN} at that bar.
-    * <p>The history must hold at least {@code MIN_Lookback(...) + 1} bars
+    * to {@link Core#min} at that bar.
+    * <p>The history must hold at least {@code minLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -780,7 +780,7 @@
    }
    /**
     * {@link Core#minOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MIN} over the whole history in the same single pass
+    * to {@link Core#min} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -793,7 +793,7 @@
    {
       requireArgument("MIN openAndFill", "inReal", inReal);
       requireHistory("MIN openAndFill", inReal.length);
-      int guardOutLen = openFillCount("MIN openAndFill", inReal.length, MIN_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("MIN openAndFill", inReal.length, minLookback(optInTimePeriod));
       requireLength("MIN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("MIN openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

@@ -306,8 +306,8 @@ silent omission in three.
 
 | Call in `<name>.c` | C | Rust | Java | C# |
 |---|---|---|---|---|
-| `sma(...)` | `TA_SMA(...)` | `self.SMA(...)` | `SMA(...)` | `SMA(...)` |
-| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.SMA_Lookback(...)?` | `SMA_Lookback(...)` | `SMA_Lookback(...)` |
+| `sma(...)` | `TA_SMA(...)` | `self.sma(...)` | `sma(...)` | `Sma(...)` |
+| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.sma_lookback(...)?` | `smaLookback(...)` | `SmaLookback(...)` |
 
 Every one of them is the callee's PUBLIC tier, so its rejection surfaces as that
 language's own failure mode. C also emits single-precision `TA_S_*` variants

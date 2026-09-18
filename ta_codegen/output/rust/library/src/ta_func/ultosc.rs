@@ -72,7 +72,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ULTOSC`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ultosc`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -87,7 +87,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ULTOSC_Lookback")]
     #[inline]
-    pub fn ULTOSC_Lookback(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32) -> Result<usize, RetCode> {
+    pub fn ultosc_lookback(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod1) as i32) == (i32::MIN) {
             optInTimePeriod1 = 7;
         } else if (((optInTimePeriod1) as i32) < 1) || (((optInTimePeriod1) as i32) > 100000) {
@@ -107,12 +107,12 @@ impl Core {
         // Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
         // time period, plus 1 for the True Range.
         maxPeriod = (((optInTimePeriod1).max(optInTimePeriod2)).max(optInTimePeriod3)) as usize;
-        return Ok((self.SMA_Lookback((maxPeriod) as i32)? + 1) as usize);
+        return Ok((self.sma_lookback((maxPeriod) as i32)? + 1) as usize);
     }
-    /// C-shaped body behind [`Core::ULTOSC`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::ultosc`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn ULTOSC_Impl(
+    pub(crate) fn ultosc_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -147,7 +147,7 @@ impl Core {
         } else if (((optInTimePeriod3) as i32) < 1) || (((optInTimePeriod3) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
+        let _assertLb = self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -227,7 +227,7 @@ impl Core {
         optInTimePeriod2 = sortedPeriods[1];
         optInTimePeriod3 = sortedPeriods[0];
         // Adjust startIdx for lookback period.
-        lookbackTotal = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
+        lookbackTotal = self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -471,7 +471,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.ULTOSC(0, high.len() - 1, &high, &low, &close, 7, 14, 28, &mut out)?;
+    /// let out_range = core.ultosc(0, high.len() - 1, &high, &low, &close, 7, 14, 28, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -479,7 +479,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ATR`] · [`Core::TRANGE`] · [`Core::RSI`]
+    /// [`ATR`](Core::atr) · [`TRANGE`](Core::trange) · [`RSI`](Core::rsi)
     ///
     /// # References
     ///
@@ -488,7 +488,7 @@ impl Core {
     #[doc(alias = "TA_ULTOSC")]
     #[doc(alias = "UltimateOscillator")]
     #[doc(alias = "UO")]
-    pub fn ULTOSC(
+    pub fn ultosc(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -506,7 +506,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
+        let _guardLb = self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -523,7 +523,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ULTOSC_Impl(
+        let retCode = self.ultosc_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -545,7 +545,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ULTOSC stream: one value per closed bar, bit-identical to [`Core::ULTOSC`]
+/// Live ULTOSC stream: one value per closed bar, bit-identical to [`Core::ultosc`]
 /// over the same series. Open with [`Core::ultosc_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -796,7 +796,7 @@ impl Core {
         optInTimePeriod2 = sortedPeriods[1];
         optInTimePeriod3 = sortedPeriods[0];
         // Adjust startIdx for lookback period.
-        lookbackTotal = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
+        lookbackTotal = self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -1020,7 +1020,7 @@ impl Core {
     }
 
     /// Open a live ULTOSC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ULTOSC`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ultosc`] at that bar.
     ///
     /// # Errors
     ///
@@ -1054,7 +1054,7 @@ impl Core {
     }
 
     /// [`Core::ultosc_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ULTOSC`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::ultosc`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1075,7 +1075,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.ULTOSC(0, high.len() - 1, &high, &low, &close, 7, 14, 28, &mut batch_out)?;
+    /// let batch = core.ultosc(0, high.len() - 1, &high, &low, &close, 7, 14, 28, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.ultosc_open_and_fill(&high, &low, &close, 7, 14, 28, &mut out)?;
@@ -1096,7 +1096,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
+        let _guardLb = self.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1311,7 +1311,7 @@ impl UltoscStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::ULTOSC`] reports over the same bars: the opener sets it
+    /// It is what [`Core::ultosc`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

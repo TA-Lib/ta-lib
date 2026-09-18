@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLCONCEALBABYSWALL} consumes
+    * Number of leading input bars {@link Core#cdlconcealbabyswall} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLCONCEALBABYSWALL_Lookback( )
+   public int cdlconcealbabyswallLookback( )
    {
       int ShadowVeryShort_rangeType = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].rangeType.ordinal();
       int ShadowVeryShort_avgPeriod = this.candleSettings[CandleSettingType.SHADOW_VERY_SHORT.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return ShadowVeryShort_avgPeriod + 3 ;
 
    }
-   RetCode CDLCONCEALBABYSWALL_Impl( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlconcealbabyswallImpl( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -57,7 +57,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLCONCEALBABYSWALL_Lookback();
+      lookbackTotal = cdlconcealbabyswallLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -129,15 +129,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLCONCEALBABYSWALL_Impl( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode cdlconcealbabyswallImpl( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -154,7 +154,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLCONCEALBABYSWALL_Lookback();
+      lookbackTotal = cdlconcealbabyswallLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -206,7 +206,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLCONCEALBABYSWALL_Lookback} is a
+    * valid range shorter than {@link Core#cdlconcealbabyswallLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -232,10 +232,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLENGULFING
+    * @see Core#cdlmarubozu
+    * @see Core#cdlengulfing
     */
-   public OutRange CDLCONCEALBABYSWALL( int startIdx,
+   public OutRange cdlconcealbabyswall( int startIdx,
                                         int endIdx,
                                         double inOpen[],
                                         double inHigh[],
@@ -244,7 +244,7 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
-      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, CDLCONCEALBABYSWALL_Lookback());
+      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, cdlconcealbabyswallLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
@@ -254,7 +254,7 @@
       requireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCONCEALBABYSWALL_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlconcealbabyswallImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLCONCEALBABYSWALL", retCode);
       }
@@ -277,7 +277,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLCONCEALBABYSWALL_Lookback} is a
+    * valid range shorter than {@link Core#cdlconcealbabyswallLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -303,10 +303,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLENGULFING
+    * @see Core#cdlmarubozu
+    * @see Core#cdlengulfing
     */
-   public OutRange CDLCONCEALBABYSWALL( int startIdx,
+   public OutRange cdlconcealbabyswall( int startIdx,
                                         int endIdx,
                                         float inOpen[],
                                         float inHigh[],
@@ -315,7 +315,7 @@
                                         int outInteger[] )
    {
       requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
-      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, CDLCONCEALBABYSWALL_Lookback());
+      int guardStart = clampedStart("CDLCONCEALBABYSWALL", startIdx, cdlconcealbabyswallLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
@@ -325,7 +325,7 @@
       requireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCONCEALBABYSWALL_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlconcealbabyswallImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLCONCEALBABYSWALL", retCode);
       }
@@ -335,7 +335,7 @@
 
    /**
     * A live CDLCONCEALBABYSWALL stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLCONCEALBABYSWALL} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlconcealbabyswall} over the same series.
     * Open with {@link Core#cdlconcealbabyswallOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -378,7 +378,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLCONCEALBABYSWALL} reports over the same bars: the
+       * <p>It is what {@link Core#cdlconcealbabyswall} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -607,7 +607,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLCONCEALBABYSWALL_Lookback();
+      lookbackTotal = cdlconcealbabyswallLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -753,8 +753,8 @@
    /**
     * Open a live CDLCONCEALBABYSWALL stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLCONCEALBABYSWALL} at that bar.
-    * <p>The history must hold at least {@code CDLCONCEALBABYSWALL_Lookback(...) + 1} bars
+    * to {@link Core#cdlconcealbabyswall} at that bar.
+    * <p>The history must hold at least {@code cdlconcealbabyswallLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -775,7 +775,7 @@
    }
    /**
     * {@link Core#cdlconcealbabyswallOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLCONCEALBABYSWALL} over the whole history in the same single pass
+    * to {@link Core#cdlconcealbabyswall} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -791,7 +791,7 @@
       requireArgument("CDLCONCEALBABYSWALL openAndFill", "inHigh", inHigh);
       requireArgument("CDLCONCEALBABYSWALL openAndFill", "inLow", inLow);
       requireArgument("CDLCONCEALBABYSWALL openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLCONCEALBABYSWALL openAndFill", inOpen.length, CDLCONCEALBABYSWALL_Lookback());
+      int guardOutLen = openFillCount("CDLCONCEALBABYSWALL openAndFill", inOpen.length, cdlconcealbabyswallLookback());
       requireHistoryLength("CDLCONCEALBABYSWALL openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLCONCEALBABYSWALL openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLCONCEALBABYSWALL openAndFill", "inClose", inClose.length, inOpen.length);

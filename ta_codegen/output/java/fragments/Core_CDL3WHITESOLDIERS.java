@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDL3WHITESOLDIERS} consumes
+    * Number of leading input bars {@link Core#cdl3whitesoldiers} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDL3WHITESOLDIERS_Lookback( )
+   public int cdl3whitesoldiersLookback( )
    {
       int BodyShort_rangeType = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].rangeType.ordinal();
       int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].avgPeriod;
@@ -38,15 +38,15 @@
       return Math.max(Math.max(ShadowVeryShort_avgPeriod, BodyShort_avgPeriod), Math.max(Far_avgPeriod, Near_avgPeriod)) + 2 ;
 
    }
-   RetCode CDL3WHITESOLDIERS_Impl( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode cdl3whitesoldiersImpl( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -81,7 +81,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDL3WHITESOLDIERS_Lookback();
+      lookbackTotal = cdl3whitesoldiersLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -192,15 +192,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDL3WHITESOLDIERS_Impl( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode cdl3whitesoldiersImpl( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -232,7 +232,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDL3WHITESOLDIERS_Lookback();
+      lookbackTotal = cdl3whitesoldiersLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -320,7 +320,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDL3WHITESOLDIERS_Lookback} is a
+    * valid range shorter than {@link Core#cdl3whitesoldiersLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -346,11 +346,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDL3BLACKCROWS
-    * @see Core#CDLADVANCEBLOCK
-    * @see Core#CDLIDENTICAL3CROWS
+    * @see Core#cdl3blackcrows
+    * @see Core#cdladvanceblock
+    * @see Core#cdlidentical3crows
     */
-   public OutRange CDL3WHITESOLDIERS( int startIdx,
+   public OutRange cdl3whitesoldiers( int startIdx,
                                       int endIdx,
                                       double inOpen[],
                                       double inHigh[],
@@ -359,7 +359,7 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDL3WHITESOLDIERS", startIdx, endIdx);
-      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, CDL3WHITESOLDIERS_Lookback());
+      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, cdl3whitesoldiersLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
@@ -369,7 +369,7 @@
       requireLength("CDL3WHITESOLDIERS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3WHITESOLDIERS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdl3whitesoldiersImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDL3WHITESOLDIERS", retCode);
       }
@@ -393,7 +393,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDL3WHITESOLDIERS_Lookback} is a
+    * valid range shorter than {@link Core#cdl3whitesoldiersLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -419,11 +419,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDL3BLACKCROWS
-    * @see Core#CDLADVANCEBLOCK
-    * @see Core#CDLIDENTICAL3CROWS
+    * @see Core#cdl3blackcrows
+    * @see Core#cdladvanceblock
+    * @see Core#cdlidentical3crows
     */
-   public OutRange CDL3WHITESOLDIERS( int startIdx,
+   public OutRange cdl3whitesoldiers( int startIdx,
                                       int endIdx,
                                       float inOpen[],
                                       float inHigh[],
@@ -432,7 +432,7 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDL3WHITESOLDIERS", startIdx, endIdx);
-      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, CDL3WHITESOLDIERS_Lookback());
+      int guardStart = clampedStart("CDL3WHITESOLDIERS", startIdx, cdl3whitesoldiersLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
@@ -442,7 +442,7 @@
       requireLength("CDL3WHITESOLDIERS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3WHITESOLDIERS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdl3whitesoldiersImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDL3WHITESOLDIERS", retCode);
       }
@@ -452,7 +452,7 @@
 
    /**
     * A live CDL3WHITESOLDIERS stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDL3WHITESOLDIERS} over the same series.
+    * closed bar, bit-identical to {@link Core#cdl3whitesoldiers} over the same series.
     * Open with {@link Core#cdl3whitesoldiersOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -514,7 +514,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDL3WHITESOLDIERS} reports over the same bars: the
+       * <p>It is what {@link Core#cdl3whitesoldiers} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -818,7 +818,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDL3WHITESOLDIERS_Lookback();
+      lookbackTotal = cdl3whitesoldiersLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1051,8 +1051,8 @@
    /**
     * Open a live CDL3WHITESOLDIERS stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDL3WHITESOLDIERS} at that bar.
-    * <p>The history must hold at least {@code CDL3WHITESOLDIERS_Lookback(...) + 1} bars
+    * to {@link Core#cdl3whitesoldiers} at that bar.
+    * <p>The history must hold at least {@code cdl3whitesoldiersLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -1073,7 +1073,7 @@
    }
    /**
     * {@link Core#cdl3whitesoldiersOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDL3WHITESOLDIERS} over the whole history in the same single pass
+    * to {@link Core#cdl3whitesoldiers} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1089,7 +1089,7 @@
       requireArgument("CDL3WHITESOLDIERS openAndFill", "inHigh", inHigh);
       requireArgument("CDL3WHITESOLDIERS openAndFill", "inLow", inLow);
       requireArgument("CDL3WHITESOLDIERS openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDL3WHITESOLDIERS openAndFill", inOpen.length, CDL3WHITESOLDIERS_Lookback());
+      int guardOutLen = openFillCount("CDL3WHITESOLDIERS openAndFill", inOpen.length, cdl3whitesoldiersLookback());
       requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDL3WHITESOLDIERS openAndFill", "inClose", inClose.length, inOpen.length);

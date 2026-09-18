@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLIDENTICAL3CROWS} consumes
+    * Number of leading input bars {@link Core#cdlidentical3crows} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLIDENTICAL3CROWS_Lookback( )
+   public int cdlidentical3crowsLookback( )
    {
       int Equal_rangeType = this.candleSettings[CandleSettingType.EQUAL.ordinal()].rangeType.ordinal();
       int Equal_avgPeriod = this.candleSettings[CandleSettingType.EQUAL.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(ShadowVeryShort_avgPeriod, Equal_avgPeriod) + 2 ;
 
    }
-   RetCode CDLIDENTICAL3CROWS_Impl( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlidentical3crowsImpl( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] EqualPeriodTotal = new double[3];
@@ -65,7 +65,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLIDENTICAL3CROWS_Lookback();
+      lookbackTotal = cdlidentical3crowsLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -150,15 +150,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLIDENTICAL3CROWS_Impl( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlidentical3crowsImpl( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       double[] EqualPeriodTotal = new double[3];
@@ -180,7 +180,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLIDENTICAL3CROWS_Lookback();
+      lookbackTotal = cdlidentical3crowsLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -247,7 +247,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLIDENTICAL3CROWS_Lookback} is a
+    * valid range shorter than {@link Core#cdlidentical3crowsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -273,10 +273,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDL3BLACKCROWS
-    * @see Core#CDL2CROWS
+    * @see Core#cdl3blackcrows
+    * @see Core#cdl2crows
     */
-   public OutRange CDLIDENTICAL3CROWS( int startIdx,
+   public OutRange cdlidentical3crows( int startIdx,
                                        int endIdx,
                                        double inOpen[],
                                        double inHigh[],
@@ -285,7 +285,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLIDENTICAL3CROWS", startIdx, endIdx);
-      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, CDLIDENTICAL3CROWS_Lookback());
+      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, cdlidentical3crowsLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
@@ -295,7 +295,7 @@
       requireLength("CDLIDENTICAL3CROWS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLIDENTICAL3CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlidentical3crowsImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLIDENTICAL3CROWS", retCode);
       }
@@ -319,7 +319,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLIDENTICAL3CROWS_Lookback} is a
+    * valid range shorter than {@link Core#cdlidentical3crowsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -345,10 +345,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDL3BLACKCROWS
-    * @see Core#CDL2CROWS
+    * @see Core#cdl3blackcrows
+    * @see Core#cdl2crows
     */
-   public OutRange CDLIDENTICAL3CROWS( int startIdx,
+   public OutRange cdlidentical3crows( int startIdx,
                                        int endIdx,
                                        float inOpen[],
                                        float inHigh[],
@@ -357,7 +357,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLIDENTICAL3CROWS", startIdx, endIdx);
-      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, CDLIDENTICAL3CROWS_Lookback());
+      int guardStart = clampedStart("CDLIDENTICAL3CROWS", startIdx, cdlidentical3crowsLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
@@ -367,7 +367,7 @@
       requireLength("CDLIDENTICAL3CROWS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLIDENTICAL3CROWS_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlidentical3crowsImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLIDENTICAL3CROWS", retCode);
       }
@@ -377,7 +377,7 @@
 
    /**
     * A live CDLIDENTICAL3CROWS stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLIDENTICAL3CROWS} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlidentical3crows} over the same series.
     * Open with {@link Core#cdlidentical3crowsOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -424,7 +424,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLIDENTICAL3CROWS} reports over the same bars: the
+       * <p>It is what {@link Core#cdlidentical3crows} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -670,7 +670,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLIDENTICAL3CROWS_Lookback();
+      lookbackTotal = cdlidentical3crowsLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -843,8 +843,8 @@
    /**
     * Open a live CDLIDENTICAL3CROWS stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLIDENTICAL3CROWS} at that bar.
-    * <p>The history must hold at least {@code CDLIDENTICAL3CROWS_Lookback(...) + 1} bars
+    * to {@link Core#cdlidentical3crows} at that bar.
+    * <p>The history must hold at least {@code cdlidentical3crowsLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -865,7 +865,7 @@
    }
    /**
     * {@link Core#cdlidentical3crowsOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLIDENTICAL3CROWS} over the whole history in the same single pass
+    * to {@link Core#cdlidentical3crows} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -881,7 +881,7 @@
       requireArgument("CDLIDENTICAL3CROWS openAndFill", "inHigh", inHigh);
       requireArgument("CDLIDENTICAL3CROWS openAndFill", "inLow", inLow);
       requireArgument("CDLIDENTICAL3CROWS openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLIDENTICAL3CROWS openAndFill", inOpen.length, CDLIDENTICAL3CROWS_Lookback());
+      int guardOutLen = openFillCount("CDLIDENTICAL3CROWS openAndFill", inOpen.length, cdlidentical3crowsLookback());
       requireHistoryLength("CDLIDENTICAL3CROWS openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLIDENTICAL3CROWS openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLIDENTICAL3CROWS openAndFill", "inClose", inClose.length, inOpen.length);

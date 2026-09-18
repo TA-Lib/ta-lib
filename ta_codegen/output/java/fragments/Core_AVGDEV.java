@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#AVGDEV} consumes before it can
+    * Number of leading input bars {@link Core#avgdev} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,7 +22,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int AVGDEV_Lookback( int optInTimePeriod )
+   public int avgdevLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -32,13 +32,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode AVGDEV_Impl( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode avgdevImpl( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -87,13 +87,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode AVGDEV_Impl( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode avgdevImpl( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -150,7 +150,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AVGDEV_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#avgdevLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -174,25 +174,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STDDEV
-    * @see Core#VAR
-    * @see Core#SMA
+    * @see Core#stddev
+    * @see Core#var
+    * @see Core#sma
     */
-   public OutRange AVGDEV( int startIdx,
+   public OutRange avgdev( int startIdx,
                            int endIdx,
                            double inReal[],
                            int optInTimePeriod,
                            double outReal[] )
    {
       requireIndexRange("AVGDEV", startIdx, endIdx);
-      int guardStart = clampedStart("AVGDEV", startIdx, AVGDEV_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("AVGDEV", startIdx, avgdevLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AVGDEV", "inReal", inReal, guardInLen);
       requireLength("AVGDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = avgdevImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AVGDEV", retCode);
       }
@@ -211,7 +211,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AVGDEV_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#avgdevLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -235,25 +235,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STDDEV
-    * @see Core#VAR
-    * @see Core#SMA
+    * @see Core#stddev
+    * @see Core#var
+    * @see Core#sma
     */
-   public OutRange AVGDEV( int startIdx,
+   public OutRange avgdev( int startIdx,
                            int endIdx,
                            float inReal[],
                            int optInTimePeriod,
                            double outReal[] )
    {
       requireIndexRange("AVGDEV", startIdx, endIdx);
-      int guardStart = clampedStart("AVGDEV", startIdx, AVGDEV_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("AVGDEV", startIdx, avgdevLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AVGDEV", "inReal", inReal, guardInLen);
       requireLength("AVGDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = avgdevImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AVGDEV", retCode);
       }
@@ -263,7 +263,7 @@
 
    /**
     * A live AVGDEV stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#AVGDEV} over the same series.
+    * closed bar, bit-identical to {@link Core#avgdev} over the same series.
     * Open with {@link Core#avgdevOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -290,7 +290,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#AVGDEV} reports over the same bars: the
+       * <p>It is what {@link Core#avgdev} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -550,8 +550,8 @@
    /**
     * Open a live AVGDEV stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#AVGDEV} at that bar.
-    * <p>The history must hold at least {@code AVGDEV_Lookback(...) + 1} bars
+    * to {@link Core#avgdev} at that bar.
+    * <p>The history must hold at least {@code avgdevLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -568,7 +568,7 @@
    }
    /**
     * {@link Core#avgdevOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#AVGDEV} over the whole history in the same single pass
+    * to {@link Core#avgdev} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -581,7 +581,7 @@
    {
       requireArgument("AVGDEV openAndFill", "inReal", inReal);
       requireHistory("AVGDEV openAndFill", inReal.length);
-      int guardOutLen = openFillCount("AVGDEV openAndFill", inReal.length, AVGDEV_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("AVGDEV openAndFill", inReal.length, avgdevLookback(optInTimePeriod));
       requireLength("AVGDEV openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("AVGDEV openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::KDJ`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::kdj`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -88,7 +88,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_KDJ_Lookback")]
     #[inline]
-    pub fn KDJ_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType) -> Result<usize, RetCode> {
+    pub fn kdj_lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 9;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
@@ -110,12 +110,12 @@ impl Core {
         if optInSlowD_MAType == MAType::DEFAULT {
             optInSlowD_MAType = MAType::RMA;
         }
-        return Ok(self.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?);
+        return Ok(self.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?);
     }
-    /// C-shaped body behind [`Core::KDJ`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::kdj`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn KDJ_Impl(
+    pub(crate) fn kdj_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -160,7 +160,7 @@ impl Core {
         if optInSlowD_MAType == MAType::DEFAULT {
             optInSlowD_MAType = MAType::RMA;
         }
-        let _assertLb = self.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
+        let _assertLb = self.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -175,7 +175,7 @@ impl Core {
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        lookbackTotal = self.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
+        lookbackTotal = self.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
         // Nothing to produce: the range is shorter than the lookback. Answering here
         // keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
         // its own argument check would reject before any array is touched.
@@ -184,7 +184,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        let _xr0 = match self.STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.stoch(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
@@ -272,7 +272,7 @@ impl Core {
     /// let mut d = vec![0.0; 252];
     /// let mut j = vec![0.0; 252];
     ///
-    /// let out_range = core.KDJ(
+    /// let out_range = core.kdj(
     ///     0, high.len() - 1, &high, &low, &close, 9, 3, MAType::RMA, 3, MAType::RMA,
     ///     &mut k, &mut d, &mut j,
     /// )?;
@@ -283,7 +283,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::STOCH`] · [`Core::STOCHF`] · [`Core::RMA`] · [`Core::MA`]
+    /// [`STOCH`](Core::stoch) · [`STOCHF`](Core::stochf) · [`RMA`](Core::rma) · [`MA`](Core::ma)
     ///
     /// # References
     ///
@@ -296,7 +296,7 @@ impl Core {
     #[doc(alias = "RandomIndex")]
     #[doc(alias = "StochasticKDJ")]
     #[doc(alias = "KDJlines")]
-    pub fn KDJ(
+    pub fn kdj(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -318,7 +318,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?;
+        let _guardLb = self.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -341,7 +341,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.KDJ_Impl(
+        let retCode = self.kdj_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -367,7 +367,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live KDJ stream: one value per closed bar, bit-identical to [`Core::KDJ`]
+/// Live KDJ stream: one value per closed bar, bit-identical to [`Core::kdj`]
 /// over the same series. Open with [`Core::kdj_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -480,7 +480,7 @@ impl Core {
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        lookbackTotal = self.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?;
+        lookbackTotal = self.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?;
         // Nothing to produce: the range is shorter than the lookback. Answering here
         // keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
         // its own argument check would reject before any array is touched.
@@ -554,7 +554,7 @@ impl Core {
     }
 
     /// Open a live KDJ stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::KDJ`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::kdj`] at that bar.
     ///
     /// # Errors
     ///
@@ -590,7 +590,7 @@ impl Core {
     }
 
     /// [`Core::kdj_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::KDJ`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::kdj`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -613,7 +613,7 @@ impl Core {
     /// let mut batch_k = vec![0.0; 252];
     /// let mut batch_d = vec![0.0; 252];
     /// let mut batch_j = vec![0.0; 252];
-    /// let batch = core.KDJ(0, high.len() - 1, &high, &low, &close, 9, 3, MAType::RMA, 3, MAType::RMA, &mut batch_k, &mut batch_d, &mut batch_j)?;
+    /// let batch = core.kdj(0, high.len() - 1, &high, &low, &close, 9, 3, MAType::RMA, 3, MAType::RMA, &mut batch_k, &mut batch_d, &mut batch_j)?;
     ///
     /// let mut k = vec![0.0; 252];
     /// let mut d = vec![0.0; 252];
@@ -640,7 +640,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?;
+        let _guardLb = self.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -776,7 +776,7 @@ impl KdjStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::KDJ`] reports over the same bars: the opener sets it
+    /// It is what [`Core::kdj`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

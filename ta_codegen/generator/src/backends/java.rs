@@ -594,7 +594,7 @@ fn gen_lookback(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let name = func.name.clone();
+    let name = super::common::camel_words(&func.name);
 
     // Build parameter list for signature
     let param_str = if func.optional_inputs.is_empty() {
@@ -633,7 +633,7 @@ fn gen_lookback(
 
     let docs = super::java_doc::lookback_docs(func, &name, enums);
     format!(
-        "{docs}   public int {name}_Lookback({param_str})\n\
+        "{docs}   public int {name}Lookback({param_str})\n\
          \x20  {{\n\
          {body}\n\
          \x20  }}\n"
@@ -680,7 +680,7 @@ fn render_init_expr(expr: &Expr) -> String {
 /// out-parameters; what changed in #236 step 3 is only that a cross-call inside
 /// it now calls the public callee and does not test a return code.
 fn body_name(base: &str) -> String {
-    format!("{base}_Impl")
+    format!("{base}Impl")
 }
 
 /// Emit the wrapper's array-argument checks (issue #172 C2).
@@ -727,18 +727,18 @@ fn body_name(base: &str) -> String {
 /// the buffers (B4, B5). A null enum is a parameter out of its domain, and its
 /// check has to sit ahead of the `_Lookback` call below, because that is where a
 /// null one is first dereferenced.
-fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
+fn gen_argument_checks(func: &FuncDef, canonical: &str, method: &str) -> String {
     let inputs: Vec<&str> = func.inputs.iter().map(|i| i.name.as_str()).collect();
     let mut out = String::new();
     let _ = writeln!(
         out,
-        "      requireIndexRange(\"{base_name}\", startIdx, endIdx);"
+        "      requireIndexRange(\"{canonical}\", startIdx, endIdx);"
     );
     for opt in &func.optional_inputs {
         if matches!(opt.param_type, ParamType::Enum(_)) {
             let _ = writeln!(
                 out,
-                "      requireArgument(\"{base_name}\", \"{0}\", {0});",
+                "      requireArgument(\"{canonical}\", \"{0}\", {0});",
                 opt.name
             );
         }
@@ -749,7 +749,7 @@ fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
     let _ = writeln!(
         out,
-        "      int guardStart = clampedStart(\"{base_name}\", startIdx, {base_name}_Lookback({}));",
+        "      int guardStart = clampedStart(\"{canonical}\", startIdx, {method}Lookback({}));",
         lb_args.join(", ")
     );
     if !inputs.is_empty() {
@@ -763,7 +763,7 @@ fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
     for name in inputs {
         let _ = writeln!(
             out,
-            "      requireLength(\"{base_name}\", \"{name}\", {name}, guardInLen);"
+            "      requireLength(\"{canonical}\", \"{name}\", {name}, guardInLen);"
         );
     }
     for output in &func.outputs {
@@ -774,12 +774,12 @@ fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
         if output.is_nullable() {
             let _ = writeln!(
                 out,
-                "      if( {name} != null ) requireLength(\"{base_name}\", \"{name}\", {name}, guardOutLen);"
+                "      if( {name} != null ) requireLength(\"{canonical}\", \"{name}\", {name}, guardOutLen);"
             );
         } else {
             let _ = writeln!(
                 out,
-                "      requireLength(\"{base_name}\", \"{name}\", {name}, guardOutLen);"
+                "      requireLength(\"{canonical}\", \"{name}\", {name}, guardOutLen);"
             );
         }
     }
@@ -800,7 +800,7 @@ fn gen_public_wrapper(
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
 ) -> String {
-    let base_name = func.name.clone();
+    let base_name = super::common::camel_words(&func.name);
     let core = body_name(&base_name);
     let public_name = base_name.clone();
 
@@ -851,7 +851,7 @@ fn gen_public_wrapper(
         out.push_str(param);
     }
     out.push_str(" )\n   {\n");
-    out.push_str(&gen_argument_checks(func, &base_name));
+    out.push_str(&gen_argument_checks(func, &func.name, &base_name));
     out.push_str("      MInteger outBegIdx = new MInteger();\n");
     out.push_str("      MInteger outNBElement = new MInteger();\n");
     {
@@ -875,8 +875,8 @@ fn gen_private(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let base_name = func.name.clone();
-    let name_override = format!("{base_name}_Private");
+    let base_name = super::common::camel_words(&func.name);
+    let name_override = format!("{base_name}Private");
     gen_func_inner(func, false, Some(&name_override), enums, registry, helpers)
 }
 
@@ -891,8 +891,8 @@ fn gen_private_sp(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let base_name = func.name.clone();
-    let name_override = format!("{base_name}_Private");
+    let base_name = super::common::camel_words(&func.name);
+    let name_override = format!("{base_name}Private");
     gen_func_inner(func, true, Some(&name_override), enums, registry, helpers)
 }
 
@@ -919,7 +919,7 @@ fn gen_func_inner(
     helpers: &HelperRegistry,
 ) -> String {
     let mut out = String::new();
-    let base_name = func.name.clone();
+    let base_name = super::common::camel_words(&func.name);
     let name = if let Some(n) = name_override {
         n.to_string()
     } else {
@@ -2801,7 +2801,7 @@ mod tests {
 
         // The BODY validates. Bounded to the double body's own text so a match
         // inside the float overload cannot stand in for it.
-        let body_pos = output.find("RetCode SMA_Impl( ").unwrap();
+        let body_pos = output.find("RetCode smaImpl( ").unwrap();
         let body_section = &output[body_pos..];
         let body_end = body_section[1..]
             .find("   RetCode ")
@@ -2814,9 +2814,9 @@ mod tests {
         // The public surface is OutRange-returning wrappers, and they call the
         // BODY, not the shim — a sub-call's throw has to propagate rather than be
         // converted and re-thrown under the outer function's name.
-        assert!(output.contains("   public OutRange SMA( "), "Missing public SMA wrapper");
+        assert!(output.contains("   public OutRange sma( "), "Missing public sma wrapper");
         assert!(
-            output.contains("RetCode retCode = SMA_Impl("),
+            output.contains("RetCode retCode = smaImpl("),
             "the public wrapper must call the body directly"
         );
         assert!(

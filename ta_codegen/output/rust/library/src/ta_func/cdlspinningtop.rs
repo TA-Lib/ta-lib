@@ -64,10 +64,10 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CDLSPINNINGTOP`]: the number of leading input values consumed
+    /// Lookback period for [`Core::cdlspinningtop`]: the number of leading input values consumed
     /// before the first output value can be produced.
     #[doc(alias = "TA_CDLSPINNINGTOP_Lookback")]
-    pub fn CDLSPINNINGTOP_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn cdlspinningtop_lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
         #[allow(non_snake_case)]
@@ -76,10 +76,10 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         return Ok((BodyShort_avgPeriod) as usize);
     }
-    /// C-shaped body behind [`Core::CDLSPINNINGTOP`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::cdlspinningtop`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CDLSPINNINGTOP_Impl(
+    pub(crate) fn cdlspinningtop_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -97,7 +97,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLSPINNINGTOP_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.cdlspinningtop_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -118,7 +118,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLSPINNINGTOP_Lookback().unwrap_or(usize::MAX);
+        lookbackTotal = self.cdlspinningtop_lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -263,7 +263,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0i32; 252];
     ///
-    /// let out_range = core.CDLSPINNINGTOP(
+    /// let out_range = core.cdlspinningtop(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out,
     /// )?;
@@ -277,10 +277,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`] · [`Core::CDLLONGLEGGEDDOJI`]
+    /// [`CDLDOJI`](Core::cdldoji) · [`CDLHIGHWAVE`](Core::cdlhighwave) ·
+    /// [`CDLLONGLEGGEDDOJI`](Core::cdllongleggeddoji)
     #[doc(alias = "TA_CDLSPINNINGTOP")]
     #[doc(alias = "SpinningTop")]
-    pub fn CDLSPINNINGTOP(
+    pub fn cdlspinningtop(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -296,7 +297,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLSPINNINGTOP_Lookback()?;
+        let _guardLb = self.cdlspinningtop_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -316,7 +317,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDLSPINNINGTOP_Impl(
+        let retCode = self.cdlspinningtop_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -336,7 +337,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLSPINNINGTOP stream: one value per closed bar, bit-identical to [`Core::CDLSPINNINGTOP`]
+/// Live CDLSPINNINGTOP stream: one value per closed bar, bit-identical to [`Core::cdlspinningtop`]
 /// over the same series. Open with [`Core::cdlspinningtop_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -476,7 +477,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLSPINNINGTOP_Lookback()?;
+        lookbackTotal = self.cdlspinningtop_lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -603,7 +604,7 @@ impl Core {
     }
 
     /// Open a live CDLSPINNINGTOP stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLSPINNINGTOP`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::cdlspinningtop`] at that bar.
     ///
     /// # Errors
     ///
@@ -640,7 +641,7 @@ impl Core {
     }
 
     /// [`Core::cdlspinningtop_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLSPINNINGTOP`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::cdlspinningtop`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -664,7 +665,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0_i32; 252];
-    /// let batch = core.CDLSPINNINGTOP(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.cdlspinningtop(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0_i32; 252];
     /// let (_stream, filled) = core.cdlspinningtop_open_and_fill(&open, &high, &low, &close, &mut out)?;
@@ -684,7 +685,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLSPINNINGTOP_Lookback()?;
+        let _guardLb = self.cdlspinningtop_lookback()?;
         if inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -801,7 +802,7 @@ impl CdlspinningtopStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CDLSPINNINGTOP`] reports over the same bars: the opener sets it
+    /// It is what [`Core::cdlspinningtop`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

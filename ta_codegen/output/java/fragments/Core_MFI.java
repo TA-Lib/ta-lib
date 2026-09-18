@@ -28,7 +28,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MFI} consumes before it can
+    * Number of leading input bars {@link Core#mfi} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -38,7 +38,7 @@
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MFI_Lookback( int optInTimePeriod )
+   public int mfiLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -48,16 +48,16 @@
       return optInTimePeriod ;
 
    }
-   RetCode MFI_Impl( int startIdx,
-                     int endIdx,
-                     double inHigh[],
-                     double inLow[],
-                     double inClose[],
-                     double inVolume[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode mfiImpl( int startIdx,
+                    int endIdx,
+                    double inHigh[],
+                    double inLow[],
+                    double inClose[],
+                    double inVolume[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -233,16 +233,16 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MFI_Impl( int startIdx,
-                     int endIdx,
-                     float inHigh[],
-                     float inLow[],
-                     float inClose[],
-                     float inVolume[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode mfiImpl( int startIdx,
+                    int endIdx,
+                    float inHigh[],
+                    float inLow[],
+                    float inClose[],
+                    float inVolume[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -373,7 +373,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MFI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#mfiLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -400,11 +400,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#RSI
-    * @see Core#AD
-    * @see Core#ADOSC
+    * @see Core#rsi
+    * @see Core#ad
+    * @see Core#adosc
     */
-   public OutRange MFI( int startIdx,
+   public OutRange mfi( int startIdx,
                         int endIdx,
                         double inHigh[],
                         double inLow[],
@@ -414,7 +414,7 @@
                         double outReal[] )
    {
       requireIndexRange("MFI", startIdx, endIdx);
-      int guardStart = clampedStart("MFI", startIdx, MFI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MFI", startIdx, mfiLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MFI", "inHigh", inHigh, guardInLen);
@@ -424,7 +424,7 @@
       requireLength("MFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = mfiImpl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MFI", retCode);
       }
@@ -447,7 +447,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MFI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#mfiLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -474,11 +474,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#RSI
-    * @see Core#AD
-    * @see Core#ADOSC
+    * @see Core#rsi
+    * @see Core#ad
+    * @see Core#adosc
     */
-   public OutRange MFI( int startIdx,
+   public OutRange mfi( int startIdx,
                         int endIdx,
                         float inHigh[],
                         float inLow[],
@@ -488,7 +488,7 @@
                         double outReal[] )
    {
       requireIndexRange("MFI", startIdx, endIdx);
-      int guardStart = clampedStart("MFI", startIdx, MFI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MFI", startIdx, mfiLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MFI", "inHigh", inHigh, guardInLen);
@@ -498,7 +498,7 @@
       requireLength("MFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MFI_Impl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = mfiImpl(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MFI", retCode);
       }
@@ -508,7 +508,7 @@
 
    /**
     * A live MFI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MFI} over the same series.
+    * closed bar, bit-identical to {@link Core#mfi} over the same series.
     * Open with {@link Core#mfiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -541,7 +541,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MFI} reports over the same bars: the
+       * <p>It is what {@link Core#mfi} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -988,8 +988,8 @@
    /**
     * Open a live MFI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MFI} at that bar.
-    * <p>The history must hold at least {@code MFI_Lookback(...) + 1} bars
+    * to {@link Core#mfi} at that bar.
+    * <p>The history must hold at least {@code mfiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1012,7 +1012,7 @@
    }
    /**
     * {@link Core#mfiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MFI} over the whole history in the same single pass
+    * to {@link Core#mfi} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1028,7 +1028,7 @@
       requireArgument("MFI openAndFill", "inLow", inLow);
       requireArgument("MFI openAndFill", "inClose", inClose);
       requireArgument("MFI openAndFill", "inVolume", inVolume);
-      int guardOutLen = openFillCount("MFI openAndFill", inHigh.length, MFI_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("MFI openAndFill", inHigh.length, mfiLookback(optInTimePeriod));
       requireHistoryLength("MFI openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("MFI openAndFill", "inClose", inClose.length, inHigh.length);
       requireHistoryLength("MFI openAndFill", "inVolume", inVolume.length, inHigh.length);

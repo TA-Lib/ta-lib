@@ -54,7 +54,7 @@ namespace TALib.Test;
 /// <remarks>
 /// <para>Ported case-for-case from the Java <c>CoreApiTest</c> so the two
 /// managed bindings are held to the same contract, which is in turn the C
-/// library's: a period outside <c>0..=MAX_INDEX</c> is refused, and a refused
+/// library's: a period outside <c>0..=MaxIndex</c> is refused, and a refused
 /// call writes nothing.</para>
 /// <para>Framework-free, like the other suites here — discovered by name and
 /// run through <c>public static int Run()</c>.</para>
@@ -126,7 +126,7 @@ public static class CoreBuilderTest
         // lookback, or the setter could be storing into something nothing reads.
         Core plain = new Core();
         Core tuned = Core.Builder().UnstablePeriod(FuncUnstId.EMA, 5).Build();
-        Check(tuned.EMA_Lookback(10) == plain.EMA_Lookback(10) + 5,
+        Check(tuned.EmaLookback(10) == plain.EmaLookback(10) + 5,
             "the unstable period is added to EMA's lookback");
     }
 
@@ -139,14 +139,14 @@ public static class CoreBuilderTest
             () => Core.Builder().UnstablePeriod(FuncUnstId.RSI, -1),
             "negative period -> ArgumentOutOfRangeException");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => Core.Builder().UnstablePeriod(FuncUnstId.RSI, Core.MAX_INDEX + 1),
-            "period above MAX_INDEX -> ArgumentOutOfRangeException");
+            () => Core.Builder().UnstablePeriod(FuncUnstId.RSI, Core.MaxIndex + 1),
+            "period above MaxIndex -> ArgumentOutOfRangeException");
         CheckThrows<ArgumentOutOfRangeException>(
             () => Core.Builder().UnstablePeriod(FuncUnstId.RSI, int.MaxValue),
             "int.MaxValue period -> ArgumentOutOfRangeException");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => Core.Builder().UnstablePeriod(FuncUnstId.ALL, Core.MAX_INDEX + 1),
-            "wildcard period above MAX_INDEX -> ArgumentOutOfRangeException");
+            () => Core.Builder().UnstablePeriod(FuncUnstId.ALL, Core.MaxIndex + 1),
+            "wildcard period above MaxIndex -> ArgumentOutOfRangeException");
         // Unlike Java, a C# enum is not a closed domain -- (FuncUnstId)(-1) and
         // (FuncUnstId)9999 are representable values a caller can pass, and both
         // index off the end of a 24-slot array. C guards this with an unsigned
@@ -164,11 +164,11 @@ public static class CoreBuilderTest
 
     private static void BoundIsABoundNotAnOffByOne()
     {
-        // MAX_INDEX itself is legal: C accepts it and rejects MAX_INDEX + 1, so a
+        // MaxIndex itself is legal: C accepts it and rejects MaxIndex + 1, so a
         // guard tightened by one would be caught here rather than shipping.
-        Core core = Core.Builder().UnstablePeriod(FuncUnstId.EMA, Core.MAX_INDEX).Build();
-        Check(core.UnstablePeriod(FuncUnstId.EMA) == Core.MAX_INDEX,
-            "the MAX_INDEX ceiling is accepted, not rejected");
+        Core core = Core.Builder().UnstablePeriod(FuncUnstId.EMA, Core.MaxIndex).Build();
+        Check(core.UnstablePeriod(FuncUnstId.EMA) == Core.MaxIndex,
+            "the MaxIndex ceiling is accepted, not rejected");
     }
 
     private static void ARejectedCallWritesNothing()
@@ -176,7 +176,7 @@ public static class CoreBuilderTest
         // The half of the contract an "it throws" assertion cannot see.
         CoreBuilder b = Core.Builder().UnstablePeriod(FuncUnstId.EMA, 7);
         CheckThrows<ArgumentOutOfRangeException>(
-            () => b.UnstablePeriod(FuncUnstId.EMA, Core.MAX_INDEX + 1),
+            () => b.UnstablePeriod(FuncUnstId.EMA, Core.MaxIndex + 1),
             "the rejected overwrite still throws");
         Check(b.Build().UnstablePeriod(FuncUnstId.EMA) == 7,
             "a rejected period leaves the previous value in place");
@@ -266,11 +266,11 @@ public static class CoreBuilderTest
         }
 
         int[] outDefault = new int[n], outTuned = new int[n];
-        OutRange rd = new Core().CDLDOJI(0, n - 1, open, high, low, close, outDefault);
+        OutRange rd = new Core().Cdldoji(0, n - 1, open, high, low, close, outDefault);
         Core tuned = Core.Builder()
             .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9)
             .Build();
-        OutRange rt = tuned.CDLDOJI(0, n - 1, open, high, low, close, outTuned);
+        OutRange rt = tuned.Cdldoji(0, n - 1, open, high, low, close, outTuned);
 
         bool noneByDefault = true, allWhenTuned = true;
         for (int i = 0; i < rd.Count; i++)
@@ -302,8 +302,8 @@ public static class CoreBuilderTest
             "negative avgPeriod -> ArgumentOutOfRangeException");
         CheckThrows<ArgumentOutOfRangeException>(
             () => Core.Builder().CandleSetting(
-                CandleSettingType.BodyDoji, RangeType.HighLow, Core.MAX_INDEX + 1, 1.0),
-            "avgPeriod above MAX_INDEX -> ArgumentOutOfRangeException");
+                CandleSettingType.BodyDoji, RangeType.HighLow, Core.MaxIndex + 1, 1.0),
+            "avgPeriod above MaxIndex -> ArgumentOutOfRangeException");
         CheckThrows<ArgumentOutOfRangeException>(
             () => Core.Builder().CandleSetting(
                 CandleSettingType.BodyDoji, RangeType.HighLow, 10, double.NaN),
@@ -323,9 +323,9 @@ public static class CoreBuilderTest
             "a zero avgPeriod means no averaging and is legal");
 
         Core ceiling = Core.Builder()
-            .CandleSetting(CandleSettingType.BodyDoji, RangeType.Shadows, Core.MAX_INDEX, 0.1).Build();
-        Check(ceiling.CandleSettings(CandleSettingType.BodyDoji).AvgPeriod == Core.MAX_INDEX,
-            "the MAX_INDEX ceiling is accepted, not rejected");
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.Shadows, Core.MaxIndex, 0.1).Build();
+        Check(ceiling.CandleSettings(CandleSettingType.BodyDoji).AvgPeriod == Core.MaxIndex,
+            "the MaxIndex ceiling is accepted, not rejected");
 
         // Only NaN is refused; a negative factor is unusual but legal, and C
         // accepts it too.

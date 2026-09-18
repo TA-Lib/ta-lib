@@ -55,10 +55,10 @@
 //!   `-warnaserror`, so [`cond_fold`](super::cond_fold) folds the whole
 //!   `if` away (dead code only — never a value change).
 //!
-//! - **Method names are the YAML `name:` verbatim** (`SMA`, `WILLR`), suffixed
-//!   variants separated by an underscore (`SMA_Lookback`). Must agree with
-//!   `Lang::CSharp` in `registry.rs` or every cross-indicator call targets a
-//!   method that does not exist.
+//! - **Method names are the canonical name in PascalCase** (`Sma`, `Willr`),
+//!   suffixed variants folded into one identifier (`SmaLookback`). Must agree
+//!   with `Lang::CSharp` in `registry.rs` or every cross-indicator call targets
+//!   a method that does not exist.
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
@@ -342,7 +342,7 @@ fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, Enum
 }
 
 /// Optional-parameter validation prologue (C#): map the `int.MinValue` /
-/// `REAL_DEFAULT` sentinels to the documented default value, then reject
+/// `RealDefault` sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`.
 ///
@@ -387,7 +387,7 @@ pub(crate) fn emit_opt_param_validation(
             ParamType::Real => {
                 if let Some(default_val) = opt.default {
                     out.push_str(&format!(
-                        "      if( {name} == REAL_DEFAULT ) {{\n         {name} = {val:e};\n      }}",
+                        "      if( {name} == RealDefault ) {{\n         {name} = {val:e};\n      }}",
                         name = opt.name,
                         val = default_val
                     ));
@@ -397,8 +397,8 @@ pub(crate) fn emit_opt_param_validation(
                             " else if( {cond} ) {{\n         return {fail};\n      }}",
                             cond = super::common::real_range_reject(
                                 &opt.name,
-                                &super::common::real_bound_literal(min, ""),
-                                &super::common::real_bound_literal(max, ""),
+                                &super::common::real_bound_named(min, "", "RealMin", "RealMax"),
+                                &super::common::real_bound_named(max, "", "RealMin", "RealMax"),
                                 false
                             )
                         ));
@@ -457,7 +457,7 @@ fn gen_lookback(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let name = func.name.clone();
+    let name = super::common::pascal_words(&func.name);
 
     let param_str = if func.optional_inputs.is_empty() {
         " ".to_string()
@@ -487,7 +487,7 @@ fn gen_lookback(
 
     let docs = super::csharp_doc::lookback_docs(func, &name, enums);
     format!(
-        "{docs}   public int {name}_Lookback({param_str})\n\
+        "{docs}   public int {name}Lookback({param_str})\n\
          \x20  {{\n\
          {body}\n\
          \x20  }}\n"
@@ -536,7 +536,7 @@ fn render_init_expr(expr: &Expr) -> String {
 /// back to a code, so that the body's cross-calls can call the public overload
 /// (which the same call site selects, by omitting the two `out int` arguments).
 fn body_name(base: &str) -> String {
-    format!("{base}_Impl")
+    format!("{base}Impl")
 }
 
 /// Emit the public, `OutRange`-returning wrapper, plus the C-shaped shim beside it.
@@ -555,9 +555,10 @@ fn gen_public_wrapper(
     single_precision: bool,
     enums: &HashMap<String, EnumDef>,
 ) -> String {
-    let base_name = func.name.clone();
+    let base_name = super::common::pascal_words(&func.name);
     let core = body_name(&base_name);
     let public_name = base_name.clone();
+    let canonical = &func.name;
 
     // Parameters: same as the core minus the two out-int params.
     let mut params: Vec<String> = vec!["int startIdx".to_string(), "int endIdx".to_string()];
@@ -628,7 +629,7 @@ fn gen_public_wrapper(
             func.optional_inputs.iter().map(|o| o.name.clone()).collect();
         let _ = writeln!(
             out,
-            "      int guardStart = ClampedStart(startIdx, endIdx, {base_name}_Lookback({}));",
+            "      int guardStart = ClampedStart(startIdx, endIdx, {base_name}Lookback({}));",
             lb_args.join(", ")
         );
         if !checked_inputs.is_empty() {
@@ -642,7 +643,7 @@ fn gen_public_wrapper(
         for name in &checked_inputs {
             let _ = writeln!(
                 out,
-                "      RequireLength(\"{base_name}\", \"{name}\", {name}.Length, guardInLen);"
+                "      RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardInLen);"
             );
         }
         for output in &func.outputs {
@@ -655,12 +656,12 @@ fn gen_public_wrapper(
             if output.is_nullable() {
                 let _ = writeln!(
                     out,
-                    "      if( !{name}.IsEmpty ) RequireLength(\"{base_name}\", \"{name}\", {name}.Length, guardOutLen);"
+                    "      if( !{name}.IsEmpty ) RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardOutLen);"
                 );
             } else {
                 let _ = writeln!(
                     out,
-                    "      RequireLength(\"{base_name}\", \"{name}\", {name}.Length, guardOutLen);"
+                    "      RequireLength(\"{canonical}\", \"{name}\", {name}.Length, guardOutLen);"
                 );
             }
         }
@@ -687,8 +688,8 @@ fn gen_private(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let base_name = func.name.clone();
-    let name_override = format!("{base_name}_Private");
+    let base_name = super::common::pascal_words(&func.name);
+    let name_override = format!("{base_name}Private");
     gen_func_inner(func, single_precision, Some(&name_override), enums, registry, helpers)
 }
 
@@ -712,7 +713,7 @@ fn gen_func_inner(
     helpers: &HelperRegistry,
 ) -> String {
     let mut out = String::new();
-    let base_name = func.name.clone();
+    let base_name = super::common::pascal_words(&func.name);
     let name = if let Some(n) = name_override {
         n.to_string()
     } else {
@@ -890,10 +891,10 @@ fn gen_func_inner(
     // Validation prologue. Omitted for the `Private` variant, whose callers are the
     // guarded cores that have already validated.
     if name_override.is_none() {
-        out.push_str("      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {\n");
+        out.push_str("      if( (startIdx < 0) || (startIdx > MaxIndex) ) {\n");
         out.push_str("         return RetCode.OutOfRangeStartIndex ;\n");
         out.push_str("      }\n");
-        out.push_str("      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {\n");
+        out.push_str("      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {\n");
         out.push_str("         return RetCode.OutOfRangeEndIndex ;\n");
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
@@ -2498,7 +2499,7 @@ mod tests {
                 continue;
             }
             let fd = parser::yaml::parse_yaml(&yaml);
-            let base = fd.name.clone();
+            let base = crate::backends::common::pascal_words(&fd.name);
             assert_eq!(
                 registry.resolve_call(&key, Lang::CSharp),
                 base,
@@ -2506,7 +2507,7 @@ mod tests {
             );
             assert_eq!(
                 registry.resolve_call(&format!("{key}_lookback"), Lang::CSharp),
-                format!("{base}_Lookback"),
+                format!("{base}Lookback"),
                 "lookback cross-call target for `{key}` disagrees with the emitted name"
             );
             checked += 1;
@@ -2541,7 +2542,7 @@ mod tests {
 
         // The BODY validates. Bounded to the double body's own text so a match
         // inside the float overload cannot stand in for it.
-        let body_pos = output.find("internal RetCode SMA_Impl( ").unwrap();
+        let body_pos = output.find("internal RetCode SmaImpl( ").unwrap();
         let body_end = output[body_pos + 1..]
             .find("   internal RetCode ")
             .map_or(output.len() - body_pos, |i| i + 1);
@@ -2552,7 +2553,7 @@ mod tests {
 
         // The public surface is OutRange-returning wrappers over those cores,
         // and nothing Java-shaped leaks through.
-        assert!(output.contains("   public OutRange SMA( "), "missing public wrapper");
+        assert!(output.contains("   public OutRange Sma( "), "missing public wrapper");
         assert!(
             output.contains("throw Failure(\"SMA\", retCode);"),
             "guarded wrapper must map RetCode onto the documented exception"
@@ -2579,7 +2580,7 @@ mod tests {
         // `out` lowering stays live on the streaming sub-opens, which keep the
         // C-shaped shape because they have no public entry point.
         assert!(
-            output.contains("MA(startIdx, endIdx, inReal, minUsed"),
+            output.contains("Ma(startIdx, endIdx, inReal, minUsed"),
             "cross-call must resolve through the registry's C# naming"
         );
         assert!(
@@ -2614,7 +2615,7 @@ mod tests {
         assert!(output.contains("case MAType.SMA:"), "switch labels must be qualified");
         assert!(!output.contains("case SMA:"), "unqualified labels are Java-only");
         assert!(
-            output.contains("MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
+            output.contains("Mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, default)"),
             "MAMA's declined FAMA output must be an empty span (rule B6a), not a buffer"
         );
         assert!(

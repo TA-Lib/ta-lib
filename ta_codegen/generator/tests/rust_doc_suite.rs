@@ -141,14 +141,15 @@ fn the_batch_and_lookback_aliases_sit_on_the_functions_they_name() {
     for name in &indicators() {
         let (func, src) = rust_source(name);
         let n = &func.name;
+        let fold = backends::common::snake_words(n);
 
-        let batch = attrs_above(&src, &format!("pub fn {n}("));
+        let batch = attrs_above(&src, &format!("pub fn {fold}("));
         assert!(
             batch.contains(&format!("#[doc(alias = \"TA_{n}\")]")),
             "{name}: the batch entry point does not carry TA_{n}; attrs were {batch:?}"
         );
 
-        let lb = attrs_above(&src, &format!("pub fn {n}_Lookback("));
+        let lb = attrs_above(&src, &format!("pub fn {fold}_lookback("));
         assert!(
             lb.contains(&format!("#[doc(alias = \"TA_{n}_Lookback\")]")),
             "{name}: the lookback does not carry TA_{n}_Lookback; attrs were {lb:?}"

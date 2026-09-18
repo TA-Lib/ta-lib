@@ -100,60 +100,60 @@ impl std::error::Error for RetCode {}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum FuncUnstId {
-    /// Unstable period of [`Core::ADX`].
+    /// Unstable period of [`Core::adx`].
     ADX,
     /// Reserved: was ADXR, knob was inert (#129); kept for ABI, reusable.
     UNUSED_1,
-    /// Unstable period of [`Core::ATR`].
+    /// Unstable period of [`Core::atr`].
     ATR,
-    /// Unstable period of [`Core::CMO`].
+    /// Unstable period of [`Core::cmo`].
     CMO,
-    /// Unstable period of [`Core::DX`].
+    /// Unstable period of [`Core::dx`].
     DX,
-    /// Unstable period of [`Core::EMA`], and of every function that smooths
+    /// Unstable period of [`Core::ema`], and of every function that smooths
     /// with one.
     EMA,
-    /// Unstable period of [`Core::HT_DCPERIOD`].
+    /// Unstable period of [`Core::ht_dcperiod`].
     HT_DCPERIOD,
-    /// Unstable period of [`Core::HT_DCPHASE`].
+    /// Unstable period of [`Core::ht_dcphase`].
     HT_DCPHASE,
-    /// Unstable period of [`Core::HT_PHASOR`].
+    /// Unstable period of [`Core::ht_phasor`].
     HT_PHASOR,
-    /// Unstable period of [`Core::HT_SINE`].
+    /// Unstable period of [`Core::ht_sine`].
     HT_SINE,
-    /// Unstable period of [`Core::HT_TRENDLINE`].
+    /// Unstable period of [`Core::ht_trendline`].
     HT_TRENDLINE,
-    /// Unstable period of [`Core::HT_TRENDMODE`].
+    /// Unstable period of [`Core::ht_trendmode`].
     HT_TRENDMODE,
     /// Reserved: was IMI, reclassified stable (#14); kept for ABI, reusable.
     UNUSED_12,
-    /// Unstable period of [`Core::KAMA`].
+    /// Unstable period of [`Core::kama`].
     KAMA,
-    /// Unstable period of [`Core::MAMA`].
+    /// Unstable period of [`Core::mama`].
     MAMA,
     /// Reserved: was MFI, reclassified stable (#4); kept for ABI, reusable.
     UNUSED_15,
-    /// Unstable period of [`Core::MINUS_DI`].
+    /// Unstable period of [`Core::minus_di`].
     MINUS_DI,
-    /// Unstable period of [`Core::MINUS_DM`].
+    /// Unstable period of [`Core::minus_dm`].
     MINUS_DM,
-    /// Unstable period of [`Core::NATR`].
+    /// Unstable period of [`Core::natr`].
     NATR,
-    /// Unstable period of [`Core::PLUS_DI`].
+    /// Unstable period of [`Core::plus_di`].
     PLUS_DI,
-    /// Unstable period of [`Core::PLUS_DM`].
+    /// Unstable period of [`Core::plus_dm`].
     PLUS_DM,
-    /// Unstable period of [`Core::RSI`].
+    /// Unstable period of [`Core::rsi`].
     RSI,
     /// Reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable.
     UNUSED_22,
-    /// Unstable period of [`Core::T3`].
+    /// Unstable period of [`Core::t3`].
     T3,
-    /// Unstable period of [`Core::RMA`].
+    /// Unstable period of [`Core::rma`].
     RMA,
-    /// Unstable period of [`Core::HA`].
+    /// Unstable period of [`Core::ha`].
     HA,
-    /// Unstable period of [`Core::RVI`].
+    /// Unstable period of [`Core::rvi`].
     RVI,
     /// Wildcard: set the unstable period for all functions at once.
     ///
@@ -300,7 +300,7 @@ pub enum CandleSettingType {
 /// every indicator method takes `&self` and only *reads* them. That makes
 /// `Core` deeply immutable and `Send + Sync`, so a single instance can be shared
 /// read-only across threads (e.g. wrapped in an `Arc` with concurrent
-/// `core.SMA(...)` calls) with no locking and no risk of configuration changing
+/// `core.sma(...)` calls) with no locking and no risk of configuration changing
 /// mid-computation.
 ///
 /// Construct one with [`Core::new()`] for all-defaults, or with
@@ -677,7 +677,7 @@ mod tests {
     #[test]
     fn a_short_history_open_reports_insufficient_history() {
         let core = Core::new();
-        let lookback = core.SMA_Lookback(30).expect("valid params");
+        let lookback = core.sma_lookback(30).expect("valid params");
         assert!(lookback > 0, "the probe needs a function that consumes bars");
 
         let one_short = vec![1.0_f64; lookback];
@@ -1055,7 +1055,7 @@ mod tests {
         // two tiers rather than over the setter: for every setting the builder
         // accepts, the lookback is a real index count and the call's reported
         // range agrees with it. A negative avg_period broke exactly this — here
-        // it wraps `CDLDOJI_Lookback` to usize::MAX and the call silently
+        // it wraps `cdldoji_lookback` to usize::MAX and the call silently
         // returns nothing, where C shifts the values instead (#185).
         let n = 40usize;
         let open = vec![100.0_f64; n];
@@ -1070,12 +1070,12 @@ mod tests {
                 )
                 .build()
                 .expect("every avg_period in this sweep is inside the bound");
-            let lookback = core.CDLDOJI_Lookback().expect("valid params");
+            let lookback = core.cdldoji_lookback().expect("valid params");
             assert!(lookback <= Core::MAX_INDEX, "avg_period {avg_period} gave lookback {lookback}");
 
             let mut out = vec![0_i32; n];
             let r = core
-                .CDLDOJI(0, n - 1, &open, &high, &low, &close, &mut out)
+                .cdldoji(0, n - 1, &open, &high, &low, &close, &mut out)
                 .expect("defaults are in range");
             if lookback > n - 1 {
                 assert_eq!(r, OutRange::EMPTY, "avg_period {avg_period}");
@@ -1138,7 +1138,7 @@ mod tests {
         let run = |core: &Core| {
             let mut out = vec![0_i32; n];
             let r = core
-                .CDLDOJI(0, n - 1, &open, &high, &low, &close, &mut out)
+                .cdldoji(0, n - 1, &open, &high, &low, &close, &mut out)
                 .expect("defaults are in range");
             out[..r.count].to_vec()
         };
@@ -1194,8 +1194,8 @@ mod tests {
         let tuned = Core::builder().unstable_period(FuncUnstId::EMA, 5).build().unwrap();
         // The unstable period is added to the function's lookback.
         assert_eq!(
-            tuned.EMA_Lookback(10).expect("valid params"),
-            base.EMA_Lookback(10).expect("valid params") + 5
+            tuned.ema_lookback(10).expect("valid params"),
+            base.ema_lookback(10).expect("valid params") + 5
         );
     }
 
@@ -1220,7 +1220,7 @@ mod tests {
             let close = close.clone();
             handles.push(thread::spawn(move || {
                 let mut out = vec![0.0; close.len()];
-                core.EMA(0, close.len() - 1, &close, 10, &mut out)
+                core.ema(0, close.len() - 1, &close, 10, &mut out)
                     .expect("period 10 is in range");
                 out[0]
             }));

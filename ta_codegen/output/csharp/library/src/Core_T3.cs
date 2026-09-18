@@ -83,16 +83,16 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
    /// more DEMA-like sharpening) (default 0.7; range 0..1;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int T3_Lookback( int optInTimePeriod, double optInVFactor )
+   public int T3Lookback( int optInTimePeriod, double optInVFactor )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 5;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInVFactor == REAL_DEFAULT ) {
+      if( optInVFactor == RealDefault ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
@@ -100,14 +100,14 @@ public partial class Core
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[(int)FuncUnstId.T3] ;
 
    }
-   internal RetCode T3_Impl( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inReal,
-                             int optInTimePeriod,
-                             double optInVFactor,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
+   internal RetCode T3Impl( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<double> inReal,
+                            int optInTimePeriod,
+                            double optInVFactor,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -128,10 +128,10 @@ public partial class Core
       double c3 = 0;
       double c4 = 0;
       double tempReal = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -139,7 +139,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == REAL_DEFAULT ) {
+      if( optInVFactor == RealDefault ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
@@ -278,14 +278,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode T3_Impl( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inReal,
-                             int optInTimePeriod,
-                             double optInVFactor,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
+   internal RetCode T3Impl( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<float> inReal,
+                            int optInTimePeriod,
+                            double optInVFactor,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -306,10 +306,10 @@ public partial class Core
       double c3 = 0;
       double c4 = 0;
       double tempReal = 0;
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -317,7 +317,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == REAL_DEFAULT ) {
+      if( optInVFactor == RealDefault ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
@@ -437,7 +437,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>T3_Lookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>T3Lookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -448,12 +448,12 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
    /// more DEMA-like sharpening) (default 0.7; range 0..1;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">T3 smoothed line. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -475,12 +475,12 @@ public partial class Core
                        double optInVFactor,
                        Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+      int guardStart = ClampedStart(startIdx, endIdx, T3Lookback(optInTimePeriod, optInVFactor));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("T3", "inReal", inReal.Length, guardInLen);
       RequireLength("T3", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = T3Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("T3", retCode);
       }
@@ -509,7 +509,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>T3_Lookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>T3Lookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -520,12 +520,12 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
    /// more DEMA-like sharpening) (default 0.7; range 0..1;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">T3 smoothed line. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -549,12 +549,12 @@ public partial class Core
                        double optInVFactor,
                        Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+      int guardStart = ClampedStart(startIdx, endIdx, T3Lookback(optInTimePeriod, optInVFactor));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("T3", "inReal", inReal.Length, guardInLen);
       RequireLength("T3", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = T3Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("T3", retCode);
       }
@@ -610,7 +610,7 @@ public partial class Core
       /// <c>Peek</c> — and <c>Clone</c> carries it verbatim. A plain <c>Open</c>
       /// hands back only the last value, a subset of this range, because the caller
       /// chose not to take the fill.</para>
-      /// <para>The last bar it can reach is <see cref="Core.MAX_INDEX"/>; past that
+      /// <para>The last bar it can reach is <see cref="Core.MaxIndex"/>; past that
       /// <c>Update</c> and <c>Advance</c> throw.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
@@ -623,13 +623,13 @@ public partial class Core
       /// rejected and that will not be re-fed, or a session with no print. Without
       /// it two handles on one feed drift a bar apart when only one of them skips.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, the last one the batch tier
+      /// has reached bar <see cref="Core.MaxIndex"/>, the last one the batch tier
       /// can address and the last this handle will count. <c>Update</c> throws the
       /// same there.</para>
       /// </remarks>
       public void Advance()
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("T3", "advance", RetCode.OutOfRangeEndIndex);
          outRangeCount++;
       }
@@ -669,7 +669,7 @@ public partial class Core
       /// which computes on whatever it is given: a handle retains its state, so a
       /// single non-finite bar would poison every later value it produces.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, which no re-feed clears: the
+      /// has reached bar <see cref="Core.MaxIndex"/>, which no re-feed clears: the
       /// handle has run out of index domain and only a shorter history can start a
       /// new one.</para>
       /// </remarks>
@@ -677,7 +677,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal )
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("T3", "update", RetCode.OutOfRangeEndIndex);
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("T3", "update", RetCode.BadParam);
          core.T3StepImpl(this, inReal);
@@ -693,7 +693,7 @@ public partial class Core
       /// concurrently with each other.</para>
       /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
-      /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
+      /// <see cref="Core.MaxIndex"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value <see cref="Update"/> would return for this bar, when it takes
@@ -781,7 +781,7 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( optInTimePeriod == int.MinValue ) {
@@ -789,7 +789,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == REAL_DEFAULT ) {
+      if( optInVFactor == RealDefault ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
@@ -800,7 +800,7 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
+         int fillLb = T3Lookback(optInTimePeriod, optInVFactor);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.InsufficientHistory;
@@ -995,25 +995,25 @@ public partial class Core
    /// <remarks>
    /// <para>The handle's <see cref="T3Stream.Value"/> starts at the last history bar's
    /// value — bit-identical to what <c>T3</c> reports for that bar.</para>
-   /// <para>The history must hold at least <c>T3_Lookback(...) + 1</c> bars
+   /// <para>The history must hold at least <c>T3Lookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>T3OpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInVFactor">As in the batch call; see <see cref="T3_Lookback"/> for its default and
-   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInVFactor">As in the batch call; see <see cref="T3Lookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public T3Stream T3Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor )
    {
       if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inReal.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 open: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       return T3OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
 
@@ -1022,7 +1022,7 @@ public partial class Core
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>T3</c> produces over the
    /// same series, so no separate batch call is needed for the warm-up plot.</para>
-   /// <para>Output arrays must hold <c>historyLen - T3_Lookback(...)</c> values and
+   /// <para>Output arrays must hold <c>historyLen - T3Lookback(...)</c> values and
    /// must not alias the inputs or each other — this path writes the outputs and
    /// then reads the input tail to seed its rings, so the batch tier's in-place
    /// allowance does not carry over here. Both are checked before anything is
@@ -1032,25 +1032,25 @@ public partial class Core
    /// <see cref="T3Stream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
-   /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3_Lookback"/> for its default and
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInVFactor">As in the batch call; see <see cref="T3_Lookback"/> for its default and
-   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="outReal">T3 smoothed line. Must hold at least <c>historyLen - T3_Lookback(...)</c>
+   /// <param name="optInVFactor">As in the batch call; see <see cref="T3Lookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="outReal">T3 smoothed line. Must hold at least <c>historyLen - T3Lookback(...)</c>
    /// values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public T3Stream T3OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inReal.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
-      int guardOutLen = OpenFillCount("T3", "openAndFill", inReal.Length, T3_Lookback(optInTimePeriod, optInVFactor));
+      if( inReal.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 openAndFill: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
+      int guardOutLen = OpenFillCount("T3", "openAndFill", inReal.Length, T3Lookback(optInTimePeriod, optInVFactor));
       RequireFillLength("T3", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inReal) ) {
          throw StreamFailure("T3", "openAndFill", RetCode.BadParam);

@@ -24,7 +24,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#T3} consumes before it can
+    * Number of leading input bars {@link Core#t3} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -40,7 +40,7 @@
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int T3_Lookback( int optInTimePeriod, double optInVFactor )
+   public int t3Lookback( int optInTimePeriod, double optInVFactor )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 5;
@@ -55,14 +55,14 @@
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
 
    }
-   RetCode T3_Impl( int startIdx,
-                    int endIdx,
-                    double inReal[],
-                    int optInTimePeriod,
-                    double optInVFactor,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode t3Impl( int startIdx,
+                   int endIdx,
+                   double inReal[],
+                   int optInTimePeriod,
+                   double optInVFactor,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -228,14 +228,14 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode T3_Impl( int startIdx,
-                    int endIdx,
-                    float inReal[],
-                    int optInTimePeriod,
-                    double optInVFactor,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode t3Impl( int startIdx,
+                   int endIdx,
+                   float inReal[],
+                   int optInTimePeriod,
+                   double optInVFactor,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -378,7 +378,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#T3_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#t3Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -405,12 +405,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#MA
+    * @see Core#ema
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#ma
     */
-   public OutRange T3( int startIdx,
+   public OutRange t3( int startIdx,
                        int endIdx,
                        double inReal[],
                        int optInTimePeriod,
@@ -418,14 +418,14 @@
                        double outReal[] )
    {
       requireIndexRange("T3", startIdx, endIdx);
-      int guardStart = clampedStart("T3", startIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+      int guardStart = clampedStart("T3", startIdx, t3Lookback(optInTimePeriod, optInVFactor));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("T3", "inReal", inReal, guardInLen);
       requireLength("T3", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      RetCode retCode = t3Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("T3", retCode);
       }
@@ -447,7 +447,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#T3_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#t3Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -474,12 +474,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#DEMA
-    * @see Core#TEMA
-    * @see Core#MA
+    * @see Core#ema
+    * @see Core#dema
+    * @see Core#tema
+    * @see Core#ma
     */
-   public OutRange T3( int startIdx,
+   public OutRange t3( int startIdx,
                        int endIdx,
                        float inReal[],
                        int optInTimePeriod,
@@ -487,14 +487,14 @@
                        double outReal[] )
    {
       requireIndexRange("T3", startIdx, endIdx);
-      int guardStart = clampedStart("T3", startIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+      int guardStart = clampedStart("T3", startIdx, t3Lookback(optInTimePeriod, optInVFactor));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("T3", "inReal", inReal, guardInLen);
       requireLength("T3", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      RetCode retCode = t3Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("T3", retCode);
       }
@@ -504,7 +504,7 @@
 
    /**
     * A live T3 stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#T3} over the same series.
+    * closed bar, bit-identical to {@link Core#t3} over the same series.
     * Open with {@link Core#t3Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -541,7 +541,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#T3} reports over the same bars: the
+       * <p>It is what {@link Core#t3} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -739,7 +739,7 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
+         int fillLb = t3Lookback(optInTimePeriod, optInVFactor);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -944,8 +944,8 @@
    /**
     * Open a live T3 stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#T3} at that bar.
-    * <p>The history must hold at least {@code T3_Lookback(...) + 1} bars
+    * to {@link Core#t3} at that bar.
+    * <p>The history must hold at least {@code t3Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
@@ -962,7 +962,7 @@
    }
    /**
     * {@link Core#t3Open} that also fills the output array(s) bit-identically
-    * to {@link Core#T3} over the whole history in the same single pass
+    * to {@link Core#t3} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -975,7 +975,7 @@
    {
       requireArgument("T3 openAndFill", "inReal", inReal);
       requireHistory("T3 openAndFill", inReal.length);
-      int guardOutLen = openFillCount("T3 openAndFill", inReal.length, T3_Lookback(optInTimePeriod, optInVFactor));
+      int guardOutLen = openFillCount("T3 openAndFill", inReal.length, t3Lookback(optInTimePeriod, optInVFactor));
       requireLength("T3 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("T3 openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

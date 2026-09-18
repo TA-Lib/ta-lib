@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLKICKINGBYLENGTH} consumes
+    * Number of leading input bars {@link Core#cdlkickingbylength} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLKICKINGBYLENGTH_Lookback( )
+   public int cdlkickingbylengthLookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(ShadowVeryShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   RetCode CDLKICKINGBYLENGTH_Impl( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlkickingbylengthImpl( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[2];
       double[] BodyLongPeriodTotal = new double[2];
@@ -65,7 +65,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLKICKINGBYLENGTH_Lookback();
+      lookbackTotal = cdlkickingbylengthLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -142,15 +142,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLKICKINGBYLENGTH_Impl( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlkickingbylengthImpl( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[2];
       double[] BodyLongPeriodTotal = new double[2];
@@ -172,7 +172,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLKICKINGBYLENGTH_Lookback();
+      lookbackTotal = cdlkickingbylengthLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -228,7 +228,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLKICKINGBYLENGTH_Lookback} is a
+    * valid range shorter than {@link Core#cdlkickingbylengthLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -255,11 +255,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLKICKING
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLGAPSIDESIDEWHITE
+    * @see Core#cdlkicking
+    * @see Core#cdlmarubozu
+    * @see Core#cdlgapsidesidewhite
     */
-   public OutRange CDLKICKINGBYLENGTH( int startIdx,
+   public OutRange cdlkickingbylength( int startIdx,
                                        int endIdx,
                                        double inOpen[],
                                        double inHigh[],
@@ -268,7 +268,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLKICKINGBYLENGTH", startIdx, endIdx);
-      int guardStart = clampedStart("CDLKICKINGBYLENGTH", startIdx, CDLKICKINGBYLENGTH_Lookback());
+      int guardStart = clampedStart("CDLKICKINGBYLENGTH", startIdx, cdlkickingbylengthLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLKICKINGBYLENGTH", "inOpen", inOpen, guardInLen);
@@ -278,7 +278,7 @@
       requireLength("CDLKICKINGBYLENGTH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLKICKINGBYLENGTH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlkickingbylengthImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLKICKINGBYLENGTH", retCode);
       }
@@ -296,7 +296,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLKICKINGBYLENGTH_Lookback} is a
+    * valid range shorter than {@link Core#cdlkickingbylengthLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -323,11 +323,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLKICKING
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLGAPSIDESIDEWHITE
+    * @see Core#cdlkicking
+    * @see Core#cdlmarubozu
+    * @see Core#cdlgapsidesidewhite
     */
-   public OutRange CDLKICKINGBYLENGTH( int startIdx,
+   public OutRange cdlkickingbylength( int startIdx,
                                        int endIdx,
                                        float inOpen[],
                                        float inHigh[],
@@ -336,7 +336,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLKICKINGBYLENGTH", startIdx, endIdx);
-      int guardStart = clampedStart("CDLKICKINGBYLENGTH", startIdx, CDLKICKINGBYLENGTH_Lookback());
+      int guardStart = clampedStart("CDLKICKINGBYLENGTH", startIdx, cdlkickingbylengthLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLKICKINGBYLENGTH", "inOpen", inOpen, guardInLen);
@@ -346,7 +346,7 @@
       requireLength("CDLKICKINGBYLENGTH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLKICKINGBYLENGTH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlkickingbylengthImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLKICKINGBYLENGTH", retCode);
       }
@@ -356,7 +356,7 @@
 
    /**
     * A live CDLKICKINGBYLENGTH stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLKICKINGBYLENGTH} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlkickingbylength} over the same series.
     * Open with {@link Core#cdlkickingbylengthOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -399,7 +399,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLKICKINGBYLENGTH} reports over the same bars: the
+       * <p>It is what {@link Core#cdlkickingbylength} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -633,7 +633,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLKICKINGBYLENGTH_Lookback();
+      lookbackTotal = cdlkickingbylengthLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -794,8 +794,8 @@
    /**
     * Open a live CDLKICKINGBYLENGTH stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLKICKINGBYLENGTH} at that bar.
-    * <p>The history must hold at least {@code CDLKICKINGBYLENGTH_Lookback(...) + 1} bars
+    * to {@link Core#cdlkickingbylength} at that bar.
+    * <p>The history must hold at least {@code cdlkickingbylengthLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -816,7 +816,7 @@
    }
    /**
     * {@link Core#cdlkickingbylengthOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLKICKINGBYLENGTH} over the whole history in the same single pass
+    * to {@link Core#cdlkickingbylength} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -832,7 +832,7 @@
       requireArgument("CDLKICKINGBYLENGTH openAndFill", "inHigh", inHigh);
       requireArgument("CDLKICKINGBYLENGTH openAndFill", "inLow", inLow);
       requireArgument("CDLKICKINGBYLENGTH openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLKICKINGBYLENGTH openAndFill", inOpen.length, CDLKICKINGBYLENGTH_Lookback());
+      int guardOutLen = openFillCount("CDLKICKINGBYLENGTH openAndFill", inOpen.length, cdlkickingbylengthLookback());
       requireHistoryLength("CDLKICKINGBYLENGTH openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLKICKINGBYLENGTH openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLKICKINGBYLENGTH openAndFill", "inClose", inClose.length, inOpen.length);

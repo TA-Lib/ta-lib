@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::PVO`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::pvo`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -81,7 +81,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_PVO_Lookback")]
     #[inline]
-    pub fn PVO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
+    pub fn pvo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -96,12 +96,12 @@ impl Core {
             optInMAType = MAType::EMA;
         }
         // Lookback is driven by the slowest MA.
-        return Ok(self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
+        return Ok(self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)?);
     }
-    /// C-shaped body behind [`Core::PVO`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::pvo`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn PVO_Impl(
+    pub(crate) fn pvo_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -132,7 +132,7 @@ impl Core {
         if optInMAType == MAType::DEFAULT {
             optInMAType = MAType::EMA;
         }
-        let _assertLb = self.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
+        let _assertLb = self.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -156,7 +156,7 @@ impl Core {
         // being false: with a caller-supplied inVolume that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
+        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return RetCode::Success;
@@ -172,12 +172,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        let _xr0 = match self.MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut tempBuffer[..]) { Ok(_r) => _r, Err(_e) => return _e };
         fastBeg = _xr0.beg_idx;
         fastNb = _xr0.count;
         retCode = RetCode::Success;
         // Calculate the slow MA into the output.
-        let _xr1 = match self.MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr1 = match self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr1.beg_idx;
         (*outNBElement) = _xr1.count;
         retCode = RetCode::Success;
@@ -252,7 +252,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.PVO(0, volume.len() - 1, &volume, 12, 26, MAType::EMA, &mut out)?;
+    /// let out_range = core.pvo(0, volume.len() - 1, &volume, 12, 26, MAType::EMA, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -260,7 +260,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::PPO`] · [`Core::OBV`] · [`Core::MACD`]
+    /// [`PPO`](Core::ppo) · [`OBV`](Core::obv) · [`MACD`](Core::macd)
     ///
     /// # References
     ///
@@ -272,7 +272,7 @@ impl Core {
     ///   [TradingView](https://www.tradingview.com/support/solutions/43000591350-percentage-volume-oscillator-pvo/).
     #[doc(alias = "TA_PVO")]
     #[doc(alias = "PercentageVolumeOscillator")]
-    pub fn PVO(
+    pub fn pvo(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -288,7 +288,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
+        let _guardLb = self.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inVolume.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -299,7 +299,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.PVO_Impl(
+        let retCode = self.pvo_impl(
             startIdx,
             endIdx,
             inVolume,
@@ -319,7 +319,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PVO stream: one value per closed bar, bit-identical to [`Core::PVO`]
+/// Live PVO stream: one value per closed bar, bit-identical to [`Core::pvo`]
 /// over the same series. Open with [`Core::pvo_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -426,7 +426,7 @@ impl Core {
         // being false: with a caller-supplied inVolume that stops short of endIdx, that
         // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
         // probe over every guarded core.
-        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)? > endIdx {
+        if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType)? > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
@@ -500,7 +500,7 @@ impl Core {
     }
 
     /// Open a live PVO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::PVO`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::pvo`] at that bar.
     ///
     /// # Errors
     ///
@@ -532,7 +532,7 @@ impl Core {
     }
 
     /// [`Core::pvo_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::PVO`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::pvo`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -551,7 +551,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.PVO(0, volume.len() - 1, &volume, 12, 26, MAType::EMA, &mut batch_out)?;
+    /// let batch = core.pvo(0, volume.len() - 1, &volume, 12, 26, MAType::EMA, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.pvo_open_and_fill(&volume, 12, 26, MAType::EMA, &mut out)?;
@@ -572,7 +572,7 @@ impl Core {
         if inVolume.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
+        let _guardLb = self.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType)?;
         let _guardOutLen = inVolume.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -691,7 +691,7 @@ impl PvoStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::PVO`] reports over the same bars: the opener sets it
+    /// It is what [`Core::pvo`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

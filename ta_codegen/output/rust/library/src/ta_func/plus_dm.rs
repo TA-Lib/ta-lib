@@ -68,7 +68,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::PLUS_DM`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::plus_dm`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -81,7 +81,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_PLUS_DM_Lookback")]
     #[inline]
-    pub fn PLUS_DM_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn plus_dm_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -93,10 +93,10 @@ impl Core {
             return Ok((1) as usize);
         }
     }
-    /// C-shaped body behind [`Core::PLUS_DM`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::plus_dm`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn PLUS_DM_Impl(
+    pub(crate) fn plus_dm_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -118,7 +118,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.PLUS_DM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.plus_dm_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -361,7 +361,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.PLUS_DM(0, high.len() - 1, &high, &low, 14, &mut out)?;
+    /// let out_range = core.plus_dm(0, high.len() - 1, &high, &low, 14, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -369,8 +369,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::MINUS_DM`] · [`Core::PLUS_DI`] · [`Core::MINUS_DI`] · [`Core::DX`] ·
-    /// [`Core::ADX`] · [`Core::ADXR`]
+    /// [`MINUS_DM`](Core::minus_dm) · [`PLUS_DI`](Core::plus_di) · [`MINUS_DI`](Core::minus_di)
+    /// · [`DX`](Core::dx) · [`ADX`](Core::adx) · [`ADXR`](Core::adxr)
     ///
     /// # References
     ///
@@ -379,7 +379,7 @@ impl Core {
     #[doc(alias = "TA_PLUS_DM")]
     #[doc(alias = "DM")]
     #[doc(alias = "PlusDirectionalMovement")]
-    pub fn PLUS_DM(
+    pub fn plus_dm(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -394,7 +394,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PLUS_DM_Lookback(optInTimePeriod)?;
+        let _guardLb = self.plus_dm_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -408,7 +408,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.PLUS_DM_Impl(
+        let retCode = self.plus_dm_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -427,7 +427,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PLUS_DM stream: one value per closed bar, bit-identical to [`Core::PLUS_DM`]
+/// Live PLUS_DM stream: one value per closed bar, bit-identical to [`Core::plus_dm`]
 /// over the same series. Open with [`Core::plus_dm_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -846,7 +846,7 @@ impl Core {
     }
 
     /// Open a live PLUS_DM stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::PLUS_DM`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::plus_dm`] at that bar.
     ///
     /// # Errors
     ///
@@ -877,7 +877,7 @@ impl Core {
     }
 
     /// [`Core::plus_dm_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::PLUS_DM`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::plus_dm`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -895,7 +895,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.PLUS_DM(0, high.len() - 1, &high, &low, 14, &mut batch_out)?;
+    /// let batch = core.plus_dm(0, high.len() - 1, &high, &low, 14, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.plus_dm_open_and_fill(&high, &low, 14, &mut out)?;
@@ -916,7 +916,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.PLUS_DM_Lookback(optInTimePeriod)?;
+        let _guardLb = self.plus_dm_lookback(optInTimePeriod)?;
         if inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1063,7 +1063,7 @@ impl PlusDmStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::PLUS_DM`] reports over the same bars: the opener sets it
+    /// It is what [`Core::plus_dm`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

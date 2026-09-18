@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MAXINDEX} consumes before it can
+    * Number of leading input bars {@link Core#maxindex} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,7 +23,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MAXINDEX_Lookback( int optInTimePeriod )
+   public int maxindexLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -33,13 +33,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MAXINDEX_Impl( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          int outInteger[] )
+   RetCode maxindexImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -114,13 +114,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MAXINDEX_Impl( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          int outInteger[] )
+   RetCode maxindexImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         int outInteger[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -193,7 +193,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MAXINDEX_Lookback} is a <b>success
+    * valid range shorter than {@link Core#maxindexLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -218,26 +218,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MAX
-    * @see Core#MININDEX
-    * @see Core#MIN
-    * @see Core#MINMAXINDEX
+    * @see Core#max
+    * @see Core#minindex
+    * @see Core#min
+    * @see Core#minmaxindex
     */
-   public OutRange MAXINDEX( int startIdx,
+   public OutRange maxindex( int startIdx,
                              int endIdx,
                              double inReal[],
                              int optInTimePeriod,
                              int outInteger[] )
    {
       requireIndexRange("MAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart("MAXINDEX", startIdx, MAXINDEX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MAXINDEX", startIdx, maxindexLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = maxindexImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MAXINDEX", retCode);
       }
@@ -259,7 +259,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MAXINDEX_Lookback} is a <b>success
+    * valid range shorter than {@link Core#maxindexLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -284,26 +284,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MAX
-    * @see Core#MININDEX
-    * @see Core#MIN
-    * @see Core#MINMAXINDEX
+    * @see Core#max
+    * @see Core#minindex
+    * @see Core#min
+    * @see Core#minmaxindex
     */
-   public OutRange MAXINDEX( int startIdx,
+   public OutRange maxindex( int startIdx,
                              int endIdx,
                              float inReal[],
                              int optInTimePeriod,
                              int outInteger[] )
    {
       requireIndexRange("MAXINDEX", startIdx, endIdx);
-      int guardStart = clampedStart("MAXINDEX", startIdx, MAXINDEX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MAXINDEX", startIdx, maxindexLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MAXINDEX", "inReal", inReal, guardInLen);
       requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = maxindexImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MAXINDEX", retCode);
       }
@@ -313,7 +313,7 @@
 
    /**
     * A live MAXINDEX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MAXINDEX} over the same series.
+    * closed bar, bit-identical to {@link Core#maxindex} over the same series.
     * Open with {@link Core#maxindexOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -344,7 +344,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MAXINDEX} reports over the same bars: the
+       * <p>It is what {@link Core#maxindex} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -657,8 +657,8 @@
    /**
     * Open a live MAXINDEX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MAXINDEX} at that bar.
-    * <p>The history must hold at least {@code MAXINDEX_Lookback(...) + 1} bars
+    * to {@link Core#maxindex} at that bar.
+    * <p>The history must hold at least {@code maxindexLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -675,7 +675,7 @@
    }
    /**
     * {@link Core#maxindexOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MAXINDEX} over the whole history in the same single pass
+    * to {@link Core#maxindex} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -688,7 +688,7 @@
    {
       requireArgument("MAXINDEX openAndFill", "inReal", inReal);
       requireHistory("MAXINDEX openAndFill", inReal.length);
-      int guardOutLen = openFillCount("MAXINDEX openAndFill", inReal.length, MAXINDEX_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("MAXINDEX openAndFill", inReal.length, maxindexLookback(optInTimePeriod));
       requireLength("MAXINDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
          throw new TALibArgumentException("MAXINDEX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

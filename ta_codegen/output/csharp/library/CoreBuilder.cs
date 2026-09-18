@@ -97,25 +97,25 @@ public sealed class CoreBuilder
     /// function at once when given <see cref="FuncUnstId.ALL"/>.</summary>
     /// <param name="id">The function to configure, or <see cref="FuncUnstId.ALL"/>
     /// as the set-all wildcard, mirroring C's <c>TA_SetUnstablePeriod</c>.</param>
-    /// <param name="period">Extra warm-up bars, in <c>0</c>..<see cref="Core.MAX_INDEX"/>.</param>
+    /// <param name="period">Extra warm-up bars, in <c>0</c>..<see cref="Core.MaxIndex"/>.</param>
     /// <returns>This builder, for chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="period"/> is
-    /// negative or above <see cref="Core.MAX_INDEX"/>, or <paramref name="id"/>
+    /// negative or above <see cref="Core.MaxIndex"/>, or <paramref name="id"/>
     /// is neither a function id nor the wildcard. A rejected call writes
     /// nothing.</exception>
     public CoreBuilder UnstablePeriod(FuncUnstId id, int period)
     {
         /* The period is added to a lookback which is then used as an index, so an
          * unbounded one overflows that lookback negative and the function indexes
-         * far past the end of its input. MAX_INDEX is the ceiling the index space
+         * far past the end of its input. MaxIndex is the ceiling the index space
          * already enforces on startIdx/endIdx; a warm-up longer than the largest
          * addressable series could never produce output, so nothing legitimate is
          * refused. C applies the same bound in TA_SetUnstablePeriod.
          */
-        if (period < 0 || period > Core.MAX_INDEX)
+        if (period < 0 || period > Core.MaxIndex)
         {
             throw new ArgumentOutOfRangeException(nameof(period), period,
-                "unstable period must be in 0.." + Core.MAX_INDEX);
+                "unstable period must be in 0.." + Core.MaxIndex);
         }
 
         /* A C# enum is NOT a closed domain -- (FuncUnstId)(-1) and (FuncUnstId)9999
@@ -147,7 +147,7 @@ public sealed class CoreBuilder
     /// <param name="settingType">Which threshold to override.</param>
     /// <param name="rangeType">What the candle dimension is measured against.</param>
     /// <param name="avgPeriod">How many prior bars to average, in
-    /// <c>0</c>..<see cref="Core.MAX_INDEX"/>. <c>0</c> means no averaging.</param>
+    /// <c>0</c>..<see cref="Core.MaxIndex"/>. <c>0</c> means no averaging.</param>
     /// <param name="factor">The multiplier applied to that average. Any value
     /// except NaN, negatives included.</param>
     /// <returns>This builder, for chaining.</returns>
@@ -180,10 +180,10 @@ public sealed class CoreBuilder
          * setting, so it is bounded like one: a negative starts the main loop
          * that many bars late while outBegIdx still reports startIdx, shifting
          * every value underneath a correct-looking index. */
-        if (avgPeriod < 0 || avgPeriod > Core.MAX_INDEX)
+        if (avgPeriod < 0 || avgPeriod > Core.MaxIndex)
         {
             throw new ArgumentOutOfRangeException(nameof(avgPeriod), avgPeriod,
-                "avgPeriod must be in 0.." + Core.MAX_INDEX);
+                "avgPeriod must be in 0.." + Core.MaxIndex);
         }
         /* Only NaN is refused -- a negative factor is an unusual but legal
          * threshold scale. NaN makes every comparison it feeds false, so the

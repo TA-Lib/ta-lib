@@ -70,7 +70,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CMO`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::cmo`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -84,7 +84,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CMO_Lookback")]
     #[inline]
-    pub fn CMO_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn cmo_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -94,10 +94,10 @@ impl Core {
         retValue = (optInTimePeriod + self.unstable_period[FuncUnstId::CMO as usize]) as usize;
         return Ok(retValue);
     }
-    /// C-shaped body behind [`Core::CMO`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::cmo`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CMO_Impl(
+    pub(crate) fn cmo_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -118,7 +118,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.CMO_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.cmo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -137,7 +137,7 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.CMO_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.cmo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -301,7 +301,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.CMO(0, data.len() - 1, &data, 14, &mut out)?;
+    /// let out_range = core.cmo(0, data.len() - 1, &data, 14, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -309,14 +309,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::RSI`]
+    /// [`RSI`](Core::rsi)
     ///
     /// # References
     ///
     /// * Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)
     #[doc(alias = "TA_CMO")]
     #[doc(alias = "ChandeMomentumOscillator")]
-    pub fn CMO(
+    pub fn cmo(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -330,7 +330,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CMO_Lookback(optInTimePeriod)?;
+        let _guardLb = self.cmo_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -341,7 +341,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CMO_Impl(
+        let retCode = self.cmo_impl(
             startIdx,
             endIdx,
             inReal,
@@ -359,7 +359,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CMO stream: one value per closed bar, bit-identical to [`Core::CMO`]
+/// Live CMO stream: one value per closed bar, bit-identical to [`Core::cmo`]
 /// over the same series. Open with [`Core::cmo_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -441,7 +441,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            let fillLb: usize = self.CMO_Lookback(optInTimePeriod)?;
+            let fillLb: usize = self.cmo_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
@@ -481,7 +481,7 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.CMO_Lookback(optInTimePeriod)?;
+        lookbackTotal = self.cmo_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -600,7 +600,7 @@ impl Core {
     }
 
     /// Open a live CMO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CMO`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::cmo`] at that bar.
     ///
     /// # Errors
     ///
@@ -630,7 +630,7 @@ impl Core {
     }
 
     /// [`Core::cmo_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CMO`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::cmo`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -647,7 +647,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.CMO(0, data.len() - 1, &data, 14, &mut batch_out)?;
+    /// let batch = core.cmo(0, data.len() - 1, &data, 14, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.cmo_open_and_fill(&data, 14, &mut out)?;
@@ -668,7 +668,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CMO_Lookback(optInTimePeriod)?;
+        let _guardLb = self.cmo_lookback(optInTimePeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -793,7 +793,7 @@ impl CmoStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CMO`] reports over the same bars: the opener sets it
+    /// It is what [`Core::cmo`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

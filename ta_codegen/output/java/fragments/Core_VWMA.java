@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#VWMA} consumes before it can
+    * Number of leading input bars {@link Core#vwma} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,7 +25,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int VWMA_Lookback( int optInTimePeriod )
+   public int vwmaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -35,14 +35,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode VWMA_Impl( int startIdx,
-                      int endIdx,
-                      double inReal[],
-                      double inVolume[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode vwmaImpl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     double inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -145,14 +145,14 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode VWMA_Impl( int startIdx,
-                      int endIdx,
-                      float inReal[],
-                      float inVolume[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode vwmaImpl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     float inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -245,8 +245,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VWMA_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#vwmaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -270,12 +270,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMA
-    * @see Core#WMA
-    * @see Core#MA
-    * @see Core#OBV
+    * @see Core#sma
+    * @see Core#wma
+    * @see Core#ma
+    * @see Core#obv
     */
-   public OutRange VWMA( int startIdx,
+   public OutRange vwma( int startIdx,
                          int endIdx,
                          double inReal[],
                          double inVolume[],
@@ -283,7 +283,7 @@
                          double outReal[] )
    {
       requireIndexRange("VWMA", startIdx, endIdx);
-      int guardStart = clampedStart("VWMA", startIdx, VWMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("VWMA", startIdx, vwmaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWMA", "inReal", inReal, guardInLen);
@@ -291,7 +291,7 @@
       requireLength("VWMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWMA_Impl(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = vwmaImpl(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VWMA", retCode);
       }
@@ -321,8 +321,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VWMA_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#vwmaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -346,12 +346,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMA
-    * @see Core#WMA
-    * @see Core#MA
-    * @see Core#OBV
+    * @see Core#sma
+    * @see Core#wma
+    * @see Core#ma
+    * @see Core#obv
     */
-   public OutRange VWMA( int startIdx,
+   public OutRange vwma( int startIdx,
                          int endIdx,
                          float inReal[],
                          float inVolume[],
@@ -359,7 +359,7 @@
                          double outReal[] )
    {
       requireIndexRange("VWMA", startIdx, endIdx);
-      int guardStart = clampedStart("VWMA", startIdx, VWMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("VWMA", startIdx, vwmaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VWMA", "inReal", inReal, guardInLen);
@@ -367,7 +367,7 @@
       requireLength("VWMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWMA_Impl(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = vwmaImpl(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VWMA", retCode);
       }
@@ -377,7 +377,7 @@
 
    /**
     * A live VWMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#VWMA} over the same series.
+    * closed bar, bit-identical to {@link Core#vwma} over the same series.
     * Open with {@link Core#vwmaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -407,7 +407,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#VWMA} reports over the same bars: the
+       * <p>It is what {@link Core#vwma} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -628,7 +628,7 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = VWMA_Lookback(optInTimePeriod);
+         int fillLb = vwmaLookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -778,8 +778,8 @@
    /**
     * Open a live VWMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#VWMA} at that bar.
-    * <p>The history must hold at least {@code VWMA_Lookback(...) + 1} bars
+    * to {@link Core#vwma} at that bar.
+    * <p>The history must hold at least {@code vwmaLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -798,7 +798,7 @@
    }
    /**
     * {@link Core#vwmaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#VWMA} over the whole history in the same single pass
+    * to {@link Core#vwma} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -812,7 +812,7 @@
       requireArgument("VWMA openAndFill", "inReal", inReal);
       requireHistory("VWMA openAndFill", inReal.length);
       requireArgument("VWMA openAndFill", "inVolume", inVolume);
-      int guardOutLen = openFillCount("VWMA openAndFill", inReal.length, VWMA_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("VWMA openAndFill", inReal.length, vwmaLookback(optInTimePeriod));
       requireHistoryLength("VWMA openAndFill", "inVolume", inVolume.length, inReal.length);
       requireLength("VWMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {

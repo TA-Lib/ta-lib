@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#AROON} consumes before it can
+    * Number of leading input bars {@link Core#aroon} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,7 +25,7 @@
     *        2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int AROON_Lookback( int optInTimePeriod )
+   public int aroonLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -35,15 +35,15 @@
       return optInTimePeriod ;
 
    }
-   RetCode AROON_Impl( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outAroonDown[],
-                       double outAroonUp[] )
+   RetCode aroonImpl( int startIdx,
+                      int endIdx,
+                      double inHigh[],
+                      double inLow[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outAroonDown[],
+                      double outAroonUp[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -150,15 +150,15 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode AROON_Impl( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outAroonDown[],
-                       double outAroonUp[] )
+   RetCode aroonImpl( int startIdx,
+                      int endIdx,
+                      float inHigh[],
+                      float inLow[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outAroonDown[],
+                      double outAroonUp[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -254,7 +254,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AROON_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#aroonLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -283,12 +283,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AROONOSC
-    * @see Core#MINMAXINDEX
-    * @see Core#MIN
-    * @see Core#MAX
+    * @see Core#aroonosc
+    * @see Core#minmaxindex
+    * @see Core#min
+    * @see Core#max
     */
-   public OutRange AROON( int startIdx,
+   public OutRange aroon( int startIdx,
                           int endIdx,
                           double inHigh[],
                           double inLow[],
@@ -297,7 +297,7 @@
                           double outAroonUp[] )
    {
       requireIndexRange("AROON", startIdx, endIdx);
-      int guardStart = clampedStart("AROON", startIdx, AROON_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("AROON", startIdx, aroonLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROON", "inHigh", inHigh, guardInLen);
@@ -306,7 +306,7 @@
       requireLength("AROON", "outAroonUp", outAroonUp, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROON_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      RetCode retCode = aroonImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AROON", retCode);
       }
@@ -326,7 +326,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AROON_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#aroonLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -355,12 +355,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AROONOSC
-    * @see Core#MINMAXINDEX
-    * @see Core#MIN
-    * @see Core#MAX
+    * @see Core#aroonosc
+    * @see Core#minmaxindex
+    * @see Core#min
+    * @see Core#max
     */
-   public OutRange AROON( int startIdx,
+   public OutRange aroon( int startIdx,
                           int endIdx,
                           float inHigh[],
                           float inLow[],
@@ -369,7 +369,7 @@
                           double outAroonUp[] )
    {
       requireIndexRange("AROON", startIdx, endIdx);
-      int guardStart = clampedStart("AROON", startIdx, AROON_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("AROON", startIdx, aroonLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROON", "inHigh", inHigh, guardInLen);
@@ -378,7 +378,7 @@
       requireLength("AROON", "outAroonUp", outAroonUp, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROON_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      RetCode retCode = aroonImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AROON", retCode);
       }
@@ -388,7 +388,7 @@
 
    /**
     * A live AROON stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#AROON} over the same series.
+    * closed bar, bit-identical to {@link Core#aroon} over the same series.
     * Open with {@link Core#aroonOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -424,7 +424,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#AROON} reports over the same bars: the
+       * <p>It is what {@link Core#aroon} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -862,8 +862,8 @@
    /**
     * Open a live AROON stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#AROON} at that bar.
-    * <p>The history must hold at least {@code AROON_Lookback(...) + 1} bars
+    * to {@link Core#aroon} at that bar.
+    * <p>The history must hold at least {@code aroonLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -882,7 +882,7 @@
    }
    /**
     * {@link Core#aroonOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#AROON} over the whole history in the same single pass
+    * to {@link Core#aroon} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -896,7 +896,7 @@
       requireArgument("AROON openAndFill", "inHigh", inHigh);
       requireHistory("AROON openAndFill", inHigh.length);
       requireArgument("AROON openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("AROON openAndFill", inHigh.length, AROON_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("AROON openAndFill", inHigh.length, aroonLookback(optInTimePeriod));
       requireHistoryLength("AROON openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AROON openAndFill", "outAroonDown", outAroonDown, guardOutLen);
       requireLength("AROON openAndFill", "outAroonUp", outAroonUp, guardOutLen);

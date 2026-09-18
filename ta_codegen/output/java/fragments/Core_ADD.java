@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#ADD} consumes before it can
+    * Number of leading input bars {@link Core#add} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,18 +20,18 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int ADD_Lookback( )
+   public int addLookback( )
    {
       return 0 ;
 
    }
-   RetCode ADD_Impl( int startIdx,
-                     int endIdx,
-                     double inReal0[],
-                     double inReal1[],
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode addImpl( int startIdx,
+                    int endIdx,
+                    double inReal0[],
+                    double inReal1[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -48,13 +48,13 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode ADD_Impl( int startIdx,
-                     int endIdx,
-                     float inReal0[],
-                     float inReal1[],
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode addImpl( int startIdx,
+                    int endIdx,
+                    float inReal0[],
+                    float inReal1[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -78,7 +78,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ADD_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#addLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -101,18 +101,18 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SUB
-    * @see Core#MULT
-    * @see Core#DIV
+    * @see Core#sub
+    * @see Core#mult
+    * @see Core#div
     */
-   public OutRange ADD( int startIdx,
+   public OutRange add( int startIdx,
                         int endIdx,
                         double inReal0[],
                         double inReal1[],
                         double outReal[] )
    {
       requireIndexRange("ADD", startIdx, endIdx);
-      int guardStart = clampedStart("ADD", startIdx, ADD_Lookback());
+      int guardStart = clampedStart("ADD", startIdx, addLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADD", "inReal0", inReal0, guardInLen);
@@ -120,7 +120,7 @@
       requireLength("ADD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADD_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = addImpl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ADD", retCode);
       }
@@ -136,7 +136,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ADD_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#addLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -159,18 +159,18 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SUB
-    * @see Core#MULT
-    * @see Core#DIV
+    * @see Core#sub
+    * @see Core#mult
+    * @see Core#div
     */
-   public OutRange ADD( int startIdx,
+   public OutRange add( int startIdx,
                         int endIdx,
                         float inReal0[],
                         float inReal1[],
                         double outReal[] )
    {
       requireIndexRange("ADD", startIdx, endIdx);
-      int guardStart = clampedStart("ADD", startIdx, ADD_Lookback());
+      int guardStart = clampedStart("ADD", startIdx, addLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ADD", "inReal0", inReal0, guardInLen);
@@ -178,7 +178,7 @@
       requireLength("ADD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADD_Impl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = addImpl(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ADD", retCode);
       }
@@ -188,7 +188,7 @@
 
    /**
     * A live ADD stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#ADD} over the same series.
+    * closed bar, bit-identical to {@link Core#add} over the same series.
     * Open with {@link Core#addOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -211,7 +211,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#ADD} reports over the same bars: the
+       * <p>It is what {@link Core#add} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -397,8 +397,8 @@
    /**
     * Open a live ADD stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#ADD} at that bar.
-    * <p>The history must hold at least {@code ADD_Lookback(...) + 1} bars
+    * to {@link Core#add} at that bar.
+    * <p>The history must hold at least {@code addLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -415,7 +415,7 @@
    }
    /**
     * {@link Core#addOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#ADD} over the whole history in the same single pass
+    * to {@link Core#add} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -429,7 +429,7 @@
       requireArgument("ADD openAndFill", "inReal0", inReal0);
       requireHistory("ADD openAndFill", inReal0.length);
       requireArgument("ADD openAndFill", "inReal1", inReal1);
-      int guardOutLen = openFillCount("ADD openAndFill", inReal0.length, ADD_Lookback());
+      int guardOutLen = openFillCount("ADD openAndFill", inReal0.length, addLookback());
       requireHistoryLength("ADD openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("ADD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {

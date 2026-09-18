@@ -48,8 +48,8 @@ namespace TALib;
 /// first output value and how many were written. An indicator consumes a
 /// number of leading bars (its <em>lookback</em>) before producing output —
 /// query it with the matching <c>*Lookback</c> method. Integer parameters
-/// accept <see cref="INTEGER_DEFAULT"/>, and real parameters
-/// <see cref="REAL_DEFAULT"/>, to select their documented default.
+/// accept <see cref="IntegerDefault"/>, and real parameters
+/// <see cref="RealDefault"/>, to select their documented default.
 /// <para>Per-instance settings — unstable periods and candlestick thresholds —
 /// take their documented defaults unless chosen up front with
 /// <see cref="Builder"/>. A <c>Core</c> whose settings are never mutated is safe
@@ -66,20 +66,20 @@ public sealed partial class Core
 
     /// <summary>Pass this for a <c>double</c> optional parameter to select its
     /// documented default — C's <c>TA_REAL_DEFAULT</c>.</summary>
-    /// <remarks>It sits deliberately outside <see cref="REAL_MIN"/>..<see cref="REAL_MAX"/>,
-    /// so it can never collide with real data. <see cref="INTEGER_DEFAULT"/> is the
+    /// <remarks>It sits deliberately outside <see cref="RealMin"/>..<see cref="RealMax"/>,
+    /// so it can never collide with real data. <see cref="IntegerDefault"/> is the
     /// <c>int</c> equivalent.</remarks>
-    public const double REAL_DEFAULT = -4e37;
+    public const double RealDefault = -4e37;
     /// <summary>Lowest value a <c>double</c> optional parameter may take.</summary>
-    public const double REAL_MIN = -3e37;
+    public const double RealMin = -3e37;
     /// <summary>Highest value a <c>double</c> optional parameter may take.</summary>
-    public const double REAL_MAX = 3e37;
+    public const double RealMax = 3e37;
     /// <summary>Selects an <c>int</c> optional parameter's documented default.</summary>
-    public const int INTEGER_DEFAULT = int.MinValue;
+    public const int IntegerDefault = int.MinValue;
     /// <summary>Lowest value an <c>int</c> optional parameter may take.</summary>
-    public const int INTEGER_MIN = int.MinValue + 1;
+    public const int IntegerMin = int.MinValue + 1;
     /// <summary>Highest value an <c>int</c> optional parameter may take.</summary>
-    public const int INTEGER_MAX = int.MaxValue;
+    public const int IntegerMax = int.MaxValue;
 
     /// <summary>Largest value <c>startIdx</c> or <c>endIdx</c> may take. Above
     /// it a call returns <see cref="RetCode.OutOfRangeStartIndex"/> or
@@ -90,7 +90,7 @@ public sealed partial class Core
     /// already imprecise well below this cap.</para>
     /// <para>Identical in C, Rust and Java, so the same call is accepted or
     /// rejected the same way in all four.</para></remarks>
-    public const int MAX_INDEX = 100000000;
+    public const int MaxIndex = 100000000;
 
     /* Sized by the id count, so the ALL wildcard gets no slot (#144). */
     internal readonly int[] unstablePeriod = new int[FuncUnstIds.Count];
@@ -215,7 +215,7 @@ public sealed partial class Core
      * pins the rows named here. */
     internal static int ClampedStart(int startIdx, int endIdx, int lookback)
     {
-        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX)
+        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MaxIndex)
         {
             return -1;
         }
@@ -306,7 +306,7 @@ public sealed partial class Core
     /* The RetCode -> exception mapping for the STREAMING tier. Deliberately not
      * a reuse of Failure(): the two tiers spell the same code differently. A
      * stream CAN still report OutOfRangeEndIndex (a history longer than
-     * MAX_INDEX + 1), and Failure() would render that as
+     * MaxIndex + 1), and Failure() would render that as
      * ArgumentOutOfRangeException("endIdx") — meaningless to a caller whose
      * method has no endIdx parameter.
      *

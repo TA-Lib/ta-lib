@@ -298,12 +298,12 @@ fn java_ma_cross_indicator_calls() {
     // the EMA one. The callee is the PUBLIC entry point since #236 step 3, and
     // the range it returns is bound to the caller's out-params.
     assert!(
-        j.contains("= EMA("),
+        j.contains("= ema("),
         "Java MA should call the public EMA(): {j}"
     );
     assert!(
-        j.contains("= EMA_Lookback("),
-        "Java MA should call EMA_Lookback(): {j}"
+        j.contains("= emaLookback("),
+        "Java MA should call emaLookback(): {j}"
     );
 }
 
@@ -318,17 +318,17 @@ fn java_stochrsi_cross_indicator_calls() {
     let j = &out.java;
 
     // STOCHRSI composes RSI and STOCHF, and must call BOTH. `contains_call`
-    // rather than `contains`: `RSI_Lookback(` is a suffix of STOCHRSI's own
-    // `STOCHRSI_Lookback(`, so a plain substring test cannot fail here.
+    // rather than `contains`: `rsiLookback(` is a suffix of STOCHRSI's own
+    // `stochrsiLookback(`, so a plain substring test cannot fail here.
     // Anchored on the ASSIGNMENT, not the bare name: `RSI(` occurs inside
     // STOCHRSI's own javadoc and inside `STOCHRSI(`, so `contains_call(j, "RSI")`
     // is satisfied by text that is not a call at all and cannot fail.
     assert!(
-        j.contains("= RSI(") && contains_call(j, "RSI_Lookback"),
-        "Java STOCHRSI should call the public RSI and RSI_Lookback: {j}"
+        j.contains("= rsi(") && contains_call(j, "rsiLookback"),
+        "Java STOCHRSI should call the public rsi and rsiLookback: {j}"
     );
     assert!(
-        j.contains("= STOCHF(") && contains_call(j, "STOCHF_Lookback"),
+        j.contains("= stochf(") && contains_call(j, "stochfLookback"),
         "Java STOCHRSI should call the public STOCHF and STOCHF_Lookback: {j}"
     );
 }

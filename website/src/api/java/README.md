@@ -70,7 +70,7 @@ A function never writes more elements than you request, so the output array only
 
 As an example, let's walk through `SMA`, a method to calculate a moving average.
 
-<pre>public OutRange SMA( <span class="ta-arg-range">int      startIdx,</span>
+<pre>public OutRange sma( <span class="ta-arg-range">int      startIdx,</span>
                      <span class="ta-arg-range">int      endIdx,</span>
                      <span class="ta-arg-in">double[] inReal,</span>
                      <span class="ta-arg-opt">int      optInTimePeriod,</span>
@@ -96,7 +96,7 @@ import io.github.talib.OutRange;
 double[] close = /* ...your closing prices... */;
 double[] out   = new double[close.length];
 
-OutRange r = Core.DEFAULT.SMA(
+OutRange r = Core.DEFAULT.sma(
     <span class="ta-arg-range">0</span>, <span class="ta-arg-range">close.length - 1</span>,
     <span class="ta-arg-in">close</span>,
     <span class="ta-arg-opt">30</span>,
@@ -121,10 +121,10 @@ Every indicator is overloaded for `float[]` inputs as well as `double[]` — see
 An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `begIdx()` is the first valid bar and `count()` is the number written; the rest of the array is left untouched, never padded with NaN. Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
 
 ```java
-int lookback = Core.DEFAULT.SMA_Lookback(30);    // 29 for a 30-period SMA
+int lookback = Core.DEFAULT.smaLookback(30);    // 29 for a 30-period SMA
 ```
 
-Each TA method has a matching `<NAME>_Lookback` method, taking the same optional parameters as the method itself. The lookback is how many inputs are consumed before the first output.
+Each TA method has a matching `<name>Lookback` method, taking the same optional parameters as the method itself. The lookback is how many inputs are consumed before the first output.
 
 **Too little data is a success, not an error.** A valid range shorter than the lookback simply produces no values: `count()` is 0 and `isEmpty()` is true. No exception is thrown — this matches the C library's `TA_SUCCESS` with `outNBElement == 0`. Nothing is written, so the output array's length is not checked on such a call — it may even be zero-length. The input is still checked, though: an `endIdx` past the end of the series you passed is a mistake worth hearing about in any range, and an empty range would otherwise hide it behind a "no data yet" result.
 

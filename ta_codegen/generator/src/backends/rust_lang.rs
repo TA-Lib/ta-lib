@@ -569,7 +569,7 @@ fn fma_dispatch_wrap(text: String, fn_name: &str, vis: &str) -> String {
 
 fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &Registry, helpers: &HelperRegistry) -> String {
     let mut out = String::new();
-    let snake = func.name.clone();
+    let snake = super::common::snake_words(&func.name);
 
     // C's pointer-based scratch-buffer election becomes a rename here, so the
     // batch bodies below run the calculation directly in the caller's output
@@ -608,7 +608,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // inline or delegates to `_private`.
     out.push_str(&fma_dispatch_wrap(
         gen_guarded_func(func, &snake, enums, registry, helpers),
-        &format!("{snake}_Impl"),
+        &format!("{snake}_impl"),
         "pub(crate) ",
     ));
     out.push_str(&gen_public_entry(func, &snake, enums, registry));
@@ -680,7 +680,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     if func.has_explicit_private {
         out.push_str(&fma_dispatch_wrap(
             gen_private_func(&body_func, &snake, &ctx, enums, registry, helpers),
-            &format!("{snake}_Private"),
+            &format!("{snake}_private"),
             "pub(crate) ",
         ));
     }
@@ -728,7 +728,7 @@ fn gen_lookback(
 
         out.push_str("    #[inline]\n");
         out.push_str(&format!(
-            "    pub fn {}_Lookback(&self, {}) -> Result<usize, RetCode> {{\n",
+            "    pub fn {}_lookback(&self, {}) -> Result<usize, RetCode> {{\n",
             snake,
             params.join(", ")
         ));
@@ -741,7 +741,7 @@ fn gen_lookback(
         // Return lookback expression
         emit_lookback_return(&mut out);
     } else {
-        out.push_str(&format!("    pub fn {snake}_Lookback(&self) -> Result<usize, RetCode> {{\n"));
+        out.push_str(&format!("    pub fn {snake}_lookback(&self) -> Result<usize, RetCode> {{\n"));
         emit_lookback_return(&mut out);
     }
 
@@ -759,15 +759,15 @@ fn gen_lookback(
 /// Java's registry branch in `render_func_call` has had since #236 step 3), and
 /// the `_Private` carve-out, which already names a distinct function.
 fn internal_callee(name: &str) -> String {
-    if name.ends_with("_Private") {
+    if name.ends_with("_private") {
         name.to_string()
     } else {
-        format!("{name}_Impl")
+        format!("{name}_impl")
     }
 }
 
 /// Generate the batch entry point the crate actually exposes: the argument
-/// contract, then `{snake}_Impl`, returning `Result<OutRange, RetCode>`.
+/// contract, then `{snake}_impl`, returning `Result<OutRange, RetCode>`.
 ///
 /// This is the same two-tier shape Java and C# ship — their public `SMA` checks
 /// its arguments, calls the code-returning one and turns a failure into an
@@ -839,7 +839,7 @@ fn gen_public_entry(
     out.push_str("        let mut outNBElement: usize = 0;\n");
     // Always one argument per line: the shortest call in the corpus is already
     // past a sensible width, so a single-line form would be dead code.
-    out.push_str(&format!("        let retCode = self.{snake}_Impl(\n"));
+    out.push_str(&format!("        let retCode = self.{snake}_impl(\n"));
     for a in &args {
         out.push_str(&format!("            {a},\n"));
     }
@@ -886,7 +886,7 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
     }
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
     out.push_str(&format!(
-        "        let _guardLb = self.{snake}_Lookback({})?;\n",
+        "        let _guardLb = self.{snake}_lookback({})?;\n",
         lb_args.join(", ")
     ));
     out.push_str(
@@ -919,8 +919,8 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
     out
 }
 
-/// Generate the guarded entry point — `{snake}_Impl`, crate-private. Validates
-/// params, then renders the algorithm inline (or delegates to `{snake}_Private`
+/// Generate the guarded entry point — `{snake}_impl`, crate-private. Validates
+/// params, then renders the algorithm inline (or delegates to `{snake}_private`
 /// when the function declares one).
 ///
 /// This keeps C's shape — a `RetCode` plus `&mut outBegIdx` / `&mut outNBElement`
@@ -943,7 +943,7 @@ fn gen_guarded_func(
     out.push_str(&format!(
         "    /// C-shaped body behind [`Core::{snake}`]: a `RetCode` plus two out-params,\n    /// which is what the transcribed body is written against. Since #267 its only\n    /// callers are that wrapper and the phantom-I/O sweep.\n"
     ));
-    out.push_str(&format!("    pub(crate) fn {snake}_Impl(\n"));
+    out.push_str(&format!("    pub(crate) fn {snake}_impl(\n"));
     out.push_str("        &self,\n");
     out.push_str("        startIdx: usize,\n");
     out.push_str("        endIdx: usize,\n");
@@ -1355,7 +1355,7 @@ fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> 
         let lb_args: Vec<String> =
             func.optional_inputs.iter().map(|o| o.name.clone()).collect();
         out.push_str(&format!(
-            "        let _assertLb = self.{snake}_Lookback({}).unwrap_or(usize::MAX);\n",
+            "        let _assertLb = self.{snake}_lookback({}).unwrap_or(usize::MAX);\n",
             lb_args.join(", ")
         ));
         out.push_str(
@@ -1405,7 +1405,7 @@ fn gen_private_func_inner(
     helpers: &HelperRegistry,
 ) -> String {
     let mut out = String::new();
-    let func_name = format!("{snake}_Private");
+    let func_name = format!("{snake}_private");
 
     out.push_str(&super::rust_doc::private_docs(func, snake));
 

@@ -23,7 +23,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CORREL} consumes before it can
+    * Number of leading input bars {@link Core#correl} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -33,7 +33,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CORREL_Lookback( int optInTimePeriod )
+   public int correlLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -43,14 +43,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode CORREL_Impl( int startIdx,
-                        int endIdx,
-                        double inReal0[],
-                        double inReal1[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode correlImpl( int startIdx,
+                       int endIdx,
+                       double inReal0[],
+                       double inReal1[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -292,14 +292,14 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CORREL_Impl( int startIdx,
-                        int endIdx,
-                        float inReal0[],
-                        float inReal1[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode correlImpl( int startIdx,
+                       int endIdx,
+                       float inReal0[],
+                       float inReal1[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -457,7 +457,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CORREL_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#correlLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -482,11 +482,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#BETA
-    * @see Core#STDDEV
-    * @see Core#VAR
+    * @see Core#beta
+    * @see Core#stddev
+    * @see Core#var
     */
-   public OutRange CORREL( int startIdx,
+   public OutRange correl( int startIdx,
                            int endIdx,
                            double inReal0[],
                            double inReal1[],
@@ -494,7 +494,7 @@
                            double outReal[] )
    {
       requireIndexRange("CORREL", startIdx, endIdx);
-      int guardStart = clampedStart("CORREL", startIdx, CORREL_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("CORREL", startIdx, correlLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CORREL", "inReal0", inReal0, guardInLen);
@@ -502,7 +502,7 @@
       requireLength("CORREL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = correlImpl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CORREL", retCode);
       }
@@ -525,7 +525,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CORREL_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#correlLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -550,11 +550,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#BETA
-    * @see Core#STDDEV
-    * @see Core#VAR
+    * @see Core#beta
+    * @see Core#stddev
+    * @see Core#var
     */
-   public OutRange CORREL( int startIdx,
+   public OutRange correl( int startIdx,
                            int endIdx,
                            float inReal0[],
                            float inReal1[],
@@ -562,7 +562,7 @@
                            double outReal[] )
    {
       requireIndexRange("CORREL", startIdx, endIdx);
-      int guardStart = clampedStart("CORREL", startIdx, CORREL_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("CORREL", startIdx, correlLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CORREL", "inReal0", inReal0, guardInLen);
@@ -570,7 +570,7 @@
       requireLength("CORREL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CORREL_Impl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = correlImpl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CORREL", retCode);
       }
@@ -580,7 +580,7 @@
 
    /**
     * A live CORREL stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CORREL} over the same series.
+    * closed bar, bit-identical to {@link Core#correl} over the same series.
     * Open with {@link Core#correlOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -622,7 +622,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CORREL} reports over the same bars: the
+       * <p>It is what {@link Core#correl} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1395,8 +1395,8 @@
    /**
     * Open a live CORREL stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CORREL} at that bar.
-    * <p>The history must hold at least {@code CORREL_Lookback(...) + 1} bars
+    * to {@link Core#correl} at that bar.
+    * <p>The history must hold at least {@code correlLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1415,7 +1415,7 @@
    }
    /**
     * {@link Core#correlOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CORREL} over the whole history in the same single pass
+    * to {@link Core#correl} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1429,7 +1429,7 @@
       requireArgument("CORREL openAndFill", "inReal0", inReal0);
       requireHistory("CORREL openAndFill", inReal0.length);
       requireArgument("CORREL openAndFill", "inReal1", inReal1);
-      int guardOutLen = openFillCount("CORREL openAndFill", inReal0.length, CORREL_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("CORREL openAndFill", inReal0.length, correlLookback(optInTimePeriod));
       requireHistoryLength("CORREL openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("CORREL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {

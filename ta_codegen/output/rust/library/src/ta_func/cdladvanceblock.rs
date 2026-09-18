@@ -64,10 +64,10 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CDLADVANCEBLOCK`]: the number of leading input values consumed
+    /// Lookback period for [`Core::cdladvanceblock`]: the number of leading input values consumed
     /// before the first output value can be produced.
     #[doc(alias = "TA_CDLADVANCEBLOCK_Lookback")]
-    pub fn CDLADVANCEBLOCK_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn cdladvanceblock_lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -100,10 +100,10 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         return Ok(((((ShadowLong_avgPeriod).max(ShadowShort_avgPeriod)).max((Far_avgPeriod).max(Near_avgPeriod))).max(BodyLong_avgPeriod) + 2) as usize);
     }
-    /// C-shaped body behind [`Core::CDLADVANCEBLOCK`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::cdladvanceblock`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CDLADVANCEBLOCK_Impl(
+    pub(crate) fn cdladvanceblock_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -121,7 +121,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLADVANCEBLOCK_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.cdladvanceblock_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -175,7 +175,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLADVANCEBLOCK_Lookback().unwrap_or(usize::MAX);
+        lookbackTotal = self.cdladvanceblock_lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -668,7 +668,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0i32; 252];
     ///
-    /// let out_range = core.CDLADVANCEBLOCK(
+    /// let out_range = core.cdladvanceblock(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out,
     /// )?;
@@ -682,10 +682,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::CDL3WHITESOLDIERS`] · CDLDELIBERATION · [`Core::CDLSTALLEDPATTERN`]
+    /// [`CDL3WHITESOLDIERS`](Core::cdl3whitesoldiers) · CDLDELIBERATION ·
+    /// [`CDLSTALLEDPATTERN`](Core::cdlstalledpattern)
     #[doc(alias = "TA_CDLADVANCEBLOCK")]
     #[doc(alias = "AdvanceBlock")]
-    pub fn CDLADVANCEBLOCK(
+    pub fn cdladvanceblock(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -701,7 +702,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLADVANCEBLOCK_Lookback()?;
+        let _guardLb = self.cdladvanceblock_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -721,7 +722,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDLADVANCEBLOCK_Impl(
+        let retCode = self.cdladvanceblock_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -741,7 +742,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLADVANCEBLOCK stream: one value per closed bar, bit-identical to [`Core::CDLADVANCEBLOCK`]
+/// Live CDLADVANCEBLOCK stream: one value per closed bar, bit-identical to [`Core::cdladvanceblock`]
 /// over the same series. Open with [`Core::cdladvanceblock_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -1088,7 +1089,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLADVANCEBLOCK_Lookback()?;
+        lookbackTotal = self.cdladvanceblock_lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1647,7 +1648,7 @@ impl Core {
     }
 
     /// Open a live CDLADVANCEBLOCK stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLADVANCEBLOCK`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::cdladvanceblock`] at that bar.
     ///
     /// # Errors
     ///
@@ -1684,7 +1685,7 @@ impl Core {
     }
 
     /// [`Core::cdladvanceblock_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLADVANCEBLOCK`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::cdladvanceblock`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1708,7 +1709,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0_i32; 252];
-    /// let batch = core.CDLADVANCEBLOCK(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.cdladvanceblock(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0_i32; 252];
     /// let (_stream, filled) = core.cdladvanceblock_open_and_fill(&open, &high, &low, &close, &mut out)?;
@@ -1728,7 +1729,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLADVANCEBLOCK_Lookback()?;
+        let _guardLb = self.cdladvanceblock_lookback()?;
         if inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1889,7 +1890,7 @@ impl CdladvanceblockStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CDLADVANCEBLOCK`] reports over the same bars: the opener sets it
+    /// It is what [`Core::cdladvanceblock`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

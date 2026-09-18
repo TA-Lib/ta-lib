@@ -74,7 +74,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CORREL`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::correl`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -87,7 +87,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_CORREL_Lookback")]
     #[inline]
-    pub fn CORREL_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn correl_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -95,10 +95,10 @@ impl Core {
         }
         return Ok((optInTimePeriod - 1) as usize);
     }
-    /// C-shaped body behind [`Core::CORREL`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::correl`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CORREL_Impl(
+    pub(crate) fn correl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -120,7 +120,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.CORREL_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.correl_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -402,7 +402,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.CORREL(0, data0.len() - 1, &data0, &data1, 30, &mut out)?;
+    /// let out_range = core.correl(0, data0.len() - 1, &data0, &data1, 30, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -410,7 +410,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::BETA`] · [`Core::STDDEV`] · [`Core::VAR`]
+    /// [`BETA`](Core::beta) · [`STDDEV`](Core::stddev) · [`VAR`](Core::var)
     ///
     /// # References
     ///
@@ -419,7 +419,7 @@ impl Core {
     #[doc(alias = "PearsonCorrelation")]
     #[doc(alias = "CorrelationCoefficient")]
     #[doc(alias = "r")]
-    pub fn CORREL(
+    pub fn correl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -434,7 +434,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CORREL_Lookback(optInTimePeriod)?;
+        let _guardLb = self.correl_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal0.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -448,7 +448,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CORREL_Impl(
+        let retCode = self.correl_impl(
             startIdx,
             endIdx,
             inReal0,
@@ -467,7 +467,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CORREL stream: one value per closed bar, bit-identical to [`Core::CORREL`]
+/// Live CORREL stream: one value per closed bar, bit-identical to [`Core::correl`]
 /// over the same series. Open with [`Core::correl_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -982,7 +982,7 @@ impl Core {
     }
 
     /// Open a live CORREL stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CORREL`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::correl`] at that bar.
     ///
     /// # Errors
     ///
@@ -1015,7 +1015,7 @@ impl Core {
     }
 
     /// [`Core::correl_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CORREL`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::correl`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1035,7 +1035,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.CORREL(0, data0.len() - 1, &data0, &data1, 30, &mut batch_out)?;
+    /// let batch = core.correl(0, data0.len() - 1, &data0, &data1, 30, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.correl_open_and_fill(&data0, &data1, 30, &mut out)?;
@@ -1056,7 +1056,7 @@ impl Core {
         if inReal0.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CORREL_Lookback(optInTimePeriod)?;
+        let _guardLb = self.correl_lookback(optInTimePeriod)?;
         if inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -1319,7 +1319,7 @@ impl CorrelStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CORREL`] reports over the same bars: the opener sets it
+    /// It is what [`Core::correl`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

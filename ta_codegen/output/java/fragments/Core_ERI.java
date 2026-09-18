@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#ERI} consumes before it can
+    * Number of leading input bars {@link Core#eri} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,7 +22,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int ERI_Lookback( int optInTimePeriod )
+   public int eriLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 13;
@@ -32,19 +32,19 @@
       /* Exactly the EMA of close underneath: its lookback, unstable period
        * included, is this function's lookback.
        */
-      return EMA_Lookback(optInTimePeriod) ;
+      return emaLookback(optInTimePeriod) ;
 
    }
-   RetCode ERI_Impl( int startIdx,
-                     int endIdx,
-                     double inHigh[],
-                     double inLow[],
-                     double inClose[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outBullPower[],
-                     double outBearPower[] )
+   RetCode eriImpl( int startIdx,
+                    int endIdx,
+                    double inHigh[],
+                    double inLow[],
+                    double inClose[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outBullPower[],
+                    double outBearPower[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -85,7 +85,7 @@
        * No division in the per-bar map: no 0/0, no NaN path (#112 by
        * construction). Bull >= Bear on every bar since high >= low.
        */
-      lookbackTotal = ERI_Lookback(optInTimePeriod);
+      lookbackTotal = eriLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -154,16 +154,16 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode ERI_Impl( int startIdx,
-                     int endIdx,
-                     float inHigh[],
-                     float inLow[],
-                     float inClose[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outBullPower[],
-                     double outBearPower[] )
+   RetCode eriImpl( int startIdx,
+                    int endIdx,
+                    float inHigh[],
+                    float inLow[],
+                    float inClose[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outBullPower[],
+                    double outBearPower[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -188,7 +188,7 @@
       if( outBullPower == outBearPower ) {
          return RetCode.BAD_PARAM ;
       }
-      lookbackTotal = ERI_Lookback(optInTimePeriod);
+      lookbackTotal = eriLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -258,7 +258,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ERI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#eriLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -286,11 +286,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#EFI
-    * @see Core#MACD
+    * @see Core#ema
+    * @see Core#efi
+    * @see Core#macd
     */
-   public OutRange ERI( int startIdx,
+   public OutRange eri( int startIdx,
                         int endIdx,
                         double inHigh[],
                         double inLow[],
@@ -300,7 +300,7 @@
                         double outBearPower[] )
    {
       requireIndexRange("ERI", startIdx, endIdx);
-      int guardStart = clampedStart("ERI", startIdx, ERI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("ERI", startIdx, eriLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ERI", "inHigh", inHigh, guardInLen);
@@ -310,7 +310,7 @@
       requireLength("ERI", "outBearPower", outBearPower, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+      RetCode retCode = eriImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ERI", retCode);
       }
@@ -335,7 +335,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ERI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#eriLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -363,11 +363,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#EFI
-    * @see Core#MACD
+    * @see Core#ema
+    * @see Core#efi
+    * @see Core#macd
     */
-   public OutRange ERI( int startIdx,
+   public OutRange eri( int startIdx,
                         int endIdx,
                         float inHigh[],
                         float inLow[],
@@ -377,7 +377,7 @@
                         double outBearPower[] )
    {
       requireIndexRange("ERI", startIdx, endIdx);
-      int guardStart = clampedStart("ERI", startIdx, ERI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("ERI", startIdx, eriLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ERI", "inHigh", inHigh, guardInLen);
@@ -387,7 +387,7 @@
       requireLength("ERI", "outBearPower", outBearPower, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+      RetCode retCode = eriImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ERI", retCode);
       }
@@ -397,7 +397,7 @@
 
    /**
     * A live ERI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#ERI} over the same series.
+    * closed bar, bit-identical to {@link Core#eri} over the same series.
     * Open with {@link Core#eriOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -424,7 +424,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#ERI} reports over the same bars: the
+       * <p>It is what {@link Core#eri} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -651,7 +651,7 @@
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.
           */
-         lookbackTotal = ERI_Lookback(optInTimePeriod);
+         lookbackTotal = eriLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -714,7 +714,7 @@
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.
           */
-         lookbackTotal = ERI_Lookback(optInTimePeriod);
+         lookbackTotal = eriLookback(optInTimePeriod);
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -817,8 +817,8 @@
    /**
     * Open a live ERI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#ERI} at that bar.
-    * <p>The history must hold at least {@code ERI_Lookback(...) + 1} bars
+    * to {@link Core#eri} at that bar.
+    * <p>The history must hold at least {@code eriLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -839,7 +839,7 @@
    }
    /**
     * {@link Core#eriOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#ERI} over the whole history in the same single pass
+    * to {@link Core#eri} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -854,7 +854,7 @@
       requireHistory("ERI openAndFill", inHigh.length);
       requireArgument("ERI openAndFill", "inLow", inLow);
       requireArgument("ERI openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("ERI openAndFill", inHigh.length, ERI_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("ERI openAndFill", inHigh.length, eriLookback(optInTimePeriod));
       requireHistoryLength("ERI openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("ERI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("ERI openAndFill", "outBullPower", outBullPower, guardOutLen);

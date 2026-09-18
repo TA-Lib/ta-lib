@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::AC`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ac`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_AC_Lookback")]
     #[inline]
-    pub fn AC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
+    pub fn ac_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 5;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -101,12 +101,12 @@ impl Core {
         // The oscillator's own window, plus the simple moving average taken over
         // the oscillator itself. Both terms are exactly the lookback of the
         // function they come from, so neither is restated here.
-        return Ok((self.AO_Lookback(optInFastPeriod, optInSlowPeriod)? + self.SMA_Lookback(optInSignalPeriod)?) as usize);
+        return Ok((self.ao_lookback(optInFastPeriod, optInSlowPeriod)? + self.sma_lookback(optInSignalPeriod)?) as usize);
     }
-    /// C-shaped body behind [`Core::AC`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::ac`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn AC_Impl(
+    pub(crate) fn ac_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -140,7 +140,7 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -189,7 +189,7 @@ impl Core {
         // "optInSignalPeriod" element.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -360,7 +360,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.AC(0, high.len() - 1, &high, &low, 5, 34, 5, &mut out)?;
+    /// let out_range = core.ac(0, high.len() - 1, &high, &low, 5, 34, 5, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -368,7 +368,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::AO`] · [`Core::MACD`] · [`Core::MEDPRICE`] · [`Core::PPO`] · [`Core::SMA`]
+    /// [`AO`](Core::ao) · [`MACD`](Core::macd) · [`MEDPRICE`](Core::medprice) ·
+    /// [`PPO`](Core::ppo) · [`SMA`](Core::sma)
     ///
     /// # References
     ///
@@ -386,7 +387,7 @@ impl Core {
     #[doc(alias = "AcceleratorDecelerator")]
     #[doc(alias = "BillWilliamsAccelerator")]
     #[doc(alias = "ACOscillator")]
-    pub fn AC(
+    pub fn ac(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -403,7 +404,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        let _guardLb = self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -417,7 +418,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.AC_Impl(
+        let retCode = self.ac_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -438,7 +439,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live AC stream: one value per closed bar, bit-identical to [`Core::AC`]
+/// Live AC stream: one value per closed bar, bit-identical to [`Core::ac`]
 /// over the same series. Open with [`Core::ac_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -611,7 +612,7 @@ impl Core {
         // "optInSignalPeriod" element.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        lookbackTotal = self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -779,7 +780,7 @@ impl Core {
     }
 
     /// Open a live AC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::AC`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ac`] at that bar.
     ///
     /// # Errors
     ///
@@ -810,7 +811,7 @@ impl Core {
     }
 
     /// [`Core::ac_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::AC`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::ac`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -828,7 +829,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.AC(0, high.len() - 1, &high, &low, 5, 34, 5, &mut batch_out)?;
+    /// let batch = core.ac(0, high.len() - 1, &high, &low, 5, 34, 5, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.ac_open_and_fill(&high, &low, 5, 34, 5, &mut out)?;
@@ -849,7 +850,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        let _guardLb = self.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1005,7 +1006,7 @@ impl AcStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::AC`] reports over the same bars: the opener sets it
+    /// It is what [`Core::ac`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::SMI`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::smi`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -85,7 +85,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SMI_Lookback")]
     #[inline]
-    pub fn SMI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
+    pub fn smi_lookback(&self, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 13;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -111,12 +111,12 @@ impl Core {
         // smooths the finished SMI line. Every term is exactly the lookback of the
         // function it comes from, so none of them is restated here -- which is also
         // what makes SMI inherit TA_FUNC_UNST_EMA from its callee.
-        return Ok((((optInTimePeriod - 1) as usize) + self.EMA_Lookback(optInSlowPeriod)? + self.EMA_Lookback(optInFastPeriod)? + self.EMA_Lookback(optInSignalPeriod)?) as usize);
+        return Ok((((optInTimePeriod - 1) as usize) + self.ema_lookback(optInSlowPeriod)? + self.ema_lookback(optInFastPeriod)? + self.ema_lookback(optInSignalPeriod)?) as usize);
     }
-    /// C-shaped body behind [`Core::SMI`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::smi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn SMI_Impl(
+    pub(crate) fn smi_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -133,13 +133,13 @@ impl Core {
         outSMISignal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, SMI_Impl_fma, SMI_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal));
+        return ta_lib_dispatch::dispatch_fma!(self, smi_impl_fma, smi_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.SMI_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
+        self.smi_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn SMI_Impl_fma(
+    fn smi_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -155,10 +155,10 @@ impl Core {
         outSMI: &mut [f64],
         outSMISignal: &mut [f64],
     ) -> RetCode {
-        self.SMI_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
+        self.smi_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal)
     }
     #[inline(always)]
-    fn SMI_Impl_impl(
+    fn smi_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -200,7 +200,7 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 2) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -243,7 +243,7 @@ impl Core {
         let mut nBar: usize = 0_usize;
         let mut nFast: usize = 0_usize;
         let mut nSignal: usize = 0_usize;
-        lookbackTotal = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -269,8 +269,8 @@ impl Core {
         kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
         kFast = 2.0 / ((optInFastPeriod + 1) as f64);
         kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSlow = self.EMA_Lookback(optInSlowPeriod).unwrap_or(usize::MAX);
-        lookbackFast = self.EMA_Lookback(optInFastPeriod).unwrap_or(usize::MAX);
+        lookbackSlow = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
+        lookbackFast = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
         emaSlowNum = 0.0;
         emaSlowDen = 0.0;
         emaFastNum = 0.0;
@@ -521,7 +521,7 @@ impl Core {
     /// let mut smi = vec![0.0; 252];
     /// let mut smi_signal = vec![0.0; 252];
     ///
-    /// let out_range = core.SMI(
+    /// let out_range = core.smi(
     ///     0, high.len() - 1, &high, &low, &close, 13, 2, 25, 9,
     ///     &mut smi, &mut smi_signal,
     /// )?;
@@ -532,7 +532,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::STOCH`] · [`Core::STOCHRSI`] · [`Core::WILLR`] · [`Core::MACD`]
+    /// [`STOCH`](Core::stoch) · [`STOCHRSI`](Core::stochrsi) · [`WILLR`](Core::willr) ·
+    /// [`MACD`](Core::macd)
     ///
     /// # References
     ///
@@ -542,7 +543,7 @@ impl Core {
     #[doc(alias = "TA_SMI")]
     #[doc(alias = "stochasticmomentumindex")]
     #[doc(alias = "Blaustochasticmomentum")]
-    pub fn SMI(
+    pub fn smi(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -562,7 +563,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        let _guardLb = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -582,7 +583,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.SMI_Impl(
+        let retCode = self.smi_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -606,7 +607,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live SMI stream: one value per closed bar, bit-identical to [`Core::SMI`]
+/// Live SMI stream: one value per closed bar, bit-identical to [`Core::smi`]
 /// over the same series. Open with [`Core::smi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -806,7 +807,7 @@ impl Core {
         let mut nBar: usize = 0_usize;
         let mut nFast: usize = 0_usize;
         let mut nSignal: usize = 0_usize;
-        lookbackTotal = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        lookbackTotal = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -832,8 +833,8 @@ impl Core {
         kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
         kFast = 2.0 / ((optInFastPeriod + 1) as f64);
         kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSlow = self.EMA_Lookback(optInSlowPeriod)?;
-        lookbackFast = self.EMA_Lookback(optInFastPeriod)?;
+        lookbackSlow = self.ema_lookback(optInSlowPeriod)?;
+        lookbackFast = self.ema_lookback(optInFastPeriod)?;
         emaSlowNum = 0.0;
         emaSlowDen = 0.0;
         emaFastNum = 0.0;
@@ -1085,7 +1086,7 @@ impl Core {
     }
 
     /// Open a live SMI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::SMI`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::smi`] at that bar.
     ///
     /// # Errors
     ///
@@ -1120,7 +1121,7 @@ impl Core {
     }
 
     /// [`Core::smi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::SMI`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::smi`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1142,7 +1143,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_smi = vec![0.0; 252];
     /// let mut batch_smi_signal = vec![0.0; 252];
-    /// let batch = core.SMI(0, high.len() - 1, &high, &low, &close, 13, 2, 25, 9, &mut batch_smi, &mut batch_smi_signal)?;
+    /// let batch = core.smi(0, high.len() - 1, &high, &low, &close, 13, 2, 25, 9, &mut batch_smi, &mut batch_smi_signal)?;
     ///
     /// let mut smi = vec![0.0; 252];
     /// let mut smi_signal = vec![0.0; 252];
@@ -1166,7 +1167,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
+        let _guardLb = self.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1364,7 +1365,7 @@ impl SmiStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::SMI`] reports over the same bars: the opener sets it
+    /// It is what [`Core::smi`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

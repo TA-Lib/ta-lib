@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLSPINNINGTOP} consumes before
+    * Number of leading input bars {@link Core#cdlspinningtop} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLSPINNINGTOP_Lookback( )
+   public int cdlspinningtopLookback( )
    {
       int BodyShort_rangeType = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].rangeType.ordinal();
       int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return BodyShort_avgPeriod ;
 
    }
-   RetCode CDLSPINNINGTOP_Impl( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlspinningtopImpl( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -56,7 +56,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLSPINNINGTOP_Lookback();
+      lookbackTotal = cdlspinningtopLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -105,15 +105,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLSPINNINGTOP_Impl( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlspinningtopImpl( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -129,7 +129,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLSPINNINGTOP_Lookback();
+      lookbackTotal = cdlspinningtopLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -169,7 +169,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLSPINNINGTOP_Lookback} is a
+    * valid range shorter than {@link Core#cdlspinningtopLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -195,11 +195,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJI
-    * @see Core#CDLHIGHWAVE
-    * @see Core#CDLLONGLEGGEDDOJI
+    * @see Core#cdldoji
+    * @see Core#cdlhighwave
+    * @see Core#cdllongleggeddoji
     */
-   public OutRange CDLSPINNINGTOP( int startIdx,
+   public OutRange cdlspinningtop( int startIdx,
                                    int endIdx,
                                    double inOpen[],
                                    double inHigh[],
@@ -208,7 +208,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLSPINNINGTOP", startIdx, endIdx);
-      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, CDLSPINNINGTOP_Lookback());
+      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, cdlspinningtopLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
@@ -218,7 +218,7 @@
       requireLength("CDLSPINNINGTOP", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSPINNINGTOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlspinningtopImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLSPINNINGTOP", retCode);
       }
@@ -236,7 +236,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLSPINNINGTOP_Lookback} is a
+    * valid range shorter than {@link Core#cdlspinningtopLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -262,11 +262,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJI
-    * @see Core#CDLHIGHWAVE
-    * @see Core#CDLLONGLEGGEDDOJI
+    * @see Core#cdldoji
+    * @see Core#cdlhighwave
+    * @see Core#cdllongleggeddoji
     */
-   public OutRange CDLSPINNINGTOP( int startIdx,
+   public OutRange cdlspinningtop( int startIdx,
                                    int endIdx,
                                    float inOpen[],
                                    float inHigh[],
@@ -275,7 +275,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLSPINNINGTOP", startIdx, endIdx);
-      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, CDLSPINNINGTOP_Lookback());
+      int guardStart = clampedStart("CDLSPINNINGTOP", startIdx, cdlspinningtopLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
@@ -285,7 +285,7 @@
       requireLength("CDLSPINNINGTOP", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSPINNINGTOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlspinningtopImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLSPINNINGTOP", retCode);
       }
@@ -295,7 +295,7 @@
 
    /**
     * A live CDLSPINNINGTOP stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLSPINNINGTOP} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlspinningtop} over the same series.
     * Open with {@link Core#cdlspinningtopOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -325,7 +325,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLSPINNINGTOP} reports over the same bars: the
+       * <p>It is what {@link Core#cdlspinningtop} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -502,7 +502,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLSPINNINGTOP_Lookback();
+      lookbackTotal = cdlspinningtopLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -611,8 +611,8 @@
    /**
     * Open a live CDLSPINNINGTOP stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLSPINNINGTOP} at that bar.
-    * <p>The history must hold at least {@code CDLSPINNINGTOP_Lookback(...) + 1} bars
+    * to {@link Core#cdlspinningtop} at that bar.
+    * <p>The history must hold at least {@code cdlspinningtopLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -633,7 +633,7 @@
    }
    /**
     * {@link Core#cdlspinningtopOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLSPINNINGTOP} over the whole history in the same single pass
+    * to {@link Core#cdlspinningtop} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -649,7 +649,7 @@
       requireArgument("CDLSPINNINGTOP openAndFill", "inHigh", inHigh);
       requireArgument("CDLSPINNINGTOP openAndFill", "inLow", inLow);
       requireArgument("CDLSPINNINGTOP openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLSPINNINGTOP openAndFill", inOpen.length, CDLSPINNINGTOP_Lookback());
+      int guardOutLen = openFillCount("CDLSPINNINGTOP openAndFill", inOpen.length, cdlspinningtopLookback());
       requireHistoryLength("CDLSPINNINGTOP openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLSPINNINGTOP openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLSPINNINGTOP openAndFill", "inClose", inClose.length, inOpen.length);

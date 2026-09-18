@@ -66,7 +66,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::MAMA`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::mama`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// [`Core::REAL_DEFAULT`] to select their default value.
     #[doc(alias = "TA_MAMA_Lookback")]
     #[inline]
-    pub fn MAMA_Lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> Result<usize, RetCode> {
+    pub fn mama_lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> Result<usize, RetCode> {
         if optInFastLimit == Self::REAL_DEFAULT {
             optInFastLimit = 5e-1;
         } else if !((optInFastLimit >= 1e-2) && (optInFastLimit <= 9.9e-1)) {
@@ -113,10 +113,10 @@ impl Core {
         //         32 Total
         return Ok((32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize);
     }
-    /// C-shaped body behind [`Core::MAMA`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::mama`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn MAMA_Impl(
+    pub(crate) fn mama_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -129,13 +129,13 @@ impl Core {
         outFAMA: Option<&mut [f64]>,
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, MAMA_Impl_fma, MAMA_Impl_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
+        return ta_lib_dispatch::dispatch_fma!(self, mama_impl_fma, mama_impl_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
         #[cfg(not(target_arch = "x86_64"))]
-        self.MAMA_Impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.mama_impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn MAMA_Impl_fma(
+    fn mama_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -147,10 +147,10 @@ impl Core {
         outMAMA: &mut [f64],
         outFAMA: Option<&mut [f64]>,
     ) -> RetCode {
-        self.MAMA_Impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.mama_impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[inline(always)]
-    fn MAMA_Impl_impl(
+    fn mama_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -178,7 +178,7 @@ impl Core {
         } else if !((optInSlowLimit >= 1e-2) && (optInSlowLimit <= 9.9e-1)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
+        let _assertLb = self.mama_lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMAMA.len());
@@ -598,7 +598,7 @@ impl Core {
     /// let mut mama = vec![0.0; 252];
     /// let mut fama = vec![0.0; 252];
     ///
-    /// let out_range = core.MAMA(0, data.len() - 1, &data, 0.5, 0.05, &mut mama, Some(&mut fama))?;
+    /// let out_range = core.mama(0, data.len() - 1, &data, 0.5, 0.05, &mut mama, Some(&mut fama))?;
     /// assert!(out_range.count > 0);
     /// assert!(mama[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -606,7 +606,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::MA`] · [`Core::WMA`] · [`Core::HT_DCPERIOD`]
+    /// [`MA`](Core::ma) · [`WMA`](Core::wma) · [`HT_DCPERIOD`](Core::ht_dcperiod)
     ///
     /// # References
     ///
@@ -615,7 +615,7 @@ impl Core {
     #[doc(alias = "TA_MAMA")]
     #[doc(alias = "MESAAdaptiveMovingAverage")]
     #[doc(alias = "EhlersMAMA")]
-    pub fn MAMA(
+    pub fn mama(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -631,7 +631,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit)?;
+        let _guardLb = self.mama_lookback(optInFastLimit, optInSlowLimit)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -645,7 +645,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MAMA_Impl(
+        let retCode = self.mama_impl(
             startIdx,
             endIdx,
             inReal,
@@ -665,7 +665,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MAMA stream: one value per closed bar, bit-identical to [`Core::MAMA`]
+/// Live MAMA stream: one value per closed bar, bit-identical to [`Core::mama`]
 /// over the same series. Open with [`Core::mama_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -1401,7 +1401,7 @@ impl Core {
     }
 
     /// Open a live MAMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MAMA`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::mama`] at that bar.
     ///
     /// # Errors
     ///
@@ -1432,7 +1432,7 @@ impl Core {
     }
 
     /// [`Core::mama_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MAMA`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::mama`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1450,7 +1450,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_mama = vec![0.0; 252];
     /// let mut batch_fama = vec![0.0; 252];
-    /// let batch = core.MAMA(0, data.len() - 1, &data, 0.5, 0.05, &mut batch_mama, Some(&mut batch_fama[..]))?;
+    /// let batch = core.mama(0, data.len() - 1, &data, 0.5, 0.05, &mut batch_mama, Some(&mut batch_fama[..]))?;
     ///
     /// let mut mama = vec![0.0; 252];
     /// let mut fama = vec![0.0; 252];
@@ -1474,7 +1474,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit)?;
+        let _guardLb = self.mama_lookback(optInFastLimit, optInSlowLimit)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outMAMA.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -1733,7 +1733,7 @@ impl MamaStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::MAMA`] reports over the same bars: the opener sets it
+    /// It is what [`Core::mama`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLONNECK} consumes before it can
+    * Number of leading input bars {@link Core#cdlonneck} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLONNECK_Lookback( )
+   public int cdlonneckLookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   RetCode CDLONNECK_Impl( int startIdx,
-                           int endIdx,
-                           double inOpen[],
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           int outInteger[] )
+   RetCode cdlonneckImpl( int startIdx,
+                          int endIdx,
+                          double inOpen[],
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLONNECK_Lookback();
+      lookbackTotal = cdlonneckLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -130,15 +130,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLONNECK_Impl( int startIdx,
-                           int endIdx,
-                           float inOpen[],
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           int outInteger[] )
+   RetCode cdlonneckImpl( int startIdx,
+                          int endIdx,
+                          float inOpen[],
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -159,7 +159,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLONNECK_Lookback();
+      lookbackTotal = cdlonneckLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -215,7 +215,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLONNECK_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlonneckLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -241,10 +241,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLINNECK
-    * @see Core#CDLTHRUSTING
+    * @see Core#cdlinneck
+    * @see Core#cdlthrusting
     */
-   public OutRange CDLONNECK( int startIdx,
+   public OutRange cdlonneck( int startIdx,
                               int endIdx,
                               double inOpen[],
                               double inHigh[],
@@ -253,7 +253,7 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLONNECK", startIdx, endIdx);
-      int guardStart = clampedStart("CDLONNECK", startIdx, CDLONNECK_Lookback());
+      int guardStart = clampedStart("CDLONNECK", startIdx, cdlonneckLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
@@ -263,7 +263,7 @@
       requireLength("CDLONNECK", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLONNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlonneckImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLONNECK", retCode);
       }
@@ -287,7 +287,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLONNECK_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlonneckLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -313,10 +313,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLINNECK
-    * @see Core#CDLTHRUSTING
+    * @see Core#cdlinneck
+    * @see Core#cdlthrusting
     */
-   public OutRange CDLONNECK( int startIdx,
+   public OutRange cdlonneck( int startIdx,
                               int endIdx,
                               float inOpen[],
                               float inHigh[],
@@ -325,7 +325,7 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLONNECK", startIdx, endIdx);
-      int guardStart = clampedStart("CDLONNECK", startIdx, CDLONNECK_Lookback());
+      int guardStart = clampedStart("CDLONNECK", startIdx, cdlonneckLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
@@ -335,7 +335,7 @@
       requireLength("CDLONNECK", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLONNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlonneckImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLONNECK", retCode);
       }
@@ -345,7 +345,7 @@
 
    /**
     * A live CDLONNECK stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLONNECK} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlonneck} over the same series.
     * Open with {@link Core#cdlonneckOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -388,7 +388,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLONNECK} reports over the same bars: the
+       * <p>It is what {@link Core#cdlonneck} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -608,7 +608,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLONNECK_Lookback();
+      lookbackTotal = cdlonneckLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -758,8 +758,8 @@
    /**
     * Open a live CDLONNECK stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLONNECK} at that bar.
-    * <p>The history must hold at least {@code CDLONNECK_Lookback(...) + 1} bars
+    * to {@link Core#cdlonneck} at that bar.
+    * <p>The history must hold at least {@code cdlonneckLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -780,7 +780,7 @@
    }
    /**
     * {@link Core#cdlonneckOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLONNECK} over the whole history in the same single pass
+    * to {@link Core#cdlonneck} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -796,7 +796,7 @@
       requireArgument("CDLONNECK openAndFill", "inHigh", inHigh);
       requireArgument("CDLONNECK openAndFill", "inLow", inLow);
       requireArgument("CDLONNECK openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLONNECK openAndFill", inOpen.length, CDLONNECK_Lookback());
+      int guardOutLen = openFillCount("CDLONNECK openAndFill", inOpen.length, cdlonneckLookback());
       requireHistoryLength("CDLONNECK openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLONNECK openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLONNECK openAndFill", "inClose", inClose.length, inOpen.length);

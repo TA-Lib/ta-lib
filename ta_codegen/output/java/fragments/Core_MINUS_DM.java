@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MINUS_DM} consumes before it can
+    * Number of leading input bars {@link Core#minusDm} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -28,7 +28,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MINUS_DM_Lookback( int optInTimePeriod )
+   public int minusDmLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -42,14 +42,14 @@
       }
 
    }
-   RetCode MINUS_DM_Impl( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode minusDmImpl( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -256,14 +256,14 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MINUS_DM_Impl( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode minusDmImpl( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -386,8 +386,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MINUS_DM_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#minusDmLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -411,22 +411,22 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#PLUS_DM
-    * @see Core#MINUS_DI
-    * @see Core#PLUS_DI
-    * @see Core#DX
-    * @see Core#ADX
-    * @see Core#ADXR
+    * @see Core#plusDm
+    * @see Core#minusDi
+    * @see Core#plusDi
+    * @see Core#dx
+    * @see Core#adx
+    * @see Core#adxr
     */
-   public OutRange MINUS_DM( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             int optInTimePeriod,
-                             double outReal[] )
+   public OutRange minusDm( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            int optInTimePeriod,
+                            double outReal[] )
    {
       requireIndexRange("MINUS_DM", startIdx, endIdx);
-      int guardStart = clampedStart("MINUS_DM", startIdx, MINUS_DM_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MINUS_DM", startIdx, minusDmLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINUS_DM", "inHigh", inHigh, guardInLen);
@@ -434,7 +434,7 @@
       requireLength("MINUS_DM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = minusDmImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MINUS_DM", retCode);
       }
@@ -452,8 +452,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MINUS_DM_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#minusDmLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -477,22 +477,22 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#PLUS_DM
-    * @see Core#MINUS_DI
-    * @see Core#PLUS_DI
-    * @see Core#DX
-    * @see Core#ADX
-    * @see Core#ADXR
+    * @see Core#plusDm
+    * @see Core#minusDi
+    * @see Core#plusDi
+    * @see Core#dx
+    * @see Core#adx
+    * @see Core#adxr
     */
-   public OutRange MINUS_DM( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             int optInTimePeriod,
-                             double outReal[] )
+   public OutRange minusDm( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            int optInTimePeriod,
+                            double outReal[] )
    {
       requireIndexRange("MINUS_DM", startIdx, endIdx);
-      int guardStart = clampedStart("MINUS_DM", startIdx, MINUS_DM_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MINUS_DM", startIdx, minusDmLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MINUS_DM", "inHigh", inHigh, guardInLen);
@@ -500,7 +500,7 @@
       requireLength("MINUS_DM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = minusDmImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MINUS_DM", retCode);
       }
@@ -510,7 +510,7 @@
 
    /**
     * A live MINUS_DM stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MINUS_DM} over the same series.
+    * closed bar, bit-identical to {@link Core#minusDm} over the same series.
     * Open with {@link Core#minusDmOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -538,7 +538,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MINUS_DM} reports over the same bars: the
+       * <p>It is what {@link Core#minusDm} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1099,8 +1099,8 @@
    /**
     * Open a live MINUS_DM stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MINUS_DM} at that bar.
-    * <p>The history must hold at least {@code MINUS_DM_Lookback(...) + 1} bars
+    * to {@link Core#minusDm} at that bar.
+    * <p>The history must hold at least {@code minusDmLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1119,7 +1119,7 @@
    }
    /**
     * {@link Core#minusDmOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MINUS_DM} over the whole history in the same single pass
+    * to {@link Core#minusDm} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1133,7 +1133,7 @@
       requireArgument("MINUS_DM openAndFill", "inHigh", inHigh);
       requireHistory("MINUS_DM openAndFill", inHigh.length);
       requireArgument("MINUS_DM openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("MINUS_DM openAndFill", inHigh.length, MINUS_DM_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("MINUS_DM openAndFill", inHigh.length, minusDmLookback(optInTimePeriod));
       requireHistoryLength("MINUS_DM openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MINUS_DM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

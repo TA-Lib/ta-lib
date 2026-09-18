@@ -66,7 +66,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::VWMA`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::vwma`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -80,7 +80,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_VWMA_Lookback")]
     #[inline]
-    pub fn VWMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn vwma_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -88,10 +88,10 @@ impl Core {
         }
         return Ok((optInTimePeriod - 1) as usize);
     }
-    /// C-shaped body behind [`Core::VWMA`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::vwma`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn VWMA_Impl(
+    pub(crate) fn vwma_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -113,7 +113,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.VWMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.vwma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -257,7 +257,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.VWMA(0, data.len() - 1, &data, &volume, 30, &mut out)?;
+    /// let out_range = core.vwma(0, data.len() - 1, &data, &volume, 30, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -265,7 +265,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::SMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::OBV`]
+    /// [`SMA`](Core::sma) · [`WMA`](Core::wma) · [`MA`](Core::ma) · [`OBV`](Core::obv)
     ///
     /// # References
     ///
@@ -277,7 +277,7 @@ impl Core {
     ///   SMA(price * volume) / SMA(volume).
     #[doc(alias = "TA_VWMA")]
     #[doc(alias = "VolumeWeightedMovingAverage")]
-    pub fn VWMA(
+    pub fn vwma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -292,7 +292,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.VWMA_Lookback(optInTimePeriod)?;
+        let _guardLb = self.vwma_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -306,7 +306,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.VWMA_Impl(
+        let retCode = self.vwma_impl(
             startIdx,
             endIdx,
             inReal,
@@ -325,7 +325,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live VWMA stream: one value per closed bar, bit-identical to [`Core::VWMA`]
+/// Live VWMA stream: one value per closed bar, bit-identical to [`Core::vwma`]
 /// over the same series. Open with [`Core::vwma_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -424,7 +424,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            let fillLb: usize = self.VWMA_Lookback(optInTimePeriod)?;
+            let fillLb: usize = self.vwma_lookback(optInTimePeriod)?;
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
@@ -557,7 +557,7 @@ impl Core {
     }
 
     /// Open a live VWMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::VWMA`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::vwma`] at that bar.
     ///
     /// # Errors
     ///
@@ -590,7 +590,7 @@ impl Core {
     }
 
     /// [`Core::vwma_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::VWMA`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::vwma`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -610,7 +610,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.VWMA(0, data.len() - 1, &data, &volume, 30, &mut batch_out)?;
+    /// let batch = core.vwma(0, data.len() - 1, &data, &volume, 30, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.vwma_open_and_fill(&data, &volume, 30, &mut out)?;
@@ -631,7 +631,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.VWMA_Lookback(optInTimePeriod)?;
+        let _guardLb = self.vwma_lookback(optInTimePeriod)?;
         if inVolume.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
@@ -770,7 +770,7 @@ impl VwmaStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::VWMA`] reports over the same bars: the opener sets it
+    /// It is what [`Core::vwma`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

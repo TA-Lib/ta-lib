@@ -63,18 +63,18 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::MARKETFI`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::marketfi`]: the number of leading input values consumed before
     /// the first output value can be produced.
     #[doc(alias = "TA_MARKETFI_Lookback")]
-    pub fn MARKETFI_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn marketfi_lookback(&self) -> Result<usize, RetCode> {
         // Each output depends only on its own bar, so nothing is consumed
         // before the first one can be produced.
         return Ok((0) as usize);
     }
-    /// C-shaped body behind [`Core::MARKETFI`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::marketfi`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn MARKETFI_Impl(
+    pub(crate) fn marketfi_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -91,7 +91,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.MARKETFI_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.marketfi_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -190,7 +190,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.MARKETFI(0, high.len() - 1, &high, &low, &volume, &mut out)?;
+    /// let out_range = core.marketfi(0, high.len() - 1, &high, &low, &volume, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -198,7 +198,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::AD`] · [`Core::ADOSC`] · [`Core::NVI`] · [`Core::OBV`] · [`Core::PVI`]
+    /// [`AD`](Core::ad) · [`ADOSC`](Core::adosc) · [`NVI`](Core::nvi) · [`OBV`](Core::obv) ·
+    /// [`PVI`](Core::pvi)
     ///
     /// # References
     ///
@@ -210,7 +211,7 @@ impl Core {
     ///   the signs of the bar-to-bar change in this index and in volume. It is an interpretive
     ///   layer, not part of the series; `outReal` is the scalar only.
     #[doc(alias = "TA_MARKETFI")]
-    pub fn MARKETFI(
+    pub fn marketfi(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -225,7 +226,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MARKETFI_Lookback()?;
+        let _guardLb = self.marketfi_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -242,7 +243,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MARKETFI_Impl(
+        let retCode = self.marketfi_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -261,7 +262,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MARKETFI stream: one value per closed bar, bit-identical to [`Core::MARKETFI`]
+/// Live MARKETFI stream: one value per closed bar, bit-identical to [`Core::marketfi`]
 /// over the same series. Open with [`Core::marketfi_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -384,7 +385,7 @@ impl Core {
     }
 
     /// Open a live MARKETFI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MARKETFI`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::marketfi`] at that bar.
     ///
     /// # Errors
     ///
@@ -418,7 +419,7 @@ impl Core {
     }
 
     /// [`Core::marketfi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MARKETFI`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::marketfi`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -439,7 +440,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.MARKETFI(0, high.len() - 1, &high, &low, &volume, &mut batch_out)?;
+    /// let batch = core.marketfi(0, high.len() - 1, &high, &low, &volume, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.marketfi_open_and_fill(&high, &low, &volume, &mut out)?;
@@ -460,7 +461,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.MARKETFI_Lookback()?;
+        let _guardLb = self.marketfi_lookback()?;
         if inLow.len() != inHigh.len() || inVolume.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -579,7 +580,7 @@ impl MarketfiStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::MARKETFI`] reports over the same bars: the opener sets it
+    /// It is what [`Core::marketfi`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

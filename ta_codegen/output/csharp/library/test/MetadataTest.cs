@@ -814,6 +814,21 @@ public static class MetadataTest
     /// Binder-thunk-versus-typed-wrapper agreement is covered instead by <c>abstract_call</c> in
     /// the JSON-RPC server, which <c>test_abstract.c</c> compares against C per function.</para>
     /// </remarks>
+    /// <summary>The canonical name as the C# surface spells it: `HT_TRENDLINE` -> `HtTrendline`.</summary>
+    private static string Folded(string canonical)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (string part in canonical.Split('_'))
+        {
+            if (part.Length == 0)
+            {
+                continue;
+            }
+            sb.Append(char.ToUpperInvariant(part[0])).Append(part.Substring(1).ToLowerInvariant());
+        }
+        return sb.ToString();
+    }
+
     private static OutRange? TypedCall(FuncInfo f, double[][] realOut, int[][] intOut)
     {
         // The catalogue's declared shapes must name a real typed overload. This
@@ -868,7 +883,7 @@ public static class MetadataTest
                           : typeof(Span<int>));
         }
 
-        MethodInfo? m = typeof(Core).GetMethod(f.Name, BindingFlags.Public | BindingFlags.Instance,
+        MethodInfo? m = typeof(Core).GetMethod(Folded(f.Name), BindingFlags.Public | BindingFlags.Instance,
                                                binder: null, types.ToArray(), modifiers: null);
         if (m is null)
         {

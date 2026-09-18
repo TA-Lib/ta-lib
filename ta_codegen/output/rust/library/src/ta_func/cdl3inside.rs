@@ -64,10 +64,10 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CDL3INSIDE`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::cdl3inside`]: the number of leading input values consumed before
     /// the first output value can be produced.
     #[doc(alias = "TA_CDL3INSIDE_Lookback")]
-    pub fn CDL3INSIDE_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn cdl3inside_lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
@@ -82,10 +82,10 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         return Ok(((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 2) as usize);
     }
-    /// C-shaped body behind [`Core::CDL3INSIDE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::cdl3inside`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CDL3INSIDE_Impl(
+    pub(crate) fn cdl3inside_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -103,7 +103,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDL3INSIDE_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.cdl3inside_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -132,7 +132,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDL3INSIDE_Lookback().unwrap_or(usize::MAX);
+        lookbackTotal = self.cdl3inside_lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -347,7 +347,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0i32; 252];
     ///
-    /// let out_range = core.CDL3INSIDE(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
+    /// let out_range = core.cdl3inside(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert_eq!(out_range.beg_idx + out_range.count, open.len());
     /// // a candlestick pattern reports 0 where it does not fire, and a signed
@@ -358,13 +358,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::CDLHARAMI`] · [`Core::CDL3OUTSIDE`] · [`Core::CDLENGULFING`]
+    /// [`CDLHARAMI`](Core::cdlharami) · [`CDL3OUTSIDE`](Core::cdl3outside) ·
+    /// [`CDLENGULFING`](Core::cdlengulfing)
     #[doc(alias = "TA_CDL3INSIDE")]
     #[doc(alias = "ThreeInsideUpDown")]
     #[doc(alias = "ThreeInside")]
     #[doc(alias = "ThreeInsideUp")]
     #[doc(alias = "ThreeInsideDown")]
-    pub fn CDL3INSIDE(
+    pub fn cdl3inside(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -380,7 +381,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDL3INSIDE_Lookback()?;
+        let _guardLb = self.cdl3inside_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -400,7 +401,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDL3INSIDE_Impl(
+        let retCode = self.cdl3inside_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -420,7 +421,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDL3INSIDE stream: one value per closed bar, bit-identical to [`Core::CDL3INSIDE`]
+/// Live CDL3INSIDE stream: one value per closed bar, bit-identical to [`Core::cdl3inside`]
 /// over the same series. Open with [`Core::cdl3inside_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -660,7 +661,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDL3INSIDE_Lookback()?;
+        lookbackTotal = self.cdl3inside_lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -879,7 +880,7 @@ impl Core {
     }
 
     /// Open a live CDL3INSIDE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDL3INSIDE`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::cdl3inside`] at that bar.
     ///
     /// # Errors
     ///
@@ -916,7 +917,7 @@ impl Core {
     }
 
     /// [`Core::cdl3inside_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDL3INSIDE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::cdl3inside`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -940,7 +941,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0_i32; 252];
-    /// let batch = core.CDL3INSIDE(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.cdl3inside(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0_i32; 252];
     /// let (_stream, filled) = core.cdl3inside_open_and_fill(&open, &high, &low, &close, &mut out)?;
@@ -960,7 +961,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDL3INSIDE_Lookback()?;
+        let _guardLb = self.cdl3inside_lookback()?;
         if inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1093,7 +1094,7 @@ impl Cdl3insideStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CDL3INSIDE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::cdl3inside`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

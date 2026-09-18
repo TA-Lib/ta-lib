@@ -35,7 +35,7 @@ import io.github.talib.Core;
 
 Core core = Core.DEFAULT;
 
-// Seed with warm-up history (>= SMA_Lookback(period) + 1 bars).
+// Seed with warm-up history (>= smaLookback(period) + 1 bars).
 double[] history = /* ...your closing prices... */;
 Core.SmaStream s = core.smaOpen(history, 30); // value() starts at the last history bar
 
@@ -50,7 +50,7 @@ double provisional = s.peek(formingClose);      // state left unchanged
 
 ## Rules
 
-- **Warm-up.** `open` succeeds only if `history.length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
+- **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/java/#numerical_stability) and [candle settings](/api/java/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer: `update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.

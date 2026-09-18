@@ -92,7 +92,7 @@ fn the_other_rejections_keep_their_own_codes() {
 fn the_fill_output_bound_from_both_sides() {
     let core = Core::new();
     let data = series(252);
-    let lb = core.SMA_Lookback(30).expect("a valid period");
+    let lb = core.sma_lookback(30).expect("a valid period");
     let produced = data.len() - lb;
 
     assert_eq!(lb, 29, "the probe needs a lookback it can be one short of");
@@ -144,7 +144,7 @@ fn the_fill_output_bound_holds_on_every_tier() {
 
     // Dispatch, including the identity arm, whose lookback is 0.
     for (period, ma) in [(30, MAType::EMA), (1, MAType::SMA)] {
-        let lb = core.MA_Lookback(period, ma).expect("a valid period");
+        let lb = core.ma_lookback(period, ma).expect("a valid period");
         let produced = data.len() - lb;
         let mut exact = vec![0.0_f64; produced];
         assert!(core.ma_open_and_fill(&data, period, ma, &mut exact).is_ok(), "MA exact");
@@ -157,7 +157,7 @@ fn the_fill_output_bound_holds_on_every_tier() {
     }
 
     // Period bank.
-    let lb = core.MAVP_Lookback(2, 30, MAType::SMA).expect("a valid window");
+    let lb = core.mavp_lookback(2, 30, MAType::SMA).expect("a valid window");
     let produced = data.len() - lb;
     let mut exact = vec![0.0_f64; produced];
     assert!(core.mavp_open_and_fill(&data, &periods, 2, 30, MAType::SMA, &mut exact).is_ok());
@@ -169,7 +169,7 @@ fn the_fill_output_bound_holds_on_every_tier() {
 
     // Composed, three outputs: each is checked separately, so a short THIRD
     // output is rejected while the first two are exact.
-    let lb = core.BBANDS_Lookback(20, 2.0, 2.0, MAType::SMA).expect("valid");
+    let lb = core.bbands_lookback(20, 2.0, 2.0, MAType::SMA).expect("valid");
     let produced = data.len() - lb;
     let (mut a, mut b, mut c) = (vec![0.0; produced], vec![0.0; produced], vec![0.0; produced]);
     assert!(core.bbands_open_and_fill(&data, 20, 2.0, 2.0, MAType::SMA, &mut a, &mut b, &mut c).is_ok());
@@ -188,7 +188,7 @@ fn the_fill_output_bound_holds_on_every_tier() {
 fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     let core = Core::new();
     let data = series(252);
-    let lb = core.SMA_Lookback(30).expect("valid");
+    let lb = core.sma_lookback(30).expect("valid");
     // A full-size output is the only shape that can observe a write: the
     // capacity bound floors at zero here, so the body runs with the caller's
     // buffer bound and rejects from inside it. That is #389's class, and it is
@@ -223,7 +223,7 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
 fn a_declined_fill_output_is_still_computed() {
     let core = Core::new();
     let data = series(252);
-    let lb = core.MAMA_Lookback(0.5, 0.05).expect("valid");
+    let lb = core.mama_lookback(0.5, 0.05).expect("valid");
     let produced = data.len() - lb;
 
     let mut ref_mama = vec![0.0_f64; produced];

@@ -14,8 +14,8 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#HT_DCPHASE} consumes before it
-    * can produce its first value.
+    * Number of leading input bars {@link Core#htDcphase} consumes before it can
+    * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
     * output.
@@ -25,7 +25,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int HT_DCPHASE_Lookback( )
+   public int htDcphaseLookback( )
    {
       /* 31 input are skip
        * +32 output are skip to account for misc lookback
@@ -38,12 +38,12 @@
       return 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()] ;
 
    }
-   RetCode HT_DCPHASE_Impl( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode htDcphaseImpl( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -446,12 +446,12 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode HT_DCPHASE_Impl( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode htDcphaseImpl( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -798,7 +798,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HT_DCPHASE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#htDcphaseLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -820,28 +820,28 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#HT_DCPERIOD
-    * @see Core#HT_PHASOR
-    * @see Core#HT_SINE
-    * @see Core#HT_TRENDLINE
-    * @see Core#HT_TRENDMODE
-    * @see Core#MAMA
-    * @see Core#WMA
+    * @see Core#htDcperiod
+    * @see Core#htPhasor
+    * @see Core#htSine
+    * @see Core#htTrendline
+    * @see Core#htTrendmode
+    * @see Core#mama
+    * @see Core#wma
     */
-   public OutRange HT_DCPHASE( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               double outReal[] )
+   public OutRange htDcphase( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              double outReal[] )
    {
       requireIndexRange("HT_DCPHASE", startIdx, endIdx);
-      int guardStart = clampedStart("HT_DCPHASE", startIdx, HT_DCPHASE_Lookback());
+      int guardStart = clampedStart("HT_DCPHASE", startIdx, htDcphaseLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_DCPHASE", "inReal", inReal, guardInLen);
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = htDcphaseImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -860,7 +860,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HT_DCPHASE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#htDcphaseLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -882,28 +882,28 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#HT_DCPERIOD
-    * @see Core#HT_PHASOR
-    * @see Core#HT_SINE
-    * @see Core#HT_TRENDLINE
-    * @see Core#HT_TRENDMODE
-    * @see Core#MAMA
-    * @see Core#WMA
+    * @see Core#htDcperiod
+    * @see Core#htPhasor
+    * @see Core#htSine
+    * @see Core#htTrendline
+    * @see Core#htTrendmode
+    * @see Core#mama
+    * @see Core#wma
     */
-   public OutRange HT_DCPHASE( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               double outReal[] )
+   public OutRange htDcphase( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              double outReal[] )
    {
       requireIndexRange("HT_DCPHASE", startIdx, endIdx);
-      int guardStart = clampedStart("HT_DCPHASE", startIdx, HT_DCPHASE_Lookback());
+      int guardStart = clampedStart("HT_DCPHASE", startIdx, htDcphaseLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HT_DCPHASE", "inReal", inReal, guardInLen);
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = htDcphaseImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -913,7 +913,7 @@
 
    /**
     * A live HT_DCPHASE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#HT_DCPHASE} over the same series.
+    * closed bar, bit-identical to {@link Core#htDcphase} over the same series.
     * Open with {@link Core#htDcphaseOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -987,7 +987,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#HT_DCPHASE} reports over the same bars: the
+       * <p>It is what {@link Core#htDcphase} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -2101,8 +2101,8 @@
    /**
     * Open a live HT_DCPHASE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#HT_DCPHASE} at that bar.
-    * <p>The history must hold at least {@code HT_DCPHASE_Lookback(...) + 1} bars
+    * to {@link Core#htDcphase} at that bar.
+    * <p>The history must hold at least {@code htDcphaseLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -2117,7 +2117,7 @@
    }
    /**
     * {@link Core#htDcphaseOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#HT_DCPHASE} over the whole history in the same single pass
+    * to {@link Core#htDcphase} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -2130,7 +2130,7 @@
    {
       requireArgument("HT_DCPHASE openAndFill", "inReal", inReal);
       requireHistory("HT_DCPHASE openAndFill", inReal.length);
-      int guardOutLen = openFillCount("HT_DCPHASE openAndFill", inReal.length, HT_DCPHASE_Lookback());
+      int guardOutLen = openFillCount("HT_DCPHASE openAndFill", inReal.length, htDcphaseLookback());
       requireLength("HT_DCPHASE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("HT_DCPHASE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

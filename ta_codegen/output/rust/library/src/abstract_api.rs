@@ -42,407 +42,407 @@ use crate::MAType;
 #[non_exhaustive]
 #[allow(non_camel_case_types)]
 pub enum FuncId {
-    /// Accelerator/Decelerator Oscillator — [`Core::AC`](crate::Core::AC).
+    /// Accelerator/Decelerator Oscillator — [`Core::ac`](crate::Core::ac).
     AC,
-    /// Acceleration Bands — [`Core::ACCBANDS`](crate::Core::ACCBANDS).
+    /// Acceleration Bands — [`Core::accbands`](crate::Core::accbands).
     ACCBANDS,
-    /// Vector Trigonometric ACos — [`Core::ACOS`](crate::Core::ACOS).
+    /// Vector Trigonometric ACos — [`Core::acos`](crate::Core::acos).
     ACOS,
-    /// Chaikin A/D Line — [`Core::AD`](crate::Core::AD).
+    /// Chaikin A/D Line — [`Core::ad`](crate::Core::ad).
     AD,
-    /// Vector Arithmetic Add — [`Core::ADD`](crate::Core::ADD).
+    /// Vector Arithmetic Add — [`Core::add`](crate::Core::add).
     ADD,
-    /// Chaikin A/D Oscillator — [`Core::ADOSC`](crate::Core::ADOSC).
+    /// Chaikin A/D Oscillator — [`Core::adosc`](crate::Core::adosc).
     ADOSC,
-    /// Average Day Range — [`Core::ADR`](crate::Core::ADR).
+    /// Average Day Range — [`Core::adr`](crate::Core::adr).
     ADR,
-    /// Average Directional Movement Index — [`Core::ADX`](crate::Core::ADX).
+    /// Average Directional Movement Index — [`Core::adx`](crate::Core::adx).
     ADX,
-    /// Average Directional Movement Index Rating — [`Core::ADXR`](crate::Core::ADXR).
+    /// Average Directional Movement Index Rating — [`Core::adxr`](crate::Core::adxr).
     ADXR,
-    /// Awesome Oscillator — [`Core::AO`](crate::Core::AO).
+    /// Awesome Oscillator — [`Core::ao`](crate::Core::ao).
     AO,
-    /// Absolute Price Oscillator — [`Core::APO`](crate::Core::APO).
+    /// Absolute Price Oscillator — [`Core::apo`](crate::Core::apo).
     APO,
-    /// Aroon — [`Core::AROON`](crate::Core::AROON).
+    /// Aroon — [`Core::aroon`](crate::Core::aroon).
     AROON,
-    /// Aroon Oscillator — [`Core::AROONOSC`](crate::Core::AROONOSC).
+    /// Aroon Oscillator — [`Core::aroonosc`](crate::Core::aroonosc).
     AROONOSC,
-    /// Vector Trigonometric ASin — [`Core::ASIN`](crate::Core::ASIN).
+    /// Vector Trigonometric ASin — [`Core::asin`](crate::Core::asin).
     ASIN,
-    /// Vector Trigonometric ATan — [`Core::ATAN`](crate::Core::ATAN).
+    /// Vector Trigonometric ATan — [`Core::atan`](crate::Core::atan).
     ATAN,
-    /// Average True Range — [`Core::ATR`](crate::Core::ATR).
+    /// Average True Range — [`Core::atr`](crate::Core::atr).
     ATR,
-    /// Average Deviation — [`Core::AVGDEV`](crate::Core::AVGDEV).
+    /// Average Deviation — [`Core::avgdev`](crate::Core::avgdev).
     AVGDEV,
-    /// Average Price — [`Core::AVGPRICE`](crate::Core::AVGPRICE).
+    /// Average Price — [`Core::avgprice`](crate::Core::avgprice).
     AVGPRICE,
-    /// Bollinger Bands — [`Core::BBANDS`](crate::Core::BBANDS).
+    /// Bollinger Bands — [`Core::bbands`](crate::Core::bbands).
     BBANDS,
-    /// Beta — [`Core::BETA`](crate::Core::BETA).
+    /// Beta — [`Core::beta`](crate::Core::beta).
     BETA,
-    /// Balance Of Power — [`Core::BOP`](crate::Core::BOP).
+    /// Balance Of Power — [`Core::bop`](crate::Core::bop).
     BOP,
-    /// Commodity Channel Index — [`Core::CCI`](crate::Core::CCI).
+    /// Commodity Channel Index — [`Core::cci`](crate::Core::cci).
     CCI,
-    /// Two Crows — [`Core::CDL2CROWS`](crate::Core::CDL2CROWS).
+    /// Two Crows — [`Core::cdl2crows`](crate::Core::cdl2crows).
     CDL2CROWS,
-    /// Three Black Crows — [`Core::CDL3BLACKCROWS`](crate::Core::CDL3BLACKCROWS).
+    /// Three Black Crows — [`Core::cdl3blackcrows`](crate::Core::cdl3blackcrows).
     CDL3BLACKCROWS,
-    /// Three Inside Up/Down — [`Core::CDL3INSIDE`](crate::Core::CDL3INSIDE).
+    /// Three Inside Up/Down — [`Core::cdl3inside`](crate::Core::cdl3inside).
     CDL3INSIDE,
-    /// Three-Line Strike — [`Core::CDL3LINESTRIKE`](crate::Core::CDL3LINESTRIKE).
+    /// Three-Line Strike — [`Core::cdl3linestrike`](crate::Core::cdl3linestrike).
     CDL3LINESTRIKE,
-    /// Three Outside Up/Down — [`Core::CDL3OUTSIDE`](crate::Core::CDL3OUTSIDE).
+    /// Three Outside Up/Down — [`Core::cdl3outside`](crate::Core::cdl3outside).
     CDL3OUTSIDE,
-    /// Three Stars In The South — [`Core::CDL3STARSINSOUTH`](crate::Core::CDL3STARSINSOUTH).
+    /// Three Stars In The South — [`Core::cdl3starsinsouth`](crate::Core::cdl3starsinsouth).
     CDL3STARSINSOUTH,
-    /// Three Advancing White Soldiers — [`Core::CDL3WHITESOLDIERS`](crate::Core::CDL3WHITESOLDIERS).
+    /// Three Advancing White Soldiers — [`Core::cdl3whitesoldiers`](crate::Core::cdl3whitesoldiers).
     CDL3WHITESOLDIERS,
-    /// Abandoned Baby — [`Core::CDLABANDONEDBABY`](crate::Core::CDLABANDONEDBABY).
+    /// Abandoned Baby — [`Core::cdlabandonedbaby`](crate::Core::cdlabandonedbaby).
     CDLABANDONEDBABY,
-    /// Advance Block — [`Core::CDLADVANCEBLOCK`](crate::Core::CDLADVANCEBLOCK).
+    /// Advance Block — [`Core::cdladvanceblock`](crate::Core::cdladvanceblock).
     CDLADVANCEBLOCK,
-    /// Belt-hold — [`Core::CDLBELTHOLD`](crate::Core::CDLBELTHOLD).
+    /// Belt-hold — [`Core::cdlbelthold`](crate::Core::cdlbelthold).
     CDLBELTHOLD,
-    /// Breakaway — [`Core::CDLBREAKAWAY`](crate::Core::CDLBREAKAWAY).
+    /// Breakaway — [`Core::cdlbreakaway`](crate::Core::cdlbreakaway).
     CDLBREAKAWAY,
-    /// Closing Marubozu — [`Core::CDLCLOSINGMARUBOZU`](crate::Core::CDLCLOSINGMARUBOZU).
+    /// Closing Marubozu — [`Core::cdlclosingmarubozu`](crate::Core::cdlclosingmarubozu).
     CDLCLOSINGMARUBOZU,
-    /// Concealing Baby Swallow — [`Core::CDLCONCEALBABYSWALL`](crate::Core::CDLCONCEALBABYSWALL).
+    /// Concealing Baby Swallow — [`Core::cdlconcealbabyswall`](crate::Core::cdlconcealbabyswall).
     CDLCONCEALBABYSWALL,
-    /// Counterattack — [`Core::CDLCOUNTERATTACK`](crate::Core::CDLCOUNTERATTACK).
+    /// Counterattack — [`Core::cdlcounterattack`](crate::Core::cdlcounterattack).
     CDLCOUNTERATTACK,
-    /// Dark Cloud Cover — [`Core::CDLDARKCLOUDCOVER`](crate::Core::CDLDARKCLOUDCOVER).
+    /// Dark Cloud Cover — [`Core::cdldarkcloudcover`](crate::Core::cdldarkcloudcover).
     CDLDARKCLOUDCOVER,
-    /// Doji — [`Core::CDLDOJI`](crate::Core::CDLDOJI).
+    /// Doji — [`Core::cdldoji`](crate::Core::cdldoji).
     CDLDOJI,
-    /// Doji Star — [`Core::CDLDOJISTAR`](crate::Core::CDLDOJISTAR).
+    /// Doji Star — [`Core::cdldojistar`](crate::Core::cdldojistar).
     CDLDOJISTAR,
-    /// Dragonfly Doji — [`Core::CDLDRAGONFLYDOJI`](crate::Core::CDLDRAGONFLYDOJI).
+    /// Dragonfly Doji — [`Core::cdldragonflydoji`](crate::Core::cdldragonflydoji).
     CDLDRAGONFLYDOJI,
-    /// Engulfing Pattern — [`Core::CDLENGULFING`](crate::Core::CDLENGULFING).
+    /// Engulfing Pattern — [`Core::cdlengulfing`](crate::Core::cdlengulfing).
     CDLENGULFING,
-    /// Evening Doji Star — [`Core::CDLEVENINGDOJISTAR`](crate::Core::CDLEVENINGDOJISTAR).
+    /// Evening Doji Star — [`Core::cdleveningdojistar`](crate::Core::cdleveningdojistar).
     CDLEVENINGDOJISTAR,
-    /// Evening Star — [`Core::CDLEVENINGSTAR`](crate::Core::CDLEVENINGSTAR).
+    /// Evening Star — [`Core::cdleveningstar`](crate::Core::cdleveningstar).
     CDLEVENINGSTAR,
-    /// Up/Down-gap side-by-side white lines — [`Core::CDLGAPSIDESIDEWHITE`](crate::Core::CDLGAPSIDESIDEWHITE).
+    /// Up/Down-gap side-by-side white lines — [`Core::cdlgapsidesidewhite`](crate::Core::cdlgapsidesidewhite).
     CDLGAPSIDESIDEWHITE,
-    /// Gravestone Doji — [`Core::CDLGRAVESTONEDOJI`](crate::Core::CDLGRAVESTONEDOJI).
+    /// Gravestone Doji — [`Core::cdlgravestonedoji`](crate::Core::cdlgravestonedoji).
     CDLGRAVESTONEDOJI,
-    /// Hammer — [`Core::CDLHAMMER`](crate::Core::CDLHAMMER).
+    /// Hammer — [`Core::cdlhammer`](crate::Core::cdlhammer).
     CDLHAMMER,
-    /// Hanging Man — [`Core::CDLHANGINGMAN`](crate::Core::CDLHANGINGMAN).
+    /// Hanging Man — [`Core::cdlhangingman`](crate::Core::cdlhangingman).
     CDLHANGINGMAN,
-    /// Harami Pattern — [`Core::CDLHARAMI`](crate::Core::CDLHARAMI).
+    /// Harami Pattern — [`Core::cdlharami`](crate::Core::cdlharami).
     CDLHARAMI,
-    /// Harami Cross Pattern — [`Core::CDLHARAMICROSS`](crate::Core::CDLHARAMICROSS).
+    /// Harami Cross Pattern — [`Core::cdlharamicross`](crate::Core::cdlharamicross).
     CDLHARAMICROSS,
-    /// High-Wave Candle — [`Core::CDLHIGHWAVE`](crate::Core::CDLHIGHWAVE).
+    /// High-Wave Candle — [`Core::cdlhighwave`](crate::Core::cdlhighwave).
     CDLHIGHWAVE,
-    /// Hikkake Pattern — [`Core::CDLHIKKAKE`](crate::Core::CDLHIKKAKE).
+    /// Hikkake Pattern — [`Core::cdlhikkake`](crate::Core::cdlhikkake).
     CDLHIKKAKE,
-    /// Modified Hikkake Pattern — [`Core::CDLHIKKAKEMOD`](crate::Core::CDLHIKKAKEMOD).
+    /// Modified Hikkake Pattern — [`Core::cdlhikkakemod`](crate::Core::cdlhikkakemod).
     CDLHIKKAKEMOD,
-    /// Homing Pigeon — [`Core::CDLHOMINGPIGEON`](crate::Core::CDLHOMINGPIGEON).
+    /// Homing Pigeon — [`Core::cdlhomingpigeon`](crate::Core::cdlhomingpigeon).
     CDLHOMINGPIGEON,
-    /// Identical Three Crows — [`Core::CDLIDENTICAL3CROWS`](crate::Core::CDLIDENTICAL3CROWS).
+    /// Identical Three Crows — [`Core::cdlidentical3crows`](crate::Core::cdlidentical3crows).
     CDLIDENTICAL3CROWS,
-    /// In-Neck Pattern — [`Core::CDLINNECK`](crate::Core::CDLINNECK).
+    /// In-Neck Pattern — [`Core::cdlinneck`](crate::Core::cdlinneck).
     CDLINNECK,
-    /// Inverted Hammer — [`Core::CDLINVERTEDHAMMER`](crate::Core::CDLINVERTEDHAMMER).
+    /// Inverted Hammer — [`Core::cdlinvertedhammer`](crate::Core::cdlinvertedhammer).
     CDLINVERTEDHAMMER,
-    /// Kicking — [`Core::CDLKICKING`](crate::Core::CDLKICKING).
+    /// Kicking — [`Core::cdlkicking`](crate::Core::cdlkicking).
     CDLKICKING,
-    /// Kicking - bull/bear determined by the longer marubozu — [`Core::CDLKICKINGBYLENGTH`](crate::Core::CDLKICKINGBYLENGTH).
+    /// Kicking - bull/bear determined by the longer marubozu — [`Core::cdlkickingbylength`](crate::Core::cdlkickingbylength).
     CDLKICKINGBYLENGTH,
-    /// Ladder Bottom — [`Core::CDLLADDERBOTTOM`](crate::Core::CDLLADDERBOTTOM).
+    /// Ladder Bottom — [`Core::cdlladderbottom`](crate::Core::cdlladderbottom).
     CDLLADDERBOTTOM,
-    /// Long Legged Doji — [`Core::CDLLONGLEGGEDDOJI`](crate::Core::CDLLONGLEGGEDDOJI).
+    /// Long Legged Doji — [`Core::cdllongleggeddoji`](crate::Core::cdllongleggeddoji).
     CDLLONGLEGGEDDOJI,
-    /// Long Line Candle — [`Core::CDLLONGLINE`](crate::Core::CDLLONGLINE).
+    /// Long Line Candle — [`Core::cdllongline`](crate::Core::cdllongline).
     CDLLONGLINE,
-    /// Marubozu — [`Core::CDLMARUBOZU`](crate::Core::CDLMARUBOZU).
+    /// Marubozu — [`Core::cdlmarubozu`](crate::Core::cdlmarubozu).
     CDLMARUBOZU,
-    /// Matching Low — [`Core::CDLMATCHINGLOW`](crate::Core::CDLMATCHINGLOW).
+    /// Matching Low — [`Core::cdlmatchinglow`](crate::Core::cdlmatchinglow).
     CDLMATCHINGLOW,
-    /// Mat Hold — [`Core::CDLMATHOLD`](crate::Core::CDLMATHOLD).
+    /// Mat Hold — [`Core::cdlmathold`](crate::Core::cdlmathold).
     CDLMATHOLD,
-    /// Morning Doji Star — [`Core::CDLMORNINGDOJISTAR`](crate::Core::CDLMORNINGDOJISTAR).
+    /// Morning Doji Star — [`Core::cdlmorningdojistar`](crate::Core::cdlmorningdojistar).
     CDLMORNINGDOJISTAR,
-    /// Morning Star — [`Core::CDLMORNINGSTAR`](crate::Core::CDLMORNINGSTAR).
+    /// Morning Star — [`Core::cdlmorningstar`](crate::Core::cdlmorningstar).
     CDLMORNINGSTAR,
-    /// On-Neck Pattern — [`Core::CDLONNECK`](crate::Core::CDLONNECK).
+    /// On-Neck Pattern — [`Core::cdlonneck`](crate::Core::cdlonneck).
     CDLONNECK,
-    /// Piercing Pattern — [`Core::CDLPIERCING`](crate::Core::CDLPIERCING).
+    /// Piercing Pattern — [`Core::cdlpiercing`](crate::Core::cdlpiercing).
     CDLPIERCING,
-    /// Rickshaw Man — [`Core::CDLRICKSHAWMAN`](crate::Core::CDLRICKSHAWMAN).
+    /// Rickshaw Man — [`Core::cdlrickshawman`](crate::Core::cdlrickshawman).
     CDLRICKSHAWMAN,
-    /// Rising/Falling Three Methods — [`Core::CDLRISEFALL3METHODS`](crate::Core::CDLRISEFALL3METHODS).
+    /// Rising/Falling Three Methods — [`Core::cdlrisefall3methods`](crate::Core::cdlrisefall3methods).
     CDLRISEFALL3METHODS,
-    /// Separating Lines — [`Core::CDLSEPARATINGLINES`](crate::Core::CDLSEPARATINGLINES).
+    /// Separating Lines — [`Core::cdlseparatinglines`](crate::Core::cdlseparatinglines).
     CDLSEPARATINGLINES,
-    /// Shooting Star — [`Core::CDLSHOOTINGSTAR`](crate::Core::CDLSHOOTINGSTAR).
+    /// Shooting Star — [`Core::cdlshootingstar`](crate::Core::cdlshootingstar).
     CDLSHOOTINGSTAR,
-    /// Short Line Candle — [`Core::CDLSHORTLINE`](crate::Core::CDLSHORTLINE).
+    /// Short Line Candle — [`Core::cdlshortline`](crate::Core::cdlshortline).
     CDLSHORTLINE,
-    /// Spinning Top — [`Core::CDLSPINNINGTOP`](crate::Core::CDLSPINNINGTOP).
+    /// Spinning Top — [`Core::cdlspinningtop`](crate::Core::cdlspinningtop).
     CDLSPINNINGTOP,
-    /// Stalled Pattern — [`Core::CDLSTALLEDPATTERN`](crate::Core::CDLSTALLEDPATTERN).
+    /// Stalled Pattern — [`Core::cdlstalledpattern`](crate::Core::cdlstalledpattern).
     CDLSTALLEDPATTERN,
-    /// Stick Sandwich — [`Core::CDLSTICKSANDWICH`](crate::Core::CDLSTICKSANDWICH).
+    /// Stick Sandwich — [`Core::cdlsticksandwich`](crate::Core::cdlsticksandwich).
     CDLSTICKSANDWICH,
-    /// Takuri (Dragonfly Doji with very long lower shadow) — [`Core::CDLTAKURI`](crate::Core::CDLTAKURI).
+    /// Takuri (Dragonfly Doji with very long lower shadow) — [`Core::cdltakuri`](crate::Core::cdltakuri).
     CDLTAKURI,
-    /// Tasuki Gap — [`Core::CDLTASUKIGAP`](crate::Core::CDLTASUKIGAP).
+    /// Tasuki Gap — [`Core::cdltasukigap`](crate::Core::cdltasukigap).
     CDLTASUKIGAP,
-    /// Thrusting Pattern — [`Core::CDLTHRUSTING`](crate::Core::CDLTHRUSTING).
+    /// Thrusting Pattern — [`Core::cdlthrusting`](crate::Core::cdlthrusting).
     CDLTHRUSTING,
-    /// Tristar Pattern — [`Core::CDLTRISTAR`](crate::Core::CDLTRISTAR).
+    /// Tristar Pattern — [`Core::cdltristar`](crate::Core::cdltristar).
     CDLTRISTAR,
-    /// Unique 3 River — [`Core::CDLUNIQUE3RIVER`](crate::Core::CDLUNIQUE3RIVER).
+    /// Unique 3 River — [`Core::cdlunique3river`](crate::Core::cdlunique3river).
     CDLUNIQUE3RIVER,
-    /// Upside Gap Two Crows — [`Core::CDLUPSIDEGAP2CROWS`](crate::Core::CDLUPSIDEGAP2CROWS).
+    /// Upside Gap Two Crows — [`Core::cdlupsidegap2crows`](crate::Core::cdlupsidegap2crows).
     CDLUPSIDEGAP2CROWS,
-    /// Upside/Downside Gap Three Methods — [`Core::CDLXSIDEGAP3METHODS`](crate::Core::CDLXSIDEGAP3METHODS).
+    /// Upside/Downside Gap Three Methods — [`Core::cdlxsidegap3methods`](crate::Core::cdlxsidegap3methods).
     CDLXSIDEGAP3METHODS,
-    /// Vector Ceil — [`Core::CEIL`](crate::Core::CEIL).
+    /// Vector Ceil — [`Core::ceil`](crate::Core::ceil).
     CEIL,
-    /// Chaikin Money Flow — [`Core::CMF`](crate::Core::CMF).
+    /// Chaikin Money Flow — [`Core::cmf`](crate::Core::cmf).
     CMF,
-    /// Chande Momentum Oscillator — [`Core::CMO`](crate::Core::CMO).
+    /// Chande Momentum Oscillator — [`Core::cmo`](crate::Core::cmo).
     CMO,
-    /// Chande Momentum Oscillator (Unsmoothed) — [`Core::CMOU`](crate::Core::CMOU).
+    /// Chande Momentum Oscillator (Unsmoothed) — [`Core::cmou`](crate::Core::cmou).
     CMOU,
-    /// Coppock Curve — [`Core::COPPOCK`](crate::Core::COPPOCK).
+    /// Coppock Curve — [`Core::coppock`](crate::Core::coppock).
     COPPOCK,
-    /// Pearson's Correlation Coefficient (r) — [`Core::CORREL`](crate::Core::CORREL).
+    /// Pearson's Correlation Coefficient (r) — [`Core::correl`](crate::Core::correl).
     CORREL,
-    /// Vector Trigonometric Cos — [`Core::COS`](crate::Core::COS).
+    /// Vector Trigonometric Cos — [`Core::cos`](crate::Core::cos).
     COS,
-    /// Vector Trigonometric Cosh — [`Core::COSH`](crate::Core::COSH).
+    /// Vector Trigonometric Cosh — [`Core::cosh`](crate::Core::cosh).
     COSH,
-    /// Cumulative Sum — [`Core::CUMSUM`](crate::Core::CUMSUM).
+    /// Cumulative Sum — [`Core::cumsum`](crate::Core::cumsum).
     CUMSUM,
-    /// Chaikin's Volatility — [`Core::CVI`](crate::Core::CVI).
+    /// Chaikin's Volatility — [`Core::cvi`](crate::Core::cvi).
     CVI,
-    /// Double Exponential Moving Average — [`Core::DEMA`](crate::Core::DEMA).
+    /// Double Exponential Moving Average — [`Core::dema`](crate::Core::dema).
     DEMA,
-    /// Vector Arithmetic Div — [`Core::DIV`](crate::Core::DIV).
+    /// Vector Arithmetic Div — [`Core::div`](crate::Core::div).
     DIV,
-    /// Donchian Channels — [`Core::DONCHIAN`](crate::Core::DONCHIAN).
+    /// Donchian Channels — [`Core::donchian`](crate::Core::donchian).
     DONCHIAN,
-    /// Detrended Price Oscillator — [`Core::DPO`](crate::Core::DPO).
+    /// Detrended Price Oscillator — [`Core::dpo`](crate::Core::dpo).
     DPO,
-    /// Directional Movement Index — [`Core::DX`](crate::Core::DX).
+    /// Directional Movement Index — [`Core::dx`](crate::Core::dx).
     DX,
-    /// Elder's Force Index — [`Core::EFI`](crate::Core::EFI).
+    /// Elder's Force Index — [`Core::efi`](crate::Core::efi).
     EFI,
-    /// Exponential Moving Average — [`Core::EMA`](crate::Core::EMA).
+    /// Exponential Moving Average — [`Core::ema`](crate::Core::ema).
     EMA,
-    /// Kaufman Efficiency Ratio — [`Core::ER`](crate::Core::ER).
+    /// Kaufman Efficiency Ratio — [`Core::er`](crate::Core::er).
     ER,
-    /// Elder Ray Index (Bull Power / Bear Power) — [`Core::ERI`](crate::Core::ERI).
+    /// Elder Ray Index (Bull Power / Bear Power) — [`Core::eri`](crate::Core::eri).
     ERI,
-    /// Vector Arithmetic Exp — [`Core::EXP`](crate::Core::EXP).
+    /// Vector Arithmetic Exp — [`Core::exp`](crate::Core::exp).
     EXP,
-    /// Vector Floor — [`Core::FLOOR`](crate::Core::FLOOR).
+    /// Vector Floor — [`Core::floor`](crate::Core::floor).
     FLOOR,
-    /// Forecast Oscillator — [`Core::FOSC`](crate::Core::FOSC).
+    /// Forecast Oscillator — [`Core::fosc`](crate::Core::fosc).
     FOSC,
-    /// Williams Fractal — [`Core::FRACTAL`](crate::Core::FRACTAL).
+    /// Williams Fractal — [`Core::fractal`](crate::Core::fractal).
     FRACTAL,
-    /// Heikin-Ashi Candles — [`Core::HA`](crate::Core::HA).
+    /// Heikin-Ashi Candles — [`Core::ha`](crate::Core::ha).
     HA,
-    /// Hull Moving Average — [`Core::HMA`](crate::Core::HMA).
+    /// Hull Moving Average — [`Core::hma`](crate::Core::hma).
     HMA,
-    /// Hilbert Transform - Dominant Cycle Period — [`Core::HT_DCPERIOD`](crate::Core::HT_DCPERIOD).
+    /// Hilbert Transform - Dominant Cycle Period — [`Core::ht_dcperiod`](crate::Core::ht_dcperiod).
     HT_DCPERIOD,
-    /// Hilbert Transform - Dominant Cycle Phase — [`Core::HT_DCPHASE`](crate::Core::HT_DCPHASE).
+    /// Hilbert Transform - Dominant Cycle Phase — [`Core::ht_dcphase`](crate::Core::ht_dcphase).
     HT_DCPHASE,
-    /// Hilbert Transform - Phasor Components — [`Core::HT_PHASOR`](crate::Core::HT_PHASOR).
+    /// Hilbert Transform - Phasor Components — [`Core::ht_phasor`](crate::Core::ht_phasor).
     HT_PHASOR,
-    /// Hilbert Transform - SineWave — [`Core::HT_SINE`](crate::Core::HT_SINE).
+    /// Hilbert Transform - SineWave — [`Core::ht_sine`](crate::Core::ht_sine).
     HT_SINE,
-    /// Hilbert Transform - Instantaneous Trendline — [`Core::HT_TRENDLINE`](crate::Core::HT_TRENDLINE).
+    /// Hilbert Transform - Instantaneous Trendline — [`Core::ht_trendline`](crate::Core::ht_trendline).
     HT_TRENDLINE,
-    /// Hilbert Transform - Trend vs Cycle Mode — [`Core::HT_TRENDMODE`](crate::Core::HT_TRENDMODE).
+    /// Hilbert Transform - Trend vs Cycle Mode — [`Core::ht_trendmode`](crate::Core::ht_trendmode).
     HT_TRENDMODE,
-    /// Intraday Momentum Index — [`Core::IMI`](crate::Core::IMI).
+    /// Intraday Momentum Index — [`Core::imi`](crate::Core::imi).
     IMI,
-    /// Kaufman Adaptive Moving Average — [`Core::KAMA`](crate::Core::KAMA).
+    /// Kaufman Adaptive Moving Average — [`Core::kama`](crate::Core::kama).
     KAMA,
-    /// Keltner Channels — [`Core::KC`](crate::Core::KC).
+    /// Keltner Channels — [`Core::kc`](crate::Core::kc).
     KC,
-    /// KDJ Stochastic — [`Core::KDJ`](crate::Core::KDJ).
+    /// KDJ Stochastic — [`Core::kdj`](crate::Core::kdj).
     KDJ,
-    /// Linear Regression — [`Core::LINEARREG`](crate::Core::LINEARREG).
+    /// Linear Regression — [`Core::linearreg`](crate::Core::linearreg).
     LINEARREG,
-    /// Linear Regression Angle — [`Core::LINEARREG_ANGLE`](crate::Core::LINEARREG_ANGLE).
+    /// Linear Regression Angle — [`Core::linearreg_angle`](crate::Core::linearreg_angle).
     LINEARREG_ANGLE,
-    /// Linear Regression Intercept — [`Core::LINEARREG_INTERCEPT`](crate::Core::LINEARREG_INTERCEPT).
+    /// Linear Regression Intercept — [`Core::linearreg_intercept`](crate::Core::linearreg_intercept).
     LINEARREG_INTERCEPT,
-    /// Linear Regression Slope — [`Core::LINEARREG_SLOPE`](crate::Core::LINEARREG_SLOPE).
+    /// Linear Regression Slope — [`Core::linearreg_slope`](crate::Core::linearreg_slope).
     LINEARREG_SLOPE,
-    /// Vector Log Natural — [`Core::LN`](crate::Core::LN).
+    /// Vector Log Natural — [`Core::ln`](crate::Core::ln).
     LN,
-    /// Vector Log10 — [`Core::LOG10`](crate::Core::LOG10).
+    /// Vector Log10 — [`Core::log10`](crate::Core::log10).
     LOG10,
-    /// Moving average — [`Core::MA`](crate::Core::MA).
+    /// Moving average — [`Core::ma`](crate::Core::ma).
     MA,
-    /// Moving Average Convergence/Divergence — [`Core::MACD`](crate::Core::MACD).
+    /// Moving Average Convergence/Divergence — [`Core::macd`](crate::Core::macd).
     MACD,
-    /// MACD with controllable MA type — [`Core::MACDEXT`](crate::Core::MACDEXT).
+    /// MACD with controllable MA type — [`Core::macdext`](crate::Core::macdext).
     MACDEXT,
-    /// Moving Average Convergence/Divergence Fix 12/26 — [`Core::MACDFIX`](crate::Core::MACDFIX).
+    /// Moving Average Convergence/Divergence Fix 12/26 — [`Core::macdfix`](crate::Core::macdfix).
     MACDFIX,
-    /// MESA Adaptive Moving Average — [`Core::MAMA`](crate::Core::MAMA).
+    /// MESA Adaptive Moving Average — [`Core::mama`](crate::Core::mama).
     MAMA,
-    /// Market Facilitation Index — [`Core::MARKETFI`](crate::Core::MARKETFI).
+    /// Market Facilitation Index — [`Core::marketfi`](crate::Core::marketfi).
     MARKETFI,
-    /// Mass Index — [`Core::MASSI`](crate::Core::MASSI).
+    /// Mass Index — [`Core::massi`](crate::Core::massi).
     MASSI,
-    /// Moving average with variable period — [`Core::MAVP`](crate::Core::MAVP).
+    /// Moving average with variable period — [`Core::mavp`](crate::Core::mavp).
     MAVP,
-    /// Highest value over a specified period — [`Core::MAX`](crate::Core::MAX).
+    /// Highest value over a specified period — [`Core::max`](crate::Core::max).
     MAX,
-    /// Index of highest value over a specified period — [`Core::MAXINDEX`](crate::Core::MAXINDEX).
+    /// Index of highest value over a specified period — [`Core::maxindex`](crate::Core::maxindex).
     MAXINDEX,
-    /// Median Price — [`Core::MEDPRICE`](crate::Core::MEDPRICE).
+    /// Median Price — [`Core::medprice`](crate::Core::medprice).
     MEDPRICE,
-    /// Money Flow Index — [`Core::MFI`](crate::Core::MFI).
+    /// Money Flow Index — [`Core::mfi`](crate::Core::mfi).
     MFI,
-    /// MidPoint over period — [`Core::MIDPOINT`](crate::Core::MIDPOINT).
+    /// MidPoint over period — [`Core::midpoint`](crate::Core::midpoint).
     MIDPOINT,
-    /// Midpoint Price over period — [`Core::MIDPRICE`](crate::Core::MIDPRICE).
+    /// Midpoint Price over period — [`Core::midprice`](crate::Core::midprice).
     MIDPRICE,
-    /// Lowest value over a specified period — [`Core::MIN`](crate::Core::MIN).
+    /// Lowest value over a specified period — [`Core::min`](crate::Core::min).
     MIN,
-    /// Index of lowest value over a specified period — [`Core::MININDEX`](crate::Core::MININDEX).
+    /// Index of lowest value over a specified period — [`Core::minindex`](crate::Core::minindex).
     MININDEX,
-    /// Lowest and highest values over a specified period — [`Core::MINMAX`](crate::Core::MINMAX).
+    /// Lowest and highest values over a specified period — [`Core::minmax`](crate::Core::minmax).
     MINMAX,
-    /// Indexes of lowest and highest values over a specified period — [`Core::MINMAXINDEX`](crate::Core::MINMAXINDEX).
+    /// Indexes of lowest and highest values over a specified period — [`Core::minmaxindex`](crate::Core::minmaxindex).
     MINMAXINDEX,
-    /// Minus Directional Indicator — [`Core::MINUS_DI`](crate::Core::MINUS_DI).
+    /// Minus Directional Indicator — [`Core::minus_di`](crate::Core::minus_di).
     MINUS_DI,
-    /// Minus Directional Movement — [`Core::MINUS_DM`](crate::Core::MINUS_DM).
+    /// Minus Directional Movement — [`Core::minus_dm`](crate::Core::minus_dm).
     MINUS_DM,
-    /// Momentum — [`Core::MOM`](crate::Core::MOM).
+    /// Momentum — [`Core::mom`](crate::Core::mom).
     MOM,
-    /// Vector Arithmetic Mult — [`Core::MULT`](crate::Core::MULT).
+    /// Vector Arithmetic Mult — [`Core::mult`](crate::Core::mult).
     MULT,
-    /// Normalized Average True Range — [`Core::NATR`](crate::Core::NATR).
+    /// Normalized Average True Range — [`Core::natr`](crate::Core::natr).
     NATR,
-    /// Negative Volume Index — [`Core::NVI`](crate::Core::NVI).
+    /// Negative Volume Index — [`Core::nvi`](crate::Core::nvi).
     NVI,
-    /// On Balance Volume — [`Core::OBV`](crate::Core::OBV).
+    /// On Balance Volume — [`Core::obv`](crate::Core::obv).
     OBV,
-    /// Percentile (nearest rank) — [`Core::PERCENTILE`](crate::Core::PERCENTILE).
+    /// Percentile (nearest rank) — [`Core::percentile`](crate::Core::percentile).
     PERCENTILE,
-    /// Percent Rank — [`Core::PERCENTRANK`](crate::Core::PERCENTRANK).
+    /// Percent Rank — [`Core::percentrank`](crate::Core::percentrank).
     PERCENTRANK,
-    /// Plus Directional Indicator — [`Core::PLUS_DI`](crate::Core::PLUS_DI).
+    /// Plus Directional Indicator — [`Core::plus_di`](crate::Core::plus_di).
     PLUS_DI,
-    /// Plus Directional Movement — [`Core::PLUS_DM`](crate::Core::PLUS_DM).
+    /// Plus Directional Movement — [`Core::plus_dm`](crate::Core::plus_dm).
     PLUS_DM,
-    /// Percentage Price Oscillator — [`Core::PPO`](crate::Core::PPO).
+    /// Percentage Price Oscillator — [`Core::ppo`](crate::Core::ppo).
     PPO,
-    /// Positive Volume Index — [`Core::PVI`](crate::Core::PVI).
+    /// Positive Volume Index — [`Core::pvi`](crate::Core::pvi).
     PVI,
-    /// Percentage Volume Oscillator — [`Core::PVO`](crate::Core::PVO).
+    /// Percentage Volume Oscillator — [`Core::pvo`](crate::Core::pvo).
     PVO,
-    /// Price Volume Trend — [`Core::PVT`](crate::Core::PVT).
+    /// Price Volume Trend — [`Core::pvt`](crate::Core::pvt).
     PVT,
-    /// Qstick — [`Core::QSTICK`](crate::Core::QSTICK).
+    /// Qstick — [`Core::qstick`](crate::Core::qstick).
     QSTICK,
-    /// Wilder's Smoothed Moving Average — [`Core::RMA`](crate::Core::RMA).
+    /// Wilder's Smoothed Moving Average — [`Core::rma`](crate::Core::rma).
     RMA,
-    /// Rate of change : ((price/prevPrice)-1)*100 — [`Core::ROC`](crate::Core::ROC).
+    /// Rate of change : ((price/prevPrice)-1)*100 — [`Core::roc`](crate::Core::roc).
     ROC,
-    /// Rate of change Percentage: (price-prevPrice)/prevPrice — [`Core::ROCP`](crate::Core::ROCP).
+    /// Rate of change Percentage: (price-prevPrice)/prevPrice — [`Core::rocp`](crate::Core::rocp).
     ROCP,
-    /// Rate of change ratio: (price/prevPrice) — [`Core::ROCR`](crate::Core::ROCR).
+    /// Rate of change ratio: (price/prevPrice) — [`Core::rocr`](crate::Core::rocr).
     ROCR,
-    /// Rate of change ratio 100 scale: (price/prevPrice)*100 — [`Core::ROCR100`](crate::Core::ROCR100).
+    /// Rate of change ratio 100 scale: (price/prevPrice)*100 — [`Core::rocr100`](crate::Core::rocr100).
     ROCR100,
-    /// Relative Strength Index — [`Core::RSI`](crate::Core::RSI).
+    /// Relative Strength Index — [`Core::rsi`](crate::Core::rsi).
     RSI,
-    /// Relative Volatility Index — [`Core::RVI`](crate::Core::RVI).
+    /// Relative Volatility Index — [`Core::rvi`](crate::Core::rvi).
     RVI,
-    /// Relative Volume — [`Core::RVOL`](crate::Core::RVOL).
+    /// Relative Volume — [`Core::rvol`](crate::Core::rvol).
     RVOL,
-    /// Parabolic SAR — [`Core::SAR`](crate::Core::SAR).
+    /// Parabolic SAR — [`Core::sar`](crate::Core::sar).
     SAR,
-    /// Parabolic SAR - Extended — [`Core::SAREXT`](crate::Core::SAREXT).
+    /// Parabolic SAR - Extended — [`Core::sarext`](crate::Core::sarext).
     SAREXT,
-    /// Vector Trigonometric Sin — [`Core::SIN`](crate::Core::SIN).
+    /// Vector Trigonometric Sin — [`Core::sin`](crate::Core::sin).
     SIN,
-    /// Vector Trigonometric Sinh — [`Core::SINH`](crate::Core::SINH).
+    /// Vector Trigonometric Sinh — [`Core::sinh`](crate::Core::sinh).
     SINH,
-    /// Simple Moving Average — [`Core::SMA`](crate::Core::SMA).
+    /// Simple Moving Average — [`Core::sma`](crate::Core::sma).
     SMA,
-    /// Stochastic Momentum Index — [`Core::SMI`](crate::Core::SMI).
+    /// Stochastic Momentum Index — [`Core::smi`](crate::Core::smi).
     SMI,
-    /// Vector Square Root — [`Core::SQRT`](crate::Core::SQRT).
+    /// Vector Square Root — [`Core::sqrt`](crate::Core::sqrt).
     SQRT,
-    /// Standard Deviation — [`Core::STDDEV`](crate::Core::STDDEV).
+    /// Standard Deviation — [`Core::stddev`](crate::Core::stddev).
     STDDEV,
-    /// Stochastic — [`Core::STOCH`](crate::Core::STOCH).
+    /// Stochastic — [`Core::stoch`](crate::Core::stoch).
     STOCH,
-    /// Stochastic Fast — [`Core::STOCHF`](crate::Core::STOCHF).
+    /// Stochastic Fast — [`Core::stochf`](crate::Core::stochf).
     STOCHF,
-    /// Stochastic Relative Strength Index — [`Core::STOCHRSI`](crate::Core::STOCHRSI).
+    /// Stochastic Relative Strength Index — [`Core::stochrsi`](crate::Core::stochrsi).
     STOCHRSI,
-    /// Vector Arithmetic Subtraction — [`Core::SUB`](crate::Core::SUB).
+    /// Vector Arithmetic Subtraction — [`Core::sub`](crate::Core::sub).
     SUB,
-    /// Summation — [`Core::SUM`](crate::Core::SUM).
+    /// Summation — [`Core::sum`](crate::Core::sum).
     SUM,
-    /// SuperTrend — [`Core::SUPERTREND`](crate::Core::SUPERTREND).
+    /// SuperTrend — [`Core::supertrend`](crate::Core::supertrend).
     SUPERTREND,
-    /// Triple Exponential Moving Average (T3) — [`Core::T3`](crate::Core::T3).
+    /// Triple Exponential Moving Average (T3) — [`Core::t3`](crate::Core::t3).
     T3,
-    /// Vector Trigonometric Tan — [`Core::TAN`](crate::Core::TAN).
+    /// Vector Trigonometric Tan — [`Core::tan`](crate::Core::tan).
     TAN,
-    /// Vector Trigonometric Tanh — [`Core::TANH`](crate::Core::TANH).
+    /// Vector Trigonometric Tanh — [`Core::tanh`](crate::Core::tanh).
     TANH,
-    /// Triple Exponential Moving Average — [`Core::TEMA`](crate::Core::TEMA).
+    /// Triple Exponential Moving Average — [`Core::tema`](crate::Core::tema).
     TEMA,
-    /// True Range — [`Core::TRANGE`](crate::Core::TRANGE).
+    /// True Range — [`Core::trange`](crate::Core::trange).
     TRANGE,
-    /// Triangular Moving Average — [`Core::TRIMA`](crate::Core::TRIMA).
+    /// Triangular Moving Average — [`Core::trima`](crate::Core::trima).
     TRIMA,
-    /// 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA — [`Core::TRIX`](crate::Core::TRIX).
+    /// 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA — [`Core::trix`](crate::Core::trix).
     TRIX,
-    /// Time Series Forecast — [`Core::TSF`](crate::Core::TSF).
+    /// Time Series Forecast — [`Core::tsf`](crate::Core::tsf).
     TSF,
-    /// True Strength Index — [`Core::TSI`](crate::Core::TSI).
+    /// True Strength Index — [`Core::tsi`](crate::Core::tsi).
     TSI,
-    /// Typical Price — [`Core::TYPPRICE`](crate::Core::TYPPRICE).
+    /// Typical Price — [`Core::typprice`](crate::Core::typprice).
     TYPPRICE,
-    /// Ultimate Oscillator — [`Core::ULTOSC`](crate::Core::ULTOSC).
+    /// Ultimate Oscillator — [`Core::ultosc`](crate::Core::ultosc).
     ULTOSC,
-    /// Variance — [`Core::VAR`](crate::Core::VAR).
+    /// Variance — [`Core::var`](crate::Core::var).
     VAR,
-    /// Vertical Horizontal Filter — [`Core::VHF`](crate::Core::VHF).
+    /// Vertical Horizontal Filter — [`Core::vhf`](crate::Core::vhf).
     VHF,
-    /// Vortex Indicator — [`Core::VORTEX`](crate::Core::VORTEX).
+    /// Vortex Indicator — [`Core::vortex`](crate::Core::vortex).
     VORTEX,
-    /// Volume Weighted Average Price — [`Core::VWAP`](crate::Core::VWAP).
+    /// Volume Weighted Average Price — [`Core::vwap`](crate::Core::vwap).
     VWAP,
-    /// Volume Weighted Moving Average — [`Core::VWMA`](crate::Core::VWMA).
+    /// Volume Weighted Moving Average — [`Core::vwma`](crate::Core::vwma).
     VWMA,
-    /// Williams' Accumulation/Distribution — [`Core::WAD`](crate::Core::WAD).
+    /// Williams' Accumulation/Distribution — [`Core::wad`](crate::Core::wad).
     WAD,
-    /// Weighted Close Price — [`Core::WCLPRICE`](crate::Core::WCLPRICE).
+    /// Weighted Close Price — [`Core::wclprice`](crate::Core::wclprice).
     WCLPRICE,
-    /// Williams' %R — [`Core::WILLR`](crate::Core::WILLR).
+    /// Williams' %R — [`Core::willr`](crate::Core::willr).
     WILLR,
-    /// Weighted Moving Average — [`Core::WMA`](crate::Core::WMA).
+    /// Weighted Moving Average — [`Core::wma`](crate::Core::wma).
     WMA,
-    /// Zero-Lag Exponential Moving Average — [`Core::ZLEMA`](crate::Core::ZLEMA).
+    /// Zero-Lag Exponential Moving Average — [`Core::zlema`](crate::Core::zlema).
     ZLEMA,
 }
 
@@ -3461,207 +3461,207 @@ impl<'a> ParamHolder<'a> {
     /// [`RetCode::BadParam`] if a bound optional parameter is out of range.
     pub fn lookback(&self) -> Result<usize, RetCode> {
         match self.func {
-            FuncId::AC => self.core.AC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::ACCBANDS => self.core.ACCBANDS_Lookback(self.int_opt[0]),
-            FuncId::ACOS => self.core.ACOS_Lookback(),
-            FuncId::AD => self.core.AD_Lookback(),
-            FuncId::ADD => self.core.ADD_Lookback(),
-            FuncId::ADOSC => self.core.ADOSC_Lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::ADR => self.core.ADR_Lookback(self.int_opt[0]),
-            FuncId::ADX => self.core.ADX_Lookback(self.int_opt[0]),
-            FuncId::ADXR => self.core.ADXR_Lookback(self.int_opt[0]),
-            FuncId::AO => self.core.AO_Lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::APO => self.core.APO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
-            FuncId::AROON => self.core.AROON_Lookback(self.int_opt[0]),
-            FuncId::AROONOSC => self.core.AROONOSC_Lookback(self.int_opt[0]),
-            FuncId::ASIN => self.core.ASIN_Lookback(),
-            FuncId::ATAN => self.core.ATAN_Lookback(),
-            FuncId::ATR => self.core.ATR_Lookback(self.int_opt[0]),
-            FuncId::AVGDEV => self.core.AVGDEV_Lookback(self.int_opt[0]),
-            FuncId::AVGPRICE => self.core.AVGPRICE_Lookback(),
-            FuncId::BBANDS => self.core.BBANDS_Lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], MAType::try_from(self.int_opt[3])?),
-            FuncId::BETA => self.core.BETA_Lookback(self.int_opt[0]),
-            FuncId::BOP => self.core.BOP_Lookback(),
-            FuncId::CCI => self.core.CCI_Lookback(self.int_opt[0]),
-            FuncId::CDL2CROWS => self.core.CDL2CROWS_Lookback(),
-            FuncId::CDL3BLACKCROWS => self.core.CDL3BLACKCROWS_Lookback(),
-            FuncId::CDL3INSIDE => self.core.CDL3INSIDE_Lookback(),
-            FuncId::CDL3LINESTRIKE => self.core.CDL3LINESTRIKE_Lookback(),
-            FuncId::CDL3OUTSIDE => self.core.CDL3OUTSIDE_Lookback(),
-            FuncId::CDL3STARSINSOUTH => self.core.CDL3STARSINSOUTH_Lookback(),
-            FuncId::CDL3WHITESOLDIERS => self.core.CDL3WHITESOLDIERS_Lookback(),
-            FuncId::CDLABANDONEDBABY => self.core.CDLABANDONEDBABY_Lookback(self.real_opt[0]),
-            FuncId::CDLADVANCEBLOCK => self.core.CDLADVANCEBLOCK_Lookback(),
-            FuncId::CDLBELTHOLD => self.core.CDLBELTHOLD_Lookback(),
-            FuncId::CDLBREAKAWAY => self.core.CDLBREAKAWAY_Lookback(),
-            FuncId::CDLCLOSINGMARUBOZU => self.core.CDLCLOSINGMARUBOZU_Lookback(),
-            FuncId::CDLCONCEALBABYSWALL => self.core.CDLCONCEALBABYSWALL_Lookback(),
-            FuncId::CDLCOUNTERATTACK => self.core.CDLCOUNTERATTACK_Lookback(),
-            FuncId::CDLDARKCLOUDCOVER => self.core.CDLDARKCLOUDCOVER_Lookback(self.real_opt[0]),
-            FuncId::CDLDOJI => self.core.CDLDOJI_Lookback(),
-            FuncId::CDLDOJISTAR => self.core.CDLDOJISTAR_Lookback(),
-            FuncId::CDLDRAGONFLYDOJI => self.core.CDLDRAGONFLYDOJI_Lookback(),
-            FuncId::CDLENGULFING => self.core.CDLENGULFING_Lookback(),
-            FuncId::CDLEVENINGDOJISTAR => self.core.CDLEVENINGDOJISTAR_Lookback(self.real_opt[0]),
-            FuncId::CDLEVENINGSTAR => self.core.CDLEVENINGSTAR_Lookback(self.real_opt[0]),
-            FuncId::CDLGAPSIDESIDEWHITE => self.core.CDLGAPSIDESIDEWHITE_Lookback(),
-            FuncId::CDLGRAVESTONEDOJI => self.core.CDLGRAVESTONEDOJI_Lookback(),
-            FuncId::CDLHAMMER => self.core.CDLHAMMER_Lookback(),
-            FuncId::CDLHANGINGMAN => self.core.CDLHANGINGMAN_Lookback(),
-            FuncId::CDLHARAMI => self.core.CDLHARAMI_Lookback(),
-            FuncId::CDLHARAMICROSS => self.core.CDLHARAMICROSS_Lookback(),
-            FuncId::CDLHIGHWAVE => self.core.CDLHIGHWAVE_Lookback(),
-            FuncId::CDLHIKKAKE => self.core.CDLHIKKAKE_Lookback(),
-            FuncId::CDLHIKKAKEMOD => self.core.CDLHIKKAKEMOD_Lookback(),
-            FuncId::CDLHOMINGPIGEON => self.core.CDLHOMINGPIGEON_Lookback(),
-            FuncId::CDLIDENTICAL3CROWS => self.core.CDLIDENTICAL3CROWS_Lookback(),
-            FuncId::CDLINNECK => self.core.CDLINNECK_Lookback(),
-            FuncId::CDLINVERTEDHAMMER => self.core.CDLINVERTEDHAMMER_Lookback(),
-            FuncId::CDLKICKING => self.core.CDLKICKING_Lookback(),
-            FuncId::CDLKICKINGBYLENGTH => self.core.CDLKICKINGBYLENGTH_Lookback(),
-            FuncId::CDLLADDERBOTTOM => self.core.CDLLADDERBOTTOM_Lookback(),
-            FuncId::CDLLONGLEGGEDDOJI => self.core.CDLLONGLEGGEDDOJI_Lookback(),
-            FuncId::CDLLONGLINE => self.core.CDLLONGLINE_Lookback(),
-            FuncId::CDLMARUBOZU => self.core.CDLMARUBOZU_Lookback(),
-            FuncId::CDLMATCHINGLOW => self.core.CDLMATCHINGLOW_Lookback(),
-            FuncId::CDLMATHOLD => self.core.CDLMATHOLD_Lookback(self.real_opt[0]),
-            FuncId::CDLMORNINGDOJISTAR => self.core.CDLMORNINGDOJISTAR_Lookback(self.real_opt[0]),
-            FuncId::CDLMORNINGSTAR => self.core.CDLMORNINGSTAR_Lookback(self.real_opt[0]),
-            FuncId::CDLONNECK => self.core.CDLONNECK_Lookback(),
-            FuncId::CDLPIERCING => self.core.CDLPIERCING_Lookback(),
-            FuncId::CDLRICKSHAWMAN => self.core.CDLRICKSHAWMAN_Lookback(),
-            FuncId::CDLRISEFALL3METHODS => self.core.CDLRISEFALL3METHODS_Lookback(),
-            FuncId::CDLSEPARATINGLINES => self.core.CDLSEPARATINGLINES_Lookback(),
-            FuncId::CDLSHOOTINGSTAR => self.core.CDLSHOOTINGSTAR_Lookback(),
-            FuncId::CDLSHORTLINE => self.core.CDLSHORTLINE_Lookback(),
-            FuncId::CDLSPINNINGTOP => self.core.CDLSPINNINGTOP_Lookback(),
-            FuncId::CDLSTALLEDPATTERN => self.core.CDLSTALLEDPATTERN_Lookback(),
-            FuncId::CDLSTICKSANDWICH => self.core.CDLSTICKSANDWICH_Lookback(),
-            FuncId::CDLTAKURI => self.core.CDLTAKURI_Lookback(),
-            FuncId::CDLTASUKIGAP => self.core.CDLTASUKIGAP_Lookback(),
-            FuncId::CDLTHRUSTING => self.core.CDLTHRUSTING_Lookback(),
-            FuncId::CDLTRISTAR => self.core.CDLTRISTAR_Lookback(),
-            FuncId::CDLUNIQUE3RIVER => self.core.CDLUNIQUE3RIVER_Lookback(),
-            FuncId::CDLUPSIDEGAP2CROWS => self.core.CDLUPSIDEGAP2CROWS_Lookback(),
-            FuncId::CDLXSIDEGAP3METHODS => self.core.CDLXSIDEGAP3METHODS_Lookback(),
-            FuncId::CEIL => self.core.CEIL_Lookback(),
-            FuncId::CMF => self.core.CMF_Lookback(self.int_opt[0]),
-            FuncId::CMO => self.core.CMO_Lookback(self.int_opt[0]),
-            FuncId::CMOU => self.core.CMOU_Lookback(self.int_opt[0]),
-            FuncId::COPPOCK => self.core.COPPOCK_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::CORREL => self.core.CORREL_Lookback(self.int_opt[0]),
-            FuncId::COS => self.core.COS_Lookback(),
-            FuncId::COSH => self.core.COSH_Lookback(),
-            FuncId::CUMSUM => self.core.CUMSUM_Lookback(),
-            FuncId::CVI => self.core.CVI_Lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::DEMA => self.core.DEMA_Lookback(self.int_opt[0]),
-            FuncId::DIV => self.core.DIV_Lookback(),
-            FuncId::DONCHIAN => self.core.DONCHIAN_Lookback(self.int_opt[0]),
-            FuncId::DPO => self.core.DPO_Lookback(self.int_opt[0]),
-            FuncId::DX => self.core.DX_Lookback(self.int_opt[0]),
-            FuncId::EFI => self.core.EFI_Lookback(self.int_opt[0]),
-            FuncId::EMA => self.core.EMA_Lookback(self.int_opt[0]),
-            FuncId::ER => self.core.ER_Lookback(self.int_opt[0]),
-            FuncId::ERI => self.core.ERI_Lookback(self.int_opt[0]),
-            FuncId::EXP => self.core.EXP_Lookback(),
-            FuncId::FLOOR => self.core.FLOOR_Lookback(),
-            FuncId::FOSC => self.core.FOSC_Lookback(self.int_opt[0]),
-            FuncId::FRACTAL => self.core.FRACTAL_Lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::HA => self.core.HA_Lookback(),
-            FuncId::HMA => self.core.HMA_Lookback(self.int_opt[0]),
-            FuncId::HT_DCPERIOD => self.core.HT_DCPERIOD_Lookback(),
-            FuncId::HT_DCPHASE => self.core.HT_DCPHASE_Lookback(),
-            FuncId::HT_PHASOR => self.core.HT_PHASOR_Lookback(),
-            FuncId::HT_SINE => self.core.HT_SINE_Lookback(),
-            FuncId::HT_TRENDLINE => self.core.HT_TRENDLINE_Lookback(),
-            FuncId::HT_TRENDMODE => self.core.HT_TRENDMODE_Lookback(),
-            FuncId::IMI => self.core.IMI_Lookback(self.int_opt[0]),
-            FuncId::KAMA => self.core.KAMA_Lookback(self.int_opt[0]),
-            FuncId::KC => self.core.KC_Lookback(self.int_opt[0], self.int_opt[1], self.real_opt[2]),
-            FuncId::KDJ => self.core.KDJ_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
-            FuncId::LINEARREG => self.core.LINEARREG_Lookback(self.int_opt[0]),
-            FuncId::LINEARREG_ANGLE => self.core.LINEARREG_ANGLE_Lookback(self.int_opt[0]),
-            FuncId::LINEARREG_INTERCEPT => self.core.LINEARREG_INTERCEPT_Lookback(self.int_opt[0]),
-            FuncId::LINEARREG_SLOPE => self.core.LINEARREG_SLOPE_Lookback(self.int_opt[0]),
-            FuncId::LN => self.core.LN_Lookback(),
-            FuncId::LOG10 => self.core.LOG10_Lookback(),
-            FuncId::MA => self.core.MA_Lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?),
-            FuncId::MACD => self.core.MACD_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::MACDEXT => self.core.MACDEXT_Lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?),
-            FuncId::MACDFIX => self.core.MACDFIX_Lookback(self.int_opt[0]),
-            FuncId::MAMA => self.core.MAMA_Lookback(self.real_opt[0], self.real_opt[1]),
-            FuncId::MARKETFI => self.core.MARKETFI_Lookback(),
-            FuncId::MASSI => self.core.MASSI_Lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::MAVP => self.core.MAVP_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
-            FuncId::MAX => self.core.MAX_Lookback(self.int_opt[0]),
-            FuncId::MAXINDEX => self.core.MAXINDEX_Lookback(self.int_opt[0]),
-            FuncId::MEDPRICE => self.core.MEDPRICE_Lookback(),
-            FuncId::MFI => self.core.MFI_Lookback(self.int_opt[0]),
-            FuncId::MIDPOINT => self.core.MIDPOINT_Lookback(self.int_opt[0]),
-            FuncId::MIDPRICE => self.core.MIDPRICE_Lookback(self.int_opt[0]),
-            FuncId::MIN => self.core.MIN_Lookback(self.int_opt[0]),
-            FuncId::MININDEX => self.core.MININDEX_Lookback(self.int_opt[0]),
-            FuncId::MINMAX => self.core.MINMAX_Lookback(self.int_opt[0]),
-            FuncId::MINMAXINDEX => self.core.MINMAXINDEX_Lookback(self.int_opt[0]),
-            FuncId::MINUS_DI => self.core.MINUS_DI_Lookback(self.int_opt[0]),
-            FuncId::MINUS_DM => self.core.MINUS_DM_Lookback(self.int_opt[0]),
-            FuncId::MOM => self.core.MOM_Lookback(self.int_opt[0]),
-            FuncId::MULT => self.core.MULT_Lookback(),
-            FuncId::NATR => self.core.NATR_Lookback(self.int_opt[0]),
-            FuncId::NVI => self.core.NVI_Lookback(),
-            FuncId::OBV => self.core.OBV_Lookback(),
-            FuncId::PERCENTILE => self.core.PERCENTILE_Lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::PERCENTRANK => self.core.PERCENTRANK_Lookback(self.int_opt[0]),
-            FuncId::PLUS_DI => self.core.PLUS_DI_Lookback(self.int_opt[0]),
-            FuncId::PLUS_DM => self.core.PLUS_DM_Lookback(self.int_opt[0]),
-            FuncId::PPO => self.core.PPO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
-            FuncId::PVI => self.core.PVI_Lookback(),
-            FuncId::PVO => self.core.PVO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
-            FuncId::PVT => self.core.PVT_Lookback(),
-            FuncId::QSTICK => self.core.QSTICK_Lookback(self.int_opt[0]),
-            FuncId::RMA => self.core.RMA_Lookback(self.int_opt[0]),
-            FuncId::ROC => self.core.ROC_Lookback(self.int_opt[0]),
-            FuncId::ROCP => self.core.ROCP_Lookback(self.int_opt[0]),
-            FuncId::ROCR => self.core.ROCR_Lookback(self.int_opt[0]),
-            FuncId::ROCR100 => self.core.ROCR100_Lookback(self.int_opt[0]),
-            FuncId::RSI => self.core.RSI_Lookback(self.int_opt[0]),
-            FuncId::RVI => self.core.RVI_Lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::RVOL => self.core.RVOL_Lookback(self.int_opt[0]),
-            FuncId::SAR => self.core.SAR_Lookback(self.real_opt[0], self.real_opt[1]),
-            FuncId::SAREXT => self.core.SAREXT_Lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
-            FuncId::SIN => self.core.SIN_Lookback(),
-            FuncId::SINH => self.core.SINH_Lookback(),
-            FuncId::SMA => self.core.SMA_Lookback(self.int_opt[0]),
-            FuncId::SMI => self.core.SMI_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
-            FuncId::SQRT => self.core.SQRT_Lookback(),
-            FuncId::STDDEV => self.core.STDDEV_Lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::STOCH => self.core.STOCH_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
-            FuncId::STOCHF => self.core.STOCHF_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
-            FuncId::STOCHRSI => self.core.STOCHRSI_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], MAType::try_from(self.int_opt[3])?),
-            FuncId::SUB => self.core.SUB_Lookback(),
-            FuncId::SUM => self.core.SUM_Lookback(self.int_opt[0]),
-            FuncId::SUPERTREND => self.core.SUPERTREND_Lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::T3 => self.core.T3_Lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::TAN => self.core.TAN_Lookback(),
-            FuncId::TANH => self.core.TANH_Lookback(),
-            FuncId::TEMA => self.core.TEMA_Lookback(self.int_opt[0]),
-            FuncId::TRANGE => self.core.TRANGE_Lookback(),
-            FuncId::TRIMA => self.core.TRIMA_Lookback(self.int_opt[0]),
-            FuncId::TRIX => self.core.TRIX_Lookback(self.int_opt[0]),
-            FuncId::TSF => self.core.TSF_Lookback(self.int_opt[0]),
-            FuncId::TSI => self.core.TSI_Lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::TYPPRICE => self.core.TYPPRICE_Lookback(),
-            FuncId::ULTOSC => self.core.ULTOSC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::VAR => self.core.VAR_Lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::VHF => self.core.VHF_Lookback(self.int_opt[0]),
-            FuncId::VORTEX => self.core.VORTEX_Lookback(self.int_opt[0]),
-            FuncId::VWAP => self.core.VWAP_Lookback(),
-            FuncId::VWMA => self.core.VWMA_Lookback(self.int_opt[0]),
-            FuncId::WAD => self.core.WAD_Lookback(),
-            FuncId::WCLPRICE => self.core.WCLPRICE_Lookback(),
-            FuncId::WILLR => self.core.WILLR_Lookback(self.int_opt[0]),
-            FuncId::WMA => self.core.WMA_Lookback(self.int_opt[0]),
-            FuncId::ZLEMA => self.core.ZLEMA_Lookback(self.int_opt[0]),
+            FuncId::AC => self.core.ac_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::ACCBANDS => self.core.accbands_lookback(self.int_opt[0]),
+            FuncId::ACOS => self.core.acos_lookback(),
+            FuncId::AD => self.core.ad_lookback(),
+            FuncId::ADD => self.core.add_lookback(),
+            FuncId::ADOSC => self.core.adosc_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::ADR => self.core.adr_lookback(self.int_opt[0]),
+            FuncId::ADX => self.core.adx_lookback(self.int_opt[0]),
+            FuncId::ADXR => self.core.adxr_lookback(self.int_opt[0]),
+            FuncId::AO => self.core.ao_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::APO => self.core.apo_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::AROON => self.core.aroon_lookback(self.int_opt[0]),
+            FuncId::AROONOSC => self.core.aroonosc_lookback(self.int_opt[0]),
+            FuncId::ASIN => self.core.asin_lookback(),
+            FuncId::ATAN => self.core.atan_lookback(),
+            FuncId::ATR => self.core.atr_lookback(self.int_opt[0]),
+            FuncId::AVGDEV => self.core.avgdev_lookback(self.int_opt[0]),
+            FuncId::AVGPRICE => self.core.avgprice_lookback(),
+            FuncId::BBANDS => self.core.bbands_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], MAType::try_from(self.int_opt[3])?),
+            FuncId::BETA => self.core.beta_lookback(self.int_opt[0]),
+            FuncId::BOP => self.core.bop_lookback(),
+            FuncId::CCI => self.core.cci_lookback(self.int_opt[0]),
+            FuncId::CDL2CROWS => self.core.cdl2crows_lookback(),
+            FuncId::CDL3BLACKCROWS => self.core.cdl3blackcrows_lookback(),
+            FuncId::CDL3INSIDE => self.core.cdl3inside_lookback(),
+            FuncId::CDL3LINESTRIKE => self.core.cdl3linestrike_lookback(),
+            FuncId::CDL3OUTSIDE => self.core.cdl3outside_lookback(),
+            FuncId::CDL3STARSINSOUTH => self.core.cdl3starsinsouth_lookback(),
+            FuncId::CDL3WHITESOLDIERS => self.core.cdl3whitesoldiers_lookback(),
+            FuncId::CDLABANDONEDBABY => self.core.cdlabandonedbaby_lookback(self.real_opt[0]),
+            FuncId::CDLADVANCEBLOCK => self.core.cdladvanceblock_lookback(),
+            FuncId::CDLBELTHOLD => self.core.cdlbelthold_lookback(),
+            FuncId::CDLBREAKAWAY => self.core.cdlbreakaway_lookback(),
+            FuncId::CDLCLOSINGMARUBOZU => self.core.cdlclosingmarubozu_lookback(),
+            FuncId::CDLCONCEALBABYSWALL => self.core.cdlconcealbabyswall_lookback(),
+            FuncId::CDLCOUNTERATTACK => self.core.cdlcounterattack_lookback(),
+            FuncId::CDLDARKCLOUDCOVER => self.core.cdldarkcloudcover_lookback(self.real_opt[0]),
+            FuncId::CDLDOJI => self.core.cdldoji_lookback(),
+            FuncId::CDLDOJISTAR => self.core.cdldojistar_lookback(),
+            FuncId::CDLDRAGONFLYDOJI => self.core.cdldragonflydoji_lookback(),
+            FuncId::CDLENGULFING => self.core.cdlengulfing_lookback(),
+            FuncId::CDLEVENINGDOJISTAR => self.core.cdleveningdojistar_lookback(self.real_opt[0]),
+            FuncId::CDLEVENINGSTAR => self.core.cdleveningstar_lookback(self.real_opt[0]),
+            FuncId::CDLGAPSIDESIDEWHITE => self.core.cdlgapsidesidewhite_lookback(),
+            FuncId::CDLGRAVESTONEDOJI => self.core.cdlgravestonedoji_lookback(),
+            FuncId::CDLHAMMER => self.core.cdlhammer_lookback(),
+            FuncId::CDLHANGINGMAN => self.core.cdlhangingman_lookback(),
+            FuncId::CDLHARAMI => self.core.cdlharami_lookback(),
+            FuncId::CDLHARAMICROSS => self.core.cdlharamicross_lookback(),
+            FuncId::CDLHIGHWAVE => self.core.cdlhighwave_lookback(),
+            FuncId::CDLHIKKAKE => self.core.cdlhikkake_lookback(),
+            FuncId::CDLHIKKAKEMOD => self.core.cdlhikkakemod_lookback(),
+            FuncId::CDLHOMINGPIGEON => self.core.cdlhomingpigeon_lookback(),
+            FuncId::CDLIDENTICAL3CROWS => self.core.cdlidentical3crows_lookback(),
+            FuncId::CDLINNECK => self.core.cdlinneck_lookback(),
+            FuncId::CDLINVERTEDHAMMER => self.core.cdlinvertedhammer_lookback(),
+            FuncId::CDLKICKING => self.core.cdlkicking_lookback(),
+            FuncId::CDLKICKINGBYLENGTH => self.core.cdlkickingbylength_lookback(),
+            FuncId::CDLLADDERBOTTOM => self.core.cdlladderbottom_lookback(),
+            FuncId::CDLLONGLEGGEDDOJI => self.core.cdllongleggeddoji_lookback(),
+            FuncId::CDLLONGLINE => self.core.cdllongline_lookback(),
+            FuncId::CDLMARUBOZU => self.core.cdlmarubozu_lookback(),
+            FuncId::CDLMATCHINGLOW => self.core.cdlmatchinglow_lookback(),
+            FuncId::CDLMATHOLD => self.core.cdlmathold_lookback(self.real_opt[0]),
+            FuncId::CDLMORNINGDOJISTAR => self.core.cdlmorningdojistar_lookback(self.real_opt[0]),
+            FuncId::CDLMORNINGSTAR => self.core.cdlmorningstar_lookback(self.real_opt[0]),
+            FuncId::CDLONNECK => self.core.cdlonneck_lookback(),
+            FuncId::CDLPIERCING => self.core.cdlpiercing_lookback(),
+            FuncId::CDLRICKSHAWMAN => self.core.cdlrickshawman_lookback(),
+            FuncId::CDLRISEFALL3METHODS => self.core.cdlrisefall3methods_lookback(),
+            FuncId::CDLSEPARATINGLINES => self.core.cdlseparatinglines_lookback(),
+            FuncId::CDLSHOOTINGSTAR => self.core.cdlshootingstar_lookback(),
+            FuncId::CDLSHORTLINE => self.core.cdlshortline_lookback(),
+            FuncId::CDLSPINNINGTOP => self.core.cdlspinningtop_lookback(),
+            FuncId::CDLSTALLEDPATTERN => self.core.cdlstalledpattern_lookback(),
+            FuncId::CDLSTICKSANDWICH => self.core.cdlsticksandwich_lookback(),
+            FuncId::CDLTAKURI => self.core.cdltakuri_lookback(),
+            FuncId::CDLTASUKIGAP => self.core.cdltasukigap_lookback(),
+            FuncId::CDLTHRUSTING => self.core.cdlthrusting_lookback(),
+            FuncId::CDLTRISTAR => self.core.cdltristar_lookback(),
+            FuncId::CDLUNIQUE3RIVER => self.core.cdlunique3river_lookback(),
+            FuncId::CDLUPSIDEGAP2CROWS => self.core.cdlupsidegap2crows_lookback(),
+            FuncId::CDLXSIDEGAP3METHODS => self.core.cdlxsidegap3methods_lookback(),
+            FuncId::CEIL => self.core.ceil_lookback(),
+            FuncId::CMF => self.core.cmf_lookback(self.int_opt[0]),
+            FuncId::CMO => self.core.cmo_lookback(self.int_opt[0]),
+            FuncId::CMOU => self.core.cmou_lookback(self.int_opt[0]),
+            FuncId::COPPOCK => self.core.coppock_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::CORREL => self.core.correl_lookback(self.int_opt[0]),
+            FuncId::COS => self.core.cos_lookback(),
+            FuncId::COSH => self.core.cosh_lookback(),
+            FuncId::CUMSUM => self.core.cumsum_lookback(),
+            FuncId::CVI => self.core.cvi_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::DEMA => self.core.dema_lookback(self.int_opt[0]),
+            FuncId::DIV => self.core.div_lookback(),
+            FuncId::DONCHIAN => self.core.donchian_lookback(self.int_opt[0]),
+            FuncId::DPO => self.core.dpo_lookback(self.int_opt[0]),
+            FuncId::DX => self.core.dx_lookback(self.int_opt[0]),
+            FuncId::EFI => self.core.efi_lookback(self.int_opt[0]),
+            FuncId::EMA => self.core.ema_lookback(self.int_opt[0]),
+            FuncId::ER => self.core.er_lookback(self.int_opt[0]),
+            FuncId::ERI => self.core.eri_lookback(self.int_opt[0]),
+            FuncId::EXP => self.core.exp_lookback(),
+            FuncId::FLOOR => self.core.floor_lookback(),
+            FuncId::FOSC => self.core.fosc_lookback(self.int_opt[0]),
+            FuncId::FRACTAL => self.core.fractal_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::HA => self.core.ha_lookback(),
+            FuncId::HMA => self.core.hma_lookback(self.int_opt[0]),
+            FuncId::HT_DCPERIOD => self.core.ht_dcperiod_lookback(),
+            FuncId::HT_DCPHASE => self.core.ht_dcphase_lookback(),
+            FuncId::HT_PHASOR => self.core.ht_phasor_lookback(),
+            FuncId::HT_SINE => self.core.ht_sine_lookback(),
+            FuncId::HT_TRENDLINE => self.core.ht_trendline_lookback(),
+            FuncId::HT_TRENDMODE => self.core.ht_trendmode_lookback(),
+            FuncId::IMI => self.core.imi_lookback(self.int_opt[0]),
+            FuncId::KAMA => self.core.kama_lookback(self.int_opt[0]),
+            FuncId::KC => self.core.kc_lookback(self.int_opt[0], self.int_opt[1], self.real_opt[2]),
+            FuncId::KDJ => self.core.kdj_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
+            FuncId::LINEARREG => self.core.linearreg_lookback(self.int_opt[0]),
+            FuncId::LINEARREG_ANGLE => self.core.linearreg_angle_lookback(self.int_opt[0]),
+            FuncId::LINEARREG_INTERCEPT => self.core.linearreg_intercept_lookback(self.int_opt[0]),
+            FuncId::LINEARREG_SLOPE => self.core.linearreg_slope_lookback(self.int_opt[0]),
+            FuncId::LN => self.core.ln_lookback(),
+            FuncId::LOG10 => self.core.log10_lookback(),
+            FuncId::MA => self.core.ma_lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?),
+            FuncId::MACD => self.core.macd_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::MACDEXT => self.core.macdext_lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?),
+            FuncId::MACDFIX => self.core.macdfix_lookback(self.int_opt[0]),
+            FuncId::MAMA => self.core.mama_lookback(self.real_opt[0], self.real_opt[1]),
+            FuncId::MARKETFI => self.core.marketfi_lookback(),
+            FuncId::MASSI => self.core.massi_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::MAVP => self.core.mavp_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::MAX => self.core.max_lookback(self.int_opt[0]),
+            FuncId::MAXINDEX => self.core.maxindex_lookback(self.int_opt[0]),
+            FuncId::MEDPRICE => self.core.medprice_lookback(),
+            FuncId::MFI => self.core.mfi_lookback(self.int_opt[0]),
+            FuncId::MIDPOINT => self.core.midpoint_lookback(self.int_opt[0]),
+            FuncId::MIDPRICE => self.core.midprice_lookback(self.int_opt[0]),
+            FuncId::MIN => self.core.min_lookback(self.int_opt[0]),
+            FuncId::MININDEX => self.core.minindex_lookback(self.int_opt[0]),
+            FuncId::MINMAX => self.core.minmax_lookback(self.int_opt[0]),
+            FuncId::MINMAXINDEX => self.core.minmaxindex_lookback(self.int_opt[0]),
+            FuncId::MINUS_DI => self.core.minus_di_lookback(self.int_opt[0]),
+            FuncId::MINUS_DM => self.core.minus_dm_lookback(self.int_opt[0]),
+            FuncId::MOM => self.core.mom_lookback(self.int_opt[0]),
+            FuncId::MULT => self.core.mult_lookback(),
+            FuncId::NATR => self.core.natr_lookback(self.int_opt[0]),
+            FuncId::NVI => self.core.nvi_lookback(),
+            FuncId::OBV => self.core.obv_lookback(),
+            FuncId::PERCENTILE => self.core.percentile_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::PERCENTRANK => self.core.percentrank_lookback(self.int_opt[0]),
+            FuncId::PLUS_DI => self.core.plus_di_lookback(self.int_opt[0]),
+            FuncId::PLUS_DM => self.core.plus_dm_lookback(self.int_opt[0]),
+            FuncId::PPO => self.core.ppo_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::PVI => self.core.pvi_lookback(),
+            FuncId::PVO => self.core.pvo_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::PVT => self.core.pvt_lookback(),
+            FuncId::QSTICK => self.core.qstick_lookback(self.int_opt[0]),
+            FuncId::RMA => self.core.rma_lookback(self.int_opt[0]),
+            FuncId::ROC => self.core.roc_lookback(self.int_opt[0]),
+            FuncId::ROCP => self.core.rocp_lookback(self.int_opt[0]),
+            FuncId::ROCR => self.core.rocr_lookback(self.int_opt[0]),
+            FuncId::ROCR100 => self.core.rocr100_lookback(self.int_opt[0]),
+            FuncId::RSI => self.core.rsi_lookback(self.int_opt[0]),
+            FuncId::RVI => self.core.rvi_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::RVOL => self.core.rvol_lookback(self.int_opt[0]),
+            FuncId::SAR => self.core.sar_lookback(self.real_opt[0], self.real_opt[1]),
+            FuncId::SAREXT => self.core.sarext_lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
+            FuncId::SIN => self.core.sin_lookback(),
+            FuncId::SINH => self.core.sinh_lookback(),
+            FuncId::SMA => self.core.sma_lookback(self.int_opt[0]),
+            FuncId::SMI => self.core.smi_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
+            FuncId::SQRT => self.core.sqrt_lookback(),
+            FuncId::STDDEV => self.core.stddev_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::STOCH => self.core.stoch_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
+            FuncId::STOCHF => self.core.stochf_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::STOCHRSI => self.core.stochrsi_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], MAType::try_from(self.int_opt[3])?),
+            FuncId::SUB => self.core.sub_lookback(),
+            FuncId::SUM => self.core.sum_lookback(self.int_opt[0]),
+            FuncId::SUPERTREND => self.core.supertrend_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::T3 => self.core.t3_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::TAN => self.core.tan_lookback(),
+            FuncId::TANH => self.core.tanh_lookback(),
+            FuncId::TEMA => self.core.tema_lookback(self.int_opt[0]),
+            FuncId::TRANGE => self.core.trange_lookback(),
+            FuncId::TRIMA => self.core.trima_lookback(self.int_opt[0]),
+            FuncId::TRIX => self.core.trix_lookback(self.int_opt[0]),
+            FuncId::TSF => self.core.tsf_lookback(self.int_opt[0]),
+            FuncId::TSI => self.core.tsi_lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::TYPPRICE => self.core.typprice_lookback(),
+            FuncId::ULTOSC => self.core.ultosc_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::VAR => self.core.var_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::VHF => self.core.vhf_lookback(self.int_opt[0]),
+            FuncId::VORTEX => self.core.vortex_lookback(self.int_opt[0]),
+            FuncId::VWAP => self.core.vwap_lookback(),
+            FuncId::VWMA => self.core.vwma_lookback(self.int_opt[0]),
+            FuncId::WAD => self.core.wad_lookback(),
+            FuncId::WCLPRICE => self.core.wclprice_lookback(),
+            FuncId::WILLR => self.core.willr_lookback(self.int_opt[0]),
+            FuncId::WMA => self.core.wma_lookback(self.int_opt[0]),
+            FuncId::ZLEMA => self.core.zlema_lookback(self.int_opt[0]),
         }
     }
 
@@ -3701,7 +3701,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.AC(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
+                let res = self.core.ac(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3716,7 +3716,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ACCBANDS(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.accbands(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -3728,7 +3728,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ACOS => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ACOS(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.acos(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3741,7 +3741,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.AD(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
+                let res = self.core.ad(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3752,7 +3752,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ADD(start_idx, end_idx, i0, i1, &mut *o0);
+                let res = self.core.add(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3765,7 +3765,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ADOSC(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut *o0);
+                let res = self.core.adosc(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3776,7 +3776,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ADR(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
+                let res = self.core.adr(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3788,7 +3788,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ADX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.adx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3800,7 +3800,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ADXR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.adxr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3811,7 +3811,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.AO(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
+                let res = self.core.ao(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3822,7 +3822,7 @@ impl<'a> ParamHolder<'a> {
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.APO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
+                let res = self.core.apo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3835,7 +3835,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.AROON(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1);
+                let res = self.core.aroon(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -3847,7 +3847,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.AROONOSC(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
+                let res = self.core.aroonosc(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3857,7 +3857,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ASIN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ASIN(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.asin(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3867,7 +3867,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ATAN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ATAN(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.atan(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3879,7 +3879,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ATR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.atr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3889,7 +3889,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::AVGDEV => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.AVGDEV(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.avgdev(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3902,7 +3902,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.AVGPRICE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.avgprice(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3916,7 +3916,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.BBANDS(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.bbands(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -3929,7 +3929,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.BETA(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
+                let res = self.core.beta(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3942,7 +3942,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.BOP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.bop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3954,7 +3954,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CCI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.cci(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3967,7 +3967,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDL2CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdl2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3980,7 +3980,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDL3BLACKCROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdl3blackcrows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -3993,7 +3993,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDL3INSIDE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdl3inside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4006,7 +4006,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDL3LINESTRIKE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdl3linestrike(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4019,7 +4019,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDL3OUTSIDE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdl3outside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4032,7 +4032,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDL3STARSINSOUTH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdl3starsinsouth(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4045,7 +4045,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDL3WHITESOLDIERS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdl3whitesoldiers(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4058,7 +4058,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLABANDONEDBABY(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
+                let res = self.core.cdlabandonedbaby(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4071,7 +4071,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLADVANCEBLOCK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdladvanceblock(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4084,7 +4084,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLBELTHOLD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlbelthold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4097,7 +4097,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLBREAKAWAY(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlbreakaway(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4110,7 +4110,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLCLOSINGMARUBOZU(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlclosingmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4123,7 +4123,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLCONCEALBABYSWALL(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlconcealbabyswall(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4136,7 +4136,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLCOUNTERATTACK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlcounterattack(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4149,7 +4149,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLDARKCLOUDCOVER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
+                let res = self.core.cdldarkcloudcover(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4162,7 +4162,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdldoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4175,7 +4175,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdldojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4188,7 +4188,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLDRAGONFLYDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdldragonflydoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4201,7 +4201,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLENGULFING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlengulfing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4214,7 +4214,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLEVENINGDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
+                let res = self.core.cdleveningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4227,7 +4227,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLEVENINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
+                let res = self.core.cdleveningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4240,7 +4240,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLGAPSIDESIDEWHITE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlgapsidesidewhite(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4253,7 +4253,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLGRAVESTONEDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlgravestonedoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4266,7 +4266,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHAMMER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4279,7 +4279,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHANGINGMAN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlhangingman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4292,7 +4292,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHARAMI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlharami(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4305,7 +4305,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHARAMICROSS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlharamicross(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4318,7 +4318,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHIGHWAVE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlhighwave(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4331,7 +4331,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHIKKAKE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlhikkake(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4344,7 +4344,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHIKKAKEMOD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlhikkakemod(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4357,7 +4357,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLHOMINGPIGEON(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlhomingpigeon(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4370,7 +4370,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLIDENTICAL3CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlidentical3crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4383,7 +4383,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLINNECK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlinneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4396,7 +4396,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLINVERTEDHAMMER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlinvertedhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4409,7 +4409,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLKICKING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlkicking(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4422,7 +4422,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLKICKINGBYLENGTH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlkickingbylength(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4435,7 +4435,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLLADDERBOTTOM(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlladderbottom(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4448,7 +4448,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLLONGLEGGEDDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdllongleggeddoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4461,7 +4461,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLLONGLINE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdllongline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4474,7 +4474,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLMARUBOZU(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4487,7 +4487,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLMATCHINGLOW(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlmatchinglow(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4500,7 +4500,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLMATHOLD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
+                let res = self.core.cdlmathold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4513,7 +4513,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLMORNINGDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
+                let res = self.core.cdlmorningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4526,7 +4526,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLMORNINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
+                let res = self.core.cdlmorningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4539,7 +4539,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLONNECK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlonneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4552,7 +4552,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLPIERCING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlpiercing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4565,7 +4565,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLRICKSHAWMAN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlrickshawman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4578,7 +4578,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLRISEFALL3METHODS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlrisefall3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4591,7 +4591,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLSEPARATINGLINES(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlseparatinglines(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4604,7 +4604,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLSHOOTINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlshootingstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4617,7 +4617,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLSHORTLINE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlshortline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4630,7 +4630,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLSPINNINGTOP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlspinningtop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4643,7 +4643,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLSTALLEDPATTERN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlstalledpattern(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4656,7 +4656,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLSTICKSANDWICH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlsticksandwich(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4669,7 +4669,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLTAKURI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdltakuri(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4682,7 +4682,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLTASUKIGAP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdltasukigap(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4695,7 +4695,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLTHRUSTING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlthrusting(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4708,7 +4708,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLTRISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdltristar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4721,7 +4721,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLUNIQUE3RIVER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlunique3river(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4734,7 +4734,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLUPSIDEGAP2CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlupsidegap2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4747,7 +4747,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CDLXSIDEGAP3METHODS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.cdlxsidegap3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4757,7 +4757,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CEIL => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CEIL(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.ceil(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4770,7 +4770,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CMF(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
+                let res = self.core.cmf(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4780,7 +4780,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CMO => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CMO(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.cmo(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4790,7 +4790,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CMOU => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CMOU(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.cmou(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4800,7 +4800,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::COPPOCK => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.COPPOCK(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
+                let res = self.core.coppock(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4811,7 +4811,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CORREL(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
+                let res = self.core.correl(start_idx, end_idx, i0, i1, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4821,7 +4821,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::COS => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.COS(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.cos(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4831,7 +4831,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::COSH => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.COSH(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.cosh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4841,7 +4841,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CUMSUM => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CUMSUM(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.cumsum(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4852,7 +4852,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.CVI(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
+                let res = self.core.cvi(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4862,7 +4862,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::DEMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.DEMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.dema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4873,7 +4873,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.DIV(start_idx, end_idx, i0, i1, &mut *o0);
+                let res = self.core.div(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4887,7 +4887,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.DONCHIAN(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.donchian(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -4899,7 +4899,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::DPO => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.DPO(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.dpo(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4911,7 +4911,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.DX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.dx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4922,7 +4922,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.EFI(start_idx, end_idx, i0_3, i0_4, self.int_opt[0], &mut *o0);
+                let res = self.core.efi(start_idx, end_idx, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4932,7 +4932,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::EMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.EMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.ema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4942,7 +4942,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ER => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ER(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.er(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4956,7 +4956,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ERI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
+                let res = self.core.eri(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -4967,7 +4967,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::EXP => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.EXP(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.exp(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4977,7 +4977,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::FLOOR => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.FLOOR(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.floor(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -4987,7 +4987,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::FOSC => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.FOSC(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.fosc(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5000,7 +5000,7 @@ impl<'a> ParamHolder<'a> {
                 if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.FRACTAL(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1);
+                let res = self.core.fractal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
                 match res {
@@ -5018,7 +5018,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 let mut o3 = self.real_out[3].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HA(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0, &mut *o1, &mut *o2, &mut *o3);
+                let res = self.core.ha(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0, &mut *o1, &mut *o2, &mut *o3);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -5031,7 +5031,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.hma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5041,7 +5041,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_DCPERIOD => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HT_DCPERIOD(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.ht_dcperiod(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5051,7 +5051,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_DCPHASE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HT_DCPHASE(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.ht_dcphase(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5063,7 +5063,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HT_PHASOR(start_idx, end_idx, i0, &mut *o0, &mut *o1);
+                let res = self.core.ht_phasor(start_idx, end_idx, i0, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5076,7 +5076,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HT_SINE(start_idx, end_idx, i0, &mut *o0, &mut *o1);
+                let res = self.core.ht_sine(start_idx, end_idx, i0, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5087,7 +5087,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_TRENDLINE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HT_TRENDLINE(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.ht_trendline(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5097,7 +5097,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_TRENDMODE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.HT_TRENDMODE(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.ht_trendmode(start_idx, end_idx, i0, &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5108,7 +5108,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.IMI(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.imi(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5118,7 +5118,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::KAMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.KAMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.kama(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5133,7 +5133,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.KC(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.real_opt[2], &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.kc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.real_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -5152,7 +5152,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.KDJ(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.kdj(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -5164,7 +5164,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::LINEARREG => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.LINEARREG(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.linearreg(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5174,7 +5174,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::LINEARREG_ANGLE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.LINEARREG_ANGLE(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.linearreg_angle(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5184,7 +5184,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::LINEARREG_INTERCEPT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.LINEARREG_INTERCEPT(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.linearreg_intercept(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5194,7 +5194,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::LINEARREG_SLOPE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.LINEARREG_SLOPE(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.linearreg_slope(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5204,7 +5204,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::LN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.LN(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.ln(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5214,7 +5214,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::LOG10 => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.LOG10(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.log10(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5225,7 +5225,7 @@ impl<'a> ParamHolder<'a> {
                 let e1 = MAType::try_from(self.int_opt[1])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MA(start_idx, end_idx, i0, self.int_opt[0], e1, &mut *o0);
+                let res = self.core.ma(start_idx, end_idx, i0, self.int_opt[0], e1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5238,7 +5238,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MACD(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.macd(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -5256,7 +5256,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MACDEXT(start_idx, end_idx, i0, self.int_opt[0], e1, self.int_opt[2], e3, self.int_opt[4], e5, &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.macdext(start_idx, end_idx, i0, self.int_opt[0], e1, self.int_opt[2], e3, self.int_opt[4], e5, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -5271,7 +5271,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MACDFIX(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.macdfix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -5285,7 +5285,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MAMA(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut *o0, Some(&mut *o1));
+                let res = self.core.mama(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut *o0, Some(&mut *o1));
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5298,7 +5298,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MARKETFI(start_idx, end_idx, i0_1, i0_2, i0_4, &mut *o0);
+                let res = self.core.marketfi(start_idx, end_idx, i0_1, i0_2, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5309,7 +5309,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MASSI(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
+                let res = self.core.massi(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5321,7 +5321,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MAVP(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
+                let res = self.core.mavp(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5331,7 +5331,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MAX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MAX(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.max(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5341,7 +5341,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MAXINDEX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MAXINDEX(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.maxindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5352,7 +5352,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MEDPRICE(start_idx, end_idx, i0_1, i0_2, &mut *o0);
+                let res = self.core.medprice(start_idx, end_idx, i0_1, i0_2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5365,7 +5365,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MFI(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
+                let res = self.core.mfi(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5375,7 +5375,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MIDPOINT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MIDPOINT(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.midpoint(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5386,7 +5386,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MIDPRICE(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
+                let res = self.core.midprice(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5396,7 +5396,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MIN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MIN(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.min(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5406,7 +5406,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MININDEX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MININDEX(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.minindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.int_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5418,7 +5418,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MINMAX(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
+                let res = self.core.minmax(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5431,7 +5431,7 @@ impl<'a> ParamHolder<'a> {
                 if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MINMAXINDEX(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
+                let res = self.core.minmaxindex(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
                 match res {
@@ -5444,7 +5444,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MINUS_DI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.minus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5455,7 +5455,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MINUS_DM(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
+                let res = self.core.minus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5465,7 +5465,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MOM => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MOM(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.mom(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5476,7 +5476,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.MULT(start_idx, end_idx, i0, i1, &mut *o0);
+                let res = self.core.mult(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5488,7 +5488,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.NATR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.natr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5499,7 +5499,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.NVI(start_idx, end_idx, i0_3, i0_4, &mut *o0);
+                let res = self.core.nvi(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5510,7 +5510,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.OBV(start_idx, end_idx, i0, i1_4, &mut *o0);
+                let res = self.core.obv(start_idx, end_idx, i0, i1_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5520,7 +5520,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::PERCENTILE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PERCENTILE(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
+                let res = self.core.percentile(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5530,7 +5530,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::PERCENTRANK => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PERCENTRANK(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.percentrank(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5542,7 +5542,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PLUS_DI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.plus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5553,7 +5553,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PLUS_DM(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
+                let res = self.core.plus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5564,7 +5564,7 @@ impl<'a> ParamHolder<'a> {
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PPO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
+                let res = self.core.ppo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5575,7 +5575,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PVI(start_idx, end_idx, i0_3, i0_4, &mut *o0);
+                let res = self.core.pvi(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5586,7 +5586,7 @@ impl<'a> ParamHolder<'a> {
                 let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PVO(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
+                let res = self.core.pvo(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], e2, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5597,7 +5597,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.PVT(start_idx, end_idx, i0_3, i0_4, &mut *o0);
+                let res = self.core.pvt(start_idx, end_idx, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5608,7 +5608,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.QSTICK(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.qstick(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5618,7 +5618,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::RMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.RMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.rma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5628,7 +5628,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROC => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ROC(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.roc(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5638,7 +5638,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROCP => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ROCP(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.rocp(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5648,7 +5648,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROCR => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ROCR(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.rocr(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5658,7 +5658,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROCR100 => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ROCR100(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.rocr100(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5668,7 +5668,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::RSI => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.RSI(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.rsi(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5678,7 +5678,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::RVI => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.RVI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
+                let res = self.core.rvi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5688,7 +5688,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::RVOL => {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.RVOL(start_idx, end_idx, i0_4, self.int_opt[0], &mut *o0);
+                let res = self.core.rvol(start_idx, end_idx, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5699,7 +5699,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SAR(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut *o0);
+                let res = self.core.sar(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5710,7 +5710,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SAREXT(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut *o0);
+                let res = self.core.sarext(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5720,7 +5720,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SIN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SIN(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.sin(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5730,7 +5730,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SINH => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SINH(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.sinh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5740,7 +5740,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.sma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5754,7 +5754,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SMI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut *o0, &mut *o1);
+                let res = self.core.smi(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5765,7 +5765,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SQRT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SQRT(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.sqrt(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5775,7 +5775,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::STDDEV => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.STDDEV(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
+                let res = self.core.stddev(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5791,7 +5791,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.STOCH(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1);
+                let res = self.core.stoch(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5807,7 +5807,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.STOCHF(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, &mut *o0, &mut *o1);
+                let res = self.core.stochf(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5821,7 +5821,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.STOCHRSI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], e3, &mut *o0, &mut *o1);
+                let res = self.core.stochrsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], e3, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -5833,7 +5833,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SUB(start_idx, end_idx, i0, i1, &mut *o0);
+                let res = self.core.sub(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5843,7 +5843,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::SUM => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SUM(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.sum(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5857,7 +5857,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.SUPERTREND(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
+                let res = self.core.supertrend(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
                 match res {
@@ -5868,7 +5868,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::T3 => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.T3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
+                let res = self.core.t3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5878,7 +5878,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TAN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TAN(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.tan(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5888,7 +5888,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TANH => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TANH(start_idx, end_idx, i0, &mut *o0);
+                let res = self.core.tanh(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5898,7 +5898,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TEMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TEMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.tema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5910,7 +5910,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TRANGE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.trange(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5920,7 +5920,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TRIMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TRIMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.trima(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5930,7 +5930,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TRIX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TRIX(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.trix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5940,7 +5940,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TSF => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TSF(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.tsf(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5950,7 +5950,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TSI => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TSI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
+                let res = self.core.tsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5962,7 +5962,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.TYPPRICE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.typprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5974,7 +5974,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ULTOSC(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
+                let res = self.core.ultosc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5984,7 +5984,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::VAR => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.VAR(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
+                let res = self.core.var(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5994,7 +5994,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::VHF => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.VHF(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.vhf(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6008,7 +6008,7 @@ impl<'a> ParamHolder<'a> {
                 if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.VORTEX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
+                let res = self.core.vortex(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 match res {
@@ -6022,7 +6022,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.VWAP(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
+                let res = self.core.vwap(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6033,7 +6033,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.VWMA(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut *o0);
+                let res = self.core.vwma(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6045,7 +6045,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.WAD(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.wad(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6057,7 +6057,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.WCLPRICE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
+                let res = self.core.wclprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6069,7 +6069,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.WILLR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
+                let res = self.core.willr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6079,7 +6079,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::WMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.WMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.wma(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6089,7 +6089,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ZLEMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.ZLEMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                let res = self.core.zlema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -6289,7 +6289,7 @@ mod binder_tests {
     fn an_output_sized_to_the_produced_count_is_enough() {
         let core = Core::new();
         let close = series(0.0);
-        let lookback = core.SMA_Lookback(30).unwrap();
+        let lookback = core.sma_lookback(30).unwrap();
         let mut exact = vec![0.0; N - lookback];
         let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close).unwrap();

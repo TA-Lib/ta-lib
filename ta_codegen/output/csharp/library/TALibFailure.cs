@@ -93,7 +93,7 @@ public class TALibArgumentException : ArgumentException, ITALibFailure
 }
 
 /// <summary><c>startIdx</c> or <c>endIdx</c> is outside
-/// <c>[0, Core.MAX_INDEX]</c>, or <c>endIdx</c> precedes <c>startIdx</c>.</summary>
+/// <c>[0, Core.MaxIndex]</c>, or <c>endIdx</c> precedes <c>startIdx</c>.</summary>
 /// <remarks><see cref="ITALibFailure.RetCode"/> distinguishes the two, which the
 /// exception's <c>ParamName</c> can only hint at.</remarks>
 public class TALibArgumentOutOfRangeException : ArgumentOutOfRangeException, ITALibFailure

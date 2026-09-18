@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#DONCHIAN} consumes before it can
+    * Number of leading input bars {@link Core#donchian} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int DONCHIAN_Lookback( int optInTimePeriod )
+   public int donchianLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
@@ -34,16 +34,16 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode DONCHIAN_Impl( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outRealUpperBand[],
-                          double outRealMiddleBand[],
-                          double outRealLowerBand[] )
+   RetCode donchianImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outRealUpperBand[],
+                         double outRealMiddleBand[],
+                         double outRealLowerBand[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -163,16 +163,16 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode DONCHIAN_Impl( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outRealUpperBand[],
-                          double outRealMiddleBand[],
-                          double outRealLowerBand[] )
+   RetCode donchianImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outRealUpperBand[],
+                         double outRealMiddleBand[],
+                         double outRealLowerBand[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -279,7 +279,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#DONCHIAN_Lookback} is a <b>success
+    * valid range shorter than {@link Core#donchianLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -308,7 +308,7 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     */
-   public OutRange DONCHIAN( int startIdx,
+   public OutRange donchian( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
@@ -318,7 +318,7 @@
                              double outRealLowerBand[] )
    {
       requireIndexRange("DONCHIAN", startIdx, endIdx);
-      int guardStart = clampedStart("DONCHIAN", startIdx, DONCHIAN_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("DONCHIAN", startIdx, donchianLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DONCHIAN", "inHigh", inHigh, guardInLen);
@@ -328,7 +328,7 @@
       requireLength("DONCHIAN", "outRealLowerBand", outRealLowerBand, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = donchianImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("DONCHIAN", retCode);
       }
@@ -357,7 +357,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#DONCHIAN_Lookback} is a <b>success
+    * valid range shorter than {@link Core#donchianLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -386,7 +386,7 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     */
-   public OutRange DONCHIAN( int startIdx,
+   public OutRange donchian( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
@@ -396,7 +396,7 @@
                              double outRealLowerBand[] )
    {
       requireIndexRange("DONCHIAN", startIdx, endIdx);
-      int guardStart = clampedStart("DONCHIAN", startIdx, DONCHIAN_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("DONCHIAN", startIdx, donchianLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DONCHIAN", "inHigh", inHigh, guardInLen);
@@ -406,7 +406,7 @@
       requireLength("DONCHIAN", "outRealLowerBand", outRealLowerBand, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = donchianImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("DONCHIAN", retCode);
       }
@@ -416,7 +416,7 @@
 
    /**
     * A live DONCHIAN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#DONCHIAN} over the same series.
+    * closed bar, bit-identical to {@link Core#donchian} over the same series.
     * Open with {@link Core#donchianOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -452,7 +452,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#DONCHIAN} reports over the same bars: the
+       * <p>It is what {@link Core#donchian} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -904,8 +904,8 @@
    /**
     * Open a live DONCHIAN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#DONCHIAN} at that bar.
-    * <p>The history must hold at least {@code DONCHIAN_Lookback(...) + 1} bars
+    * to {@link Core#donchian} at that bar.
+    * <p>The history must hold at least {@code donchianLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -924,7 +924,7 @@
    }
    /**
     * {@link Core#donchianOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#DONCHIAN} over the whole history in the same single pass
+    * to {@link Core#donchian} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -938,7 +938,7 @@
       requireArgument("DONCHIAN openAndFill", "inHigh", inHigh);
       requireHistory("DONCHIAN openAndFill", inHigh.length);
       requireArgument("DONCHIAN openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("DONCHIAN openAndFill", inHigh.length, DONCHIAN_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("DONCHIAN openAndFill", inHigh.length, donchianLookback(optInTimePeriod));
       requireHistoryLength("DONCHIAN openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("DONCHIAN openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);
       requireLength("DONCHIAN openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);

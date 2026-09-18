@@ -24,7 +24,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#PLUS_DI} consumes before it can
+    * Number of leading input bars {@link Core#plusDi} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -37,7 +37,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int PLUS_DI_Lookback( int optInTimePeriod )
+   public int plusDiLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -51,15 +51,15 @@
       }
 
    }
-   RetCode PLUS_DI_Impl( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode plusDiImpl( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -391,15 +391,15 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode PLUS_DI_Impl( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode plusDiImpl( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -602,8 +602,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PLUS_DI_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#plusDiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -628,23 +628,23 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MINUS_DI
-    * @see Core#DX
-    * @see Core#ADX
-    * @see Core#ADXR
-    * @see Core#PLUS_DM
-    * @see Core#TRANGE
+    * @see Core#minusDi
+    * @see Core#dx
+    * @see Core#adx
+    * @see Core#adxr
+    * @see Core#plusDm
+    * @see Core#trange
     */
-   public OutRange PLUS_DI( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            int optInTimePeriod,
-                            double outReal[] )
+   public OutRange plusDi( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod,
+                           double outReal[] )
    {
       requireIndexRange("PLUS_DI", startIdx, endIdx);
-      int guardStart = clampedStart("PLUS_DI", startIdx, PLUS_DI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("PLUS_DI", startIdx, plusDiLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PLUS_DI", "inHigh", inHigh, guardInLen);
@@ -653,7 +653,7 @@
       requireLength("PLUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PLUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = plusDiImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PLUS_DI", retCode);
       }
@@ -676,8 +676,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PLUS_DI_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#plusDiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -702,23 +702,23 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MINUS_DI
-    * @see Core#DX
-    * @see Core#ADX
-    * @see Core#ADXR
-    * @see Core#PLUS_DM
-    * @see Core#TRANGE
+    * @see Core#minusDi
+    * @see Core#dx
+    * @see Core#adx
+    * @see Core#adxr
+    * @see Core#plusDm
+    * @see Core#trange
     */
-   public OutRange PLUS_DI( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            int optInTimePeriod,
-                            double outReal[] )
+   public OutRange plusDi( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod,
+                           double outReal[] )
    {
       requireIndexRange("PLUS_DI", startIdx, endIdx);
-      int guardStart = clampedStart("PLUS_DI", startIdx, PLUS_DI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("PLUS_DI", startIdx, plusDiLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PLUS_DI", "inHigh", inHigh, guardInLen);
@@ -727,7 +727,7 @@
       requireLength("PLUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PLUS_DI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = plusDiImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PLUS_DI", retCode);
       }
@@ -737,7 +737,7 @@
 
    /**
     * A live PLUS_DI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#PLUS_DI} over the same series.
+    * closed bar, bit-identical to {@link Core#plusDi} over the same series.
     * Open with {@link Core#plusDiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -767,7 +767,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#PLUS_DI} reports over the same bars: the
+       * <p>It is what {@link Core#plusDi} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1569,8 +1569,8 @@
    /**
     * Open a live PLUS_DI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#PLUS_DI} at that bar.
-    * <p>The history must hold at least {@code PLUS_DI_Lookback(...) + 1} bars
+    * to {@link Core#plusDi} at that bar.
+    * <p>The history must hold at least {@code plusDiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1591,7 +1591,7 @@
    }
    /**
     * {@link Core#plusDiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#PLUS_DI} over the whole history in the same single pass
+    * to {@link Core#plusDi} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1606,7 +1606,7 @@
       requireHistory("PLUS_DI openAndFill", inHigh.length);
       requireArgument("PLUS_DI openAndFill", "inLow", inLow);
       requireArgument("PLUS_DI openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("PLUS_DI openAndFill", inHigh.length, PLUS_DI_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("PLUS_DI openAndFill", inHigh.length, plusDiLookback(optInTimePeriod));
       requireHistoryLength("PLUS_DI openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("PLUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("PLUS_DI openAndFill", "outReal", outReal, guardOutLen);

@@ -356,12 +356,13 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
             "{name}: bare cross-indicator call must resolve to the guarded \
              entry point, got {bare}"
         );
-        // The resolved name is the YAML `name:` verbatim, and the suffix is
-        // separated by an underscore.
-        assert_eq!(bare, func.name, "{name}: C# base must be the YAML name verbatim");
+        // The resolved name is the YAML `name:` folded to C#'s convention,
+        // and the suffix rides on it without a separator.
+        let folded = backends::common::pascal_words(&func.name);
+        assert_eq!(bare, folded, "{name}: C# base must be the folded YAML name");
         assert_eq!(
             lookback,
-            format!("{}_Lookback", func.name),
+            format!("{folded}Lookback"),
             "{name}: lookback and guarded names disagree on the base"
         );
         // What the resolver promises must be what the emitter actually writes —
@@ -421,7 +422,10 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             // future private-delegating fused function would trip the
             // dispatcher/clone balance above on purpose.)
             assert!(
-                out.contains(&format!("fn {}_Impl_fma(", func.name)),
+                out.contains(&format!(
+                    "fn {}_impl_fma(",
+                    backends::common::snake_words(&func.name)
+                )),
                 "{name}: guarded variant lost its FMA clone"
             );
             // The fused sites live on in the renamed portable impl.

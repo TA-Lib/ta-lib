@@ -191,10 +191,10 @@ params. No generic `<T: TaFloat>`, no `f32` variants.
 
 | Variant | Purpose |
 |---------|---------|
-| `pub fn <N>_Lookback(...) -> Result<usize, RetCode>` | First valid output index |
-| `pub fn <N>(...) -> Result<OutRange, RetCode>` | The batch API, and the tier that **owns the argument contract**: index range, then parameters, then every input and output length, before it calls `<N>_Impl` |
-| `pub(crate) fn <N>_Impl(...) -> RetCode` | The body. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits. Not a cross-call target |
-| `fn <N>_Private(...)` | Only where the definition declares one; extra pre-computed params, no validation prologue. No shipped indicator declares one — the construct is carried by the `SYNTH4` gate fixture |
+| `pub fn <n>_lookback(...) -> Result<usize, RetCode>` | First valid output index |
+| `pub fn <n>(...) -> Result<OutRange, RetCode>` | The batch API, and the tier that **owns the argument contract**: index range, then parameters, then every input and output length, before it calls `<n>_impl` |
+| `pub(crate) fn <n>_impl(...) -> RetCode` | The body. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits. Not a cross-call target |
+| `fn <n>_private(...)` | Only where the definition declares one; extra pre-computed params, no validation prologue. No shipped indicator declares one — the construct is carried by the `SYNTH4` gate fixture |
 
 Cross-indicator calls target the **public** wrapper, as in C, Java and C#. `?` is
 unavailable at those sites (the caller returns a bare `RetCode`), so

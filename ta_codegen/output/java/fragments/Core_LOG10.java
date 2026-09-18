@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#LOG10} consumes before it can
+    * Number of leading input bars {@link Core#log10} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int LOG10_Lookback( )
+   public int log10Lookback( )
    {
       return 0 ;
 
    }
-   RetCode LOG10_Impl( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode log10Impl( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode LOG10_Impl( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode log10Impl( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -80,7 +80,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#LOG10_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#log10Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -102,23 +102,23 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#LN
-    * @see Core#EXP
+    * @see Core#ln
+    * @see Core#exp
     */
-   public OutRange LOG10( int startIdx,
+   public OutRange log10( int startIdx,
                           int endIdx,
                           double inReal[],
                           double outReal[] )
    {
       requireIndexRange("LOG10", startIdx, endIdx);
-      int guardStart = clampedStart("LOG10", startIdx, LOG10_Lookback());
+      int guardStart = clampedStart("LOG10", startIdx, log10Lookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LOG10", "inReal", inReal, guardInLen);
       requireLength("LOG10", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = log10Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("LOG10", retCode);
       }
@@ -138,7 +138,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#LOG10_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#log10Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -160,23 +160,23 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#LN
-    * @see Core#EXP
+    * @see Core#ln
+    * @see Core#exp
     */
-   public OutRange LOG10( int startIdx,
+   public OutRange log10( int startIdx,
                           int endIdx,
                           float inReal[],
                           double outReal[] )
    {
       requireIndexRange("LOG10", startIdx, endIdx);
-      int guardStart = clampedStart("LOG10", startIdx, LOG10_Lookback());
+      int guardStart = clampedStart("LOG10", startIdx, log10Lookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("LOG10", "inReal", inReal, guardInLen);
       requireLength("LOG10", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = log10Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("LOG10", retCode);
       }
@@ -186,7 +186,7 @@
 
    /**
     * A live LOG10 stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#LOG10} over the same series.
+    * closed bar, bit-identical to {@link Core#log10} over the same series.
     * Open with {@link Core#log10Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -209,7 +209,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#LOG10} reports over the same bars: the
+       * <p>It is what {@link Core#log10} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -392,8 +392,8 @@
    /**
     * Open a live LOG10 stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#LOG10} at that bar.
-    * <p>The history must hold at least {@code LOG10_Lookback(...) + 1} bars
+    * to {@link Core#log10} at that bar.
+    * <p>The history must hold at least {@code log10Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -408,7 +408,7 @@
    }
    /**
     * {@link Core#log10Open} that also fills the output array(s) bit-identically
-    * to {@link Core#LOG10} over the whole history in the same single pass
+    * to {@link Core#log10} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -421,7 +421,7 @@
    {
       requireArgument("LOG10 openAndFill", "inReal", inReal);
       requireHistory("LOG10 openAndFill", inReal.length);
-      int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, LOG10_Lookback());
+      int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, log10Lookback());
       requireLength("LOG10 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("LOG10 openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#TSI} consumes before it can
+    * Number of leading input bars {@link Core#tsi} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int TSI_Lookback( int optInFirstPeriod, int optInSecondPeriod )
+   public int tsiLookback( int optInFirstPeriod, int optInSecondPeriod )
    {
       if( optInFirstPeriod == Integer.MIN_VALUE ) {
          optInFirstPeriod = 25;
@@ -44,17 +44,17 @@
        * function it comes from, which is also what makes TSI inherit
        * TA_FUNC_UNST_EMA from its callee.
        */
-      return 1 + EMA_Lookback(optInFirstPeriod) + EMA_Lookback(optInSecondPeriod) ;
+      return 1 + emaLookback(optInFirstPeriod) + emaLookback(optInSecondPeriod) ;
 
    }
-   RetCode TSI_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInFirstPeriod,
-                     int optInSecondPeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode tsiImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInFirstPeriod,
+                    int optInSecondPeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double kFirst = 0;
       double kSecond = 0;
@@ -92,7 +92,7 @@
       } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+      lookbackTotal = tsiLookback(optInFirstPeriod, optInSecondPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -122,7 +122,7 @@
        */
       kFirst = 2.0 / (double)(optInFirstPeriod + 1);
       kSecond = 2.0 / (double)(optInSecondPeriod + 1);
-      lookbackFirst = EMA_Lookback(optInFirstPeriod);
+      lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
       emaSecondNum = 0.0;
@@ -219,14 +219,14 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode TSI_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInFirstPeriod,
-                     int optInSecondPeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode tsiImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInFirstPeriod,
+                    int optInSecondPeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double kFirst = 0;
       double kSecond = 0;
@@ -264,7 +264,7 @@
       } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+      lookbackTotal = tsiLookback(optInFirstPeriod, optInSecondPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -276,7 +276,7 @@
       outBegIdx.value = startIdx;
       kFirst = 2.0 / (double)(optInFirstPeriod + 1);
       kSecond = 2.0 / (double)(optInSecondPeriod + 1);
-      lookbackFirst = EMA_Lookback(optInFirstPeriod);
+      lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
       emaSecondNum = 0.0;
@@ -373,7 +373,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TSI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#tsiLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -401,12 +401,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMI
-    * @see Core#MACD
-    * @see Core#CMO
-    * @see Core#RSI
+    * @see Core#smi
+    * @see Core#macd
+    * @see Core#cmo
+    * @see Core#rsi
     */
-   public OutRange TSI( int startIdx,
+   public OutRange tsi( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInFirstPeriod,
@@ -414,14 +414,14 @@
                         double outReal[] )
    {
       requireIndexRange("TSI", startIdx, endIdx);
-      int guardStart = clampedStart("TSI", startIdx, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
+      int guardStart = clampedStart("TSI", startIdx, tsiLookback(optInFirstPeriod, optInSecondPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TSI", "inReal", inReal, guardInLen);
       requireLength("TSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = tsiImpl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TSI", retCode);
       }
@@ -456,7 +456,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TSI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#tsiLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -484,12 +484,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SMI
-    * @see Core#MACD
-    * @see Core#CMO
-    * @see Core#RSI
+    * @see Core#smi
+    * @see Core#macd
+    * @see Core#cmo
+    * @see Core#rsi
     */
-   public OutRange TSI( int startIdx,
+   public OutRange tsi( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInFirstPeriod,
@@ -497,14 +497,14 @@
                         double outReal[] )
    {
       requireIndexRange("TSI", startIdx, endIdx);
-      int guardStart = clampedStart("TSI", startIdx, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
+      int guardStart = clampedStart("TSI", startIdx, tsiLookback(optInFirstPeriod, optInSecondPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TSI", "inReal", inReal, guardInLen);
       requireLength("TSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = tsiImpl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TSI", retCode);
       }
@@ -514,7 +514,7 @@
 
    /**
     * A live TSI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#TSI} over the same series.
+    * closed bar, bit-identical to {@link Core#tsi} over the same series.
     * Open with {@link Core#tsiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -546,7 +546,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#TSI} reports over the same bars: the
+       * <p>It is what {@link Core#tsi} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -750,7 +750,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+      lookbackTotal = tsiLookback(optInFirstPeriod, optInSecondPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -780,7 +780,7 @@
        */
       kFirst = 2.0 / (double)(optInFirstPeriod + 1);
       kSecond = 2.0 / (double)(optInSecondPeriod + 1);
-      lookbackFirst = EMA_Lookback(optInFirstPeriod);
+      lookbackFirst = emaLookback(optInFirstPeriod);
       emaFirstNum = 0.0;
       emaFirstDen = 0.0;
       emaSecondNum = 0.0;
@@ -930,8 +930,8 @@
    /**
     * Open a live TSI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#TSI} at that bar.
-    * <p>The history must hold at least {@code TSI_Lookback(...) + 1} bars
+    * to {@link Core#tsi} at that bar.
+    * <p>The history must hold at least {@code tsiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -948,7 +948,7 @@
    }
    /**
     * {@link Core#tsiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#TSI} over the whole history in the same single pass
+    * to {@link Core#tsi} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -961,7 +961,7 @@
    {
       requireArgument("TSI openAndFill", "inReal", inReal);
       requireHistory("TSI openAndFill", inReal.length);
-      int guardOutLen = openFillCount("TSI openAndFill", inReal.length, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
+      int guardOutLen = openFillCount("TSI openAndFill", inReal.length, tsiLookback(optInFirstPeriod, optInSecondPeriod));
       requireLength("TSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("TSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

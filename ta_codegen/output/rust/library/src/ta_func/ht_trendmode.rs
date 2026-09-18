@@ -73,10 +73,10 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::HT_TRENDMODE`]: the number of leading input values consumed
+    /// Lookback period for [`Core::ht_trendmode`]: the number of leading input values consumed
     /// before the first output value can be produced.
     #[doc(alias = "TA_HT_TRENDMODE_Lookback")]
-    pub fn HT_TRENDMODE_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn ht_trendmode_lookback(&self) -> Result<usize, RetCode> {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
         // ---
@@ -86,10 +86,10 @@ impl Core {
         // See mama_lookback for an explanation of the "32".
         return Ok((63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize);
     }
-    /// C-shaped body behind [`Core::HT_TRENDMODE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::ht_trendmode`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn HT_TRENDMODE_Impl(
+    pub(crate) fn ht_trendmode_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -99,13 +99,13 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, HT_TRENDMODE_Impl_fma, HT_TRENDMODE_Impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, ht_trendmode_impl_fma, ht_trendmode_impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.HT_TRENDMODE_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+        self.ht_trendmode_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn HT_TRENDMODE_Impl_fma(
+    fn ht_trendmode_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -114,10 +114,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.HT_TRENDMODE_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+        self.ht_trendmode_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn HT_TRENDMODE_Impl_impl(
+    fn ht_trendmode_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -132,7 +132,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.HT_TRENDMODE_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.ht_trendmode_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
@@ -651,7 +651,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0i32; 252];
     ///
-    /// let out_range = core.HT_TRENDMODE(0, data.len() - 1, &data, &mut out)?;
+    /// let out_range = core.ht_trendmode(0, data.len() - 1, &data, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert_eq!(out_range.beg_idx + out_range.count, data.len());
     /// // the mode is a flag: 1 in a trend, 0 in a cycle
@@ -661,8 +661,9 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::HT_TRENDLINE`] · [`Core::HT_SINE`] · [`Core::HT_DCPHASE`] · [`Core::HT_DCPERIOD`]
-    /// · [`Core::MAMA`]
+    /// [`HT_TRENDLINE`](Core::ht_trendline) · [`HT_SINE`](Core::ht_sine) ·
+    /// [`HT_DCPHASE`](Core::ht_dcphase) · [`HT_DCPERIOD`](Core::ht_dcperiod) ·
+    /// [`MAMA`](Core::mama)
     ///
     /// # References
     ///
@@ -671,7 +672,7 @@ impl Core {
     #[doc(alias = "TA_HT_TRENDMODE")]
     #[doc(alias = "HilbertTransformTrendvsCycleMode")]
     #[doc(alias = "TrendMode")]
-    pub fn HT_TRENDMODE(
+    pub fn ht_trendmode(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -684,7 +685,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HT_TRENDMODE_Lookback()?;
+        let _guardLb = self.ht_trendmode_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -695,7 +696,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.HT_TRENDMODE_Impl(
+        let retCode = self.ht_trendmode_impl(
             startIdx,
             endIdx,
             inReal,
@@ -712,7 +713,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_TRENDMODE stream: one value per closed bar, bit-identical to [`Core::HT_TRENDMODE`]
+/// Live HT_TRENDMODE stream: one value per closed bar, bit-identical to [`Core::ht_trendmode`]
 /// over the same series. Open with [`Core::ht_trendmode_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -1664,7 +1665,7 @@ impl Core {
     }
 
     /// Open a live HT_TRENDMODE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::HT_TRENDMODE`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ht_trendmode`] at that bar.
     ///
     /// # Errors
     ///
@@ -1694,7 +1695,7 @@ impl Core {
     }
 
     /// [`Core::ht_trendmode_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::HT_TRENDMODE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::ht_trendmode`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1711,7 +1712,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0_i32; 252];
-    /// let batch = core.HT_TRENDMODE(0, data.len() - 1, &data, &mut batch_out)?;
+    /// let batch = core.ht_trendmode(0, data.len() - 1, &data, &mut batch_out)?;
     ///
     /// let mut out = vec![0_i32; 252];
     /// let (_stream, filled) = core.ht_trendmode_open_and_fill(&data, &mut out)?;
@@ -1731,7 +1732,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HT_TRENDMODE_Lookback()?;
+        let _guardLb = self.ht_trendmode_lookback()?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outInteger.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -2129,7 +2130,7 @@ impl HtTrendmodeStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::HT_TRENDMODE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::ht_trendmode`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

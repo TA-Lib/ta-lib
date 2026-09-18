@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::DPO`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::dpo`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_DPO_Lookback")]
     #[inline]
-    pub fn DPO_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn dpo_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -90,10 +90,10 @@ impl Core {
         // then read inReal[-1].
         return Ok(((optInTimePeriod - 1).max(optInTimePeriod / 2 + 1)) as usize);
     }
-    /// C-shaped body behind [`Core::DPO`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::dpo`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn DPO_Impl(
+    pub(crate) fn dpo_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -114,7 +114,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.DPO_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.dpo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -133,7 +133,7 @@ impl Core {
         // the composite differential in test_dpo.c a memcmp instead of a tolerance
         // argument, and it is lost by dividing once into a reciprocal or by
         // reordering the add/snapshot/subtract.
-        lookbackTotal = self.DPO_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.dpo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -220,7 +220,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.DPO(0, data.len() - 1, &data, 20, &mut out)?;
+    /// let out_range = core.dpo(0, data.len() - 1, &data, 20, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -228,7 +228,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::SMA`] · [`Core::MOM`] · [`Core::APO`]
+    /// [`SMA`](Core::sma) · [`MOM`](Core::mom) · [`APO`](Core::apo)
     ///
     /// # References
     ///
@@ -237,7 +237,7 @@ impl Core {
     ///   Oscillator](https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/detrended-price-oscillator-dpo)
     #[doc(alias = "TA_DPO")]
     #[doc(alias = "DetrendedPriceOscillator")]
-    pub fn DPO(
+    pub fn dpo(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -251,7 +251,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.DPO_Lookback(optInTimePeriod)?;
+        let _guardLb = self.dpo_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -262,7 +262,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.DPO_Impl(
+        let retCode = self.dpo_impl(
             startIdx,
             endIdx,
             inReal,
@@ -280,7 +280,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live DPO stream: one value per closed bar, bit-identical to [`Core::DPO`]
+/// Live DPO stream: one value per closed bar, bit-identical to [`Core::dpo`]
 /// over the same series. Open with [`Core::dpo_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -386,7 +386,7 @@ impl Core {
         // the composite differential in test_dpo.c a memcmp instead of a tolerance
         // argument, and it is lost by dividing once into a reciprocal or by
         // reordering the add/snapshot/subtract.
-        lookbackTotal = self.DPO_Lookback(optInTimePeriod)?;
+        lookbackTotal = self.dpo_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -467,7 +467,7 @@ impl Core {
     }
 
     /// Open a live DPO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::DPO`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::dpo`] at that bar.
     ///
     /// # Errors
     ///
@@ -497,7 +497,7 @@ impl Core {
     }
 
     /// [`Core::dpo_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::DPO`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::dpo`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -514,7 +514,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.DPO(0, data.len() - 1, &data, 20, &mut batch_out)?;
+    /// let batch = core.dpo(0, data.len() - 1, &data, 20, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.dpo_open_and_fill(&data, 20, &mut out)?;
@@ -535,7 +535,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.DPO_Lookback(optInTimePeriod)?;
+        let _guardLb = self.dpo_lookback(optInTimePeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -663,7 +663,7 @@ impl DpoStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::DPO`] reports over the same bars: the opener sets it
+    /// It is what [`Core::dpo`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

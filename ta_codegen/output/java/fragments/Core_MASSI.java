@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MASSI} consumes before it can
+    * Number of leading input bars {@link Core#massi} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -26,7 +26,7 @@
     *        25; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MASSI_Lookback( int optInFastPeriod, int optInSlowPeriod )
+   public int massiLookback( int optInFastPeriod, int optInSlowPeriod )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 9;
@@ -42,18 +42,18 @@
        * window. The EMA term is exactly the callee's own lookback, which is what
        * makes MASSI inherit TA_FUNC_UNST_EMA -- and it shifts by 2u, not u.
        */
-      return EMA_Lookback(optInFastPeriod) * 2 + (optInSlowPeriod - 1) ;
+      return emaLookback(optInFastPeriod) * 2 + (optInSlowPeriod - 1) ;
 
    }
-   RetCode MASSI_Impl( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       int optInFastPeriod,
-                       int optInSlowPeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode massiImpl( int startIdx,
+                      int endIdx,
+                      double inHigh[],
+                      double inLow[],
+                      int optInFastPeriod,
+                      int optInSlowPeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double optInK_1 = 0;
       double hl = 0;
@@ -90,7 +90,7 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackEma = EMA_Lookback(optInFastPeriod);
+      lookbackEma = emaLookback(optInFastPeriod);
       lookbackEma2 = lookbackEma * 2;
       lookbackTotal = lookbackEma2 + (optInSlowPeriod - 1);
       if( startIdx < lookbackTotal ) {
@@ -211,15 +211,15 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MASSI_Impl( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       int optInFastPeriod,
-                       int optInSlowPeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode massiImpl( int startIdx,
+                      int endIdx,
+                      float inHigh[],
+                      float inLow[],
+                      int optInFastPeriod,
+                      int optInSlowPeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double optInK_1 = 0;
       double hl = 0;
@@ -256,7 +256,7 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackEma = EMA_Lookback(optInFastPeriod);
+      lookbackEma = emaLookback(optInFastPeriod);
       lookbackEma2 = lookbackEma * 2;
       lookbackTotal = lookbackEma2 + (optInSlowPeriod - 1);
       if( startIdx < lookbackTotal ) {
@@ -368,7 +368,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MASSI_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#massiLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -396,14 +396,14 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CVI
-    * @see Core#ATR
-    * @see Core#NATR
-    * @see Core#TRANGE
-    * @see Core#EMA
-    * @see Core#SUM
+    * @see Core#cvi
+    * @see Core#atr
+    * @see Core#natr
+    * @see Core#trange
+    * @see Core#ema
+    * @see Core#sum
     */
-   public OutRange MASSI( int startIdx,
+   public OutRange massi( int startIdx,
                           int endIdx,
                           double inHigh[],
                           double inLow[],
@@ -412,7 +412,7 @@
                           double outReal[] )
    {
       requireIndexRange("MASSI", startIdx, endIdx);
-      int guardStart = clampedStart("MASSI", startIdx, MASSI_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardStart = clampedStart("MASSI", startIdx, massiLookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MASSI", "inHigh", inHigh, guardInLen);
@@ -420,7 +420,7 @@
       requireLength("MASSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MASSI_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = massiImpl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MASSI", retCode);
       }
@@ -453,7 +453,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MASSI_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#massiLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -481,14 +481,14 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CVI
-    * @see Core#ATR
-    * @see Core#NATR
-    * @see Core#TRANGE
-    * @see Core#EMA
-    * @see Core#SUM
+    * @see Core#cvi
+    * @see Core#atr
+    * @see Core#natr
+    * @see Core#trange
+    * @see Core#ema
+    * @see Core#sum
     */
-   public OutRange MASSI( int startIdx,
+   public OutRange massi( int startIdx,
                           int endIdx,
                           float inHigh[],
                           float inLow[],
@@ -497,7 +497,7 @@
                           double outReal[] )
    {
       requireIndexRange("MASSI", startIdx, endIdx);
-      int guardStart = clampedStart("MASSI", startIdx, MASSI_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardStart = clampedStart("MASSI", startIdx, massiLookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MASSI", "inHigh", inHigh, guardInLen);
@@ -505,7 +505,7 @@
       requireLength("MASSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MASSI_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = massiImpl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MASSI", retCode);
       }
@@ -515,7 +515,7 @@
 
    /**
     * A live MASSI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MASSI} over the same series.
+    * closed bar, bit-identical to {@link Core#massi} over the same series.
     * Open with {@link Core#massiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -548,7 +548,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MASSI} reports over the same bars: the
+       * <p>It is what {@link Core#massi} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -765,7 +765,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      lookbackEma = EMA_Lookback(optInFastPeriod);
+      lookbackEma = emaLookback(optInFastPeriod);
       lookbackEma2 = lookbackEma * 2;
       lookbackTotal = lookbackEma2 + (optInSlowPeriod - 1);
       if( startIdx < lookbackTotal ) {
@@ -944,8 +944,8 @@
    /**
     * Open a live MASSI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MASSI} at that bar.
-    * <p>The history must hold at least {@code MASSI_Lookback(...) + 1} bars
+    * to {@link Core#massi} at that bar.
+    * <p>The history must hold at least {@code massiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -964,7 +964,7 @@
    }
    /**
     * {@link Core#massiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MASSI} over the whole history in the same single pass
+    * to {@link Core#massi} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -978,7 +978,7 @@
       requireArgument("MASSI openAndFill", "inHigh", inHigh);
       requireHistory("MASSI openAndFill", inHigh.length);
       requireArgument("MASSI openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("MASSI openAndFill", inHigh.length, MASSI_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardOutLen = openFillCount("MASSI openAndFill", inHigh.length, massiLookback(optInFastPeriod, optInSlowPeriod));
       requireHistoryLength("MASSI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MASSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#WILLR} consumes before it can
+    * Number of leading input bars {@link Core#willr} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -29,7 +29,7 @@
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int WILLR_Lookback( int optInTimePeriod )
+   public int willrLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -39,15 +39,15 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode WILLR_Impl( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode willrImpl( int startIdx,
+                      int endIdx,
+                      double inHigh[],
+                      double inLow[],
+                      double inClose[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -264,15 +264,15 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode WILLR_Impl( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode willrImpl( int startIdx,
+                      int endIdx,
+                      float inHigh[],
+                      float inLow[],
+                      float inClose[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -441,7 +441,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#WILLR_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#willrLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -467,11 +467,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STOCH
-    * @see Core#STOCHF
-    * @see Core#MINMAX
+    * @see Core#stoch
+    * @see Core#stochf
+    * @see Core#minmax
     */
-   public OutRange WILLR( int startIdx,
+   public OutRange willr( int startIdx,
                           int endIdx,
                           double inHigh[],
                           double inLow[],
@@ -480,7 +480,7 @@
                           double outReal[] )
    {
       requireIndexRange("WILLR", startIdx, endIdx);
-      int guardStart = clampedStart("WILLR", startIdx, WILLR_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("WILLR", startIdx, willrLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WILLR", "inHigh", inHigh, guardInLen);
@@ -489,7 +489,7 @@
       requireLength("WILLR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WILLR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = willrImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("WILLR", retCode);
       }
@@ -508,7 +508,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#WILLR_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#willrLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -534,11 +534,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STOCH
-    * @see Core#STOCHF
-    * @see Core#MINMAX
+    * @see Core#stoch
+    * @see Core#stochf
+    * @see Core#minmax
     */
-   public OutRange WILLR( int startIdx,
+   public OutRange willr( int startIdx,
                           int endIdx,
                           float inHigh[],
                           float inLow[],
@@ -547,7 +547,7 @@
                           double outReal[] )
    {
       requireIndexRange("WILLR", startIdx, endIdx);
-      int guardStart = clampedStart("WILLR", startIdx, WILLR_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("WILLR", startIdx, willrLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("WILLR", "inHigh", inHigh, guardInLen);
@@ -556,7 +556,7 @@
       requireLength("WILLR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WILLR_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = willrImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("WILLR", retCode);
       }
@@ -568,7 +568,7 @@
 
    /**
     * A live WILLR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#WILLR} over the same series.
+    * closed bar, bit-identical to {@link Core#willr} over the same series.
     * Open with {@link Core#willrOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -603,7 +603,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#WILLR} reports over the same bars: the
+       * <p>It is what {@link Core#willr} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1054,8 +1054,8 @@
    /**
     * Open a live WILLR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#WILLR} at that bar.
-    * <p>The history must hold at least {@code WILLR_Lookback(...) + 1} bars
+    * to {@link Core#willr} at that bar.
+    * <p>The history must hold at least {@code willrLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1076,7 +1076,7 @@
    }
    /**
     * {@link Core#willrOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#WILLR} over the whole history in the same single pass
+    * to {@link Core#willr} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1091,7 +1091,7 @@
       requireHistory("WILLR openAndFill", inHigh.length);
       requireArgument("WILLR openAndFill", "inLow", inLow);
       requireArgument("WILLR openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("WILLR openAndFill", inHigh.length, WILLR_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("WILLR openAndFill", inHigh.length, willrLookback(optInTimePeriod));
       requireHistoryLength("WILLR openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("WILLR openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("WILLR openAndFill", "outReal", outReal, guardOutLen);

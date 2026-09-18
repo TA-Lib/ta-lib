@@ -29,7 +29,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#KAMA} consumes before it can
+    * Number of leading input bars {@link Core#kama} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -42,7 +42,7 @@
     *        30; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int KAMA_Lookback( int optInTimePeriod )
+   public int kamaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -55,13 +55,13 @@
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()] ;
 
    }
-   RetCode KAMA_Impl( int startIdx,
-                      int endIdx,
-                      double inReal[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode kamaImpl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double constMax = 0;
       double constDiff = 0;
@@ -302,13 +302,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode KAMA_Impl( int startIdx,
-                      int endIdx,
-                      float inReal[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode kamaImpl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double constMax = 0;
       double constDiff = 0;
@@ -475,8 +475,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#KAMA_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#kamaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -499,25 +499,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MAMA
-    * @see Core#EMA
-    * @see Core#MA
+    * @see Core#mama
+    * @see Core#ema
+    * @see Core#ma
     */
-   public OutRange KAMA( int startIdx,
+   public OutRange kama( int startIdx,
                          int endIdx,
                          double inReal[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("KAMA", startIdx, endIdx);
-      int guardStart = clampedStart("KAMA", startIdx, KAMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("KAMA", startIdx, kamaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("KAMA", "inReal", inReal, guardInLen);
       requireLength("KAMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = kamaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("KAMA", retCode);
       }
@@ -542,8 +542,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#KAMA_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#kamaLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -566,25 +566,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MAMA
-    * @see Core#EMA
-    * @see Core#MA
+    * @see Core#mama
+    * @see Core#ema
+    * @see Core#ma
     */
-   public OutRange KAMA( int startIdx,
+   public OutRange kama( int startIdx,
                          int endIdx,
                          float inReal[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("KAMA", startIdx, endIdx);
-      int guardStart = clampedStart("KAMA", startIdx, KAMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("KAMA", startIdx, kamaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("KAMA", "inReal", inReal, guardInLen);
       requireLength("KAMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = KAMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = kamaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("KAMA", retCode);
       }
@@ -594,7 +594,7 @@
 
    /**
     * A live KAMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#KAMA} over the same series.
+    * closed bar, bit-identical to {@link Core#kama} over the same series.
     * Open with {@link Core#kamaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -628,7 +628,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#KAMA} reports over the same bars: the
+       * <p>It is what {@link Core#kama} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -910,7 +910,7 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = KAMA_Lookback(optInTimePeriod);
+         int fillLb = kamaLookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -1193,8 +1193,8 @@
    /**
     * Open a live KAMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#KAMA} at that bar.
-    * <p>The history must hold at least {@code KAMA_Lookback(...) + 1} bars
+    * to {@link Core#kama} at that bar.
+    * <p>The history must hold at least {@code kamaLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1211,7 +1211,7 @@
    }
    /**
     * {@link Core#kamaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#KAMA} over the whole history in the same single pass
+    * to {@link Core#kama} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1224,7 +1224,7 @@
    {
       requireArgument("KAMA openAndFill", "inReal", inReal);
       requireHistory("KAMA openAndFill", inReal.length);
-      int guardOutLen = openFillCount("KAMA openAndFill", inReal.length, KAMA_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("KAMA openAndFill", inReal.length, kamaLookback(optInTimePeriod));
       requireLength("KAMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("KAMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

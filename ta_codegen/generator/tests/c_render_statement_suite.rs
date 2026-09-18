@@ -595,10 +595,10 @@ fn java_macd_lookback_code_rendering() {
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    let lookback_end = j.find("RetCode MACD_Impl(").unwrap();
+    let lookback_end = j.find("RetCode macdImpl(").unwrap();
     let lookback = &j[..lookback_end];
     assert!(
-        lookback.contains("MACD_Lookback"),
+        lookback.contains("macdLookback"),
         "Java MACD should have lookback function"
     );
 }
@@ -620,10 +620,10 @@ fn stochrsi_lookback_cross_calls() {
     );
 
     // Java lookback sums both callees' lookbacks. `contains_call` for the same
-    // reason as above — `RSI_Lookback(` is a suffix of `STOCHRSI_Lookback(`.
+    // reason as above — `rsiLookback(` is a suffix of `stochrsiLookback(`.
     let j = &out.java;
     assert!(
-        contains_call(j, "RSI_Lookback") && contains_call(j, "STOCHF_Lookback"),
+        contains_call(j, "rsiLookback") && contains_call(j, "stochfLookback"),
         "Java STOCHRSI lookback should have cross-indicator lookback calls"
     );
 }

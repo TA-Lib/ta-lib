@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLPIERCING} consumes before it
+    * Number of leading input bars {@link Core#cdlpiercing} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLPIERCING_Lookback( )
+   public int cdlpiercingLookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return BodyLong_avgPeriod + 1 ;
 
    }
-   RetCode CDLPIERCING_Impl( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlpiercingImpl( int startIdx,
+                            int endIdx,
+                            double inOpen[],
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[2];
       int i = 0;
@@ -57,7 +57,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLPIERCING_Lookback();
+      lookbackTotal = cdlpiercingLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -120,15 +120,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLPIERCING_Impl( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlpiercingImpl( int startIdx,
+                            int endIdx,
+                            float inOpen[],
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double[] BodyLongPeriodTotal = new double[2];
       int i = 0;
@@ -145,7 +145,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLPIERCING_Lookback();
+      lookbackTotal = cdlpiercingLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -195,7 +195,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLPIERCING_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlpiercingLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -221,11 +221,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDARKCLOUDCOVER
-    * @see Core#CDLENGULFING
-    * @see Core#CDLMORNINGSTAR
+    * @see Core#cdldarkcloudcover
+    * @see Core#cdlengulfing
+    * @see Core#cdlmorningstar
     */
-   public OutRange CDLPIERCING( int startIdx,
+   public OutRange cdlpiercing( int startIdx,
                                 int endIdx,
                                 double inOpen[],
                                 double inHigh[],
@@ -234,7 +234,7 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLPIERCING", startIdx, endIdx);
-      int guardStart = clampedStart("CDLPIERCING", startIdx, CDLPIERCING_Lookback());
+      int guardStart = clampedStart("CDLPIERCING", startIdx, cdlpiercingLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
@@ -244,7 +244,7 @@
       requireLength("CDLPIERCING", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLPIERCING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlpiercingImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLPIERCING", retCode);
       }
@@ -267,7 +267,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLPIERCING_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlpiercingLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -293,11 +293,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDARKCLOUDCOVER
-    * @see Core#CDLENGULFING
-    * @see Core#CDLMORNINGSTAR
+    * @see Core#cdldarkcloudcover
+    * @see Core#cdlengulfing
+    * @see Core#cdlmorningstar
     */
-   public OutRange CDLPIERCING( int startIdx,
+   public OutRange cdlpiercing( int startIdx,
                                 int endIdx,
                                 float inOpen[],
                                 float inHigh[],
@@ -306,7 +306,7 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLPIERCING", startIdx, endIdx);
-      int guardStart = clampedStart("CDLPIERCING", startIdx, CDLPIERCING_Lookback());
+      int guardStart = clampedStart("CDLPIERCING", startIdx, cdlpiercingLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
@@ -316,7 +316,7 @@
       requireLength("CDLPIERCING", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLPIERCING_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlpiercingImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLPIERCING", retCode);
       }
@@ -326,7 +326,7 @@
 
    /**
     * A live CDLPIERCING stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLPIERCING} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlpiercing} over the same series.
     * Open with {@link Core#cdlpiercingOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -361,7 +361,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLPIERCING} reports over the same bars: the
+       * <p>It is what {@link Core#cdlpiercing} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -562,7 +562,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLPIERCING_Lookback();
+      lookbackTotal = cdlpiercingLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -691,8 +691,8 @@
    /**
     * Open a live CDLPIERCING stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLPIERCING} at that bar.
-    * <p>The history must hold at least {@code CDLPIERCING_Lookback(...) + 1} bars
+    * to {@link Core#cdlpiercing} at that bar.
+    * <p>The history must hold at least {@code cdlpiercingLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -713,7 +713,7 @@
    }
    /**
     * {@link Core#cdlpiercingOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLPIERCING} over the whole history in the same single pass
+    * to {@link Core#cdlpiercing} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -729,7 +729,7 @@
       requireArgument("CDLPIERCING openAndFill", "inHigh", inHigh);
       requireArgument("CDLPIERCING openAndFill", "inLow", inLow);
       requireArgument("CDLPIERCING openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLPIERCING openAndFill", inOpen.length, CDLPIERCING_Lookback());
+      int guardOutLen = openFillCount("CDLPIERCING openAndFill", inOpen.length, cdlpiercingLookback());
       requireHistoryLength("CDLPIERCING openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLPIERCING openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLPIERCING openAndFill", "inClose", inClose.length, inOpen.length);

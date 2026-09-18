@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLBELTHOLD} consumes before it
+    * Number of leading input bars {@link Core#cdlbelthold} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLBELTHOLD_Lookback( )
+   public int cdlbeltholdLookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
-   RetCode CDLBELTHOLD_Impl( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlbeltholdImpl( int startIdx,
+                            int endIdx,
+                            double inOpen[],
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLBELTHOLD_Lookback();
+      lookbackTotal = cdlbeltholdLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -126,15 +126,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLBELTHOLD_Impl( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlbeltholdImpl( int startIdx,
+                            int endIdx,
+                            float inOpen[],
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -155,7 +155,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLBELTHOLD_Lookback();
+      lookbackTotal = cdlbeltholdLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -211,7 +211,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLBELTHOLD_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlbeltholdLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -237,11 +237,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLCLOSINGMARUBOZU
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLLONGLINE
+    * @see Core#cdlclosingmarubozu
+    * @see Core#cdlmarubozu
+    * @see Core#cdllongline
     */
-   public OutRange CDLBELTHOLD( int startIdx,
+   public OutRange cdlbelthold( int startIdx,
                                 int endIdx,
                                 double inOpen[],
                                 double inHigh[],
@@ -250,7 +250,7 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLBELTHOLD", startIdx, endIdx);
-      int guardStart = clampedStart("CDLBELTHOLD", startIdx, CDLBELTHOLD_Lookback());
+      int guardStart = clampedStart("CDLBELTHOLD", startIdx, cdlbeltholdLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
@@ -260,7 +260,7 @@
       requireLength("CDLBELTHOLD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLBELTHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlbeltholdImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLBELTHOLD", retCode);
       }
@@ -285,7 +285,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLBELTHOLD_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlbeltholdLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -311,11 +311,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLCLOSINGMARUBOZU
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLLONGLINE
+    * @see Core#cdlclosingmarubozu
+    * @see Core#cdlmarubozu
+    * @see Core#cdllongline
     */
-   public OutRange CDLBELTHOLD( int startIdx,
+   public OutRange cdlbelthold( int startIdx,
                                 int endIdx,
                                 float inOpen[],
                                 float inHigh[],
@@ -324,7 +324,7 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLBELTHOLD", startIdx, endIdx);
-      int guardStart = clampedStart("CDLBELTHOLD", startIdx, CDLBELTHOLD_Lookback());
+      int guardStart = clampedStart("CDLBELTHOLD", startIdx, cdlbeltholdLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
@@ -334,7 +334,7 @@
       requireLength("CDLBELTHOLD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLBELTHOLD_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlbeltholdImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLBELTHOLD", retCode);
       }
@@ -344,7 +344,7 @@
 
    /**
     * A live CDLBELTHOLD stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLBELTHOLD} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlbelthold} over the same series.
     * Open with {@link Core#cdlbeltholdOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -381,7 +381,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLBELTHOLD} reports over the same bars: the
+       * <p>It is what {@link Core#cdlbelthold} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -595,7 +595,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLBELTHOLD_Lookback();
+      lookbackTotal = cdlbeltholdLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -733,8 +733,8 @@
    /**
     * Open a live CDLBELTHOLD stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLBELTHOLD} at that bar.
-    * <p>The history must hold at least {@code CDLBELTHOLD_Lookback(...) + 1} bars
+    * to {@link Core#cdlbelthold} at that bar.
+    * <p>The history must hold at least {@code cdlbeltholdLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -755,7 +755,7 @@
    }
    /**
     * {@link Core#cdlbeltholdOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLBELTHOLD} over the whole history in the same single pass
+    * to {@link Core#cdlbelthold} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -771,7 +771,7 @@
       requireArgument("CDLBELTHOLD openAndFill", "inHigh", inHigh);
       requireArgument("CDLBELTHOLD openAndFill", "inLow", inLow);
       requireArgument("CDLBELTHOLD openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLBELTHOLD openAndFill", inOpen.length, CDLBELTHOLD_Lookback());
+      int guardOutLen = openFillCount("CDLBELTHOLD openAndFill", inOpen.length, cdlbeltholdLookback());
       requireHistoryLength("CDLBELTHOLD openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLBELTHOLD openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLBELTHOLD openAndFill", "inClose", inClose.length, inOpen.length);

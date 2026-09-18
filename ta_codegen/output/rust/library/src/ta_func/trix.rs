@@ -70,7 +70,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::TRIX`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::trix`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -84,20 +84,20 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_TRIX_Lookback")]
     #[inline]
-    pub fn TRIX_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn trix_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
         let mut emaLookback: usize = 0_usize;
-        emaLookback = self.EMA_Lookback(optInTimePeriod)?;
-        return Ok((emaLookback * 3 + self.ROCR_Lookback(1)?) as usize);
+        emaLookback = self.ema_lookback(optInTimePeriod)?;
+        return Ok((emaLookback * 3 + self.rocr_lookback(1)?) as usize);
     }
-    /// C-shaped body behind [`Core::TRIX`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::trix`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn TRIX_Impl(
+    pub(crate) fn trix_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -108,13 +108,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, TRIX_Impl_fma, TRIX_Impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, trix_impl_fma, trix_impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.TRIX_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.trix_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn TRIX_Impl_fma(
+    fn trix_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -124,10 +124,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.TRIX_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.trix_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn TRIX_Impl_impl(
+    fn trix_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -148,7 +148,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.TRIX_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.trix_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -168,8 +168,8 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.EMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
-        lookbackTotal = lookbackEMA * 3 + self.ROCR_Lookback(1).unwrap_or(usize::MAX);
+        lookbackEMA = self.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -300,7 +300,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.TRIX(0, data.len() - 1, &data, 30, &mut out)?;
+    /// let out_range = core.trix(0, data.len() - 1, &data, 30, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -308,14 +308,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::EMA`] · [`Core::ROC`] · [`Core::ROCR`] · [`Core::TEMA`]
+    /// [`EMA`](Core::ema) · [`ROC`](Core::roc) · [`ROCR`](Core::rocr) · [`TEMA`](Core::tema)
     ///
     /// # References
     ///
     /// * Jack K. Hutson, Technical Analysis of Stocks & Commodities (1980s)
     #[doc(alias = "TA_TRIX")]
     #[doc(alias = "TripleExponentialAverage")]
-    pub fn TRIX(
+    pub fn trix(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -329,7 +329,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.TRIX_Lookback(optInTimePeriod)?;
+        let _guardLb = self.trix_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -340,7 +340,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.TRIX_Impl(
+        let retCode = self.trix_impl(
             startIdx,
             endIdx,
             inReal,
@@ -358,7 +358,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TRIX stream: one value per closed bar, bit-identical to [`Core::TRIX`]
+/// Live TRIX stream: one value per closed bar, bit-identical to [`Core::trix`]
 /// over the same series. Open with [`Core::trix_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -444,8 +444,8 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.EMA_Lookback(optInTimePeriod)?;
-        lookbackTotal = lookbackEMA * 3 + self.ROCR_Lookback(1)?;
+        lookbackEMA = self.ema_lookback(optInTimePeriod)?;
+        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -552,7 +552,7 @@ impl Core {
     }
 
     /// Open a live TRIX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::TRIX`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::trix`] at that bar.
     ///
     /// # Errors
     ///
@@ -582,7 +582,7 @@ impl Core {
     }
 
     /// [`Core::trix_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::TRIX`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::trix`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -599,7 +599,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.TRIX(0, data.len() - 1, &data, 30, &mut batch_out)?;
+    /// let batch = core.trix(0, data.len() - 1, &data, 30, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.trix_open_and_fill(&data, 30, &mut out)?;
@@ -620,7 +620,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.TRIX_Lookback(optInTimePeriod)?;
+        let _guardLb = self.trix_lookback(optInTimePeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -736,7 +736,7 @@ impl TrixStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::TRIX`] reports over the same bars: the opener sets it
+    /// It is what [`Core::trix`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

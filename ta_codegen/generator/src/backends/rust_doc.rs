@@ -141,7 +141,11 @@ pub fn guarded_docs(
             .iter()
             .map(|n| {
                 if registry.contains(&n.to_lowercase()) {
-                    format!("[`Core::{}`]", registry.name_of(&n.to_lowercase()))
+                    format!(
+                        "[`{0}`](Core::{1})",
+                        registry.name_of(&n.to_lowercase()),
+                        super::common::snake_words(&registry.name_of(&n.to_lowercase()))
+                    )
                 } else {
                     escape_prose(n)
                 }
@@ -202,7 +206,11 @@ pub fn category_index(funcs: &[FuncDef]) -> String {
         for f in members {
             let hint = f.hint.as_deref().unwrap_or_default();
             let dash = if hint.is_empty() { "" } else { " — " };
-            s.push_str(&format!("//! * [`{0}`](Core::{0}){dash}{hint}\n", f.name));
+            s.push_str(&format!(
+                "//! * [`{0}`](Core::{1}){dash}{hint}\n",
+                f.name,
+                super::common::snake_words(&f.name)
+            ));
         }
         s.push_str("//!\n");
     }
@@ -297,7 +305,7 @@ pub fn private_docs(func: &FuncDef, snake: &str) -> String {
     ));
     d.blank();
     d.paragraph(&format!(
-        "Unlike `{snake}_Impl` the bounds assertions here are unconditional: an \
+        "Unlike `{snake}_impl` the bounds assertions here are unconditional: an \
          `endIdx` beyond the input slice panics even when the lookback clamp means \
          no element would be read. [`Core::{snake}`] rejects that with \
          [`RetCode::BadParam`] and never reaches either."

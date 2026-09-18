@@ -31,7 +31,7 @@ fn emit_csharp_sv_func(
     enums: &HashMap<String, EnumDef>,
 ) -> String {
     use std::fmt::Write as _;
-    let base = func.name.clone();
+    let base = crate::backends::common::pascal_words(&func.name);
     let base_pascal = crate::backends::common::pascal_words(&func.name);
     let class = crate::backends::csharp_stream::stream_class_name(func);
     let valty = crate::backends::csharp_stream::value_type_name(func);
@@ -377,9 +377,9 @@ fn emit_csharp_sv_func(
     // code, including the ones the public surface converts into throws.
     let _ = writeln!(
         s,
-        "            RetCode rc;\n            try {{ rc = c2.{base}_Impl(0, svN - 1, {full_ins}, {opts_lead}out beg, out nb{bargs}); }}\n            catch (Exception _sve) when (_sve is ITALibFailure) {{ rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }}"
+        "            RetCode rc;\n            try {{ rc = c2.{base}Impl(0, svN - 1, {full_ins}, {opts_lead}out beg, out nb{bargs}); }}\n            catch (Exception _sve) when (_sve is ITALibFailure) {{ rc = ((ITALibFailure)_sve).RetCode; beg = 0; nb = 0; }}"
     );
-    let _ = writeln!(s, "            int lb = c2.{base}_Lookback({opts});");
+    let _ = writeln!(s, "            int lb = c2.{base}Lookback({opts});");
     s.push_str("            if (rc != RetCode.Success || nb == 0) {\n");
     // Reject parity: whenever the batch produced nothing -- an error (bad
     // params, an out-of-list enum reaching a dispatch default arm) or an empty
@@ -889,7 +889,7 @@ fn emit_csharp_sv_func(
         s.push_str("                        int mBeg = 0, mNb = 0;\n");
         let _ = writeln!(
             s,
-            "                        RetCode mrc;\n                        try {{ mrc = c2.{base}_Impl(0, svN - 1, {full_ins}, {opts_lead}out mBeg, out mNb{margs}); }}\n                        catch (Exception _mve) when (_mve is ITALibFailure) {{ mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }}"
+            "                        RetCode mrc;\n                        try {{ mrc = c2.{base}Impl(0, svN - 1, {full_ins}, {opts_lead}out mBeg, out mNb{margs}); }}\n                        catch (Exception _mve) when (_mve is ITALibFailure) {{ mrc = ((ITALibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }}"
         );
         s.push_str("                        if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;\n");
         s.push_str("                        else {\n");
@@ -995,7 +995,7 @@ fn emit_csharp_sv_func(
     s.push_str("                    RetCode rcS;\n");
     let _ = writeln!(
         s,
-        "                    try {{ rcS = c2.{base}_Impl(Sidx, svN - 1, {full_ins}, {opts_lead}out begS, out nbS{bargs}); }}\n\
+        "                    try {{ rcS = c2.{base}Impl(Sidx, svN - 1, {full_ins}, {opts_lead}out begS, out nbS{bargs}); }}\n\
          \x20                   catch (Exception _sve) when (_sve is ITALibFailure) {{ rcS = ((ITALibFailure)_sve).RetCode; }}"
     );
     s.push_str("                    if (rcS == RetCode.Success && nbS > 0) {\n");

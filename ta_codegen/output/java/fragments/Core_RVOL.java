@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#RVOL} consumes before it can
+    * Number of leading input bars {@link Core#rvol} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int RVOL_Lookback( int optInTimePeriod )
+   public int rvolLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
@@ -34,13 +34,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode RVOL_Impl( int startIdx,
-                      int endIdx,
-                      double inVolume[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode rvolImpl( int startIdx,
+                     int endIdx,
+                     double inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double periodTotal = 0;
       double baseline = 0;
@@ -99,13 +99,13 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode RVOL_Impl( int startIdx,
-                      int endIdx,
-                      float inVolume[],
-                      int optInTimePeriod,
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode rvolImpl( int startIdx,
+                     int endIdx,
+                     float inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double periodTotal = 0;
       double baseline = 0;
@@ -176,8 +176,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RVOL_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#rvolLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -201,26 +201,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#OBV
-    * @see Core#PVO
-    * @see Core#VWMA
-    * @see Core#SMA
+    * @see Core#obv
+    * @see Core#pvo
+    * @see Core#vwma
+    * @see Core#sma
     */
-   public OutRange RVOL( int startIdx,
+   public OutRange rvol( int startIdx,
                          int endIdx,
                          double inVolume[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("RVOL", startIdx, endIdx);
-      int guardStart = clampedStart("RVOL", startIdx, RVOL_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("RVOL", startIdx, rvolLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RVOL", "inVolume", inVolume, guardInLen);
       requireLength("RVOL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RVOL_Impl(startIdx, endIdx, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = rvolImpl(startIdx, endIdx, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("RVOL", retCode);
       }
@@ -249,8 +249,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RVOL_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#rvolLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -274,26 +274,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#OBV
-    * @see Core#PVO
-    * @see Core#VWMA
-    * @see Core#SMA
+    * @see Core#obv
+    * @see Core#pvo
+    * @see Core#vwma
+    * @see Core#sma
     */
-   public OutRange RVOL( int startIdx,
+   public OutRange rvol( int startIdx,
                          int endIdx,
                          float inVolume[],
                          int optInTimePeriod,
                          double outReal[] )
    {
       requireIndexRange("RVOL", startIdx, endIdx);
-      int guardStart = clampedStart("RVOL", startIdx, RVOL_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("RVOL", startIdx, rvolLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RVOL", "inVolume", inVolume, guardInLen);
       requireLength("RVOL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RVOL_Impl(startIdx, endIdx, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = rvolImpl(startIdx, endIdx, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("RVOL", retCode);
       }
@@ -303,7 +303,7 @@
 
    /**
     * A live RVOL stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#RVOL} over the same series.
+    * closed bar, bit-identical to {@link Core#rvol} over the same series.
     * Open with {@link Core#rvolOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -331,7 +331,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#RVOL} reports over the same bars: the
+       * <p>It is what {@link Core#rvol} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -610,8 +610,8 @@
    /**
     * Open a live RVOL stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#RVOL} at that bar.
-    * <p>The history must hold at least {@code RVOL_Lookback(...) + 1} bars
+    * to {@link Core#rvol} at that bar.
+    * <p>The history must hold at least {@code rvolLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -628,7 +628,7 @@
    }
    /**
     * {@link Core#rvolOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#RVOL} over the whole history in the same single pass
+    * to {@link Core#rvol} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -641,7 +641,7 @@
    {
       requireArgument("RVOL openAndFill", "inVolume", inVolume);
       requireHistory("RVOL openAndFill", inVolume.length);
-      int guardOutLen = openFillCount("RVOL openAndFill", inVolume.length, RVOL_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("RVOL openAndFill", inVolume.length, rvolLookback(optInTimePeriod));
       requireLength("RVOL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
          throw new TALibArgumentException("RVOL openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

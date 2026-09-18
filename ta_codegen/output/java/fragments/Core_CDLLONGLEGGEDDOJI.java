@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLLONGLEGGEDDOJI} consumes
+    * Number of leading input bars {@link Core#cdllongleggeddoji} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLLONGLEGGEDDOJI_Lookback( )
+   public int cdllongleggeddojiLookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].rangeType.ordinal();
       int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyDoji_avgPeriod, ShadowLong_avgPeriod) ;
 
    }
-   RetCode CDLLONGLEGGEDDOJI_Impl( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode cdllongleggeddojiImpl( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLLONGLEGGEDDOJI_Lookback();
+      lookbackTotal = cdllongleggeddojiLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -122,15 +122,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLLONGLEGGEDDOJI_Impl( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode cdllongleggeddojiImpl( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -151,7 +151,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLLONGLEGGEDDOJI_Lookback();
+      lookbackTotal = cdllongleggeddojiLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -205,7 +205,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLLONGLEGGEDDOJI_Lookback} is a
+    * valid range shorter than {@link Core#cdllongleggeddojiLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -231,12 +231,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJI
-    * @see Core#CDLGRAVESTONEDOJI
-    * @see Core#CDLDRAGONFLYDOJI
-    * @see Core#CDLRICKSHAWMAN
+    * @see Core#cdldoji
+    * @see Core#cdlgravestonedoji
+    * @see Core#cdldragonflydoji
+    * @see Core#cdlrickshawman
     */
-   public OutRange CDLLONGLEGGEDDOJI( int startIdx,
+   public OutRange cdllongleggeddoji( int startIdx,
                                       int endIdx,
                                       double inOpen[],
                                       double inHigh[],
@@ -245,7 +245,7 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDLLONGLEGGEDDOJI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLLONGLEGGEDDOJI", startIdx, CDLLONGLEGGEDDOJI_Lookback());
+      int guardStart = clampedStart("CDLLONGLEGGEDDOJI", startIdx, cdllongleggeddojiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLONGLEGGEDDOJI", "inOpen", inOpen, guardInLen);
@@ -255,7 +255,7 @@
       requireLength("CDLLONGLEGGEDDOJI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLLONGLEGGEDDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdllongleggeddojiImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLLONGLEGGEDDOJI", retCode);
       }
@@ -278,7 +278,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLLONGLEGGEDDOJI_Lookback} is a
+    * valid range shorter than {@link Core#cdllongleggeddojiLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -304,12 +304,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJI
-    * @see Core#CDLGRAVESTONEDOJI
-    * @see Core#CDLDRAGONFLYDOJI
-    * @see Core#CDLRICKSHAWMAN
+    * @see Core#cdldoji
+    * @see Core#cdlgravestonedoji
+    * @see Core#cdldragonflydoji
+    * @see Core#cdlrickshawman
     */
-   public OutRange CDLLONGLEGGEDDOJI( int startIdx,
+   public OutRange cdllongleggeddoji( int startIdx,
                                       int endIdx,
                                       float inOpen[],
                                       float inHigh[],
@@ -318,7 +318,7 @@
                                       int outInteger[] )
    {
       requireIndexRange("CDLLONGLEGGEDDOJI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLLONGLEGGEDDOJI", startIdx, CDLLONGLEGGEDDOJI_Lookback());
+      int guardStart = clampedStart("CDLLONGLEGGEDDOJI", startIdx, cdllongleggeddojiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLLONGLEGGEDDOJI", "inOpen", inOpen, guardInLen);
@@ -328,7 +328,7 @@
       requireLength("CDLLONGLEGGEDDOJI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLLONGLEGGEDDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdllongleggeddojiImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLLONGLEGGEDDOJI", retCode);
       }
@@ -338,7 +338,7 @@
 
    /**
     * A live CDLLONGLEGGEDDOJI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLLONGLEGGEDDOJI} over the same series.
+    * closed bar, bit-identical to {@link Core#cdllongleggeddoji} over the same series.
     * Open with {@link Core#cdllongleggeddojiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -375,7 +375,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLLONGLEGGEDDOJI} reports over the same bars: the
+       * <p>It is what {@link Core#cdllongleggeddoji} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -579,7 +579,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLLONGLEGGEDDOJI_Lookback();
+      lookbackTotal = cdllongleggeddojiLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -713,8 +713,8 @@
    /**
     * Open a live CDLLONGLEGGEDDOJI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLLONGLEGGEDDOJI} at that bar.
-    * <p>The history must hold at least {@code CDLLONGLEGGEDDOJI_Lookback(...) + 1} bars
+    * to {@link Core#cdllongleggeddoji} at that bar.
+    * <p>The history must hold at least {@code cdllongleggeddojiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -735,7 +735,7 @@
    }
    /**
     * {@link Core#cdllongleggeddojiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLLONGLEGGEDDOJI} over the whole history in the same single pass
+    * to {@link Core#cdllongleggeddoji} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -751,7 +751,7 @@
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLLONGLEGGEDDOJI openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLLONGLEGGEDDOJI openAndFill", inOpen.length, CDLLONGLEGGEDDOJI_Lookback());
+      int guardOutLen = openFillCount("CDLLONGLEGGEDDOJI openAndFill", inOpen.length, cdllongleggeddojiLookback());
       requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLLONGLEGGEDDOJI openAndFill", "inClose", inClose.length, inOpen.length);

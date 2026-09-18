@@ -463,6 +463,20 @@ public class MetadataTest {
      * second path for the comparison above. (The library itself uses no
      * reflection; this is test scaffolding.)
      */
+    /** The canonical name as the Java surface spells it: {@code HT_TRENDLINE} -> {@code htTrendline}. */
+    private static String folded(String canonical) {
+        StringBuilder sb = new StringBuilder();
+        for (String part : canonical.split("_")) {
+            if (part.isEmpty()) {
+                continue;
+            }
+            sb.append(sb.length() == 0 ? Character.toLowerCase(part.charAt(0))
+                                       : Character.toUpperCase(part.charAt(0)));
+            sb.append(part.substring(1).toLowerCase(java.util.Locale.ROOT));
+        }
+        return sb.toString();
+    }
+
     private static OutRange typedCall(FuncInfo f, double[][] outs, int[][] iouts)
             throws Exception {
         java.util.List<Object> args = new java.util.ArrayList<>();
@@ -528,7 +542,7 @@ public class MetadataTest {
         }
 
         java.lang.reflect.Method m =
-            Core.class.getMethod(f.name(), types.toArray(new Class<?>[0]));
+            Core.class.getMethod(folded(f.name()), types.toArray(new Class<?>[0]));
         return (OutRange) m.invoke(Core.DEFAULT, args.toArray());
     }
 
@@ -691,7 +705,7 @@ public class MetadataTest {
 
         // And against the typed call, bit for bit.
         double[] c = new double[N];
-        OutRange rc = Core.DEFAULT.SMA(0, N - 1, CLOSE, 5, c);
+        OutRange rc = Core.DEFAULT.sma(0, N - 1, CLOSE, 5, c);
         check(rc.equals(ra), "explicit-parameter range matches the typed call");
         boolean same = true;
         for (int i = 0; i < rc.count(); i++) {
@@ -891,10 +905,10 @@ public class MetadataTest {
         int viaDefault = rsi.newCall().setOptInput(0, 14).lookback();
         int viaTuned = rsi.newCall(tuned).setOptInput(0, 14).lookback();
 
-        check(viaDefault == Core.DEFAULT.RSI_Lookback(14),
+        check(viaDefault == Core.DEFAULT.rsiLookback(14),
               "newCall() uses Core.DEFAULT (" + viaDefault + ")");
-        check(viaTuned == tuned.RSI_Lookback(14),
-              "newCall(core) uses the given Core (" + viaTuned + " vs " + tuned.RSI_Lookback(14) + ")");
+        check(viaTuned == tuned.rsiLookback(14),
+              "newCall(core) uses the given Core (" + viaTuned + " vs " + tuned.rsiLookback(14) + ")");
         check(viaTuned == viaDefault + 9,
               "the unstable period reaches the binder: " + viaDefault + " + 9 == " + viaTuned);
 
@@ -932,7 +946,7 @@ public class MetadataTest {
          * the 176 functions to on Core.DEFAULT, now on a Core that is not it.
          */
         double[] direct = new double[N];
-        OutRange rDirect = tuned.RSI(0, N - 1, CLOSE, 14, direct);
+        OutRange rDirect = tuned.rsi(0, N - 1, CLOSE, 14, direct);
         check(rDirect.begIdx() == rTuned.begIdx() && rDirect.count() == rTuned.count(),
               "the binder and the typed call agree on the range for the tuned Core");
         boolean sameBits = true;

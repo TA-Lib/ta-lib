@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#COPPOCK} consumes before it can
+    * Number of leading input bars {@link Core#coppock} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -26,7 +26,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int COPPOCK_Lookback( int optInWMAPeriod, int optInROC1Period, int optInROC2Period )
+   public int coppockLookback( int optInWMAPeriod, int optInROC1Period, int optInROC2Period )
    {
       if( optInWMAPeriod == Integer.MIN_VALUE ) {
          optInWMAPeriod = 10;
@@ -55,15 +55,15 @@
       return optInROC2Period + optInWMAPeriod - 1 ;
 
    }
-   RetCode COPPOCK_Impl( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInWMAPeriod,
-                         int optInROC1Period,
-                         int optInROC2Period,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode coppockImpl( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInWMAPeriod,
+                        int optInROC1Period,
+                        int optInROC2Period,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int inIdx = 0;
@@ -136,7 +136,7 @@
        * expiring slot and the re-anchor walks the ring, oldest first, weight
        * counting up from 1, then adds the current bar at weight w.
        */
-      lookbackTotal = COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
+      lookbackTotal = coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -265,15 +265,15 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode COPPOCK_Impl( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInWMAPeriod,
-                         int optInROC1Period,
-                         int optInROC2Period,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode coppockImpl( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInWMAPeriod,
+                        int optInROC1Period,
+                        int optInROC2Period,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int outIdx = 0;
       int inIdx = 0;
@@ -320,7 +320,7 @@
       } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
+      lookbackTotal = coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -428,8 +428,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#COPPOCK_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#coppockLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -456,7 +456,7 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     */
-   public OutRange COPPOCK( int startIdx,
+   public OutRange coppock( int startIdx,
                             int endIdx,
                             double inReal[],
                             int optInWMAPeriod,
@@ -465,14 +465,14 @@
                             double outReal[] )
    {
       requireIndexRange("COPPOCK", startIdx, endIdx);
-      int guardStart = clampedStart("COPPOCK", startIdx, COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
+      int guardStart = clampedStart("COPPOCK", startIdx, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COPPOCK", "inReal", inReal, guardInLen);
       requireLength("COPPOCK", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COPPOCK_Impl(startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
+      RetCode retCode = coppockImpl(startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("COPPOCK", retCode);
       }
@@ -497,8 +497,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#COPPOCK_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#coppockLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -525,7 +525,7 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     */
-   public OutRange COPPOCK( int startIdx,
+   public OutRange coppock( int startIdx,
                             int endIdx,
                             float inReal[],
                             int optInWMAPeriod,
@@ -534,14 +534,14 @@
                             double outReal[] )
    {
       requireIndexRange("COPPOCK", startIdx, endIdx);
-      int guardStart = clampedStart("COPPOCK", startIdx, COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
+      int guardStart = clampedStart("COPPOCK", startIdx, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COPPOCK", "inReal", inReal, guardInLen);
       requireLength("COPPOCK", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COPPOCK_Impl(startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
+      RetCode retCode = coppockImpl(startIdx, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("COPPOCK", retCode);
       }
@@ -551,7 +551,7 @@
 
    /**
     * A live COPPOCK stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#COPPOCK} over the same series.
+    * closed bar, bit-identical to {@link Core#coppock} over the same series.
     * Open with {@link Core#coppockOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -593,7 +593,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#COPPOCK} reports over the same bars: the
+       * <p>It is what {@link Core#coppock} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -966,7 +966,7 @@
        * expiring slot and the re-anchor walks the ring, oldest first, weight
        * counting up from 1, then adds the current bar at weight w.
        */
-      lookbackTotal = COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
+      lookbackTotal = coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1176,8 +1176,8 @@
    /**
     * Open a live COPPOCK stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#COPPOCK} at that bar.
-    * <p>The history must hold at least {@code COPPOCK_Lookback(...) + 1} bars
+    * to {@link Core#coppock} at that bar.
+    * <p>The history must hold at least {@code coppockLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1194,7 +1194,7 @@
    }
    /**
     * {@link Core#coppockOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#COPPOCK} over the whole history in the same single pass
+    * to {@link Core#coppock} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1207,7 +1207,7 @@
    {
       requireArgument("COPPOCK openAndFill", "inReal", inReal);
       requireHistory("COPPOCK openAndFill", inReal.length);
-      int guardOutLen = openFillCount("COPPOCK openAndFill", inReal.length, COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
+      int guardOutLen = openFillCount("COPPOCK openAndFill", inReal.length, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       requireLength("COPPOCK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("COPPOCK openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

@@ -111,7 +111,7 @@ def parse_rust(root):
         # The batch entry point, not the stream API: it is what separates an
         # indicator from types.rs / mod.rs / the shared stream helpers, and it
         # does not move when the stream API is recased.
-        if not re.search(r"pub fn %s_Lookback\(" % re.escape(name), src):
+        if not re.search(r"pub fn %s_lookback\(" % re.escape(name.lower()), src):
             continue
         m = re.search(r"pub fn (\w+_open)\(&self, ([^)]*?)\) -> Result<\((\w+Stream)\b", src)
         if not m:

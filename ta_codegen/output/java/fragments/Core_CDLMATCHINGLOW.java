@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLMATCHINGLOW} consumes before
+    * Number of leading input bars {@link Core#cdlmatchinglow} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLMATCHINGLOW_Lookback( )
+   public int cdlmatchinglowLookback( )
    {
       int Equal_rangeType = this.candleSettings[CandleSettingType.EQUAL.ordinal()].rangeType.ordinal();
       int Equal_avgPeriod = this.candleSettings[CandleSettingType.EQUAL.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return Equal_avgPeriod + 1 ;
 
    }
-   RetCode CDLMATCHINGLOW_Impl( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlmatchinglowImpl( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -56,7 +56,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMATCHINGLOW_Lookback();
+      lookbackTotal = cdlmatchinglowLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -109,15 +109,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLMATCHINGLOW_Impl( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdlmatchinglowImpl( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -133,7 +133,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLMATCHINGLOW_Lookback();
+      lookbackTotal = cdlmatchinglowLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -180,7 +180,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLMATCHINGLOW_Lookback} is a
+    * valid range shorter than {@link Core#cdlmatchinglowLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -206,9 +206,9 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHOMINGPIGEON
+    * @see Core#cdlhomingpigeon
     */
-   public OutRange CDLMATCHINGLOW( int startIdx,
+   public OutRange cdlmatchinglow( int startIdx,
                                    int endIdx,
                                    double inOpen[],
                                    double inHigh[],
@@ -217,7 +217,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLMATCHINGLOW", startIdx, endIdx);
-      int guardStart = clampedStart("CDLMATCHINGLOW", startIdx, CDLMATCHINGLOW_Lookback());
+      int guardStart = clampedStart("CDLMATCHINGLOW", startIdx, cdlmatchinglowLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATCHINGLOW", "inOpen", inOpen, guardInLen);
@@ -227,7 +227,7 @@
       requireLength("CDLMATCHINGLOW", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATCHINGLOW_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlmatchinglowImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLMATCHINGLOW", retCode);
       }
@@ -251,7 +251,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLMATCHINGLOW_Lookback} is a
+    * valid range shorter than {@link Core#cdlmatchinglowLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -277,9 +277,9 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLHOMINGPIGEON
+    * @see Core#cdlhomingpigeon
     */
-   public OutRange CDLMATCHINGLOW( int startIdx,
+   public OutRange cdlmatchinglow( int startIdx,
                                    int endIdx,
                                    float inOpen[],
                                    float inHigh[],
@@ -288,7 +288,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLMATCHINGLOW", startIdx, endIdx);
-      int guardStart = clampedStart("CDLMATCHINGLOW", startIdx, CDLMATCHINGLOW_Lookback());
+      int guardStart = clampedStart("CDLMATCHINGLOW", startIdx, cdlmatchinglowLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLMATCHINGLOW", "inOpen", inOpen, guardInLen);
@@ -298,7 +298,7 @@
       requireLength("CDLMATCHINGLOW", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATCHINGLOW_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlmatchinglowImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLMATCHINGLOW", retCode);
       }
@@ -308,7 +308,7 @@
 
    /**
     * A live CDLMATCHINGLOW stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLMATCHINGLOW} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlmatchinglow} over the same series.
     * Open with {@link Core#cdlmatchinglowOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -343,7 +343,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLMATCHINGLOW} reports over the same bars: the
+       * <p>It is what {@link Core#cdlmatchinglow} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -534,7 +534,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLMATCHINGLOW_Lookback();
+      lookbackTotal = cdlmatchinglowLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -653,8 +653,8 @@
    /**
     * Open a live CDLMATCHINGLOW stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLMATCHINGLOW} at that bar.
-    * <p>The history must hold at least {@code CDLMATCHINGLOW_Lookback(...) + 1} bars
+    * to {@link Core#cdlmatchinglow} at that bar.
+    * <p>The history must hold at least {@code cdlmatchinglowLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -675,7 +675,7 @@
    }
    /**
     * {@link Core#cdlmatchinglowOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLMATCHINGLOW} over the whole history in the same single pass
+    * to {@link Core#cdlmatchinglow} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -691,7 +691,7 @@
       requireArgument("CDLMATCHINGLOW openAndFill", "inHigh", inHigh);
       requireArgument("CDLMATCHINGLOW openAndFill", "inLow", inLow);
       requireArgument("CDLMATCHINGLOW openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLMATCHINGLOW openAndFill", inOpen.length, CDLMATCHINGLOW_Lookback());
+      int guardOutLen = openFillCount("CDLMATCHINGLOW openAndFill", inOpen.length, cdlmatchinglowLookback());
       requireHistoryLength("CDLMATCHINGLOW openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLMATCHINGLOW openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLMATCHINGLOW openAndFill", "inClose", inClose.length, inOpen.length);

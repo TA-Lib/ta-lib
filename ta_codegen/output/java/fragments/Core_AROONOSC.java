@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#AROONOSC} consumes before it can
+    * Number of leading input bars {@link Core#aroonosc} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int AROONOSC_Lookback( int optInTimePeriod )
+   public int aroonoscLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -37,14 +37,14 @@
       return optInTimePeriod ;
 
    }
-   RetCode AROONOSC_Impl( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode aroonoscImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -163,14 +163,14 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode AROONOSC_Impl( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode aroonoscImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -263,7 +263,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AROONOSC_Lookback} is a <b>success
+    * valid range shorter than {@link Core#aroonoscLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -289,10 +289,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AROON
-    * @see Core#MINMAX
+    * @see Core#aroon
+    * @see Core#minmax
     */
-   public OutRange AROONOSC( int startIdx,
+   public OutRange aroonosc( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
@@ -300,7 +300,7 @@
                              double outReal[] )
    {
       requireIndexRange("AROONOSC", startIdx, endIdx);
-      int guardStart = clampedStart("AROONOSC", startIdx, AROONOSC_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("AROONOSC", startIdx, aroonoscLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
@@ -308,7 +308,7 @@
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROONOSC_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = aroonoscImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AROONOSC", retCode);
       }
@@ -327,7 +327,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AROONOSC_Lookback} is a <b>success
+    * valid range shorter than {@link Core#aroonoscLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -353,10 +353,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AROON
-    * @see Core#MINMAX
+    * @see Core#aroon
+    * @see Core#minmax
     */
-   public OutRange AROONOSC( int startIdx,
+   public OutRange aroonosc( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
@@ -364,7 +364,7 @@
                              double outReal[] )
    {
       requireIndexRange("AROONOSC", startIdx, endIdx);
-      int guardStart = clampedStart("AROONOSC", startIdx, AROONOSC_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("AROONOSC", startIdx, aroonoscLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
@@ -372,7 +372,7 @@
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROONOSC_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = aroonoscImpl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AROONOSC", retCode);
       }
@@ -382,7 +382,7 @@
 
    /**
     * A live AROONOSC stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#AROONOSC} over the same series.
+    * closed bar, bit-identical to {@link Core#aroonosc} over the same series.
     * Open with {@link Core#aroonoscOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -417,7 +417,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#AROONOSC} reports over the same bars: the
+       * <p>It is what {@link Core#aroonosc} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -856,8 +856,8 @@
    /**
     * Open a live AROONOSC stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#AROONOSC} at that bar.
-    * <p>The history must hold at least {@code AROONOSC_Lookback(...) + 1} bars
+    * to {@link Core#aroonosc} at that bar.
+    * <p>The history must hold at least {@code aroonoscLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -876,7 +876,7 @@
    }
    /**
     * {@link Core#aroonoscOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#AROONOSC} over the whole history in the same single pass
+    * to {@link Core#aroonosc} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -890,7 +890,7 @@
       requireArgument("AROONOSC openAndFill", "inHigh", inHigh);
       requireHistory("AROONOSC openAndFill", inHigh.length);
       requireArgument("AROONOSC openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("AROONOSC openAndFill", inHigh.length, AROONOSC_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("AROONOSC openAndFill", inHigh.length, aroonoscLookback(optInTimePeriod));
       requireHistoryLength("AROONOSC openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AROONOSC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

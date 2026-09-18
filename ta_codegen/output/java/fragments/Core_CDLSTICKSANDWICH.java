@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLSTICKSANDWICH} consumes before
+    * Number of leading input bars {@link Core#cdlsticksandwich} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLSTICKSANDWICH_Lookback( )
+   public int cdlsticksandwichLookback( )
    {
       int Equal_rangeType = this.candleSettings[CandleSettingType.EQUAL.ordinal()].rangeType.ordinal();
       int Equal_avgPeriod = this.candleSettings[CandleSettingType.EQUAL.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return Equal_avgPeriod + 2 ;
 
    }
-   RetCode CDLSTICKSANDWICH_Impl( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlsticksandwichImpl( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -56,7 +56,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLSTICKSANDWICH_Lookback();
+      lookbackTotal = cdlsticksandwichLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -114,15 +114,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLSTICKSANDWICH_Impl( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode cdlsticksandwichImpl( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -138,7 +138,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLSTICKSANDWICH_Lookback();
+      lookbackTotal = cdlsticksandwichLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -185,7 +185,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLSTICKSANDWICH_Lookback} is a
+    * valid range shorter than {@link Core#cdlsticksandwichLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -211,10 +211,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMATCHINGLOW
-    * @see Core#CDLHOMINGPIGEON
+    * @see Core#cdlmatchinglow
+    * @see Core#cdlhomingpigeon
     */
-   public OutRange CDLSTICKSANDWICH( int startIdx,
+   public OutRange cdlsticksandwich( int startIdx,
                                      int endIdx,
                                      double inOpen[],
                                      double inHigh[],
@@ -223,7 +223,7 @@
                                      int outInteger[] )
    {
       requireIndexRange("CDLSTICKSANDWICH", startIdx, endIdx);
-      int guardStart = clampedStart("CDLSTICKSANDWICH", startIdx, CDLSTICKSANDWICH_Lookback());
+      int guardStart = clampedStart("CDLSTICKSANDWICH", startIdx, cdlsticksandwichLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTICKSANDWICH", "inOpen", inOpen, guardInLen);
@@ -233,7 +233,7 @@
       requireLength("CDLSTICKSANDWICH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSTICKSANDWICH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlsticksandwichImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLSTICKSANDWICH", retCode);
       }
@@ -257,7 +257,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLSTICKSANDWICH_Lookback} is a
+    * valid range shorter than {@link Core#cdlsticksandwichLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -283,10 +283,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMATCHINGLOW
-    * @see Core#CDLHOMINGPIGEON
+    * @see Core#cdlmatchinglow
+    * @see Core#cdlhomingpigeon
     */
-   public OutRange CDLSTICKSANDWICH( int startIdx,
+   public OutRange cdlsticksandwich( int startIdx,
                                      int endIdx,
                                      float inOpen[],
                                      float inHigh[],
@@ -295,7 +295,7 @@
                                      int outInteger[] )
    {
       requireIndexRange("CDLSTICKSANDWICH", startIdx, endIdx);
-      int guardStart = clampedStart("CDLSTICKSANDWICH", startIdx, CDLSTICKSANDWICH_Lookback());
+      int guardStart = clampedStart("CDLSTICKSANDWICH", startIdx, cdlsticksandwichLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLSTICKSANDWICH", "inOpen", inOpen, guardInLen);
@@ -305,7 +305,7 @@
       requireLength("CDLSTICKSANDWICH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSTICKSANDWICH_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlsticksandwichImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLSTICKSANDWICH", retCode);
       }
@@ -315,7 +315,7 @@
 
    /**
     * A live CDLSTICKSANDWICH stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLSTICKSANDWICH} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlsticksandwich} over the same series.
     * Open with {@link Core#cdlsticksandwichOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -354,7 +354,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLSTICKSANDWICH} reports over the same bars: the
+       * <p>It is what {@link Core#cdlsticksandwich} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -557,7 +557,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLSTICKSANDWICH_Lookback();
+      lookbackTotal = cdlsticksandwichLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -685,8 +685,8 @@
    /**
     * Open a live CDLSTICKSANDWICH stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLSTICKSANDWICH} at that bar.
-    * <p>The history must hold at least {@code CDLSTICKSANDWICH_Lookback(...) + 1} bars
+    * to {@link Core#cdlsticksandwich} at that bar.
+    * <p>The history must hold at least {@code cdlsticksandwichLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -707,7 +707,7 @@
    }
    /**
     * {@link Core#cdlsticksandwichOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLSTICKSANDWICH} over the whole history in the same single pass
+    * to {@link Core#cdlsticksandwich} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -723,7 +723,7 @@
       requireArgument("CDLSTICKSANDWICH openAndFill", "inHigh", inHigh);
       requireArgument("CDLSTICKSANDWICH openAndFill", "inLow", inLow);
       requireArgument("CDLSTICKSANDWICH openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLSTICKSANDWICH openAndFill", inOpen.length, CDLSTICKSANDWICH_Lookback());
+      int guardOutLen = openFillCount("CDLSTICKSANDWICH openAndFill", inOpen.length, cdlsticksandwichLookback());
       requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLSTICKSANDWICH openAndFill", "inClose", inClose.length, inOpen.length);

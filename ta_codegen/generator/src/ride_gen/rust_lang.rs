@@ -114,7 +114,7 @@ impl RideResult {
 
 #[allow(clippy::too_many_lines)]
 fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
-    let n = func.name.clone();
+    let n = crate::backends::common::snake_words(&func.name);
     let base = crate::backends::common::snake_words(&func.name);
     let input_names = expand_input_names(&func.inputs);
     let outs = &func.outputs;
@@ -216,7 +216,7 @@ fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     // reads it. Everything between here and there must tolerate it.
     let _ = writeln!(
         s,
-        "    let lb_opt = core.{n}_Lookback({}).ok();",
+        "    let lb_opt = core.{n}_lookback({}).ok();",
         opt_args.trim_end().trim_end_matches(',')
     );
     s.push_str("    r.lb = match lb_opt { Some(v) => v as i32, None => -1 };\n");
@@ -239,7 +239,7 @@ fn emit_rust_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("false { r.skip = 4; r.emit(resp); return; }\n\n");
 
     s.push_str("    let mut key = fuzz_hash_init();\n");
-    let _ = writeln!(s, "    key = ride_mix_str(key, \"TA_{}\");", n.to_uppercase());
+    let _ = writeln!(s, "    key = ride_mix_str(key, \"TA_{}\");", func.name.to_uppercase());
     s.push_str("    key = ride_mix_u64(key, m as u64);\n");
     s.push_str("    key = ride_mix_u64(key, RIDE_GEN.with(std::cell::Cell::get));\n");
     s.push_str("    key = ride_mix_u64(key, params[\"unstablePeriod\"].as_i64().unwrap_or(0) as u64);\n");

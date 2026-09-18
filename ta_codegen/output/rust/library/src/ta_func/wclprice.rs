@@ -66,17 +66,17 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::WCLPRICE`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::wclprice`]: the number of leading input values consumed before
     /// the first output value can be produced.
     #[doc(alias = "TA_WCLPRICE_Lookback")]
-    pub fn WCLPRICE_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn wclprice_lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
     }
-    /// C-shaped body behind [`Core::WCLPRICE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::wclprice`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn WCLPRICE_Impl(
+    pub(crate) fn wclprice_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -88,13 +88,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, WCLPRICE_Impl_fma, WCLPRICE_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, wclprice_impl_fma, wclprice_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.WCLPRICE_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+        self.wclprice_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn WCLPRICE_Impl_fma(
+    fn wclprice_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -105,10 +105,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.WCLPRICE_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+        self.wclprice_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn WCLPRICE_Impl_impl(
+    fn wclprice_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -125,7 +125,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.WCLPRICE_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.wclprice_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -191,7 +191,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.WCLPRICE(0, high.len() - 1, &high, &low, &close, &mut out)?;
+    /// let out_range = core.wclprice(0, high.len() - 1, &high, &low, &close, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -199,11 +199,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::TYPPRICE`] · [`Core::MEDPRICE`] · [`Core::AVGPRICE`]
+    /// [`TYPPRICE`](Core::typprice) · [`MEDPRICE`](Core::medprice) · [`AVGPRICE`](Core::avgprice)
     #[doc(alias = "TA_WCLPRICE")]
     #[doc(alias = "WeightedClosePrice")]
     #[doc(alias = "WeightedClose")]
-    pub fn WCLPRICE(
+    pub fn wclprice(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -218,7 +218,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.WCLPRICE_Lookback()?;
+        let _guardLb = self.wclprice_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -235,7 +235,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.WCLPRICE_Impl(
+        let retCode = self.wclprice_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -254,7 +254,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live WCLPRICE stream: one value per closed bar, bit-identical to [`Core::WCLPRICE`]
+/// Live WCLPRICE stream: one value per closed bar, bit-identical to [`Core::wclprice`]
 /// over the same series. Open with [`Core::wclprice_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -339,7 +339,7 @@ impl Core {
     }
 
     /// Open a live WCLPRICE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::WCLPRICE`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::wclprice`] at that bar.
     ///
     /// # Errors
     ///
@@ -373,7 +373,7 @@ impl Core {
     }
 
     /// [`Core::wclprice_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::WCLPRICE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::wclprice`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -394,7 +394,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.WCLPRICE(0, high.len() - 1, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.wclprice(0, high.len() - 1, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.wclprice_open_and_fill(&high, &low, &close, &mut out)?;
@@ -415,7 +415,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.WCLPRICE_Lookback()?;
+        let _guardLb = self.wclprice_lookback()?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -521,7 +521,7 @@ impl WclpriceStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::WCLPRICE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::wclprice`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

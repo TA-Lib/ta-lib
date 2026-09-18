@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#RMA} consumes before it can
+    * Number of leading input bars {@link Core#rma} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int RMA_Lookback( int optInTimePeriod )
+   public int rmaLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.RMA.ordinal()] ;
 
    }
-   RetCode RMA_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode rmaImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -68,7 +68,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = RMA_Lookback(optInTimePeriod);
+      lookbackTotal = rmaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -125,13 +125,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode RMA_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode rmaImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -155,7 +155,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = RMA_Lookback(optInTimePeriod);
+      lookbackTotal = rmaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -223,7 +223,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RMA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#rmaLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -248,27 +248,27 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#SMA
-    * @see Core#ATR
-    * @see Core#RSI
-    * @see Core#DEMA
+    * @see Core#ema
+    * @see Core#sma
+    * @see Core#atr
+    * @see Core#rsi
+    * @see Core#dema
     */
-   public OutRange RMA( int startIdx,
+   public OutRange rma( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("RMA", startIdx, endIdx);
-      int guardStart = clampedStart("RMA", startIdx, RMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("RMA", startIdx, rmaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RMA", "inReal", inReal, guardInLen);
       requireLength("RMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = rmaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("RMA", retCode);
       }
@@ -310,7 +310,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RMA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#rmaLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -335,27 +335,27 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#EMA
-    * @see Core#SMA
-    * @see Core#ATR
-    * @see Core#RSI
-    * @see Core#DEMA
+    * @see Core#ema
+    * @see Core#sma
+    * @see Core#atr
+    * @see Core#rsi
+    * @see Core#dema
     */
-   public OutRange RMA( int startIdx,
+   public OutRange rma( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("RMA", startIdx, endIdx);
-      int guardStart = clampedStart("RMA", startIdx, RMA_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("RMA", startIdx, rmaLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RMA", "inReal", inReal, guardInLen);
       requireLength("RMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = rmaImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("RMA", retCode);
       }
@@ -365,7 +365,7 @@
 
    /**
     * A live RMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#RMA} over the same series.
+    * closed bar, bit-identical to {@link Core#rma} over the same series.
     * Open with {@link Core#rmaOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -392,7 +392,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#RMA} reports over the same bars: the
+       * <p>It is what {@link Core#rma} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -546,7 +546,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = RMA_Lookback(optInTimePeriod);
+      lookbackTotal = rmaLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -651,8 +651,8 @@
    /**
     * Open a live RMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#RMA} at that bar.
-    * <p>The history must hold at least {@code RMA_Lookback(...) + 1} bars
+    * to {@link Core#rma} at that bar.
+    * <p>The history must hold at least {@code rmaLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -669,7 +669,7 @@
    }
    /**
     * {@link Core#rmaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#RMA} over the whole history in the same single pass
+    * to {@link Core#rma} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -682,7 +682,7 @@
    {
       requireArgument("RMA openAndFill", "inReal", inReal);
       requireHistory("RMA openAndFill", inReal.length);
-      int guardOutLen = openFillCount("RMA openAndFill", inReal.length, RMA_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("RMA openAndFill", inReal.length, rmaLookback(optInTimePeriod));
       requireLength("RMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("RMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

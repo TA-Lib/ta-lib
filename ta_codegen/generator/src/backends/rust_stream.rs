@@ -627,7 +627,7 @@ fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
             "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
         );
     }
-    let _ = writeln!(s, "        let _guardLb = self.{}_Lookback({})?;", func.name, lb_args.join(", "));
+    let _ = writeln!(s, "        let _guardLb = self.{}_lookback({})?;", common::snake_words(&func.name), lb_args.join(", "));
     if with_pair && inputs.len() > 1 {
         let disagree: Vec<String> =
             inputs[1..].iter().map(|extra| format!("{extra}.len() != {first}.len()")).collect();
@@ -853,7 +853,7 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(
         o,
-        "/// Live {n} stream: one value per closed bar, bit-identical to [`Core::{n}`]\n\
+        "/// Live {n} stream: one value per closed bar, bit-identical to [`Core::{sn}`]\n\
          /// over the same series. Open with [`Core::{sn}_open`]; dropping the handle\n\
          /// closes the stream. Cloning it forks an independent stream.\n\
          ///\n\
@@ -1806,7 +1806,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
             let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{n}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).\n    /// Everything [`Core::{sn}_open`] rejects is rejected here too."
+                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).\n    /// Everything [`Core::{sn}_open`] rejects is rejected here too."
             );
             // The example is the summary's own claim, made runnable.
             if let Some(doctest) = open_and_fill_doctest(func, enums) {
@@ -2175,7 +2175,7 @@ fn emit_identity_fast_path(
         .collect();
     let cond = render_expr(&idp.condition, &typing.ctx, &opt_real_params, registry, helpers);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let lb_call = format!("self.{}_Lookback({})?", func.name, lb_args.join(", "));
+    let lb_call = format!("self.{}_lookback({})?", common::snake_words(&func.name), lb_args.join(", "));
     let _ = writeln!(o, "        if {cond} {{");
     // batch( startIdx, .. ) begins at max(startIdx, lookback), and the anchored
     // `_open*_internal` variants are the batch call over that same range. The
@@ -2558,7 +2558,7 @@ fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String 
     let mut d = String::new();
     let _ = writeln!(
         d,
-        "    /// Open a live {n} stream over the warm-up history; returns the handle and\n    /// the value at the last history bar — bit-identical to [`Core::{n}`] at that bar.",
+        "    /// Open a live {n} stream over the warm-up history; returns the handle and\n    /// the value at the last history bar — bit-identical to [`Core::{sn}`] at that bar.",
         n = func.name.to_uppercase()
     );
     let _ = writeln!(
@@ -2689,7 +2689,7 @@ fn open_and_fill_doctest(
     enums: &HashMap<String, EnumDef>,
 ) -> Option<Vec<String>> {
     let sn = snake(func);
-    let batch = &func.name;
+    let batch = super::common::snake_words(&func.name);
     let len = super::rust_doc::EXAMPLE_LEN;
 
     let mut lines: Vec<String> = vec!["```".to_string()];
@@ -2961,7 +2961,7 @@ fn emit_update_and_peek(
         "    /// The bars this stream has an output for, in the input series'\n\
          \x20   /// coordinates: `[beg_idx, beg_idx + count)`.\n\
          \x20   ///\n\
-         \x20   /// It is what [`Core::{n}`] reports over the same bars: the opener sets it\n\
+         \x20   /// It is what [`Core::{sn}`] reports over the same bars: the opener sets it\n\
          \x20   /// to `(lookback, historyLen - lookback)`, every accepted `update` adds\n\
          \x20   /// one to the count — a rejected one changes nothing, and neither does\n\
          \x20   /// `peek` — and a clone carries it verbatim. A plain `Open` hands back\n\
@@ -3358,7 +3358,7 @@ fn emit_dispatch(
         .collect::<Vec<_>>()
         .join(", ");
     let lb_args = params_join.clone();
-    let lb_call = format!("self.{}_Lookback({lb_args})?", func.name);
+    let lb_call = format!("self.{}_lookback({lb_args})?", common::snake_words(&func.name));
 
     // --- structs + sub enum -------------------------------------------------
     emit_handle_struct(o, func);
@@ -3867,7 +3867,7 @@ fn emit_period_bank(
         o,
         "        // Seed EVERY sub-MA at the SHARED max-period lookback, exactly as the\n        // batch does: it clamps startIdx up to lookback(maxPeriod) and calls the\n        // callee with that same start for every period. Seeding each sub at its\n        // OWN (smaller) lookback would seed the recurrence from a different bar\n        // and diverge for every period < maxPeriod (order-1 for recursive MAs,\n        // running-sum residue for stable ones)."
     );
-    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args})?;");
+    let _ = writeln!(o, "        let lookbackTotal: usize = self.{}_lookback({lb_args})?;", common::snake_words(callee));
     let _ = writeln!(
         o,
         "        let subStart: usize = if startIdx < lookbackTotal {{ lookbackTotal }} else {{ startIdx }};"
@@ -3912,7 +3912,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        // An inverted [min, max] period window is invalid (batch rejects).");
     let _ = writeln!(o, "        if {min} > {max} {{\n            return Err(RetCode::BadParam);\n        }}");
     let _ = writeln!(o, "        let historyLen: usize = {price}.len();");
-    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args})?;");
+    let _ = writeln!(o, "        let lookbackTotal: usize = self.{}_lookback({lb_args})?;", common::snake_words(callee));
     let _ = writeln!(
         o,
         "        if historyLen < lookbackTotal + 1 {{\n            return Err(RetCode::InsufficientHistory);\n        }}"

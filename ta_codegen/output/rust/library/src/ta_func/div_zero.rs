@@ -79,7 +79,7 @@ fn batch_div_by_zero_succeeds_with_the_ieee_754_value() {
     let mut out = vec![0.0_f64; CASES.len()];
 
     let range = core
-        .DIV(0, CASES.len() - 1, &num, &den, &mut out)
+        .div(0, CASES.len() - 1, &num, &den, &mut out)
         .expect("a zero divisor is not an error");
     assert_eq!(range.beg_idx, 0);
     assert_eq!(range.count, CASES.len(), "a zero divisor must not truncate the output");
@@ -97,7 +97,7 @@ fn a_sub_range_shifts_rather_than_recomputing_from_zero() {
 
     // 4..=7 is the +/-Inf block, so a range that silently restarted at 0 would
     // land on the NaN rows and fail rather than looking right.
-    let range = core.DIV(4, 7, &num, &den, &mut out).expect("a zero divisor is not an error");
+    let range = core.div(4, 7, &num, &den, &mut out).expect("a zero divisor is not an error");
     assert_eq!(range.beg_idx, 4);
     assert_eq!(range.count, 4);
     for i in 0..range.count {

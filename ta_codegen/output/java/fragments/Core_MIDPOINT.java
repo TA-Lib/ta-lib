@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MIDPOINT} consumes before it can
+    * Number of leading input bars {@link Core#midpoint} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MIDPOINT_Lookback( int optInTimePeriod )
+   public int midpointLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MIDPOINT_Impl( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode midpointImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -225,13 +225,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MIDPOINT_Impl( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode midpointImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -374,7 +374,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MIDPOINT_Lookback} is a <b>success
+    * valid range shorter than {@link Core#midpointLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -398,25 +398,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MIDPRICE
-    * @see Core#MAX
-    * @see Core#MIN
+    * @see Core#midprice
+    * @see Core#max
+    * @see Core#min
     */
-   public OutRange MIDPOINT( int startIdx,
+   public OutRange midpoint( int startIdx,
                              int endIdx,
                              double inReal[],
                              int optInTimePeriod,
                              double outReal[] )
    {
       requireIndexRange("MIDPOINT", startIdx, endIdx);
-      int guardStart = clampedStart("MIDPOINT", startIdx, MIDPOINT_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MIDPOINT", startIdx, midpointLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIDPOINT", "inReal", inReal, guardInLen);
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = midpointImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MIDPOINT", retCode);
       }
@@ -434,7 +434,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MIDPOINT_Lookback} is a <b>success
+    * valid range shorter than {@link Core#midpointLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -458,25 +458,25 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MIDPRICE
-    * @see Core#MAX
-    * @see Core#MIN
+    * @see Core#midprice
+    * @see Core#max
+    * @see Core#min
     */
-   public OutRange MIDPOINT( int startIdx,
+   public OutRange midpoint( int startIdx,
                              int endIdx,
                              float inReal[],
                              int optInTimePeriod,
                              double outReal[] )
    {
       requireIndexRange("MIDPOINT", startIdx, endIdx);
-      int guardStart = clampedStart("MIDPOINT", startIdx, MIDPOINT_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MIDPOINT", startIdx, midpointLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MIDPOINT", "inReal", inReal, guardInLen);
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = midpointImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MIDPOINT", retCode);
       }
@@ -488,7 +488,7 @@
 
    /**
     * A live MIDPOINT stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MIDPOINT} over the same series.
+    * closed bar, bit-identical to {@link Core#midpoint} over the same series.
     * Open with {@link Core#midpointOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -521,7 +521,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MIDPOINT} reports over the same bars: the
+       * <p>It is what {@link Core#midpoint} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -919,8 +919,8 @@
    /**
     * Open a live MIDPOINT stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MIDPOINT} at that bar.
-    * <p>The history must hold at least {@code MIDPOINT_Lookback(...) + 1} bars
+    * to {@link Core#midpoint} at that bar.
+    * <p>The history must hold at least {@code midpointLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -937,7 +937,7 @@
    }
    /**
     * {@link Core#midpointOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MIDPOINT} over the whole history in the same single pass
+    * to {@link Core#midpoint} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -950,7 +950,7 @@
    {
       requireArgument("MIDPOINT openAndFill", "inReal", inReal);
       requireHistory("MIDPOINT openAndFill", inReal.length);
-      int guardOutLen = openFillCount("MIDPOINT openAndFill", inReal.length, MIDPOINT_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("MIDPOINT openAndFill", inReal.length, midpointLookback(optInTimePeriod));
       requireLength("MIDPOINT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("MIDPOINT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

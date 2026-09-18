@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLCLOSINGMARUBOZU} consumes
+    * Number of leading input bars {@link Core#cdlclosingmarubozu} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLCLOSINGMARUBOZU_Lookback( )
+   public int cdlclosingmarubozuLookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
-   RetCode CDLCLOSINGMARUBOZU_Impl( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlclosingmarubozuImpl( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLCLOSINGMARUBOZU_Lookback();
+      lookbackTotal = cdlclosingmarubozuLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -126,15 +126,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLCLOSINGMARUBOZU_Impl( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode cdlclosingmarubozuImpl( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -155,7 +155,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLCLOSINGMARUBOZU_Lookback();
+      lookbackTotal = cdlclosingmarubozuLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -209,7 +209,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLCLOSINGMARUBOZU_Lookback} is a
+    * valid range shorter than {@link Core#cdlclosingmarubozuLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -235,11 +235,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLLONGLINE
-    * @see Core#CDLBELTHOLD
+    * @see Core#cdlmarubozu
+    * @see Core#cdllongline
+    * @see Core#cdlbelthold
     */
-   public OutRange CDLCLOSINGMARUBOZU( int startIdx,
+   public OutRange cdlclosingmarubozu( int startIdx,
                                        int endIdx,
                                        double inOpen[],
                                        double inHigh[],
@@ -248,7 +248,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLCLOSINGMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, CDLCLOSINGMARUBOZU_Lookback());
+      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, cdlclosingmarubozuLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
@@ -258,7 +258,7 @@
       requireLength("CDLCLOSINGMARUBOZU", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCLOSINGMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlclosingmarubozuImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLCLOSINGMARUBOZU", retCode);
       }
@@ -281,7 +281,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLCLOSINGMARUBOZU_Lookback} is a
+    * valid range shorter than {@link Core#cdlclosingmarubozuLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -307,11 +307,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLMARUBOZU
-    * @see Core#CDLLONGLINE
-    * @see Core#CDLBELTHOLD
+    * @see Core#cdlmarubozu
+    * @see Core#cdllongline
+    * @see Core#cdlbelthold
     */
-   public OutRange CDLCLOSINGMARUBOZU( int startIdx,
+   public OutRange cdlclosingmarubozu( int startIdx,
                                        int endIdx,
                                        float inOpen[],
                                        float inHigh[],
@@ -320,7 +320,7 @@
                                        int outInteger[] )
    {
       requireIndexRange("CDLCLOSINGMARUBOZU", startIdx, endIdx);
-      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, CDLCLOSINGMARUBOZU_Lookback());
+      int guardStart = clampedStart("CDLCLOSINGMARUBOZU", startIdx, cdlclosingmarubozuLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
@@ -330,7 +330,7 @@
       requireLength("CDLCLOSINGMARUBOZU", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCLOSINGMARUBOZU_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlclosingmarubozuImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLCLOSINGMARUBOZU", retCode);
       }
@@ -340,7 +340,7 @@
 
    /**
     * A live CDLCLOSINGMARUBOZU stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLCLOSINGMARUBOZU} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlclosingmarubozu} over the same series.
     * Open with {@link Core#cdlclosingmarubozuOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -377,7 +377,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLCLOSINGMARUBOZU} reports over the same bars: the
+       * <p>It is what {@link Core#cdlclosingmarubozu} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -591,7 +591,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLCLOSINGMARUBOZU_Lookback();
+      lookbackTotal = cdlclosingmarubozuLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -729,8 +729,8 @@
    /**
     * Open a live CDLCLOSINGMARUBOZU stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLCLOSINGMARUBOZU} at that bar.
-    * <p>The history must hold at least {@code CDLCLOSINGMARUBOZU_Lookback(...) + 1} bars
+    * to {@link Core#cdlclosingmarubozu} at that bar.
+    * <p>The history must hold at least {@code cdlclosingmarubozuLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -751,7 +751,7 @@
    }
    /**
     * {@link Core#cdlclosingmarubozuOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLCLOSINGMARUBOZU} over the whole history in the same single pass
+    * to {@link Core#cdlclosingmarubozu} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -767,7 +767,7 @@
       requireArgument("CDLCLOSINGMARUBOZU openAndFill", "inHigh", inHigh);
       requireArgument("CDLCLOSINGMARUBOZU openAndFill", "inLow", inLow);
       requireArgument("CDLCLOSINGMARUBOZU openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLCLOSINGMARUBOZU openAndFill", inOpen.length, CDLCLOSINGMARUBOZU_Lookback());
+      int guardOutLen = openFillCount("CDLCLOSINGMARUBOZU openAndFill", inOpen.length, cdlclosingmarubozuLookback());
       requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLCLOSINGMARUBOZU openAndFill", "inClose", inClose.length, inOpen.length);

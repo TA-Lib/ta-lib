@@ -82,7 +82,7 @@ pub fn guarded_docs(
         "Values are written only where the indicator is defined. The returned \
          <see cref=\"OutRange\"/> says where they start and how many there are; nothing \
          outside that range is touched, and the library never pads with NaN. A valid range \
-         shorter than <c>{cs_name}_Lookback</c> is a <b>success with no values</b> \
+         shorter than <c>{cs_name}Lookback</c> is a <b>success with no values</b> \
          (<c>Count == 0</c>), not an error."
     ));
     b.close("remarks");
@@ -116,7 +116,7 @@ pub fn guarded_docs(
     b.exception(
         "System.ArgumentOutOfRangeException",
         "<c>startIdx</c> or <c>endIdx</c> is negative or above \
-         <see cref=\"Core.MAX_INDEX\"/>, or <c>endIdx &lt; startIdx</c>.",
+         <see cref=\"Core.MaxIndex\"/>, or <c>endIdx &lt; startIdx</c>.",
     );
     b.exception(
         "System.ArgumentException",
@@ -261,7 +261,7 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
         }
         // Every optional parameter accepts the cross-language default sentinel.
         meta.push(match opt.param_type {
-            ParamType::Real => "<see cref=\"Core.REAL_DEFAULT\"/> selects the default".to_string(),
+            ParamType::Real => "<see cref=\"Core.RealDefault\"/> selects the default".to_string(),
             _ => "<c>int.MinValue</c> selects the default".to_string(),
         });
     }

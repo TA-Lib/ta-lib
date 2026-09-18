@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#VORTEX} consumes before it can
+    * Number of leading input bars {@link Core#vortex} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,7 +22,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int VORTEX_Lookback( int optInTimePeriod )
+   public int vortexLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -37,16 +37,16 @@
       return optInTimePeriod ;
 
    }
-   RetCode VORTEX_Impl( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outPlusVI[],
-                        double outMinusVI[] )
+   RetCode vortexImpl( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outPlusVI[],
+                       double outMinusVI[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -97,7 +97,7 @@
        * both of which sit at or ahead of the output slot, which is why the
        * outputs are written LAST (see the loop comment).
        */
-      lookbackTotal = VORTEX_Lookback(optInTimePeriod);
+      lookbackTotal = vortexLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -235,16 +235,16 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode VORTEX_Impl( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outPlusVI[],
-                        double outMinusVI[] )
+   RetCode vortexImpl( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outPlusVI[],
+                       double outMinusVI[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -277,7 +277,7 @@
       if( outPlusVI == outMinusVI ) {
          return RetCode.BAD_PARAM ;
       }
-      lookbackTotal = VORTEX_Lookback(optInTimePeriod);
+      lookbackTotal = vortexLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -391,7 +391,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VORTEX_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#vortexLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -419,12 +419,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#TRANGE
-    * @see Core#PLUS_DI
-    * @see Core#MINUS_DI
-    * @see Core#ADX
+    * @see Core#trange
+    * @see Core#plusDi
+    * @see Core#minusDi
+    * @see Core#adx
     */
-   public OutRange VORTEX( int startIdx,
+   public OutRange vortex( int startIdx,
                            int endIdx,
                            double inHigh[],
                            double inLow[],
@@ -434,7 +434,7 @@
                            double outMinusVI[] )
    {
       requireIndexRange("VORTEX", startIdx, endIdx);
-      int guardStart = clampedStart("VORTEX", startIdx, VORTEX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("VORTEX", startIdx, vortexLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VORTEX", "inHigh", inHigh, guardInLen);
@@ -444,7 +444,7 @@
       requireLength("VORTEX", "outMinusVI", outMinusVI, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VORTEX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
+      RetCode retCode = vortexImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VORTEX", retCode);
       }
@@ -471,7 +471,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#VORTEX_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#vortexLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -499,12 +499,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#TRANGE
-    * @see Core#PLUS_DI
-    * @see Core#MINUS_DI
-    * @see Core#ADX
+    * @see Core#trange
+    * @see Core#plusDi
+    * @see Core#minusDi
+    * @see Core#adx
     */
-   public OutRange VORTEX( int startIdx,
+   public OutRange vortex( int startIdx,
                            int endIdx,
                            float inHigh[],
                            float inLow[],
@@ -514,7 +514,7 @@
                            double outMinusVI[] )
    {
       requireIndexRange("VORTEX", startIdx, endIdx);
-      int guardStart = clampedStart("VORTEX", startIdx, VORTEX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("VORTEX", startIdx, vortexLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("VORTEX", "inHigh", inHigh, guardInLen);
@@ -524,7 +524,7 @@
       requireLength("VORTEX", "outMinusVI", outMinusVI, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VORTEX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
+      RetCode retCode = vortexImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("VORTEX", retCode);
       }
@@ -534,7 +534,7 @@
 
    /**
     * A live VORTEX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#VORTEX} over the same series.
+    * closed bar, bit-identical to {@link Core#vortex} over the same series.
     * Open with {@link Core#vortexOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -572,7 +572,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#VORTEX} reports over the same bars: the
+       * <p>It is what {@link Core#vortex} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -999,7 +999,7 @@
        * both of which sit at or ahead of the output slot, which is why the
        * outputs are written LAST (see the loop comment).
        */
-      lookbackTotal = VORTEX_Lookback(optInTimePeriod);
+      lookbackTotal = vortexLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1215,8 +1215,8 @@
    /**
     * Open a live VORTEX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#VORTEX} at that bar.
-    * <p>The history must hold at least {@code VORTEX_Lookback(...) + 1} bars
+    * to {@link Core#vortex} at that bar.
+    * <p>The history must hold at least {@code vortexLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1237,7 +1237,7 @@
    }
    /**
     * {@link Core#vortexOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#VORTEX} over the whole history in the same single pass
+    * to {@link Core#vortex} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1252,7 +1252,7 @@
       requireHistory("VORTEX openAndFill", inHigh.length);
       requireArgument("VORTEX openAndFill", "inLow", inLow);
       requireArgument("VORTEX openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("VORTEX openAndFill", inHigh.length, VORTEX_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("VORTEX openAndFill", inHigh.length, vortexLookback(optInTimePeriod));
       requireHistoryLength("VORTEX openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("VORTEX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("VORTEX openAndFill", "outPlusVI", outPlusVI, guardOutLen);

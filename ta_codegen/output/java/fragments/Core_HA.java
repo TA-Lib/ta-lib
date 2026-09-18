@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#HA} consumes before it can
+    * Number of leading input bars {@link Core#ha} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,23 +24,23 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int HA_Lookback( )
+   public int haLookback( )
    {
       return this.unstablePeriod[FuncUnstId.HA.ordinal()] ;
 
    }
-   RetCode HA_Impl( int startIdx,
-                    int endIdx,
-                    double inOpen[],
-                    double inHigh[],
-                    double inLow[],
-                    double inClose[],
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outHAOpen[],
-                    double outHAHigh[],
-                    double outHALow[],
-                    double outHAClose[] )
+   RetCode haImpl( int startIdx,
+                   int endIdx,
+                   double inOpen[],
+                   double inHigh[],
+                   double inLow[],
+                   double inClose[],
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outHAOpen[],
+                   double outHAHigh[],
+                   double outHALow[],
+                   double outHAClose[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -65,7 +65,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = HA_Lookback();
+      lookbackTotal = haLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -157,18 +157,18 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode HA_Impl( int startIdx,
-                    int endIdx,
-                    float inOpen[],
-                    float inHigh[],
-                    float inLow[],
-                    float inClose[],
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outHAOpen[],
-                    double outHAHigh[],
-                    double outHALow[],
-                    double outHAClose[] )
+   RetCode haImpl( int startIdx,
+                   int endIdx,
+                   float inOpen[],
+                   float inHigh[],
+                   float inLow[],
+                   float inClose[],
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outHAOpen[],
+                   double outHAHigh[],
+                   double outHALow[],
+                   double outHAClose[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -193,7 +193,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = HA_Lookback();
+      lookbackTotal = haLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -290,7 +290,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#haLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -321,12 +321,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AVGPRICE
-    * @see Core#MEDPRICE
-    * @see Core#TYPPRICE
-    * @see Core#WCLPRICE
+    * @see Core#avgprice
+    * @see Core#medprice
+    * @see Core#typprice
+    * @see Core#wclprice
     */
-   public OutRange HA( int startIdx,
+   public OutRange ha( int startIdx,
                        int endIdx,
                        double inOpen[],
                        double inHigh[],
@@ -338,7 +338,7 @@
                        double outHAClose[] )
    {
       requireIndexRange("HA", startIdx, endIdx);
-      int guardStart = clampedStart("HA", startIdx, HA_Lookback());
+      int guardStart = clampedStart("HA", startIdx, haLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HA", "inOpen", inOpen, guardInLen);
@@ -351,7 +351,7 @@
       requireLength("HA", "outHAClose", outHAClose, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
+      RetCode retCode = haImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HA", retCode);
       }
@@ -386,7 +386,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#HA_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#haLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -417,12 +417,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#AVGPRICE
-    * @see Core#MEDPRICE
-    * @see Core#TYPPRICE
-    * @see Core#WCLPRICE
+    * @see Core#avgprice
+    * @see Core#medprice
+    * @see Core#typprice
+    * @see Core#wclprice
     */
-   public OutRange HA( int startIdx,
+   public OutRange ha( int startIdx,
                        int endIdx,
                        float inOpen[],
                        float inHigh[],
@@ -434,7 +434,7 @@
                        double outHAClose[] )
    {
       requireIndexRange("HA", startIdx, endIdx);
-      int guardStart = clampedStart("HA", startIdx, HA_Lookback());
+      int guardStart = clampedStart("HA", startIdx, haLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("HA", "inOpen", inOpen, guardInLen);
@@ -447,7 +447,7 @@
       requireLength("HA", "outHAClose", outHAClose, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
+      RetCode retCode = haImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("HA", retCode);
       }
@@ -457,7 +457,7 @@
 
    /**
     * A live HA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#HA} over the same series.
+    * closed bar, bit-identical to {@link Core#ha} over the same series.
     * Open with {@link Core#haOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -485,7 +485,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#HA} reports over the same bars: the
+       * <p>It is what {@link Core#ha} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -746,7 +746,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = HA_Lookback();
+      lookbackTotal = haLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -890,8 +890,8 @@
    /**
     * Open a live HA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#HA} at that bar.
-    * <p>The history must hold at least {@code HA_Lookback(...) + 1} bars
+    * to {@link Core#ha} at that bar.
+    * <p>The history must hold at least {@code haLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -912,7 +912,7 @@
    }
    /**
     * {@link Core#haOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#HA} over the whole history in the same single pass
+    * to {@link Core#ha} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -928,7 +928,7 @@
       requireArgument("HA openAndFill", "inHigh", inHigh);
       requireArgument("HA openAndFill", "inLow", inLow);
       requireArgument("HA openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("HA openAndFill", inOpen.length, HA_Lookback());
+      int guardOutLen = openFillCount("HA openAndFill", inOpen.length, haLookback());
       requireHistoryLength("HA openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("HA openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("HA openAndFill", "inClose", inClose.length, inOpen.length);

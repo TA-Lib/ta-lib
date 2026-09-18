@@ -65,10 +65,10 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CDLLADDERBOTTOM`]: the number of leading input values consumed
+    /// Lookback period for [`Core::cdlladderbottom`]: the number of leading input values consumed
     /// before the first output value can be produced.
     #[doc(alias = "TA_CDLLADDERBOTTOM_Lookback")]
-    pub fn CDLLADDERBOTTOM_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn cdlladderbottom_lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
@@ -77,10 +77,10 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         return Ok((ShadowVeryShort_avgPeriod + 4) as usize);
     }
-    /// C-shaped body behind [`Core::CDLLADDERBOTTOM`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::cdlladderbottom`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CDLLADDERBOTTOM_Impl(
+    pub(crate) fn cdlladderbottom_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -98,7 +98,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDLLADDERBOTTOM_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.cdlladderbottom_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -119,7 +119,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLLADDERBOTTOM_Lookback().unwrap_or(usize::MAX);
+        lookbackTotal = self.cdlladderbottom_lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -281,7 +281,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0i32; 252];
     ///
-    /// let out_range = core.CDLLADDERBOTTOM(
+    /// let out_range = core.cdlladderbottom(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out,
     /// )?;
@@ -295,10 +295,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLMATCHINGLOW`] · [`Core::CDLBREAKAWAY`]
+    /// [`CDL3BLACKCROWS`](Core::cdl3blackcrows) · [`CDLMATCHINGLOW`](Core::cdlmatchinglow) ·
+    /// [`CDLBREAKAWAY`](Core::cdlbreakaway)
     #[doc(alias = "TA_CDLLADDERBOTTOM")]
     #[doc(alias = "LadderBottom")]
-    pub fn CDLLADDERBOTTOM(
+    pub fn cdlladderbottom(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -314,7 +315,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLLADDERBOTTOM_Lookback()?;
+        let _guardLb = self.cdlladderbottom_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -334,7 +335,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDLLADDERBOTTOM_Impl(
+        let retCode = self.cdlladderbottom_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -354,7 +355,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLLADDERBOTTOM stream: one value per closed bar, bit-identical to [`Core::CDLLADDERBOTTOM`]
+/// Live CDLLADDERBOTTOM stream: one value per closed bar, bit-identical to [`Core::cdlladderbottom`]
 /// over the same series. Open with [`Core::cdlladderbottom_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -509,7 +510,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDLLADDERBOTTOM_Lookback()?;
+        lookbackTotal = self.cdlladderbottom_lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -663,7 +664,7 @@ impl Core {
     }
 
     /// Open a live CDLLADDERBOTTOM stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLLADDERBOTTOM`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::cdlladderbottom`] at that bar.
     ///
     /// # Errors
     ///
@@ -700,7 +701,7 @@ impl Core {
     }
 
     /// [`Core::cdlladderbottom_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLLADDERBOTTOM`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::cdlladderbottom`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -724,7 +725,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0_i32; 252];
-    /// let batch = core.CDLLADDERBOTTOM(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.cdlladderbottom(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0_i32; 252];
     /// let (_stream, filled) = core.cdlladderbottom_open_and_fill(&open, &high, &low, &close, &mut out)?;
@@ -744,7 +745,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDLLADDERBOTTOM_Lookback()?;
+        let _guardLb = self.cdlladderbottom_lookback()?;
         if inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -873,7 +874,7 @@ impl CdlladderbottomStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CDLLADDERBOTTOM`] reports over the same bars: the opener sets it
+    /// It is what [`Core::cdlladderbottom`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

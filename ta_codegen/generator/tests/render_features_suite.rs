@@ -190,8 +190,8 @@ fn test_rust_generic_output_smoke() {
 
     // 1. Concrete f64 signatures present (no generics)
     assert!(
-        r.contains("pub fn SMA("),
-        "Rust SMA should have pub fn SMA("
+        r.contains("pub fn sma("),
+        "Rust SMA should have pub fn sma("
     );
     assert!(
         !r.contains("_unguarded"),
@@ -229,10 +229,13 @@ fn test_rust_generic_output_smoke() {
     // 6. Exactly 4 pub fn: guarded + lookback + the stream tier's open +
     // open_and_fill (open_internal is pub(crate), update/peek live on the handle
     // type).
-    let batch_pub_fn_count = r.matches("pub fn SMA").count();
+    // `pub fn sma` alone would also match the stream openers, whose names now
+    // share the stem.
+    let batch_pub_fn_count =
+        r.matches("pub fn sma(").count() + r.matches("pub fn sma_lookback(").count();
     assert_eq!(
         batch_pub_fn_count, 2,
-        "Rust SMA batch tier should have exactly 2 pub fn (sma, SMA_Lookback), got {}",
+        "Rust SMA batch tier should have exactly 2 pub fn (sma, sma_lookback), got {}",
         batch_pub_fn_count
     );
     let stream_pub_fn_count = r.matches("pub fn sma_open").count();
@@ -1745,14 +1748,14 @@ fn candle_settings_unpacking_in_lookback() {
         "C lookback should contain candle settings unpacking"
     );
 
-    let rust_lookback_end = rust_out.find("pub fn CDL2CROWS(").unwrap();
+    let rust_lookback_end = rust_out.find("pub fn cdl2crows(").unwrap();
     let rust_lookback = &rust_out[..rust_lookback_end];
     assert!(
         rust_lookback.contains("self.candle_settings.body_long"),
         "Rust lookback should contain candle settings unpacking"
     );
 
-    let java_lookback_end = java_out.find("RetCode CDL2CROWS_Impl(").unwrap();
+    let java_lookback_end = java_out.find("RetCode cdl2crowsImpl(").unwrap();
     let java_lookback = &java_out[..java_lookback_end];
     assert!(
         java_lookback.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()]"),

@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLHIGHWAVE} consumes before it
+    * Number of leading input bars {@link Core#cdlhighwave} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLHIGHWAVE_Lookback( )
+   public int cdlhighwaveLookback( )
    {
       int BodyShort_rangeType = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].rangeType.ordinal();
       int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BODY_SHORT.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyShort_avgPeriod, ShadowVeryLong_avgPeriod) ;
 
    }
-   RetCode CDLHIGHWAVE_Impl( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlhighwaveImpl( int startIdx,
+                            int endIdx,
+                            double inOpen[],
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLHIGHWAVE_Lookback();
+      lookbackTotal = cdlhighwaveLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -122,15 +122,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLHIGHWAVE_Impl( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode cdlhighwaveImpl( int startIdx,
+                            int endIdx,
+                            float inOpen[],
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowPeriodTotal = 0;
@@ -151,7 +151,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLHIGHWAVE_Lookback();
+      lookbackTotal = cdlhighwaveLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -206,7 +206,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLHIGHWAVE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlhighwaveLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -233,12 +233,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLLONGLEGGEDDOJI
-    * @see Core#CDLSPINNINGTOP
-    * @see Core#CDLRICKSHAWMAN
-    * @see Core#CDLDOJI
+    * @see Core#cdllongleggeddoji
+    * @see Core#cdlspinningtop
+    * @see Core#cdlrickshawman
+    * @see Core#cdldoji
     */
-   public OutRange CDLHIGHWAVE( int startIdx,
+   public OutRange cdlhighwave( int startIdx,
                                 int endIdx,
                                 double inOpen[],
                                 double inHigh[],
@@ -247,7 +247,7 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLHIGHWAVE", startIdx, endIdx);
-      int guardStart = clampedStart("CDLHIGHWAVE", startIdx, CDLHIGHWAVE_Lookback());
+      int guardStart = clampedStart("CDLHIGHWAVE", startIdx, cdlhighwaveLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIGHWAVE", "inOpen", inOpen, guardInLen);
@@ -257,7 +257,7 @@
       requireLength("CDLHIGHWAVE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIGHWAVE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlhighwaveImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLHIGHWAVE", retCode);
       }
@@ -281,7 +281,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLHIGHWAVE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdlhighwaveLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -308,12 +308,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLLONGLEGGEDDOJI
-    * @see Core#CDLSPINNINGTOP
-    * @see Core#CDLRICKSHAWMAN
-    * @see Core#CDLDOJI
+    * @see Core#cdllongleggeddoji
+    * @see Core#cdlspinningtop
+    * @see Core#cdlrickshawman
+    * @see Core#cdldoji
     */
-   public OutRange CDLHIGHWAVE( int startIdx,
+   public OutRange cdlhighwave( int startIdx,
                                 int endIdx,
                                 float inOpen[],
                                 float inHigh[],
@@ -322,7 +322,7 @@
                                 int outInteger[] )
    {
       requireIndexRange("CDLHIGHWAVE", startIdx, endIdx);
-      int guardStart = clampedStart("CDLHIGHWAVE", startIdx, CDLHIGHWAVE_Lookback());
+      int guardStart = clampedStart("CDLHIGHWAVE", startIdx, cdlhighwaveLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLHIGHWAVE", "inOpen", inOpen, guardInLen);
@@ -332,7 +332,7 @@
       requireLength("CDLHIGHWAVE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIGHWAVE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdlhighwaveImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLHIGHWAVE", retCode);
       }
@@ -342,7 +342,7 @@
 
    /**
     * A live CDLHIGHWAVE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLHIGHWAVE} over the same series.
+    * closed bar, bit-identical to {@link Core#cdlhighwave} over the same series.
     * Open with {@link Core#cdlhighwaveOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -379,7 +379,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLHIGHWAVE} reports over the same bars: the
+       * <p>It is what {@link Core#cdlhighwave} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -583,7 +583,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLHIGHWAVE_Lookback();
+      lookbackTotal = cdlhighwaveLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -717,8 +717,8 @@
    /**
     * Open a live CDLHIGHWAVE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLHIGHWAVE} at that bar.
-    * <p>The history must hold at least {@code CDLHIGHWAVE_Lookback(...) + 1} bars
+    * to {@link Core#cdlhighwave} at that bar.
+    * <p>The history must hold at least {@code cdlhighwaveLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -739,7 +739,7 @@
    }
    /**
     * {@link Core#cdlhighwaveOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLHIGHWAVE} over the whole history in the same single pass
+    * to {@link Core#cdlhighwave} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -755,7 +755,7 @@
       requireArgument("CDLHIGHWAVE openAndFill", "inHigh", inHigh);
       requireArgument("CDLHIGHWAVE openAndFill", "inLow", inLow);
       requireArgument("CDLHIGHWAVE openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLHIGHWAVE openAndFill", inOpen.length, CDLHIGHWAVE_Lookback());
+      int guardOutLen = openFillCount("CDLHIGHWAVE openAndFill", inOpen.length, cdlhighwaveLookback());
       requireHistoryLength("CDLHIGHWAVE openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLHIGHWAVE openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLHIGHWAVE openAndFill", "inClose", inClose.length, inOpen.length);

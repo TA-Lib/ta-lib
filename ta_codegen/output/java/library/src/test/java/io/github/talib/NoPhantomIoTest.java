@@ -298,17 +298,37 @@ public class NoPhantomIoTest {
     private static Map<String, Sig> discover(boolean wantFloat, Core on) {
         Map<String, Method> cores = new TreeMap<>();
         Map<String, Method> lookbacks = new HashMap<>();
+        // Driven from the registry rather than from a name pattern: the stream
+        // tier also ends in `Impl`, and a pattern that stops matching would leave
+        // the sweeps below quietly probing nothing. The key stays the canonical
+        // name, which is what the metadata and every message here speak.
+        Map<String, String> stems = new HashMap<>();
+        for (FuncInfo f : Functions.all()) {
+            stems.put(camelCase(f.name()), f.name());
+        }
         for (Method m : Core.class.getDeclaredMethods()) {
             String n = m.getName();
-            if (n.endsWith("_Impl")) {
-                boolean isFloat = m.getParameterTypes()[2] == float[].class;
-                if (isFloat == wantFloat) {
-                    cores.put(n.substring(0, n.length() - "_Impl".length()), m);
+            if (n.endsWith("Impl")) {
+                String canonical = stems.get(n.substring(0, n.length() - "Impl".length()));
+                if (canonical != null) {
+                    boolean isFloat = m.getParameterTypes()[2] == float[].class;
+                    if (isFloat == wantFloat) {
+                        cores.put(canonical, m);
+                    }
                 }
-            } else if (n.endsWith("_Lookback")) {
-                lookbacks.put(n.substring(0, n.length() - "_Lookback".length()), m);
+            } else if (n.endsWith("Lookback")) {
+                String canonical = stems.get(n.substring(0, n.length() - "Lookback".length()));
+                if (canonical != null) {
+                    lookbacks.put(canonical, m);
+                }
             }
         }
+        // A discovery keyed on a spelling goes vacuous, not red, when the spelling
+        // moves: with no floor the sweeps below would report a clean pass over an
+        // empty corpus.
+        check(cores.size() >= 150,
+              "phantom-I/O discovery found " + cores.size() + " cores; the naming of the"
+              + " numerics tier moved and the sweeps are probing almost nothing");
         Map<String, Sig> out = new TreeMap<>();
         for (Map.Entry<String, Method> e : cores.entrySet()) {
             String name = e.getKey();
@@ -534,7 +554,7 @@ public class NoPhantomIoTest {
             try {
                 lookback = (Integer) sig.lookback.invoke(sig.on, e.getValue());
             } catch (ReflectiveOperationException ex) {
-                violation(sig.name + "_Lookback(" + e.getKey() + ") threw " + ex.getCause());
+                violation(sig.name + "Lookback(" + e.getKey() + ") threw " + ex.getCause());
                 continue;
             }
             if (lookback >= 0) {
@@ -1153,16 +1173,16 @@ public class NoPhantomIoTest {
      */
     static void theProbesCanFail() {
         Core core = Core.DEFAULT;
-        int lookback = core.SMA_Lookback(30);
+        int lookback = core.smaLookback(30);
         MInteger b = new MInteger();
         MInteger n = new MInteger();
 
         // 1. sub-lookback: the quiet case, then one bar longer.
-        RetCode quiet = core.SMA_Impl(0, lookback - 1, new double[0], 30, b, n,
+        RetCode quiet = core.smaImpl(0, lookback - 1, new double[0], 30, b, n,
                                           new double[0]);
         check(quiet == RetCode.SUCCESS && n.value == 0,
               "a sub-lookback range with zero-length arrays is a silent success");
-        check(throwsOob(() -> core.SMA_Impl(0, lookback, new double[0], 30, b, n,
+        check(throwsOob(() -> core.smaImpl(0, lookback, new double[0], 30, b, n,
                                                 new double[0])),
               "one bar longer DOES touch the arrays, so sweep 1 can detect I/O");
 
@@ -1174,13 +1194,13 @@ public class NoPhantomIoTest {
         for (int i = 0; i < in.length; i++) {
             in[i] = bar("inReal", i);
         }
-        check(core.SMA_Impl(0, endIdx, in, 30, b, n, new double[count])
+        check(core.smaImpl(0, endIdx, in, 30, b, n, new double[count])
                   == RetCode.SUCCESS && n.value == count,
               "exactly-sized input and output are enough for SMA");
-        check(throwsOob(() -> core.SMA_Impl(0, endIdx, in, 30, b, n,
+        check(throwsOob(() -> core.smaImpl(0, endIdx, in, 30, b, n,
                                                 new double[count - 1])),
               "an output one short of the count throws, so sweep 2 sees over-writes");
-        check(throwsOob(() -> core.SMA_Impl(0, endIdx, Arrays.copyOf(in, endIdx),
+        check(throwsOob(() -> core.smaImpl(0, endIdx, Arrays.copyOf(in, endIdx),
                                                 30, b, n, new double[count])),
               "an input one short of endIdx+1 throws, so sweep 2 sees over-reads");
 
@@ -1190,7 +1210,7 @@ public class NoPhantomIoTest {
         for (int i = 0; i < bars.length; i++) {
             bars[i] = bar("close", i);
         }
-        check(throwsOob(() -> core.MEDPRICE_Impl(0, endIdx, new double[0], bars,
+        check(throwsOob(() -> core.medpriceImpl(0, endIdx, new double[0], bars,
                                                      b, n, new double[endIdx + 1])),
               "a leg the function reads, given zero length, throws");
 

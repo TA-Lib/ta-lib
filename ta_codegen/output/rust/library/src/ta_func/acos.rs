@@ -63,16 +63,16 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ACOS`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::acos`]: the number of leading input values consumed before the
     /// first output value can be produced.
     #[doc(alias = "TA_ACOS_Lookback")]
-    pub fn ACOS_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn acos_lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
-    /// C-shaped body behind [`Core::ACOS`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::acos`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn ACOS_Impl(
+    pub(crate) fn acos_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -87,7 +87,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ACOS_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.acos_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -144,7 +144,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.ACOS(0, data.len() - 1, &data, &mut out)?;
+    /// let out_range = core.acos(0, data.len() - 1, &data, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -152,7 +152,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::COS`] · [`Core::ASIN`] · [`Core::ATAN`]
+    /// [`COS`](Core::cos) · [`ASIN`](Core::asin) · [`ATAN`](Core::atan)
     ///
     /// # References
     ///
@@ -162,7 +162,7 @@ impl Core {
     #[doc(alias = "ArcCosine")]
     #[doc(alias = "InverseCosine")]
     #[doc(alias = "arccos")]
-    pub fn ACOS(
+    pub fn acos(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -175,7 +175,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ACOS_Lookback()?;
+        let _guardLb = self.acos_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -186,7 +186,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ACOS_Impl(
+        let retCode = self.acos_impl(
             startIdx,
             endIdx,
             inReal,
@@ -203,7 +203,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ACOS stream: one value per closed bar, bit-identical to [`Core::ACOS`]
+/// Live ACOS stream: one value per closed bar, bit-identical to [`Core::acos`]
 /// over the same series. Open with [`Core::acos_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -287,7 +287,7 @@ impl Core {
     }
 
     /// Open a live ACOS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ACOS`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::acos`] at that bar.
     ///
     /// # Errors
     ///
@@ -317,7 +317,7 @@ impl Core {
     }
 
     /// [`Core::acos_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ACOS`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::acos`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -334,7 +334,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.ACOS(0, data.len() - 1, &data, &mut batch_out)?;
+    /// let batch = core.acos(0, data.len() - 1, &data, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.acos_open_and_fill(&data, &mut out)?;
@@ -355,7 +355,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ACOS_Lookback()?;
+        let _guardLb = self.acos_lookback()?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -458,7 +458,7 @@ impl AcosStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::ACOS`] reports over the same bars: the opener sets it
+    /// It is what [`Core::acos`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::FOSC`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::fosc`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_FOSC_Lookback")]
     #[inline]
-    pub fn FOSC_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn fosc_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -86,10 +86,10 @@ impl Core {
         }
         return Ok((optInTimePeriod) as usize);
     }
-    /// C-shaped body behind [`Core::FOSC`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::fosc`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn FOSC_Impl(
+    pub(crate) fn fosc_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -100,13 +100,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, FOSC_Impl_fma, FOSC_Impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, fosc_impl_fma, fosc_impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.FOSC_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.fosc_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn FOSC_Impl_fma(
+    fn fosc_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -116,10 +116,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.FOSC_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.fosc_impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn FOSC_Impl_impl(
+    fn fosc_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -140,7 +140,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.FOSC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.fosc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -180,7 +180,7 @@ impl Core {
         // the output write because with outReal==inReal (#130) that write lands on
         // exactly that cell whenever startIdx is the clamped minimum. closeValue
         // carries no such constraint: it sits startIdx bars ahead of the cursor.
-        lookbackTotal = self.FOSC_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.fosc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -310,7 +310,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.FOSC(0, data.len() - 1, &data, 5, &mut out)?;
+    /// let out_range = core.fosc(0, data.len() - 1, &data, 5, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -318,7 +318,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::TSF`] · [`Core::LINEARREG`] · [`Core::CMOU`]
+    /// [`TSF`](Core::tsf) · [`LINEARREG`](Core::linearreg) · [`CMOU`](Core::cmou)
     ///
     /// # References
     ///
@@ -327,7 +327,7 @@ impl Core {
     /// * Steven B. Achelis, *Technical Analysis from A to Z*, page 147
     #[doc(alias = "TA_FOSC")]
     #[doc(alias = "ForecastOscillator")]
-    pub fn FOSC(
+    pub fn fosc(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -341,7 +341,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.FOSC_Lookback(optInTimePeriod)?;
+        let _guardLb = self.fosc_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -352,7 +352,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.FOSC_Impl(
+        let retCode = self.fosc_impl(
             startIdx,
             endIdx,
             inReal,
@@ -370,7 +370,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live FOSC stream: one value per closed bar, bit-identical to [`Core::FOSC`]
+/// Live FOSC stream: one value per closed bar, bit-identical to [`Core::fosc`]
 /// over the same series. Open with [`Core::fosc_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -519,7 +519,7 @@ impl Core {
         // the output write because with outReal==inReal (#130) that write lands on
         // exactly that cell whenever startIdx is the clamped minimum. closeValue
         // carries no such constraint: it sits startIdx bars ahead of the cursor.
-        lookbackTotal = self.FOSC_Lookback(optInTimePeriod)?;
+        lookbackTotal = self.fosc_lookback(optInTimePeriod)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -647,7 +647,7 @@ impl Core {
     }
 
     /// Open a live FOSC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::FOSC`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::fosc`] at that bar.
     ///
     /// # Errors
     ///
@@ -677,7 +677,7 @@ impl Core {
     }
 
     /// [`Core::fosc_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::FOSC`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::fosc`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -694,7 +694,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.FOSC(0, data.len() - 1, &data, 5, &mut batch_out)?;
+    /// let batch = core.fosc(0, data.len() - 1, &data, 5, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.fosc_open_and_fill(&data, 5, &mut out)?;
@@ -715,7 +715,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.FOSC_Lookback(optInTimePeriod)?;
+        let _guardLb = self.fosc_lookback(optInTimePeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -869,7 +869,7 @@ impl FoscStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::FOSC`] reports over the same bars: the opener sets it
+    /// It is what [`Core::fosc`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

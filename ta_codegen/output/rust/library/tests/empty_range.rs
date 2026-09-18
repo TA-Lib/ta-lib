@@ -57,23 +57,23 @@ fn the_empty_series_is_bad_param_and_does_not_panic() {
     let none: [f64; 0] = [];
     let mut one = [0.0_f64; 1];
 
-    assert_eq!(core.SQRT(0, 0, &none, &mut one), Err(RetCode::BadParam));
-    assert_eq!(core.ADD(0, 0, &none, &none, &mut one), Err(RetCode::BadParam));
+    assert_eq!(core.sqrt(0, 0, &none, &mut one), Err(RetCode::BadParam));
+    assert_eq!(core.add(0, 0, &none, &none, &mut one), Err(RetCode::BadParam));
     assert_eq!(
-        core.AVGPRICE(0, 0, &none, &none, &none, &none, &mut one),
+        core.avgprice(0, 0, &none, &none, &none, &none, &mut one),
         Err(RetCode::BadParam)
     );
     assert_eq!(
-        core.AD(0, 0, &none, &none, &none, &none, &mut one),
+        core.ad(0, 0, &none, &none, &none, &none, &mut one),
         Err(RetCode::BadParam)
     );
-    assert_eq!(core.SMA(0, 0, &none, 1, &mut one), Err(RetCode::BadParam));
+    assert_eq!(core.sma(0, 0, &none, 1, &mut one), Err(RetCode::BadParam));
 
     // Same calls with the output sized to the (empty) series. Here either bound
     // is enough to answer, so these rows say only that the answer is a value.
     let mut out: [f64; 0] = [];
-    assert_eq!(core.SQRT(0, 0, &none, &mut out), Err(RetCode::BadParam));
-    assert_eq!(core.SMA(0, 0, &none, 1, &mut out), Err(RetCode::BadParam));
+    assert_eq!(core.sqrt(0, 0, &none, &mut out), Err(RetCode::BadParam));
+    assert_eq!(core.sma(0, 0, &none, 1, &mut out), Err(RetCode::BadParam));
 }
 
 /// The other spelling a caller reaches for — `endIdx` one below `startIdx`, so
@@ -90,7 +90,7 @@ fn an_inverted_range_is_an_end_index_error() {
     let mut out = vec![0.0; 8];
 
     assert_eq!(
-        core.SQRT(1, 0, &data, &mut out),
+        core.sqrt(1, 0, &data, &mut out),
         Err(RetCode::OutOfRangeEndIndex)
     );
     // With no series at all it is still the range that is answered, not the
@@ -98,7 +98,7 @@ fn an_inverted_range_is_an_end_index_error() {
     let none: [f64; 0] = [];
     let mut no_out: [f64; 0] = [];
     assert_eq!(
-        core.SQRT(1, 0, &none, &mut no_out),
+        core.sqrt(1, 0, &none, &mut no_out),
         Err(RetCode::OutOfRangeEndIndex)
     );
 }
@@ -120,23 +120,23 @@ fn a_sub_lookback_range_frees_the_output_bound_and_not_the_input_bound() {
 
     // Output bound off: no values are produced, so no output space is owed.
     assert_eq!(
-        core.SMA(0, 5, &six, 30, &mut out_six),
+        core.sma(0, 5, &six, 30, &mut out_six),
         Ok(OutRange { beg_idx: 0, count: 0 })
     );
     assert_eq!(
-        core.SMA(0, 5, &six, 30, &mut out_none),
+        core.sma(0, 5, &six, 30, &mut out_none),
         Ok(OutRange { beg_idx: 0, count: 0 })
     );
 
     // Input bound on: the series must still reach `endIdx`, sub-lookback or not.
     assert_eq!(
-        core.SMA(0, 5, &five, 30, &mut out_none),
+        core.sma(0, 5, &five, 30, &mut out_none),
         Err(RetCode::BadParam)
     );
     // The row `Core.cs` names as `Ok(count 0)` here and a throw there. It is
     // `BadParam` here, which is the same verdict C# reaches by throwing.
     assert_eq!(
-        core.SMA(0, 5, &none, 30, &mut out_none),
+        core.sma(0, 5, &none, 30, &mut out_none),
         Err(RetCode::BadParam)
     );
 }
@@ -154,12 +154,12 @@ fn the_input_bound_is_end_idx_plus_one_at_any_lookback() {
         let short = series(5);
         // Six bars reach `endIdx = 5`.
         assert!(
-            core.SMA(0, 5, &exact, period, &mut out).is_ok(),
+            core.sma(0, 5, &exact, period, &mut out).is_ok(),
             "period {period}: a series reaching endIdx was rejected"
         );
         // Five do not, whatever the period says about how many values come out.
         assert_eq!(
-            core.SMA(0, 5, &short, period, &mut out),
+            core.sma(0, 5, &short, period, &mut out),
             Err(RetCode::BadParam),
             "period {period}: a series one short of endIdx was accepted"
         );

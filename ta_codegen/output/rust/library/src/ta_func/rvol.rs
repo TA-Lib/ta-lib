@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::RVOL`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::rvol`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_RVOL_Lookback")]
     #[inline]
-    pub fn RVOL_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn rvol_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -86,10 +86,10 @@ impl Core {
         }
         return Ok((optInTimePeriod) as usize);
     }
-    /// C-shaped body behind [`Core::RVOL`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::rvol`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn RVOL_Impl(
+    pub(crate) fn rvol_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -110,7 +110,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.RVOL_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.rvol_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -211,7 +211,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.RVOL(0, volume.len() - 1, &volume, 20, &mut out)?;
+    /// let out_range = core.rvol(0, volume.len() - 1, &volume, 20, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -219,7 +219,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::OBV`] · [`Core::PVO`] · [`Core::VWMA`] · [`Core::SMA`]
+    /// [`OBV`](Core::obv) · [`PVO`](Core::pvo) · [`VWMA`](Core::vwma) · [`SMA`](Core::sma)
     ///
     /// # References
     ///
@@ -229,7 +229,7 @@ impl Core {
     ///   [trading-signals](https://www.npmjs.com/package/trading-signals), `volume/RVOL`.
     #[doc(alias = "TA_RVOL")]
     #[doc(alias = "RelativeVolume")]
-    pub fn RVOL(
+    pub fn rvol(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -243,7 +243,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.RVOL_Lookback(optInTimePeriod)?;
+        let _guardLb = self.rvol_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inVolume.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -254,7 +254,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.RVOL_Impl(
+        let retCode = self.rvol_impl(
             startIdx,
             endIdx,
             inVolume,
@@ -272,7 +272,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live RVOL stream: one value per closed bar, bit-identical to [`Core::RVOL`]
+/// Live RVOL stream: one value per closed bar, bit-identical to [`Core::rvol`]
 /// over the same series. Open with [`Core::rvol_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -427,7 +427,7 @@ impl Core {
     }
 
     /// Open a live RVOL stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::RVOL`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::rvol`] at that bar.
     ///
     /// # Errors
     ///
@@ -459,7 +459,7 @@ impl Core {
     }
 
     /// [`Core::rvol_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::RVOL`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::rvol`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -478,7 +478,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.RVOL(0, volume.len() - 1, &volume, 20, &mut batch_out)?;
+    /// let batch = core.rvol(0, volume.len() - 1, &volume, 20, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.rvol_open_and_fill(&volume, 20, &mut out)?;
@@ -499,7 +499,7 @@ impl Core {
         if inVolume.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.RVOL_Lookback(optInTimePeriod)?;
+        let _guardLb = self.rvol_lookback(optInTimePeriod)?;
         let _guardOutLen = inVolume.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -620,7 +620,7 @@ impl RvolStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::RVOL`] reports over the same bars: the opener sets it
+    /// It is what [`Core::rvol`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

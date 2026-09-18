@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#AO} consumes before it can
+    * Number of leading input bars {@link Core#ao} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,7 +25,7 @@
     *        34; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int AO_Lookback( int optInFastPeriod, int optInSlowPeriod )
+   public int aoLookback( int optInFastPeriod, int optInSlowPeriod )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 5;
@@ -41,18 +41,18 @@
        * of that window's SMA. There is no swap of an inverted pair, so the max is
        * taken over the periods exactly as the caller gave them.
        */
-      return SMA_Lookback(Math.max(optInFastPeriod, optInSlowPeriod)) ;
+      return smaLookback(Math.max(optInFastPeriod, optInSlowPeriod)) ;
 
    }
-   RetCode AO_Impl( int startIdx,
-                    int endIdx,
-                    double inHigh[],
-                    double inLow[],
-                    int optInFastPeriod,
-                    int optInSlowPeriod,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode aoImpl( int startIdx,
+                   int endIdx,
+                   double inHigh[],
+                   double inLow[],
+                   int optInFastPeriod,
+                   int optInSlowPeriod,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -109,7 +109,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = (int)AO_Lookback(optInFastPeriod, optInSlowPeriod);
+      lookbackTotal = (int)aoLookback(optInFastPeriod, optInSlowPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -177,15 +177,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode AO_Impl( int startIdx,
-                    int endIdx,
-                    float inHigh[],
-                    float inLow[],
-                    int optInFastPeriod,
-                    int optInSlowPeriod,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode aoImpl( int startIdx,
+                   int endIdx,
+                   float inHigh[],
+                   float inLow[],
+                   int optInFastPeriod,
+                   int optInSlowPeriod,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -212,7 +212,7 @@
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = (int)AO_Lookback(optInFastPeriod, optInSlowPeriod);
+      lookbackTotal = (int)aoLookback(optInFastPeriod, optInSlowPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -274,7 +274,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AO_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#aoLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -301,13 +301,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#APO
-    * @see Core#MACD
-    * @see Core#MEDPRICE
-    * @see Core#PPO
-    * @see Core#ULTOSC
+    * @see Core#apo
+    * @see Core#macd
+    * @see Core#medprice
+    * @see Core#ppo
+    * @see Core#ultosc
     */
-   public OutRange AO( int startIdx,
+   public OutRange ao( int startIdx,
                        int endIdx,
                        double inHigh[],
                        double inLow[],
@@ -316,7 +316,7 @@
                        double outReal[] )
    {
       requireIndexRange("AO", startIdx, endIdx);
-      int guardStart = clampedStart("AO", startIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardStart = clampedStart("AO", startIdx, aoLookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AO", "inHigh", inHigh, guardInLen);
@@ -324,7 +324,7 @@
       requireLength("AO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AO_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = aoImpl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AO", retCode);
       }
@@ -353,7 +353,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#AO_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#aoLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -380,13 +380,13 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#APO
-    * @see Core#MACD
-    * @see Core#MEDPRICE
-    * @see Core#PPO
-    * @see Core#ULTOSC
+    * @see Core#apo
+    * @see Core#macd
+    * @see Core#medprice
+    * @see Core#ppo
+    * @see Core#ultosc
     */
-   public OutRange AO( int startIdx,
+   public OutRange ao( int startIdx,
                        int endIdx,
                        float inHigh[],
                        float inLow[],
@@ -395,7 +395,7 @@
                        double outReal[] )
    {
       requireIndexRange("AO", startIdx, endIdx);
-      int guardStart = clampedStart("AO", startIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardStart = clampedStart("AO", startIdx, aoLookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("AO", "inHigh", inHigh, guardInLen);
@@ -403,7 +403,7 @@
       requireLength("AO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AO_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = aoImpl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("AO", retCode);
       }
@@ -413,7 +413,7 @@
 
    /**
     * A live AO stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#AO} over the same series.
+    * closed bar, bit-identical to {@link Core#ao} over the same series.
     * Open with {@link Core#aoOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -446,7 +446,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#AO} reports over the same bars: the
+       * <p>It is what {@link Core#ao} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -702,7 +702,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = (int)AO_Lookback(optInFastPeriod, optInSlowPeriod);
+      lookbackTotal = (int)aoLookback(optInFastPeriod, optInSlowPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -842,8 +842,8 @@
    /**
     * Open a live AO stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#AO} at that bar.
-    * <p>The history must hold at least {@code AO_Lookback(...) + 1} bars
+    * to {@link Core#ao} at that bar.
+    * <p>The history must hold at least {@code aoLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -862,7 +862,7 @@
    }
    /**
     * {@link Core#aoOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#AO} over the whole history in the same single pass
+    * to {@link Core#ao} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -876,7 +876,7 @@
       requireArgument("AO openAndFill", "inHigh", inHigh);
       requireHistory("AO openAndFill", inHigh.length);
       requireArgument("AO openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("AO openAndFill", inHigh.length, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+      int guardOutLen = openFillCount("AO openAndFill", inHigh.length, aoLookback(optInFastPeriod, optInSlowPeriod));
       requireHistoryLength("AO openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

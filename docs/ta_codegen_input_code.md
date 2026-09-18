@@ -175,12 +175,13 @@ generator resolves it to the correct symbol per language. From
 retCode = sma( startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal );
 ```
 
-maps to `TA_SMA(...)` in C and the public `SMA(...)` in Rust, Java and C# — the
-callee's public entry point in every backend, which is what C has always done
-(#236 step 3, #267). Its rejection surfaces as a throw in Java and C# and as an
-`Err(RetCode)` in Rust.
-`sma_lookback(...)` similarly maps to `TA_SMA_Lookback(...)` in C and
-`SMA_Lookback(...)` (`self.SMA_Lookback(...)` in Rust) elsewhere.
+maps to `TA_SMA(...)` in C and to the public entry point each other backend
+folds that name to (`sma(...)` in Rust and Java, `Sma(...)` in C#; see
+`docs/naming-spec.md`), which is what C has always done (#236 step 3, #267). Its
+rejection surfaces as a throw in Java and C# and as an `Err(RetCode)` in Rust.
+`sma_lookback(...)` maps the same way: `TA_SMA_Lookback(...)` in C,
+`self.sma_lookback(...)` in Rust, `smaLookback(...)` in Java, `SmaLookback(...)`
+in C#.
 
 ## What the generator adds (do NOT write these)
 

@@ -164,7 +164,7 @@ public static class BatchApiTest
         double[] input = { 2.0, 1.2, 1.5 };
         var output = new double[3];
 
-        OutRange r = core.MAX(0, 2, input, 2, output);
+        OutRange r = core.Max(0, 2, input, 2, output);
 
         Check(r.BegIdx == 1, $"MAX BegIdx == 1 (got {r.BegIdx})");
         Check(r.Count == 2, $"MAX Count == 2 (got {r.Count})");
@@ -180,8 +180,8 @@ public static class BatchApiTest
         double[] input = Closes(200);
         var output = new double[input.Length];
 
-        OutRange r = core.MA(0, input.Length - 1, input, 10, MAType.SMA, output);
-        Check(r.BegIdx == core.MA_Lookback(10, MAType.SMA), "SMA BegIdx == lookback");
+        OutRange r = core.Ma(0, input.Length - 1, input, 10, MAType.SMA, output);
+        Check(r.BegIdx == core.MaLookback(10, MAType.SMA), "SMA BegIdx == lookback");
         Check(r.Count == input.Length - r.BegIdx, "SMA Count fills to the end");
     }
 
@@ -204,8 +204,8 @@ public static class BatchApiTest
         var output = new double[100];
         Array.Fill(output, sentinel);
 
-        int lookback = core.CMO_Lookback(int.MinValue);
-        OutRange r = core.CMO(0, input.Length - 1, input, int.MinValue, output);
+        int lookback = core.CmoLookback(int.MinValue);
+        OutRange r = core.Cmo(0, input.Length - 1, input, int.MinValue, output);
 
         Check(r.BegIdx == lookback, "CMO BegIdx == lookback");
         Check(r.Count > 0, "CMO produced values (so the tail check is not vacuous)");
@@ -233,10 +233,10 @@ public static class BatchApiTest
         double[] input = Closes(10);
         var output = new double[10];
 
-        Check(core.SMA_Lookback(30) > 9,
+        Check(core.SmaLookback(30) > 9,
               "the 30-period lookback really does exceed this 10-bar range");
 
-        OutRange r = core.SMA(0, input.Length - 1, input, 30, output);
+        OutRange r = core.Sma(0, input.Length - 1, input, 30, output);
         Check(r.Count == 0, "too-short range yields Count == 0");
         Check(r.IsEmpty, "too-short range IsEmpty");
         Check(r.BegIdx == 0, "empty range reports BegIdx 0");
@@ -250,13 +250,13 @@ public static class BatchApiTest
         var output = new double[100];
 
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(-1, 50, input, 10, output), "negative startIdx -> ArgumentOutOfRange");
+            () => core.Sma(-1, 50, input, 10, output), "negative startIdx -> ArgumentOutOfRange");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(0, -1, input, 10, output), "negative endIdx -> ArgumentOutOfRange");
+            () => core.Sma(0, -1, input, 10, output), "negative endIdx -> ArgumentOutOfRange");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(50, 10, input, 10, output), "endIdx < startIdx -> ArgumentOutOfRange");
+            () => core.Sma(50, 10, input, 10, output), "endIdx < startIdx -> ArgumentOutOfRange");
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 50, input, 0, output), "period below range -> ArgumentException");
+            () => core.Sma(0, 50, input, 0, output), "period below range -> ArgumentException");
 
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
@@ -266,10 +266,10 @@ public static class BatchApiTest
         // — any valid range needs endIdx >= 0 and therefore at least one element,
         // so an empty input can never satisfy it.
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 50, (double[])null!, 10, output),
+            () => core.Sma(0, 50, (double[])null!, 10, output),
             "null input -> ArgumentException");
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 50, Array.Empty<double>(), 10, output),
+            () => core.Sma(0, 50, Array.Empty<double>(), 10, output),
             "empty input -> ArgumentException");
 
         // It names the parameter, which is the whole point of checking rather
@@ -277,7 +277,7 @@ public static class BatchApiTest
         _checks++;
         try
         {
-            core.SMA(0, 50, (double[])null!, 10, output);
+            core.Sma(0, 50, (double[])null!, 10, output);
             _failures++;
             Console.WriteLine("  FAIL: expected an empty-input rejection");
         }
@@ -296,7 +296,7 @@ public static class BatchApiTest
         // otherwise — see TheLengthBoundFromBothSides below.)
         _checks++;
         {
-            OutRange r = core.SMA(0, 5, input, 30, Array.Empty<double>());
+            OutRange r = core.Sma(0, 5, input, 30, Array.Empty<double>());
             if (!r.IsEmpty)
             {
                 _failures++;
@@ -308,7 +308,7 @@ public static class BatchApiTest
         var shared = new double[100];
         var third = new double[100];
         CheckThrows<ArgumentException>(
-            () => core.BBANDS(0, 50, input, 20, 2.0, 2.0, MAType.SMA, shared, shared, third),
+            () => core.Bbands(0, 50, input, 20, 2.0, 2.0, MAType.SMA, shared, shared, third),
             "aliased output arrays -> ArgumentException");
     }
 
@@ -334,7 +334,7 @@ public static class BatchApiTest
         double[] input = Closes(200);
 
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 199, input, 10, new double[3]),
+            () => core.Sma(0, 199, input, 10, new double[3]),
             "undersized output -> ArgumentException",
             "SMA", "outReal", "3", "191");
     }
@@ -346,7 +346,7 @@ public static class BatchApiTest
         double[] input = Closes(200);
 
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 500, input, 10, new double[501]),
+            () => core.Sma(0, 500, input, 10, new double[501]),
             "endIdx past the input end -> ArgumentException",
             "SMA", "inReal", "200", "501");
     }
@@ -360,11 +360,11 @@ public static class BatchApiTest
         var output = new double[200];
 
         CheckThrows<ArgumentException>(
-            () => core.ADD(0, 199, longer, shorter, output),
+            () => core.Add(0, 199, longer, shorter, output),
             "mismatched input lengths -> ArgumentException",
             "ADD", "inReal1", "50", "200");
         // Control: over the range both legs cover, the same call succeeds.
-        Check(core.ADD(0, 49, longer, shorter, output).Count == 50,
+        Check(core.Add(0, 49, longer, shorter, output).Count == 50,
               "ADD over the range both legs cover succeeds");
     }
 
@@ -378,14 +378,14 @@ public static class BatchApiTest
     {
         var core = new Core();
         double[] input = Closes(200);
-        int produced = 199 - core.SMA_Lookback(10) + 1;
+        int produced = 199 - core.SmaLookback(10) + 1;
 
         Check(produced == 191, "the produced count really is 191 (got " + produced + ")");
         Check(produced < 200, "the produced count is shorter than the requested range");
-        Check(core.SMA(0, 199, input, 10, new double[produced]).Count == produced,
+        Check(core.Sma(0, 199, input, 10, new double[produced]).Count == produced,
               "an exactly-sized output is accepted and filled");
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 199, input, 10, new double[produced - 1]),
+            () => core.Sma(0, 199, input, 10, new double[produced - 1]),
             "one element short of the produced count -> ArgumentException",
             "outReal", (produced - 1).ToString(), produced.ToString());
     }
@@ -403,7 +403,7 @@ public static class BatchApiTest
         Array.Fill(output, sentinel);
 
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 199, input, 10, output), "undersized output throws");
+            () => core.Sma(0, 199, input, 10, output), "undersized output throws");
 
         bool untouched = true;
         foreach (double v in output)
@@ -415,7 +415,7 @@ public static class BatchApiTest
         }
         Check(untouched, "a rejected call left the output buffer untouched");
         // Non-vacuity: the same buffer IS writable by a call that is accepted.
-        core.SMA(0, 2, input, 1, output);
+        core.Sma(0, 2, input, 1, output);
         Check(output[0] != sentinel, "the sentinel is overwritten by a call that runs");
     }
 
@@ -430,16 +430,16 @@ public static class BatchApiTest
         var tiny = new double[3];
 
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(50, 10, input, 10, tiny),
+            () => core.Sma(50, 10, input, 10, tiny),
             "endIdx < startIdx still -> ArgumentOutOfRange", "endIdx");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(-1, 199, input, 10, tiny),
+            () => core.Sma(-1, 199, input, 10, tiny),
             "negative startIdx still -> ArgumentOutOfRange", "startIdx");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(0, Core.MAX_INDEX + 1, input, 10, tiny),
-            "endIdx above MAX_INDEX still -> ArgumentOutOfRange", "endIdx");
+            () => core.Sma(0, Core.MaxIndex + 1, input, 10, tiny),
+            "endIdx above MaxIndex still -> ArgumentOutOfRange", "endIdx");
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 199, input, 0, tiny),
+            () => core.Sma(0, 199, input, 0, tiny),
             "out-of-range period still -> the parameter message", "bad parameter");
 
         // And an EMPTY input does not change any of those answers. It used to:
@@ -451,16 +451,16 @@ public static class BatchApiTest
         // Fewer than all four would leave a branch where the old behaviour could
         // come back unnoticed.
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(-1, 199, ReadOnlySpan<double>.Empty, 10, tiny),
+            () => core.Sma(-1, 199, ReadOnlySpan<double>.Empty, 10, tiny),
             "empty input does not mask a bad startIdx", "startIdx");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(50, 10, ReadOnlySpan<double>.Empty, 10, tiny),
+            () => core.Sma(50, 10, ReadOnlySpan<double>.Empty, 10, tiny),
             "empty input does not mask endIdx < startIdx", "endIdx");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.SMA(0, Core.MAX_INDEX + 1, ReadOnlySpan<double>.Empty, 10, tiny),
-            "empty input does not mask endIdx above MAX_INDEX", "endIdx");
+            () => core.Sma(0, Core.MaxIndex + 1, ReadOnlySpan<double>.Empty, 10, tiny),
+            "empty input does not mask endIdx above MaxIndex", "endIdx");
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 199, ReadOnlySpan<double>.Empty, 0, tiny),
+            () => core.Sma(0, 199, ReadOnlySpan<double>.Empty, 0, tiny),
             "empty input does not mask a bad parameter", "bad parameter");
     }
 
@@ -469,7 +469,7 @@ public static class BatchApiTest
     {
         var core = new Core();
         double[] input = Closes(200);
-        int produced = 199 - core.MACD_Lookback(12, 26, 9) + 1;
+        int produced = 199 - core.MacdLookback(12, 26, 9) + 1;
         Check(produced > 0, "MACD produces values over this range");
 
         var big1 = new double[200];
@@ -477,13 +477,13 @@ public static class BatchApiTest
         var small = new double[produced - 1];
 
         CheckThrows<ArgumentException>(
-            () => core.MACD(0, 199, input, 12, 26, 9, small, big1, big2),
+            () => core.Macd(0, 199, input, 12, 26, 9, small, big1, big2),
             "short first output is named", "outMACD", produced.ToString());
         CheckThrows<ArgumentException>(
-            () => core.MACD(0, 199, input, 12, 26, 9, big1, small, big2),
+            () => core.Macd(0, 199, input, 12, 26, 9, big1, small, big2),
             "short second output is named", "outMACDSignal", produced.ToString());
         CheckThrows<ArgumentException>(
-            () => core.MACD(0, 199, input, 12, 26, 9, big1, big2, small),
+            () => core.Macd(0, 199, input, 12, 26, 9, big1, big2, small),
             "short third output is named", "outMACDHist", produced.ToString());
     }
 
@@ -495,10 +495,10 @@ public static class BatchApiTest
         double[] h = Closes(200);
         double[] l = Closes(200);
         double[] c = Closes(200);
-        int produced = 199 - core.CDLDOJI_Lookback() + 1;
+        int produced = 199 - core.CdldojiLookback() + 1;
 
         CheckThrows<ArgumentException>(
-            () => core.CDLDOJI(0, 199, o, h, l, c, new int[3]),
+            () => core.Cdldoji(0, 199, o, h, l, c, new int[3]),
             "short int output -> ArgumentException",
             "CDLDOJI", "outInteger", "3", produced.ToString());
     }
@@ -515,12 +515,12 @@ public static class BatchApiTest
         }
 
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 199, inF, 10, new double[3]),
+            () => core.Sma(0, 199, inF, 10, new double[3]),
             "float overload: undersized output", "SMA", "outReal", "3", "191");
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, 500, inF, 10, new double[501]),
+            () => core.Sma(0, 500, inF, 10, new double[501]),
             "float overload: endIdx past the input end", "SMA", "inReal", "200", "501");
-        Check(core.SMA(0, 199, inF, 10, new double[191]).Count == 191,
+        Check(core.Sma(0, 199, inF, 10, new double[191]).Count == 191,
               "float overload accepts an exactly-sized output");
     }
 
@@ -543,23 +543,23 @@ public static class BatchApiTest
         var outv = new int[200];
 
         CheckThrows<ArgumentException>(
-            () => core.CDL3OUTSIDE(0, 199, real, ReadOnlySpan<double>.Empty,
+            () => core.Cdl3outside(0, 199, real, ReadOnlySpan<double>.Empty,
                                    ReadOnlySpan<double>.Empty, real, outv),
             "an empty high leg the body never reads", "inHigh", "0", "200");
         double[] nullLeg = null!;
         CheckThrows<ArgumentException>(
-            () => core.CDL3OUTSIDE(0, 199, real, real, nullLeg, real, outv),
+            () => core.Cdl3outside(0, 199, real, real, nullLeg, real, outv),
             "a null low leg the body never reads", "inLow", "0", "200");
         CheckThrows<ArgumentException>(
-            () => core.CDLHIKKAKE(0, 199, ReadOnlySpan<double>.Empty, real, real, real, outv),
+            () => core.Cdlhikkake(0, 199, ReadOnlySpan<double>.Empty, real, real, real, outv),
             "CDLHIKKAKE's open leg, the other shape of the same exemption",
             "inOpen", "0", "200");
 
         CheckThrows<ArgumentException>(
-            () => core.CDL3OUTSIDE(0, 199, ReadOnlySpan<double>.Empty, real, real, real, outv),
+            () => core.Cdl3outside(0, 199, ReadOnlySpan<double>.Empty, real, real, real, outv),
             "the open leg, which IS read, is still checked", "inOpen", "0", "200");
         // Non-vacuity: every leg supplied and sized is the success these reject.
-        Check(core.CDL3OUTSIDE(0, 199, real, real, real, real, outv).Count > 0,
+        Check(core.Cdl3outside(0, 199, real, real, real, real, outv).Count > 0,
               "CDL3OUTSIDE runs when every declared leg is supplied");
     }
 
@@ -574,12 +574,12 @@ public static class BatchApiTest
         double[] input = Closes(24);
         double[] wide = Closes(25);
 
-        Check(core.APO_Lookback(12, 26, MAType.EMA) > 24,
+        Check(core.ApoLookback(12, 26, MAType.EMA) > 24,
               "APO's lookback exceeds this range, so nothing is produced");
         CheckThrows<ArgumentException>(
-            () => core.APO(0, 24, input, 12, 26, MAType.EMA, Array.Empty<double>()),
+            () => core.Apo(0, 24, input, 12, 26, MAType.EMA, Array.Empty<double>()),
             "endIdx past the input, producing nothing", "APO", "inReal", "24", "25");
-        Check(core.APO(0, 24, wide, 12, 26, MAType.EMA, Array.Empty<double>()).Count == 0,
+        Check(core.Apo(0, 24, wide, 12, 26, MAType.EMA, Array.Empty<double>()).Count == 0,
               "an input reaching endIdx is an empty success, zero-length output");
     }
 
@@ -597,14 +597,14 @@ public static class BatchApiTest
             {
                 leaked++;
             }
-            if (m.Name == "SMA")
+            if (m.Name == "Sma")
             {
                 sma++;
             }
         }
         Check(leaked == 0, "no Unguarded method survives on the public Core surface");
         // Non-vacuity: the reflection actually sees the surface it is asserting over.
-        Check(sma >= 2, "reflection sees the SMA overloads it is filtering over");
+        Check(sma >= 2, "reflection sees the Sma overloads it is filtering over");
     }
 
     /// <summary>The float overload adopts the identical shape (C's TA_S_* parity).</summary>
@@ -620,8 +620,8 @@ public static class BatchApiTest
         var outputD = new double[100];
         var outputF = new double[100];
 
-        OutRange rd = core.SMA(0, input.Length - 1, input, 10, outputD);
-        OutRange rf = core.SMA(0, inputF.Length - 1, inputF, 10, outputF);
+        OutRange rd = core.Sma(0, input.Length - 1, input, 10, outputD);
+        OutRange rf = core.Sma(0, inputF.Length - 1, inputF, 10, outputF);
 
         Check(rd.BegIdx == rf.BegIdx && rd.Count == rf.Count,
               "float overload reports the same OutRange");
@@ -657,11 +657,11 @@ public static class BatchApiTest
         var outputDefault = new double[200];
         var outputExplicit = new double[200];
 
-        Check(core.SMA_Lookback(int.MinValue) == core.SMA_Lookback(30),
+        Check(core.SmaLookback(int.MinValue) == core.SmaLookback(30),
               "SMA lookback: int.MinValue == the documented default of 30");
 
-        OutRange rDefault = core.SMA(0, input.Length - 1, input, int.MinValue, outputDefault);
-        OutRange rExplicit = core.SMA(0, input.Length - 1, input, 30, outputExplicit);
+        OutRange rDefault = core.Sma(0, input.Length - 1, input, int.MinValue, outputDefault);
+        OutRange rExplicit = core.Sma(0, input.Length - 1, input, 30, outputExplicit);
 
         Check(rDefault.BegIdx == rExplicit.BegIdx && rDefault.Count == rExplicit.Count,
               "SMA: int.MinValue reports the same range as period 30");
@@ -698,14 +698,14 @@ public static class BatchApiTest
 
         // Two outputs offset within one buffer.
         CheckThrows<ArgumentException>(
-            () => core.BBANDS(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
+            () => core.Bbands(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
                               big.AsSpan(0, n), big.AsSpan(10, n), big.AsSpan(n + 12, 4)),
             "outputs overlapping at an offset are rejected");
 
         // Same start, DIFFERENT length: the same memory, which an equality test
         // reads as not-equal. This is the case that motivated the fix.
         CheckThrows<ArgumentException>(
-            () => core.BBANDS(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
+            () => core.Bbands(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
                               big.AsSpan(0, n), big.AsSpan(0, n + 1), big.AsSpan(n + 12, 4)),
             "outputs sharing a start but differing in length are rejected");
 
@@ -713,7 +713,7 @@ public static class BatchApiTest
         var buf = new double[n + 40];
         Array.Copy(src, buf, n);
         CheckThrows<ArgumentException>(
-            () => core.BBANDS(0, n - 1, buf.AsSpan(0, n), 5, 2.0, 2.0, MAType.SMA,
+            () => core.Bbands(0, n - 1, buf.AsSpan(0, n), 5, 2.0, 2.0, MAType.SMA,
                               buf.AsSpan(20, n), new double[n], new double[n]),
             "an output partially overlapping an input is rejected");
 
@@ -726,15 +726,15 @@ public static class BatchApiTest
         var mbuf = new double[n + 40];
         Array.Copy(src, mbuf, n);
         CheckThrows<ArgumentException>(
-            () => core.MAVP(0, n - 1, mbuf.AsSpan(0, n), per, 2, 20, MAType.SMA, mbuf.AsSpan(15, n)),
+            () => core.Mavp(0, n - 1, mbuf.AsSpan(0, n), per, 2, 20, MAType.SMA, mbuf.AsSpan(15, n)),
             "MAVP rejects a partially overlapping output");
 
         // THE OTHER HALF: whole-buffer in-place must still work, and still be
         // correct. Rejecting it would break callers the bodies were written for.
         var inplace = (double[])src.Clone();
         var reference = new double[n];
-        core.SMA(0, n - 1, src, 5, reference);
-        OutRange r = core.SMA(0, n - 1, inplace, 5, inplace);
+        core.Sma(0, n - 1, src, 5, reference);
+        OutRange r = core.Sma(0, n - 1, inplace, 5, inplace);
         Check(r.Count > 0, "whole-buffer in-place is still accepted");
 
         bool same = true;
@@ -751,7 +751,7 @@ public static class BatchApiTest
         var o1 = new double[n];
         var o2 = new double[n];
         var o3 = new double[n];
-        OutRange rb = core.BBANDS(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA, o1, o2, o3);
+        OutRange rb = core.Bbands(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA, o1, o2, o3);
         Check(rb.Count > 0, "disjoint outputs still produce values");
     }
 
@@ -771,13 +771,13 @@ public static class BatchApiTest
         double[] shared = new double[n];
 
         CheckThrows<ArgumentException>(
-            () => core.SUPERTREND(0, n - 1, hlc, hlc, hlc, 10, 3.0,
+            () => core.Supertrend(0, n - 1, hlc, hlc, hlc, 10, 3.0,
                 shared.AsSpan(),
                 MemoryMarshal.Cast<double, int>(shared.AsSpan())),
             "SUPERTREND's int direction output sharing memory with its real trend output is rejected");
 
         // Disjoint mixed-type outputs are untouched by the guard.
-        OutRange r = core.SUPERTREND(0, n - 1, hlc, hlc, hlc, 10, 3.0, new double[n], new int[n]);
+        OutRange r = core.Supertrend(0, n - 1, hlc, hlc, hlc, 10, 3.0, new double[n], new int[n]);
         Check(r.Count > 0, "disjoint mixed-type outputs still produce values");
     }
 
@@ -795,7 +795,7 @@ public static class BatchApiTest
         int[] shared = new int[n];
 
         CheckThrows<ArgumentException>(
-            () => core.SUPERTREND(0, n - 1,
+            () => core.Supertrend(0, n - 1,
                 MemoryMarshal.Cast<int, float>(shared),
                 MemoryMarshal.Cast<int, float>(shared),
                 MemoryMarshal.Cast<int, float>(shared),
@@ -808,7 +808,7 @@ public static class BatchApiTest
         {
             disjointF[i] = 100.0f + 10.0f * MathF.Sin(i / 7.0f);
         }
-        OutRange r = core.SUPERTREND(0, n - 1, disjointF, disjointF, disjointF, 10, 3.0, new double[n], new int[n]);
+        OutRange r = core.Supertrend(0, n - 1, disjointF, disjointF, disjointF, 10, 3.0, new double[n], new int[n]);
         Check(r.Count > 0, "disjoint float-overload mixed-type operands still produce values");
     }
 
@@ -834,7 +834,7 @@ public static class BatchApiTest
         // The float view spans the same bytes as the double view of the first
         // half, so input and output genuinely overlap.
         CheckThrows<ArgumentException>(
-            () => core.SMA(0, n - 1,
+            () => core.Sma(0, n - 1,
                 MemoryMarshal.Cast<double, float>(shared.AsSpan()).Slice(0, n),
                 5,
                 shared.AsSpan(0, n)),
@@ -846,7 +846,7 @@ public static class BatchApiTest
         {
             disjoint[i] = 100.0f + i;
         }
-        OutRange r = core.SMA(0, n - 1, disjoint, 5, new double[n]);
+        OutRange r = core.Sma(0, n - 1, disjoint, 5, new double[n]);
         Check(r.Count > 0, "a disjoint float input and double output still produce values");
     }
 
@@ -872,24 +872,24 @@ public static class BatchApiTest
 
         // Lossless, the pair the type cannot separate.
         CheckCode(RetCode.OutOfRangeStartIndex,
-            () => core.SMA(-1, 50, input, 10, output), "negative startIdx carries OutOfRangeStartIndex");
+            () => core.Sma(-1, 50, input, 10, output), "negative startIdx carries OutOfRangeStartIndex");
         CheckCode(RetCode.OutOfRangeEndIndex,
-            () => core.SMA(50, 10, input, 10, output), "endIdx < startIdx carries OutOfRangeEndIndex");
+            () => core.Sma(50, 10, input, 10, output), "endIdx < startIdx carries OutOfRangeEndIndex");
 
         // The rest of the batch tier's vocabulary.
         CheckCode(RetCode.BadParam,
-            () => core.SMA(0, 50, input, 0, output), "an out-of-range period carries BadParam");
+            () => core.Sma(0, 50, input, 0, output), "an out-of-range period carries BadParam");
         CheckCode(RetCode.BadParam,
-            () => core.MACD(0, 199, input, 12, 26, 9, output, output, new double[200]),
+            () => core.Macd(0, 199, input, 12, 26, 9, output, output, new double[200]),
             "two outputs sharing one buffer carries BadParam");
 
         // The condition C has no code for. It reports the code C answers for an
         // absent argument it CAN detect, so the mapping stays total.
         CheckCode(RetCode.BadParam,
-            () => core.SMA(0, 199, input, 10, new double[3]), "a short output carries BadParam");
+            () => core.Sma(0, 199, input, 10, new double[3]), "a short output carries BadParam");
 
         // Streaming's one recoverable condition, which is why it has a code.
-        int lookback = core.SMA_Lookback(30);
+        int lookback = core.SmaLookback(30);
         CheckCode(RetCode.InsufficientHistory,
             () => core.SmaOpen(new double[lookback], 30), "a short history carries InsufficientHistory");
         CheckThrows<InsufficientHistoryException>(
@@ -983,13 +983,13 @@ public static class BatchApiTest
         double[] input = Closes(252);
         var mamaRef = new double[252];
         var famaRef = new double[252];
-        OutRange reference = core.MAMA(0, 251, input, 0.5, 0.05, mamaRef, famaRef);
+        OutRange reference = core.Mama(0, 251, input, 0.5, 0.05, mamaRef, famaRef);
         Check(reference.Count > 0, "the reference call produces values");
 
         const double canary = -1.2345678901234e300;
         var mama = new double[252];
         Array.Fill(mama, canary);
-        OutRange r = core.MAMA(0, 251, input, 0.5, 0.05, mama, default);
+        OutRange r = core.Mama(0, 251, input, 0.5, 0.05, mama, default);
 
         Check(r.BegIdx == reference.BegIdx && r.Count == reference.Count,
             "declining outFAMA leaves the reported range alone");
@@ -1011,15 +1011,15 @@ public static class BatchApiTest
         // A null array converts to an empty span, so this is the same call —
         // which is exactly why C# cannot tell "declined" from "empty".
         double[]? absent = null;
-        core.MAMA(0, 251, input, 0.5, 0.05, new double[252], absent);
+        core.Mama(0, 251, input, 0.5, 0.05, new double[252], absent);
 
         // Controls, so the acceptance above is about the FLAG and not about MAMA
         // having stopped checking its outputs.
         CheckThrows<ArgumentException>(
-            () => core.MAMA(0, 251, input, 0.5, 0.05, default, famaRef),
+            () => core.Mama(0, 251, input, 0.5, 0.05, default, famaRef),
             "the non-nullable output is still required", "MAMA", "outMAMA");
         CheckThrows<ArgumentException>(
-            () => core.MAMA(0, 251, input, 0.5, 0.05, mamaRef, new double[1]),
+            () => core.Mama(0, 251, input, 0.5, 0.05, mamaRef, new double[1]),
             "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
     }
 
@@ -1038,10 +1038,10 @@ public static class BatchApiTest
         var core = new Core();
         double[] input = Closes(252);
         const int period = 253;
-        Check(core.ACCBANDS_Lookback(period) > 251,
+        Check(core.AccbandsLookback(period) > 251,
             "the probe needs a lookback past the range, or it proves nothing");
 
-        OutRange r = core.ACCBANDS(0, 251, input, input, input, period,
+        OutRange r = core.Accbands(0, 251, input, input, input, period,
             default, default, default);
         Check(r.Count == 0, "a sub-lookback range needs no output space");
 
@@ -1049,12 +1049,12 @@ public static class BatchApiTest
         // are still rejected, so this is about the count and not about the bound
         // having gone away.
         CheckThrows<ArgumentException>(
-            () => core.ACCBANDS(0, 251, input, input, input, 20, default, default, default),
+            () => core.Accbands(0, 251, input, input, input, 20, default, default, default),
             "an output that has to hold values is still bounded", "ACCBANDS");
         // And a REAL alias of two outputs is still rejected.
         var shared = new double[252];
         CheckThrows<ArgumentException>(
-            () => core.ACCBANDS(0, 251, input, input, input, 20,
+            () => core.Accbands(0, 251, input, input, input, 20,
                 shared, shared, new double[252]),
             "two outputs that are one span are still rejected", "ACCBANDS");
     }

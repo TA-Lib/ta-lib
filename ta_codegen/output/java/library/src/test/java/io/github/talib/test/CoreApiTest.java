@@ -157,13 +157,13 @@ public class CoreApiTest {
         Core plain = Core.DEFAULT;
         Core tuned = Core.builder().unstablePeriod(FuncUnstId.RSI, 9).build();
 
-        OutRange r0 = plain.RSI(0, in.length - 1, in, 14, out0);
-        OutRange r9 = tuned.RSI(0, in.length - 1, in, 14, out9);
+        OutRange r0 = plain.rsi(0, in.length - 1, in, 14, out0);
+        OutRange r9 = tuned.rsi(0, in.length - 1, in, 14, out9);
         check(!r0.isEmpty() && !r9.isEmpty(), "both rsi calls produced values");
         check(r9.begIdx() == r0.begIdx() + 9,
               "unstable period shifts begIdx by exactly that many bars ("
               + r0.begIdx() + " -> " + r9.begIdx() + ")");
-        check(plain.RSI_Lookback(14) + 9 == tuned.RSI_Lookback(14),
+        check(plain.rsiLookback(14) + 9 == tuned.rsiLookback(14),
               "the lookback is unstable-period aware per Core instance");
     }
 
@@ -184,8 +184,8 @@ public class CoreApiTest {
 
         int[] outD = new int[n], outT = new int[n];
 
-        OutRange rD = Core.DEFAULT.CDLDOJI(0, n - 1, open, high, low, close, outD);
-        OutRange rT = tuned.CDLDOJI(0, n - 1, open, high, low, close, outT);
+        OutRange rD = Core.DEFAULT.cdldoji(0, n - 1, open, high, low, close, outD);
+        OutRange rT = tuned.cdldoji(0, n - 1, open, high, low, close, outT);
         check(!rD.isEmpty() && !rT.isEmpty(), "cdlDoji produced output on both cores");
         check(outD[rD.count() - 1] == 0, "default core: this candle is not a doji");
         check(outT[rT.count() - 1] == 100, "tuned core: a huge BodyDoji factor calls it a doji");
@@ -210,12 +210,12 @@ public class CoreApiTest {
             Core core = Core.builder()
                 .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, avgPeriod, 0.1)
                 .build();
-            int lookback = core.CDLDOJI_Lookback();
+            int lookback = core.cdldojiLookback();
             check(lookback >= 0 && lookback <= Core.MAX_INDEX,
                   "avgPeriod " + avgPeriod + ": lookback " + lookback + " is a real index count");
 
             int[] out = new int[n];
-            OutRange r = core.CDLDOJI(0, n - 1, open, high, low, close, out);
+            OutRange r = core.cdldoji(0, n - 1, open, high, low, close, out);
             if (lookback > n - 1) {
                 check(r.isEmpty(),
                       "avgPeriod " + avgPeriod + ": a lookback past the series produces nothing");
@@ -240,9 +240,9 @@ public class CoreApiTest {
         }
         int[] o1 = new int[n], o2 = new int[n], o3 = new int[n];
 
-        OutRange q1 = overridden.CDLDOJI(0, n - 1, open, high, low, close, o1);
-        OutRange q2 = restored.CDLDOJI(0, n - 1, open, high, low, close, o2);
-        OutRange q3 = Core.DEFAULT.CDLDOJI(0, n - 1, open, high, low, close, o3);
+        OutRange q1 = overridden.cdldoji(0, n - 1, open, high, low, close, o1);
+        OutRange q2 = restored.cdldoji(0, n - 1, open, high, low, close, o2);
+        OutRange q3 = Core.DEFAULT.cdldoji(0, n - 1, open, high, low, close, o3);
 
         check(o1[q1.count() - 1] != o3[q3.count() - 1],
               "the override changed the verdict (so the restore below is not vacuous)");
@@ -407,7 +407,7 @@ public class CoreApiTest {
         final Core shared = Core.builder().unstablePeriod(FuncUnstId.RSI, 4).build();
 
         final double[] reference = new double[in.length];
-        final OutRange refRange = shared.RSI(0, in.length - 1, in, 14, reference);
+        final OutRange refRange = shared.rsi(0, in.length - 1, in, 14, reference);
 
         final int threads = 8;
         final CountDownLatch start = new CountDownLatch(1);
@@ -420,7 +420,7 @@ public class CoreApiTest {
                     start.await();
                     for (int rep = 0; rep < 50; rep++) {
                         double[] out = new double[in.length];
-                        OutRange r = shared.RSI(0, in.length - 1, in, 14, out);
+                        OutRange r = shared.rsi(0, in.length - 1, in, 14, out);
                         if (!r.equals(refRange)) {
                             problems.add("range diverged: " + r + " != " + refRange);
                             return;

@@ -98,7 +98,7 @@ fn bbands(
     let mut upper = vec![fill; cap];
     let mut middle = vec![fill; cap];
     let mut lower = vec![fill; cap];
-    let out = core.BBANDS(
+    let out = core.bbands(
         0,
         input.len() - 1,
         input,
@@ -133,14 +133,14 @@ fn bbands_from_ma_and_stddev(
 ) -> Option<Bands> {
     let n = input.len();
     let mut ma = vec![f64::NAN; n];
-    let Ok(ma_out) = core.MA(0, n - 1, input, period, matype, &mut ma) else {
+    let Ok(ma_out) = core.ma(0, n - 1, input, period, matype, &mut ma) else {
         return None;
     };
     if ma_out.is_empty() {
         return None;
     }
     let mut sd = vec![f64::NAN; n];
-    let Ok(sd_out) = core.STDDEV(ma_out.beg_idx, n - 1, input, period, 1.0, &mut sd) else {
+    let Ok(sd_out) = core.stddev(ma_out.beg_idx, n - 1, input, period, 1.0, &mut sd) else {
         return None;
     };
     let (ma_beg, sd_beg, sd_nb) = (ma_out.beg_idx, sd_out.beg_idx, sd_out.count);

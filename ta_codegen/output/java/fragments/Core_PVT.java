@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#PVT} consumes before it can
+    * Number of leading input bars {@link Core#pvt} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,19 +21,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int PVT_Lookback( )
+   public int pvtLookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode PVT_Impl( int startIdx,
-                     int endIdx,
-                     double inClose[],
-                     double inVolume[],
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode pvtImpl( int startIdx,
+                    int endIdx,
+                    double inClose[],
+                    double inVolume[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -65,13 +65,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode PVT_Impl( int startIdx,
-                     int endIdx,
-                     float inClose[],
-                     float inVolume[],
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode pvtImpl( int startIdx,
+                    int endIdx,
+                    float inClose[],
+                    float inVolume[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -120,7 +120,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PVT_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#pvtLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -143,20 +143,20 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#OBV
-    * @see Core#NVI
-    * @see Core#PVI
-    * @see Core#PVO
-    * @see Core#AD
+    * @see Core#obv
+    * @see Core#nvi
+    * @see Core#pvi
+    * @see Core#pvo
+    * @see Core#ad
     */
-   public OutRange PVT( int startIdx,
+   public OutRange pvt( int startIdx,
                         int endIdx,
                         double inClose[],
                         double inVolume[],
                         double outReal[] )
    {
       requireIndexRange("PVT", startIdx, endIdx);
-      int guardStart = clampedStart("PVT", startIdx, PVT_Lookback());
+      int guardStart = clampedStart("PVT", startIdx, pvtLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVT", "inClose", inClose, guardInLen);
@@ -164,7 +164,7 @@
       requireLength("PVT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVT_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = pvtImpl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PVT", retCode);
       }
@@ -194,7 +194,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#PVT_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#pvtLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -217,20 +217,20 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#OBV
-    * @see Core#NVI
-    * @see Core#PVI
-    * @see Core#PVO
-    * @see Core#AD
+    * @see Core#obv
+    * @see Core#nvi
+    * @see Core#pvi
+    * @see Core#pvo
+    * @see Core#ad
     */
-   public OutRange PVT( int startIdx,
+   public OutRange pvt( int startIdx,
                         int endIdx,
                         float inClose[],
                         float inVolume[],
                         double outReal[] )
    {
       requireIndexRange("PVT", startIdx, endIdx);
-      int guardStart = clampedStart("PVT", startIdx, PVT_Lookback());
+      int guardStart = clampedStart("PVT", startIdx, pvtLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("PVT", "inClose", inClose, guardInLen);
@@ -238,7 +238,7 @@
       requireLength("PVT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PVT_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = pvtImpl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("PVT", retCode);
       }
@@ -248,7 +248,7 @@
 
    /**
     * A live PVT stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#PVT} over the same series.
+    * closed bar, bit-identical to {@link Core#pvt} over the same series.
     * Open with {@link Core#pvtOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -273,7 +273,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#PVT} reports over the same bars: the
+       * <p>It is what {@link Core#pvt} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -498,8 +498,8 @@
    /**
     * Open a live PVT stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#PVT} at that bar.
-    * <p>The history must hold at least {@code PVT_Lookback(...) + 1} bars
+    * to {@link Core#pvt} at that bar.
+    * <p>The history must hold at least {@code pvtLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -516,7 +516,7 @@
    }
    /**
     * {@link Core#pvtOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#PVT} over the whole history in the same single pass
+    * to {@link Core#pvt} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -530,7 +530,7 @@
       requireArgument("PVT openAndFill", "inClose", inClose);
       requireHistory("PVT openAndFill", inClose.length);
       requireArgument("PVT openAndFill", "inVolume", inVolume);
-      int guardOutLen = openFillCount("PVT openAndFill", inClose.length, PVT_Lookback());
+      int guardOutLen = openFillCount("PVT openAndFill", inClose.length, pvtLookback());
       requireHistoryLength("PVT openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("PVT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {

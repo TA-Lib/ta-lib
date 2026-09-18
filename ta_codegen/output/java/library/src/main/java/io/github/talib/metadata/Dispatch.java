@@ -57,607 +57,607 @@ final class Dispatch {
       Core core = h.core();
       switch (h.info().name()) {
          case "AC":
-            return core.AC(
+            return core.ac(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0));
          case "ACCBANDS":
-            return core.ACCBANDS(
+            return core.accbands(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "ACOS":
-            return core.ACOS(
+            return core.acos(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "AD":
-            return core.AD(
+            return core.ad(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.realOutput(0));
          case "ADD":
-            return core.ADD(
+            return core.add(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.realOutput(0));
          case "ADOSC":
-            return core.ADOSC(
+            return core.adosc(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "ADR":
-            return core.ADR(
+            return core.adr(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
          case "ADX":
-            return core.ADX(
+            return core.adx(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "ADXR":
-            return core.ADXR(
+            return core.adxr(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "AO":
-            return core.AO(
+            return core.ao(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "APO":
-            return core.APO(
+            return core.apo(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
          case "AROON":
-            return core.AROON(
+            return core.aroon(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "AROONOSC":
-            return core.AROONOSC(
+            return core.aroonosc(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
          case "ASIN":
-            return core.ASIN(
+            return core.asin(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "ATAN":
-            return core.ATAN(
+            return core.atan(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "ATR":
-            return core.ATR(
+            return core.atr(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "AVGDEV":
-            return core.AVGDEV(
+            return core.avgdev(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "AVGPRICE":
-            return core.AVGPRICE(
+            return core.avgprice(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "BBANDS":
-            return core.BBANDS(
+            return core.bbands(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "BETA":
-            return core.BETA(
+            return core.beta(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.realOutput(0));
          case "BOP":
-            return core.BOP(
+            return core.bop(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "CCI":
-            return core.CCI(
+            return core.cci(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "CDL2CROWS":
-            return core.CDL2CROWS(
+            return core.cdl2crows(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDL3BLACKCROWS":
-            return core.CDL3BLACKCROWS(
+            return core.cdl3blackcrows(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDL3INSIDE":
-            return core.CDL3INSIDE(
+            return core.cdl3inside(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDL3LINESTRIKE":
-            return core.CDL3LINESTRIKE(
+            return core.cdl3linestrike(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDL3OUTSIDE":
-            return core.CDL3OUTSIDE(
+            return core.cdl3outside(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDL3STARSINSOUTH":
-            return core.CDL3STARSINSOUTH(
+            return core.cdl3starsinsouth(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDL3WHITESOLDIERS":
-            return core.CDL3WHITESOLDIERS(
+            return core.cdl3whitesoldiers(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLABANDONEDBABY":
-            return core.CDLABANDONEDBABY(
+            return core.cdlabandonedbaby(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.intOutput(0));
          case "CDLADVANCEBLOCK":
-            return core.CDLADVANCEBLOCK(
+            return core.cdladvanceblock(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLBELTHOLD":
-            return core.CDLBELTHOLD(
+            return core.cdlbelthold(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLBREAKAWAY":
-            return core.CDLBREAKAWAY(
+            return core.cdlbreakaway(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLCLOSINGMARUBOZU":
-            return core.CDLCLOSINGMARUBOZU(
+            return core.cdlclosingmarubozu(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLCONCEALBABYSWALL":
-            return core.CDLCONCEALBABYSWALL(
+            return core.cdlconcealbabyswall(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLCOUNTERATTACK":
-            return core.CDLCOUNTERATTACK(
+            return core.cdlcounterattack(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLDARKCLOUDCOVER":
-            return core.CDLDARKCLOUDCOVER(
+            return core.cdldarkcloudcover(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.intOutput(0));
          case "CDLDOJI":
-            return core.CDLDOJI(
+            return core.cdldoji(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLDOJISTAR":
-            return core.CDLDOJISTAR(
+            return core.cdldojistar(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLDRAGONFLYDOJI":
-            return core.CDLDRAGONFLYDOJI(
+            return core.cdldragonflydoji(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLENGULFING":
-            return core.CDLENGULFING(
+            return core.cdlengulfing(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLEVENINGDOJISTAR":
-            return core.CDLEVENINGDOJISTAR(
+            return core.cdleveningdojistar(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.intOutput(0));
          case "CDLEVENINGSTAR":
-            return core.CDLEVENINGSTAR(
+            return core.cdleveningstar(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.intOutput(0));
          case "CDLGAPSIDESIDEWHITE":
-            return core.CDLGAPSIDESIDEWHITE(
+            return core.cdlgapsidesidewhite(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLGRAVESTONEDOJI":
-            return core.CDLGRAVESTONEDOJI(
+            return core.cdlgravestonedoji(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHAMMER":
-            return core.CDLHAMMER(
+            return core.cdlhammer(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHANGINGMAN":
-            return core.CDLHANGINGMAN(
+            return core.cdlhangingman(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHARAMI":
-            return core.CDLHARAMI(
+            return core.cdlharami(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHARAMICROSS":
-            return core.CDLHARAMICROSS(
+            return core.cdlharamicross(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHIGHWAVE":
-            return core.CDLHIGHWAVE(
+            return core.cdlhighwave(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHIKKAKE":
-            return core.CDLHIKKAKE(
+            return core.cdlhikkake(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHIKKAKEMOD":
-            return core.CDLHIKKAKEMOD(
+            return core.cdlhikkakemod(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLHOMINGPIGEON":
-            return core.CDLHOMINGPIGEON(
+            return core.cdlhomingpigeon(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLIDENTICAL3CROWS":
-            return core.CDLIDENTICAL3CROWS(
+            return core.cdlidentical3crows(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLINNECK":
-            return core.CDLINNECK(
+            return core.cdlinneck(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLINVERTEDHAMMER":
-            return core.CDLINVERTEDHAMMER(
+            return core.cdlinvertedhammer(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLKICKING":
-            return core.CDLKICKING(
+            return core.cdlkicking(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLKICKINGBYLENGTH":
-            return core.CDLKICKINGBYLENGTH(
+            return core.cdlkickingbylength(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLLADDERBOTTOM":
-            return core.CDLLADDERBOTTOM(
+            return core.cdlladderbottom(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLLONGLEGGEDDOJI":
-            return core.CDLLONGLEGGEDDOJI(
+            return core.cdllongleggeddoji(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLLONGLINE":
-            return core.CDLLONGLINE(
+            return core.cdllongline(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLMARUBOZU":
-            return core.CDLMARUBOZU(
+            return core.cdlmarubozu(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLMATCHINGLOW":
-            return core.CDLMATCHINGLOW(
+            return core.cdlmatchinglow(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLMATHOLD":
-            return core.CDLMATHOLD(
+            return core.cdlmathold(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.intOutput(0));
          case "CDLMORNINGDOJISTAR":
-            return core.CDLMORNINGDOJISTAR(
+            return core.cdlmorningdojistar(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.intOutput(0));
          case "CDLMORNINGSTAR":
-            return core.CDLMORNINGSTAR(
+            return core.cdlmorningstar(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.intOutput(0));
          case "CDLONNECK":
-            return core.CDLONNECK(
+            return core.cdlonneck(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLPIERCING":
-            return core.CDLPIERCING(
+            return core.cdlpiercing(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLRICKSHAWMAN":
-            return core.CDLRICKSHAWMAN(
+            return core.cdlrickshawman(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLRISEFALL3METHODS":
-            return core.CDLRISEFALL3METHODS(
+            return core.cdlrisefall3methods(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLSEPARATINGLINES":
-            return core.CDLSEPARATINGLINES(
+            return core.cdlseparatinglines(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLSHOOTINGSTAR":
-            return core.CDLSHOOTINGSTAR(
+            return core.cdlshootingstar(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLSHORTLINE":
-            return core.CDLSHORTLINE(
+            return core.cdlshortline(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLSPINNINGTOP":
-            return core.CDLSPINNINGTOP(
+            return core.cdlspinningtop(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLSTALLEDPATTERN":
-            return core.CDLSTALLEDPATTERN(
+            return core.cdlstalledpattern(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLSTICKSANDWICH":
-            return core.CDLSTICKSANDWICH(
+            return core.cdlsticksandwich(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLTAKURI":
-            return core.CDLTAKURI(
+            return core.cdltakuri(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLTASUKIGAP":
-            return core.CDLTASUKIGAP(
+            return core.cdltasukigap(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLTHRUSTING":
-            return core.CDLTHRUSTING(
+            return core.cdlthrusting(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLTRISTAR":
-            return core.CDLTRISTAR(
+            return core.cdltristar(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLUNIQUE3RIVER":
-            return core.CDLUNIQUE3RIVER(
+            return core.cdlunique3river(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLUPSIDEGAP2CROWS":
-            return core.CDLUPSIDEGAP2CROWS(
+            return core.cdlupsidegap2crows(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CDLXSIDEGAP3METHODS":
-            return core.CDLXSIDEGAP3METHODS(
+            return core.cdlxsidegap3methods(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
          case "CEIL":
-            return core.CEIL(
+            return core.ceil(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "CMF":
-            return core.CMF(
+            return core.cmf(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.realOutput(0));
          case "CMO":
-            return core.CMO(
+            return core.cmo(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "CMOU":
-            return core.CMOU(
+            return core.cmou(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "COPPOCK":
-            return core.COPPOCK(
+            return core.coppock(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0));
          case "CORREL":
-            return core.CORREL(
+            return core.correl(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.realOutput(0));
          case "COS":
-            return core.COS(
+            return core.cos(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "COSH":
-            return core.COSH(
+            return core.cosh(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "CUMSUM":
-            return core.CUMSUM(
+            return core.cumsum(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "CVI":
-            return core.CVI(
+            return core.cvi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "DEMA":
-            return core.DEMA(
+            return core.dema(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "DIV":
-            return core.DIV(
+            return core.div(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.realOutput(0));
          case "DONCHIAN":
-            return core.DONCHIAN(
+            return core.donchian(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "DPO":
-            return core.DPO(
+            return core.dpo(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "DX":
-            return core.DX(
+            return core.dx(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "EFI":
-            return core.EFI(
+            return core.efi(
                startIdx, endIdx, h.price(0, 3), h.price(0, 4), h.intOpt(0), h.realOutput(0));
          case "EMA":
-            return core.EMA(
+            return core.ema(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "ER":
-            return core.ER(
+            return core.er(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "ERI":
-            return core.ERI(
+            return core.eri(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "EXP":
-            return core.EXP(
+            return core.exp(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "FLOOR":
-            return core.FLOOR(
+            return core.floor(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "FOSC":
-            return core.FOSC(
+            return core.fosc(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "FRACTAL":
-            return core.FRACTAL(
+            return core.fractal(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.intOutput(0), h.intOutput(1));
          case "HA":
-            return core.HA(
+            return core.ha(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0), h.realOutput(1), h.realOutput(2), h.realOutput(3));
          case "HMA":
-            return core.HMA(
+            return core.hma(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "HT_DCPERIOD":
-            return core.HT_DCPERIOD(
+            return core.htDcperiod(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "HT_DCPHASE":
-            return core.HT_DCPHASE(
+            return core.htDcphase(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "HT_PHASOR":
-            return core.HT_PHASOR(
+            return core.htPhasor(
                startIdx, endIdx, h.realInput(0), h.realOutput(0), h.realOutput(1));
          case "HT_SINE":
-            return core.HT_SINE(
+            return core.htSine(
                startIdx, endIdx, h.realInput(0), h.realOutput(0), h.realOutput(1));
          case "HT_TRENDLINE":
-            return core.HT_TRENDLINE(
+            return core.htTrendline(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "HT_TRENDMODE":
-            return core.HT_TRENDMODE(
+            return core.htTrendmode(
                startIdx, endIdx, h.realInput(0), h.intOutput(0));
          case "IMI":
-            return core.IMI(
+            return core.imi(
                startIdx, endIdx, h.price(0, 0), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "KAMA":
-            return core.KAMA(
+            return core.kama(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "KC":
-            return core.KC(
+            return core.kc(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.realOpt(2), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "KDJ":
-            return core.KDJ(
+            return core.kdj(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "LINEARREG":
-            return core.LINEARREG(
+            return core.linearreg(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "LINEARREG_ANGLE":
-            return core.LINEARREG_ANGLE(
+            return core.linearregAngle(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "LINEARREG_INTERCEPT":
-            return core.LINEARREG_INTERCEPT(
+            return core.linearregIntercept(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "LINEARREG_SLOPE":
-            return core.LINEARREG_SLOPE(
+            return core.linearregSlope(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "LN":
-            return core.LN(
+            return core.ln(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "LOG10":
-            return core.LOG10(
+            return core.log10(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "MA":
-            return core.MA(
+            return core.ma(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.maTypeOpt(1), h.realOutput(0));
          case "MACD":
-            return core.MACD(
+            return core.macd(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "MACDEXT":
-            return core.MACDEXT(
+            return core.macdext(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.maTypeOpt(1), h.intOpt(2), h.maTypeOpt(3), h.intOpt(4), h.maTypeOpt(5), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "MACDFIX":
-            return core.MACDFIX(
+            return core.macdfix(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "MAMA":
-            return core.MAMA(
+            return core.mama(
                startIdx, endIdx, h.realInput(0), h.realOpt(0), h.realOpt(1), h.realOutput(0), h.realOutput(1));
          case "MARKETFI":
-            return core.MARKETFI(
+            return core.marketfi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 4), h.realOutput(0));
          case "MASSI":
-            return core.MASSI(
+            return core.massi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "MAVP":
-            return core.MAVP(
+            return core.mavp(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
          case "MAX":
-            return core.MAX(
+            return core.max(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "MAXINDEX":
-            return core.MAXINDEX(
+            return core.maxindex(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOutput(0));
          case "MEDPRICE":
-            return core.MEDPRICE(
+            return core.medprice(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOutput(0));
          case "MFI":
-            return core.MFI(
+            return core.mfi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.realOutput(0));
          case "MIDPOINT":
-            return core.MIDPOINT(
+            return core.midpoint(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "MIDPRICE":
-            return core.MIDPRICE(
+            return core.midprice(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
          case "MIN":
-            return core.MIN(
+            return core.min(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "MININDEX":
-            return core.MININDEX(
+            return core.minindex(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOutput(0));
          case "MINMAX":
-            return core.MINMAX(
+            return core.minmax(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "MINMAXINDEX":
-            return core.MINMAXINDEX(
+            return core.minmaxindex(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOutput(0), h.intOutput(1));
          case "MINUS_DI":
-            return core.MINUS_DI(
+            return core.minusDi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "MINUS_DM":
-            return core.MINUS_DM(
+            return core.minusDm(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
          case "MOM":
-            return core.MOM(
+            return core.mom(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "MULT":
-            return core.MULT(
+            return core.mult(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.realOutput(0));
          case "NATR":
-            return core.NATR(
+            return core.natr(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "NVI":
-            return core.NVI(
+            return core.nvi(
                startIdx, endIdx, h.price(0, 3), h.price(0, 4), h.realOutput(0));
          case "OBV":
-            return core.OBV(
+            return core.obv(
                startIdx, endIdx, h.realInput(0), h.price(1, 4), h.realOutput(0));
          case "PERCENTILE":
-            return core.PERCENTILE(
+            return core.percentile(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
          case "PERCENTRANK":
-            return core.PERCENTRANK(
+            return core.percentrank(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "PLUS_DI":
-            return core.PLUS_DI(
+            return core.plusDi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "PLUS_DM":
-            return core.PLUS_DM(
+            return core.plusDm(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
          case "PPO":
-            return core.PPO(
+            return core.ppo(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
          case "PVI":
-            return core.PVI(
+            return core.pvi(
                startIdx, endIdx, h.price(0, 3), h.price(0, 4), h.realOutput(0));
          case "PVO":
-            return core.PVO(
+            return core.pvo(
                startIdx, endIdx, h.price(0, 4), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
          case "PVT":
-            return core.PVT(
+            return core.pvt(
                startIdx, endIdx, h.price(0, 3), h.price(0, 4), h.realOutput(0));
          case "QSTICK":
-            return core.QSTICK(
+            return core.qstick(
                startIdx, endIdx, h.price(0, 0), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "RMA":
-            return core.RMA(
+            return core.rma(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "ROC":
-            return core.ROC(
+            return core.roc(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "ROCP":
-            return core.ROCP(
+            return core.rocp(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "ROCR":
-            return core.ROCR(
+            return core.rocr(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "ROCR100":
-            return core.ROCR100(
+            return core.rocr100(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "RSI":
-            return core.RSI(
+            return core.rsi(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "RVI":
-            return core.RVI(
+            return core.rvi(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "RVOL":
-            return core.RVOL(
+            return core.rvol(
                startIdx, endIdx, h.price(0, 4), h.intOpt(0), h.realOutput(0));
          case "SAR":
-            return core.SAR(
+            return core.sar(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOpt(0), h.realOpt(1), h.realOutput(0));
          case "SAREXT":
-            return core.SAREXT(
+            return core.sarext(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7), h.realOutput(0));
          case "SIN":
-            return core.SIN(
+            return core.sin(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "SINH":
-            return core.SINH(
+            return core.sinh(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "SMA":
-            return core.SMA(
+            return core.sma(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "SMI":
-            return core.SMI(
+            return core.smi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.realOutput(0), h.realOutput(1));
          case "SQRT":
-            return core.SQRT(
+            return core.sqrt(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "STDDEV":
-            return core.STDDEV(
+            return core.stddev(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
          case "STOCH":
-            return core.STOCH(
+            return core.stoch(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4), h.realOutput(0), h.realOutput(1));
          case "STOCHF":
-            return core.STOCHF(
+            return core.stochf(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0), h.realOutput(1));
          case "STOCHRSI":
-            return core.STOCHRSI(
+            return core.stochrsi(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.maTypeOpt(3), h.realOutput(0), h.realOutput(1));
          case "SUB":
-            return core.SUB(
+            return core.sub(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.realOutput(0));
          case "SUM":
-            return core.SUM(
+            return core.sum(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "SUPERTREND":
-            return core.SUPERTREND(
+            return core.supertrend(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOpt(1), h.realOutput(0), h.intOutput(1));
          case "T3":
-            return core.T3(
+            return core.t3(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
          case "TAN":
-            return core.TAN(
+            return core.tan(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "TANH":
-            return core.TANH(
+            return core.tanh(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "TEMA":
-            return core.TEMA(
+            return core.tema(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "TRANGE":
-            return core.TRANGE(
+            return core.trange(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "TRIMA":
-            return core.TRIMA(
+            return core.trima(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "TRIX":
-            return core.TRIX(
+            return core.trix(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "TSF":
-            return core.TSF(
+            return core.tsf(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "TSI":
-            return core.TSI(
+            return core.tsi(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "TYPPRICE":
-            return core.TYPPRICE(
+            return core.typprice(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "ULTOSC":
-            return core.ULTOSC(
+            return core.ultosc(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0));
          case "VAR":
-            return core.VAR(
+            return core.var(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
          case "VHF":
-            return core.VHF(
+            return core.vhf(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "VORTEX":
-            return core.VORTEX(
+            return core.vortex(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "VWAP":
-            return core.VWAP(
+            return core.vwap(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.realOutput(0));
          case "VWMA":
-            return core.VWMA(
+            return core.vwma(
                startIdx, endIdx, h.realInput(0), h.price(1, 4), h.intOpt(0), h.realOutput(0));
          case "WAD":
-            return core.WAD(
+            return core.wad(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "WCLPRICE":
-            return core.WCLPRICE(
+            return core.wclprice(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "WILLR":
-            return core.WILLR(
+            return core.willr(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
          case "WMA":
-            return core.WMA(
+            return core.wma(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "ZLEMA":
-            return core.ZLEMA(
+            return core.zlema(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          default:
             throw new IllegalArgumentException("no such function: " + h.info().name());
@@ -671,407 +671,407 @@ final class Dispatch {
       Core core = h.core();
       switch (h.info().name()) {
          case "AC":
-            return core.AC_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
+            return core.acLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "ACCBANDS":
-            return core.ACCBANDS_Lookback(h.intOpt(0));
+            return core.accbandsLookback(h.intOpt(0));
          case "ACOS":
-            return core.ACOS_Lookback();
+            return core.acosLookback();
          case "AD":
-            return core.AD_Lookback();
+            return core.adLookback();
          case "ADD":
-            return core.ADD_Lookback();
+            return core.addLookback();
          case "ADOSC":
-            return core.ADOSC_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.adoscLookback(h.intOpt(0), h.intOpt(1));
          case "ADR":
-            return core.ADR_Lookback(h.intOpt(0));
+            return core.adrLookback(h.intOpt(0));
          case "ADX":
-            return core.ADX_Lookback(h.intOpt(0));
+            return core.adxLookback(h.intOpt(0));
          case "ADXR":
-            return core.ADXR_Lookback(h.intOpt(0));
+            return core.adxrLookback(h.intOpt(0));
          case "AO":
-            return core.AO_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.aoLookback(h.intOpt(0), h.intOpt(1));
          case "APO":
-            return core.APO_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
+            return core.apoLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "AROON":
-            return core.AROON_Lookback(h.intOpt(0));
+            return core.aroonLookback(h.intOpt(0));
          case "AROONOSC":
-            return core.AROONOSC_Lookback(h.intOpt(0));
+            return core.aroonoscLookback(h.intOpt(0));
          case "ASIN":
-            return core.ASIN_Lookback();
+            return core.asinLookback();
          case "ATAN":
-            return core.ATAN_Lookback();
+            return core.atanLookback();
          case "ATR":
-            return core.ATR_Lookback(h.intOpt(0));
+            return core.atrLookback(h.intOpt(0));
          case "AVGDEV":
-            return core.AVGDEV_Lookback(h.intOpt(0));
+            return core.avgdevLookback(h.intOpt(0));
          case "AVGPRICE":
-            return core.AVGPRICE_Lookback();
+            return core.avgpriceLookback();
          case "BBANDS":
-            return core.BBANDS_Lookback(h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3));
+            return core.bbandsLookback(h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3));
          case "BETA":
-            return core.BETA_Lookback(h.intOpt(0));
+            return core.betaLookback(h.intOpt(0));
          case "BOP":
-            return core.BOP_Lookback();
+            return core.bopLookback();
          case "CCI":
-            return core.CCI_Lookback(h.intOpt(0));
+            return core.cciLookback(h.intOpt(0));
          case "CDL2CROWS":
-            return core.CDL2CROWS_Lookback();
+            return core.cdl2crowsLookback();
          case "CDL3BLACKCROWS":
-            return core.CDL3BLACKCROWS_Lookback();
+            return core.cdl3blackcrowsLookback();
          case "CDL3INSIDE":
-            return core.CDL3INSIDE_Lookback();
+            return core.cdl3insideLookback();
          case "CDL3LINESTRIKE":
-            return core.CDL3LINESTRIKE_Lookback();
+            return core.cdl3linestrikeLookback();
          case "CDL3OUTSIDE":
-            return core.CDL3OUTSIDE_Lookback();
+            return core.cdl3outsideLookback();
          case "CDL3STARSINSOUTH":
-            return core.CDL3STARSINSOUTH_Lookback();
+            return core.cdl3starsinsouthLookback();
          case "CDL3WHITESOLDIERS":
-            return core.CDL3WHITESOLDIERS_Lookback();
+            return core.cdl3whitesoldiersLookback();
          case "CDLABANDONEDBABY":
-            return core.CDLABANDONEDBABY_Lookback(h.realOpt(0));
+            return core.cdlabandonedbabyLookback(h.realOpt(0));
          case "CDLADVANCEBLOCK":
-            return core.CDLADVANCEBLOCK_Lookback();
+            return core.cdladvanceblockLookback();
          case "CDLBELTHOLD":
-            return core.CDLBELTHOLD_Lookback();
+            return core.cdlbeltholdLookback();
          case "CDLBREAKAWAY":
-            return core.CDLBREAKAWAY_Lookback();
+            return core.cdlbreakawayLookback();
          case "CDLCLOSINGMARUBOZU":
-            return core.CDLCLOSINGMARUBOZU_Lookback();
+            return core.cdlclosingmarubozuLookback();
          case "CDLCONCEALBABYSWALL":
-            return core.CDLCONCEALBABYSWALL_Lookback();
+            return core.cdlconcealbabyswallLookback();
          case "CDLCOUNTERATTACK":
-            return core.CDLCOUNTERATTACK_Lookback();
+            return core.cdlcounterattackLookback();
          case "CDLDARKCLOUDCOVER":
-            return core.CDLDARKCLOUDCOVER_Lookback(h.realOpt(0));
+            return core.cdldarkcloudcoverLookback(h.realOpt(0));
          case "CDLDOJI":
-            return core.CDLDOJI_Lookback();
+            return core.cdldojiLookback();
          case "CDLDOJISTAR":
-            return core.CDLDOJISTAR_Lookback();
+            return core.cdldojistarLookback();
          case "CDLDRAGONFLYDOJI":
-            return core.CDLDRAGONFLYDOJI_Lookback();
+            return core.cdldragonflydojiLookback();
          case "CDLENGULFING":
-            return core.CDLENGULFING_Lookback();
+            return core.cdlengulfingLookback();
          case "CDLEVENINGDOJISTAR":
-            return core.CDLEVENINGDOJISTAR_Lookback(h.realOpt(0));
+            return core.cdleveningdojistarLookback(h.realOpt(0));
          case "CDLEVENINGSTAR":
-            return core.CDLEVENINGSTAR_Lookback(h.realOpt(0));
+            return core.cdleveningstarLookback(h.realOpt(0));
          case "CDLGAPSIDESIDEWHITE":
-            return core.CDLGAPSIDESIDEWHITE_Lookback();
+            return core.cdlgapsidesidewhiteLookback();
          case "CDLGRAVESTONEDOJI":
-            return core.CDLGRAVESTONEDOJI_Lookback();
+            return core.cdlgravestonedojiLookback();
          case "CDLHAMMER":
-            return core.CDLHAMMER_Lookback();
+            return core.cdlhammerLookback();
          case "CDLHANGINGMAN":
-            return core.CDLHANGINGMAN_Lookback();
+            return core.cdlhangingmanLookback();
          case "CDLHARAMI":
-            return core.CDLHARAMI_Lookback();
+            return core.cdlharamiLookback();
          case "CDLHARAMICROSS":
-            return core.CDLHARAMICROSS_Lookback();
+            return core.cdlharamicrossLookback();
          case "CDLHIGHWAVE":
-            return core.CDLHIGHWAVE_Lookback();
+            return core.cdlhighwaveLookback();
          case "CDLHIKKAKE":
-            return core.CDLHIKKAKE_Lookback();
+            return core.cdlhikkakeLookback();
          case "CDLHIKKAKEMOD":
-            return core.CDLHIKKAKEMOD_Lookback();
+            return core.cdlhikkakemodLookback();
          case "CDLHOMINGPIGEON":
-            return core.CDLHOMINGPIGEON_Lookback();
+            return core.cdlhomingpigeonLookback();
          case "CDLIDENTICAL3CROWS":
-            return core.CDLIDENTICAL3CROWS_Lookback();
+            return core.cdlidentical3crowsLookback();
          case "CDLINNECK":
-            return core.CDLINNECK_Lookback();
+            return core.cdlinneckLookback();
          case "CDLINVERTEDHAMMER":
-            return core.CDLINVERTEDHAMMER_Lookback();
+            return core.cdlinvertedhammerLookback();
          case "CDLKICKING":
-            return core.CDLKICKING_Lookback();
+            return core.cdlkickingLookback();
          case "CDLKICKINGBYLENGTH":
-            return core.CDLKICKINGBYLENGTH_Lookback();
+            return core.cdlkickingbylengthLookback();
          case "CDLLADDERBOTTOM":
-            return core.CDLLADDERBOTTOM_Lookback();
+            return core.cdlladderbottomLookback();
          case "CDLLONGLEGGEDDOJI":
-            return core.CDLLONGLEGGEDDOJI_Lookback();
+            return core.cdllongleggeddojiLookback();
          case "CDLLONGLINE":
-            return core.CDLLONGLINE_Lookback();
+            return core.cdllonglineLookback();
          case "CDLMARUBOZU":
-            return core.CDLMARUBOZU_Lookback();
+            return core.cdlmarubozuLookback();
          case "CDLMATCHINGLOW":
-            return core.CDLMATCHINGLOW_Lookback();
+            return core.cdlmatchinglowLookback();
          case "CDLMATHOLD":
-            return core.CDLMATHOLD_Lookback(h.realOpt(0));
+            return core.cdlmatholdLookback(h.realOpt(0));
          case "CDLMORNINGDOJISTAR":
-            return core.CDLMORNINGDOJISTAR_Lookback(h.realOpt(0));
+            return core.cdlmorningdojistarLookback(h.realOpt(0));
          case "CDLMORNINGSTAR":
-            return core.CDLMORNINGSTAR_Lookback(h.realOpt(0));
+            return core.cdlmorningstarLookback(h.realOpt(0));
          case "CDLONNECK":
-            return core.CDLONNECK_Lookback();
+            return core.cdlonneckLookback();
          case "CDLPIERCING":
-            return core.CDLPIERCING_Lookback();
+            return core.cdlpiercingLookback();
          case "CDLRICKSHAWMAN":
-            return core.CDLRICKSHAWMAN_Lookback();
+            return core.cdlrickshawmanLookback();
          case "CDLRISEFALL3METHODS":
-            return core.CDLRISEFALL3METHODS_Lookback();
+            return core.cdlrisefall3methodsLookback();
          case "CDLSEPARATINGLINES":
-            return core.CDLSEPARATINGLINES_Lookback();
+            return core.cdlseparatinglinesLookback();
          case "CDLSHOOTINGSTAR":
-            return core.CDLSHOOTINGSTAR_Lookback();
+            return core.cdlshootingstarLookback();
          case "CDLSHORTLINE":
-            return core.CDLSHORTLINE_Lookback();
+            return core.cdlshortlineLookback();
          case "CDLSPINNINGTOP":
-            return core.CDLSPINNINGTOP_Lookback();
+            return core.cdlspinningtopLookback();
          case "CDLSTALLEDPATTERN":
-            return core.CDLSTALLEDPATTERN_Lookback();
+            return core.cdlstalledpatternLookback();
          case "CDLSTICKSANDWICH":
-            return core.CDLSTICKSANDWICH_Lookback();
+            return core.cdlsticksandwichLookback();
          case "CDLTAKURI":
-            return core.CDLTAKURI_Lookback();
+            return core.cdltakuriLookback();
          case "CDLTASUKIGAP":
-            return core.CDLTASUKIGAP_Lookback();
+            return core.cdltasukigapLookback();
          case "CDLTHRUSTING":
-            return core.CDLTHRUSTING_Lookback();
+            return core.cdlthrustingLookback();
          case "CDLTRISTAR":
-            return core.CDLTRISTAR_Lookback();
+            return core.cdltristarLookback();
          case "CDLUNIQUE3RIVER":
-            return core.CDLUNIQUE3RIVER_Lookback();
+            return core.cdlunique3riverLookback();
          case "CDLUPSIDEGAP2CROWS":
-            return core.CDLUPSIDEGAP2CROWS_Lookback();
+            return core.cdlupsidegap2crowsLookback();
          case "CDLXSIDEGAP3METHODS":
-            return core.CDLXSIDEGAP3METHODS_Lookback();
+            return core.cdlxsidegap3methodsLookback();
          case "CEIL":
-            return core.CEIL_Lookback();
+            return core.ceilLookback();
          case "CMF":
-            return core.CMF_Lookback(h.intOpt(0));
+            return core.cmfLookback(h.intOpt(0));
          case "CMO":
-            return core.CMO_Lookback(h.intOpt(0));
+            return core.cmoLookback(h.intOpt(0));
          case "CMOU":
-            return core.CMOU_Lookback(h.intOpt(0));
+            return core.cmouLookback(h.intOpt(0));
          case "COPPOCK":
-            return core.COPPOCK_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
+            return core.coppockLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "CORREL":
-            return core.CORREL_Lookback(h.intOpt(0));
+            return core.correlLookback(h.intOpt(0));
          case "COS":
-            return core.COS_Lookback();
+            return core.cosLookback();
          case "COSH":
-            return core.COSH_Lookback();
+            return core.coshLookback();
          case "CUMSUM":
-            return core.CUMSUM_Lookback();
+            return core.cumsumLookback();
          case "CVI":
-            return core.CVI_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.cviLookback(h.intOpt(0), h.intOpt(1));
          case "DEMA":
-            return core.DEMA_Lookback(h.intOpt(0));
+            return core.demaLookback(h.intOpt(0));
          case "DIV":
-            return core.DIV_Lookback();
+            return core.divLookback();
          case "DONCHIAN":
-            return core.DONCHIAN_Lookback(h.intOpt(0));
+            return core.donchianLookback(h.intOpt(0));
          case "DPO":
-            return core.DPO_Lookback(h.intOpt(0));
+            return core.dpoLookback(h.intOpt(0));
          case "DX":
-            return core.DX_Lookback(h.intOpt(0));
+            return core.dxLookback(h.intOpt(0));
          case "EFI":
-            return core.EFI_Lookback(h.intOpt(0));
+            return core.efiLookback(h.intOpt(0));
          case "EMA":
-            return core.EMA_Lookback(h.intOpt(0));
+            return core.emaLookback(h.intOpt(0));
          case "ER":
-            return core.ER_Lookback(h.intOpt(0));
+            return core.erLookback(h.intOpt(0));
          case "ERI":
-            return core.ERI_Lookback(h.intOpt(0));
+            return core.eriLookback(h.intOpt(0));
          case "EXP":
-            return core.EXP_Lookback();
+            return core.expLookback();
          case "FLOOR":
-            return core.FLOOR_Lookback();
+            return core.floorLookback();
          case "FOSC":
-            return core.FOSC_Lookback(h.intOpt(0));
+            return core.foscLookback(h.intOpt(0));
          case "FRACTAL":
-            return core.FRACTAL_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.fractalLookback(h.intOpt(0), h.intOpt(1));
          case "HA":
-            return core.HA_Lookback();
+            return core.haLookback();
          case "HMA":
-            return core.HMA_Lookback(h.intOpt(0));
+            return core.hmaLookback(h.intOpt(0));
          case "HT_DCPERIOD":
-            return core.HT_DCPERIOD_Lookback();
+            return core.htDcperiodLookback();
          case "HT_DCPHASE":
-            return core.HT_DCPHASE_Lookback();
+            return core.htDcphaseLookback();
          case "HT_PHASOR":
-            return core.HT_PHASOR_Lookback();
+            return core.htPhasorLookback();
          case "HT_SINE":
-            return core.HT_SINE_Lookback();
+            return core.htSineLookback();
          case "HT_TRENDLINE":
-            return core.HT_TRENDLINE_Lookback();
+            return core.htTrendlineLookback();
          case "HT_TRENDMODE":
-            return core.HT_TRENDMODE_Lookback();
+            return core.htTrendmodeLookback();
          case "IMI":
-            return core.IMI_Lookback(h.intOpt(0));
+            return core.imiLookback(h.intOpt(0));
          case "KAMA":
-            return core.KAMA_Lookback(h.intOpt(0));
+            return core.kamaLookback(h.intOpt(0));
          case "KC":
-            return core.KC_Lookback(h.intOpt(0), h.intOpt(1), h.realOpt(2));
+            return core.kcLookback(h.intOpt(0), h.intOpt(1), h.realOpt(2));
          case "KDJ":
-            return core.KDJ_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4));
+            return core.kdjLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4));
          case "LINEARREG":
-            return core.LINEARREG_Lookback(h.intOpt(0));
+            return core.linearregLookback(h.intOpt(0));
          case "LINEARREG_ANGLE":
-            return core.LINEARREG_ANGLE_Lookback(h.intOpt(0));
+            return core.linearregAngleLookback(h.intOpt(0));
          case "LINEARREG_INTERCEPT":
-            return core.LINEARREG_INTERCEPT_Lookback(h.intOpt(0));
+            return core.linearregInterceptLookback(h.intOpt(0));
          case "LINEARREG_SLOPE":
-            return core.LINEARREG_SLOPE_Lookback(h.intOpt(0));
+            return core.linearregSlopeLookback(h.intOpt(0));
          case "LN":
-            return core.LN_Lookback();
+            return core.lnLookback();
          case "LOG10":
-            return core.LOG10_Lookback();
+            return core.log10Lookback();
          case "MA":
-            return core.MA_Lookback(h.intOpt(0), h.maTypeOpt(1));
+            return core.maLookback(h.intOpt(0), h.maTypeOpt(1));
          case "MACD":
-            return core.MACD_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
+            return core.macdLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "MACDEXT":
-            return core.MACDEXT_Lookback(h.intOpt(0), h.maTypeOpt(1), h.intOpt(2), h.maTypeOpt(3), h.intOpt(4), h.maTypeOpt(5));
+            return core.macdextLookback(h.intOpt(0), h.maTypeOpt(1), h.intOpt(2), h.maTypeOpt(3), h.intOpt(4), h.maTypeOpt(5));
          case "MACDFIX":
-            return core.MACDFIX_Lookback(h.intOpt(0));
+            return core.macdfixLookback(h.intOpt(0));
          case "MAMA":
-            return core.MAMA_Lookback(h.realOpt(0), h.realOpt(1));
+            return core.mamaLookback(h.realOpt(0), h.realOpt(1));
          case "MARKETFI":
-            return core.MARKETFI_Lookback();
+            return core.marketfiLookback();
          case "MASSI":
-            return core.MASSI_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.massiLookback(h.intOpt(0), h.intOpt(1));
          case "MAVP":
-            return core.MAVP_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
+            return core.mavpLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "MAX":
-            return core.MAX_Lookback(h.intOpt(0));
+            return core.maxLookback(h.intOpt(0));
          case "MAXINDEX":
-            return core.MAXINDEX_Lookback(h.intOpt(0));
+            return core.maxindexLookback(h.intOpt(0));
          case "MEDPRICE":
-            return core.MEDPRICE_Lookback();
+            return core.medpriceLookback();
          case "MFI":
-            return core.MFI_Lookback(h.intOpt(0));
+            return core.mfiLookback(h.intOpt(0));
          case "MIDPOINT":
-            return core.MIDPOINT_Lookback(h.intOpt(0));
+            return core.midpointLookback(h.intOpt(0));
          case "MIDPRICE":
-            return core.MIDPRICE_Lookback(h.intOpt(0));
+            return core.midpriceLookback(h.intOpt(0));
          case "MIN":
-            return core.MIN_Lookback(h.intOpt(0));
+            return core.minLookback(h.intOpt(0));
          case "MININDEX":
-            return core.MININDEX_Lookback(h.intOpt(0));
+            return core.minindexLookback(h.intOpt(0));
          case "MINMAX":
-            return core.MINMAX_Lookback(h.intOpt(0));
+            return core.minmaxLookback(h.intOpt(0));
          case "MINMAXINDEX":
-            return core.MINMAXINDEX_Lookback(h.intOpt(0));
+            return core.minmaxindexLookback(h.intOpt(0));
          case "MINUS_DI":
-            return core.MINUS_DI_Lookback(h.intOpt(0));
+            return core.minusDiLookback(h.intOpt(0));
          case "MINUS_DM":
-            return core.MINUS_DM_Lookback(h.intOpt(0));
+            return core.minusDmLookback(h.intOpt(0));
          case "MOM":
-            return core.MOM_Lookback(h.intOpt(0));
+            return core.momLookback(h.intOpt(0));
          case "MULT":
-            return core.MULT_Lookback();
+            return core.multLookback();
          case "NATR":
-            return core.NATR_Lookback(h.intOpt(0));
+            return core.natrLookback(h.intOpt(0));
          case "NVI":
-            return core.NVI_Lookback();
+            return core.nviLookback();
          case "OBV":
-            return core.OBV_Lookback();
+            return core.obvLookback();
          case "PERCENTILE":
-            return core.PERCENTILE_Lookback(h.intOpt(0), h.realOpt(1));
+            return core.percentileLookback(h.intOpt(0), h.realOpt(1));
          case "PERCENTRANK":
-            return core.PERCENTRANK_Lookback(h.intOpt(0));
+            return core.percentrankLookback(h.intOpt(0));
          case "PLUS_DI":
-            return core.PLUS_DI_Lookback(h.intOpt(0));
+            return core.plusDiLookback(h.intOpt(0));
          case "PLUS_DM":
-            return core.PLUS_DM_Lookback(h.intOpt(0));
+            return core.plusDmLookback(h.intOpt(0));
          case "PPO":
-            return core.PPO_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
+            return core.ppoLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "PVI":
-            return core.PVI_Lookback();
+            return core.pviLookback();
          case "PVO":
-            return core.PVO_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
+            return core.pvoLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "PVT":
-            return core.PVT_Lookback();
+            return core.pvtLookback();
          case "QSTICK":
-            return core.QSTICK_Lookback(h.intOpt(0));
+            return core.qstickLookback(h.intOpt(0));
          case "RMA":
-            return core.RMA_Lookback(h.intOpt(0));
+            return core.rmaLookback(h.intOpt(0));
          case "ROC":
-            return core.ROC_Lookback(h.intOpt(0));
+            return core.rocLookback(h.intOpt(0));
          case "ROCP":
-            return core.ROCP_Lookback(h.intOpt(0));
+            return core.rocpLookback(h.intOpt(0));
          case "ROCR":
-            return core.ROCR_Lookback(h.intOpt(0));
+            return core.rocrLookback(h.intOpt(0));
          case "ROCR100":
-            return core.ROCR100_Lookback(h.intOpt(0));
+            return core.rocr100Lookback(h.intOpt(0));
          case "RSI":
-            return core.RSI_Lookback(h.intOpt(0));
+            return core.rsiLookback(h.intOpt(0));
          case "RVI":
-            return core.RVI_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.rviLookback(h.intOpt(0), h.intOpt(1));
          case "RVOL":
-            return core.RVOL_Lookback(h.intOpt(0));
+            return core.rvolLookback(h.intOpt(0));
          case "SAR":
-            return core.SAR_Lookback(h.realOpt(0), h.realOpt(1));
+            return core.sarLookback(h.realOpt(0), h.realOpt(1));
          case "SAREXT":
-            return core.SAREXT_Lookback(h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7));
+            return core.sarextLookback(h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7));
          case "SIN":
-            return core.SIN_Lookback();
+            return core.sinLookback();
          case "SINH":
-            return core.SINH_Lookback();
+            return core.sinhLookback();
          case "SMA":
-            return core.SMA_Lookback(h.intOpt(0));
+            return core.smaLookback(h.intOpt(0));
          case "SMI":
-            return core.SMI_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3));
+            return core.smiLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3));
          case "SQRT":
-            return core.SQRT_Lookback();
+            return core.sqrtLookback();
          case "STDDEV":
-            return core.STDDEV_Lookback(h.intOpt(0), h.realOpt(1));
+            return core.stddevLookback(h.intOpt(0), h.realOpt(1));
          case "STOCH":
-            return core.STOCH_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4));
+            return core.stochLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4));
          case "STOCHF":
-            return core.STOCHF_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
+            return core.stochfLookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "STOCHRSI":
-            return core.STOCHRSI_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.maTypeOpt(3));
+            return core.stochrsiLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.maTypeOpt(3));
          case "SUB":
-            return core.SUB_Lookback();
+            return core.subLookback();
          case "SUM":
-            return core.SUM_Lookback(h.intOpt(0));
+            return core.sumLookback(h.intOpt(0));
          case "SUPERTREND":
-            return core.SUPERTREND_Lookback(h.intOpt(0), h.realOpt(1));
+            return core.supertrendLookback(h.intOpt(0), h.realOpt(1));
          case "T3":
-            return core.T3_Lookback(h.intOpt(0), h.realOpt(1));
+            return core.t3Lookback(h.intOpt(0), h.realOpt(1));
          case "TAN":
-            return core.TAN_Lookback();
+            return core.tanLookback();
          case "TANH":
-            return core.TANH_Lookback();
+            return core.tanhLookback();
          case "TEMA":
-            return core.TEMA_Lookback(h.intOpt(0));
+            return core.temaLookback(h.intOpt(0));
          case "TRANGE":
-            return core.TRANGE_Lookback();
+            return core.trangeLookback();
          case "TRIMA":
-            return core.TRIMA_Lookback(h.intOpt(0));
+            return core.trimaLookback(h.intOpt(0));
          case "TRIX":
-            return core.TRIX_Lookback(h.intOpt(0));
+            return core.trixLookback(h.intOpt(0));
          case "TSF":
-            return core.TSF_Lookback(h.intOpt(0));
+            return core.tsfLookback(h.intOpt(0));
          case "TSI":
-            return core.TSI_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.tsiLookback(h.intOpt(0), h.intOpt(1));
          case "TYPPRICE":
-            return core.TYPPRICE_Lookback();
+            return core.typpriceLookback();
          case "ULTOSC":
-            return core.ULTOSC_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
+            return core.ultoscLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "VAR":
-            return core.VAR_Lookback(h.intOpt(0), h.realOpt(1));
+            return core.varLookback(h.intOpt(0), h.realOpt(1));
          case "VHF":
-            return core.VHF_Lookback(h.intOpt(0));
+            return core.vhfLookback(h.intOpt(0));
          case "VORTEX":
-            return core.VORTEX_Lookback(h.intOpt(0));
+            return core.vortexLookback(h.intOpt(0));
          case "VWAP":
-            return core.VWAP_Lookback();
+            return core.vwapLookback();
          case "VWMA":
-            return core.VWMA_Lookback(h.intOpt(0));
+            return core.vwmaLookback(h.intOpt(0));
          case "WAD":
-            return core.WAD_Lookback();
+            return core.wadLookback();
          case "WCLPRICE":
-            return core.WCLPRICE_Lookback();
+            return core.wclpriceLookback();
          case "WILLR":
-            return core.WILLR_Lookback(h.intOpt(0));
+            return core.willrLookback(h.intOpt(0));
          case "WMA":
-            return core.WMA_Lookback(h.intOpt(0));
+            return core.wmaLookback(h.intOpt(0));
          case "ZLEMA":
-            return core.ZLEMA_Lookback(h.intOpt(0));
+            return core.zlemaLookback(h.intOpt(0));
          default:
             throw new IllegalArgumentException("no such function: " + h.info().name());
       }

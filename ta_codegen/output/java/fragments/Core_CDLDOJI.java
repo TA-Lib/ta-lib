@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLDOJI} consumes before it can
+    * Number of leading input bars {@link Core#cdldoji} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLDOJI_Lookback( )
+   public int cdldojiLookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].rangeType.ordinal();
       int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return BodyDoji_avgPeriod ;
 
    }
-   RetCode CDLDOJI_Impl( int startIdx,
-                         int endIdx,
-                         double inOpen[],
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         int outInteger[] )
+   RetCode cdldojiImpl( int startIdx,
+                        int endIdx,
+                        double inOpen[],
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       int i = 0;
@@ -56,7 +56,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLDOJI_Lookback();
+      lookbackTotal = cdldojiLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -105,15 +105,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLDOJI_Impl( int startIdx,
-                         int endIdx,
-                         float inOpen[],
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         int outInteger[] )
+   RetCode cdldojiImpl( int startIdx,
+                        int endIdx,
+                        float inOpen[],
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       int i = 0;
@@ -129,7 +129,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLDOJI_Lookback();
+      lookbackTotal = cdldojiLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -169,8 +169,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLDOJI_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#cdldojiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -194,12 +194,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJISTAR
-    * @see Core#CDLDRAGONFLYDOJI
-    * @see Core#CDLGRAVESTONEDOJI
-    * @see Core#CDLLONGLEGGEDDOJI
+    * @see Core#cdldojistar
+    * @see Core#cdldragonflydoji
+    * @see Core#cdlgravestonedoji
+    * @see Core#cdllongleggeddoji
     */
-   public OutRange CDLDOJI( int startIdx,
+   public OutRange cdldoji( int startIdx,
                             int endIdx,
                             double inOpen[],
                             double inHigh[],
@@ -208,7 +208,7 @@
                             int outInteger[] )
    {
       requireIndexRange("CDLDOJI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLDOJI", startIdx, CDLDOJI_Lookback());
+      int guardStart = clampedStart("CDLDOJI", startIdx, cdldojiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJI", "inOpen", inOpen, guardInLen);
@@ -218,7 +218,7 @@
       requireLength("CDLDOJI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdldojiImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLDOJI", retCode);
       }
@@ -236,8 +236,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLDOJI_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#cdldojiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -261,12 +261,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDOJISTAR
-    * @see Core#CDLDRAGONFLYDOJI
-    * @see Core#CDLGRAVESTONEDOJI
-    * @see Core#CDLLONGLEGGEDDOJI
+    * @see Core#cdldojistar
+    * @see Core#cdldragonflydoji
+    * @see Core#cdlgravestonedoji
+    * @see Core#cdllongleggeddoji
     */
-   public OutRange CDLDOJI( int startIdx,
+   public OutRange cdldoji( int startIdx,
                             int endIdx,
                             float inOpen[],
                             float inHigh[],
@@ -275,7 +275,7 @@
                             int outInteger[] )
    {
       requireIndexRange("CDLDOJI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLDOJI", startIdx, CDLDOJI_Lookback());
+      int guardStart = clampedStart("CDLDOJI", startIdx, cdldojiLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLDOJI", "inOpen", inOpen, guardInLen);
@@ -285,7 +285,7 @@
       requireLength("CDLDOJI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdldojiImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLDOJI", retCode);
       }
@@ -295,7 +295,7 @@
 
    /**
     * A live CDLDOJI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLDOJI} over the same series.
+    * closed bar, bit-identical to {@link Core#cdldoji} over the same series.
     * Open with {@link Core#cdldojiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -325,7 +325,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLDOJI} reports over the same bars: the
+       * <p>It is what {@link Core#cdldoji} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -502,7 +502,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLDOJI_Lookback();
+      lookbackTotal = cdldojiLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -611,8 +611,8 @@
    /**
     * Open a live CDLDOJI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLDOJI} at that bar.
-    * <p>The history must hold at least {@code CDLDOJI_Lookback(...) + 1} bars
+    * to {@link Core#cdldoji} at that bar.
+    * <p>The history must hold at least {@code cdldojiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -633,7 +633,7 @@
    }
    /**
     * {@link Core#cdldojiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLDOJI} over the whole history in the same single pass
+    * to {@link Core#cdldoji} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -649,7 +649,7 @@
       requireArgument("CDLDOJI openAndFill", "inHigh", inHigh);
       requireArgument("CDLDOJI openAndFill", "inLow", inLow);
       requireArgument("CDLDOJI openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLDOJI openAndFill", inOpen.length, CDLDOJI_Lookback());
+      int guardOutLen = openFillCount("CDLDOJI openAndFill", inOpen.length, cdldojiLookback());
       requireHistoryLength("CDLDOJI openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLDOJI openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLDOJI openAndFill", "inClose", inClose.length, inOpen.length);

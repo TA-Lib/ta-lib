@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::VAR`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::var`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -85,7 +85,7 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_VAR_Lookback")]
     #[inline]
-    pub fn VAR_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
+    pub fn var_lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -98,10 +98,10 @@ impl Core {
         }
         return Ok((optInTimePeriod - 1) as usize);
     }
-    /// C-shaped body behind [`Core::VAR`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::var`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn VAR_Impl(
+    pub(crate) fn var_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -128,7 +128,7 @@ impl Core {
         } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.VAR_Lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
+        let _assertLb = self.var_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -345,7 +345,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.VAR(0, data.len() - 1, &data, 5, 1.0, &mut out)?;
+    /// let out_range = core.var(0, data.len() - 1, &data, 5, 1.0, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -353,10 +353,10 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::STDDEV`]
+    /// [`STDDEV`](Core::stddev)
     #[doc(alias = "TA_VAR")]
     #[doc(alias = "Variance")]
-    pub fn VAR(
+    pub fn var(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -371,7 +371,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.VAR_Lookback(optInTimePeriod, optInNbDev)?;
+        let _guardLb = self.var_lookback(optInTimePeriod, optInNbDev)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -382,7 +382,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.VAR_Impl(
+        let retCode = self.var_impl(
             startIdx,
             endIdx,
             inReal,
@@ -401,7 +401,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live VAR stream: one value per closed bar, bit-identical to [`Core::VAR`]
+/// Live VAR stream: one value per closed bar, bit-identical to [`Core::var`]
 /// over the same series. Open with [`Core::var_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -803,7 +803,7 @@ impl Core {
     }
 
     /// Open a live VAR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::VAR`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::var`] at that bar.
     ///
     /// # Errors
     ///
@@ -833,7 +833,7 @@ impl Core {
     }
 
     /// [`Core::var_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::VAR`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::var`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -850,7 +850,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.VAR(0, data.len() - 1, &data, 5, 1.0, &mut batch_out)?;
+    /// let batch = core.var(0, data.len() - 1, &data, 5, 1.0, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.var_open_and_fill(&data, 5, 1.0, &mut out)?;
@@ -871,7 +871,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.VAR_Lookback(optInTimePeriod, optInNbDev)?;
+        let _guardLb = self.var_lookback(optInTimePeriod, optInNbDev)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -1097,7 +1097,7 @@ impl VarStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::VAR`] reports over the same bars: the opener sets it
+    /// It is what [`Core::var`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

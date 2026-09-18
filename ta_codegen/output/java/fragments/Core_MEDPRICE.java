@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MEDPRICE} consumes before it can
+    * Number of leading input bars {@link Core#medprice} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,19 +23,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MEDPRICE_Lookback( )
+   public int medpriceLookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode MEDPRICE_Impl( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode medpriceImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -59,13 +59,13 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MEDPRICE_Impl( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode medpriceImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -91,7 +91,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MEDPRICE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#medpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -114,19 +114,19 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MIDPRICE
-    * @see Core#AVGPRICE
-    * @see Core#TYPPRICE
-    * @see Core#WCLPRICE
+    * @see Core#midprice
+    * @see Core#avgprice
+    * @see Core#typprice
+    * @see Core#wclprice
     */
-   public OutRange MEDPRICE( int startIdx,
+   public OutRange medprice( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
                              double outReal[] )
    {
       requireIndexRange("MEDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart("MEDPRICE", startIdx, MEDPRICE_Lookback());
+      int guardStart = clampedStart("MEDPRICE", startIdx, medpriceLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
@@ -134,7 +134,7 @@
       requireLength("MEDPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MEDPRICE_Impl(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
+      RetCode retCode = medpriceImpl(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MEDPRICE", retCode);
       }
@@ -151,7 +151,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MEDPRICE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#medpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -174,19 +174,19 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MIDPRICE
-    * @see Core#AVGPRICE
-    * @see Core#TYPPRICE
-    * @see Core#WCLPRICE
+    * @see Core#midprice
+    * @see Core#avgprice
+    * @see Core#typprice
+    * @see Core#wclprice
     */
-   public OutRange MEDPRICE( int startIdx,
+   public OutRange medprice( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
                              double outReal[] )
    {
       requireIndexRange("MEDPRICE", startIdx, endIdx);
-      int guardStart = clampedStart("MEDPRICE", startIdx, MEDPRICE_Lookback());
+      int guardStart = clampedStart("MEDPRICE", startIdx, medpriceLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
@@ -194,7 +194,7 @@
       requireLength("MEDPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MEDPRICE_Impl(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
+      RetCode retCode = medpriceImpl(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MEDPRICE", retCode);
       }
@@ -204,7 +204,7 @@
 
    /**
     * A live MEDPRICE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MEDPRICE} over the same series.
+    * closed bar, bit-identical to {@link Core#medprice} over the same series.
     * Open with {@link Core#medpriceOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -227,7 +227,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MEDPRICE} reports over the same bars: the
+       * <p>It is what {@link Core#medprice} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -420,8 +420,8 @@
    /**
     * Open a live MEDPRICE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MEDPRICE} at that bar.
-    * <p>The history must hold at least {@code MEDPRICE_Lookback(...) + 1} bars
+    * to {@link Core#medprice} at that bar.
+    * <p>The history must hold at least {@code medpriceLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -438,7 +438,7 @@
    }
    /**
     * {@link Core#medpriceOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MEDPRICE} over the whole history in the same single pass
+    * to {@link Core#medprice} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -452,7 +452,7 @@
       requireArgument("MEDPRICE openAndFill", "inHigh", inHigh);
       requireHistory("MEDPRICE openAndFill", inHigh.length);
       requireArgument("MEDPRICE openAndFill", "inLow", inLow);
-      int guardOutLen = openFillCount("MEDPRICE openAndFill", inHigh.length, MEDPRICE_Lookback());
+      int guardOutLen = openFillCount("MEDPRICE openAndFill", inHigh.length, medpriceLookback());
       requireHistoryLength("MEDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MEDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {

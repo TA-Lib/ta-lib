@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDL3LINESTRIKE} consumes before
+    * Number of leading input bars {@link Core#cdl3linestrike} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDL3LINESTRIKE_Lookback( )
+   public int cdl3linestrikeLookback( )
    {
       int Near_rangeType = this.candleSettings[CandleSettingType.NEAR.ordinal()].rangeType.ordinal();
       int Near_avgPeriod = this.candleSettings[CandleSettingType.NEAR.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return Near_avgPeriod + 3 ;
 
    }
-   RetCode CDL3LINESTRIKE_Impl( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdl3linestrikeImpl( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
       int i = 0;
@@ -57,7 +57,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDL3LINESTRIKE_Lookback();
+      lookbackTotal = cdl3linestrikeLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -131,15 +131,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDL3LINESTRIKE_Impl( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdl3linestrikeImpl( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
       int i = 0;
@@ -156,7 +156,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDL3LINESTRIKE_Lookback();
+      lookbackTotal = cdl3linestrikeLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -209,7 +209,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDL3LINESTRIKE_Lookback} is a
+    * valid range shorter than {@link Core#cdl3linestrikeLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -236,10 +236,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDL3WHITESOLDIERS
-    * @see Core#CDL3BLACKCROWS
+    * @see Core#cdl3whitesoldiers
+    * @see Core#cdl3blackcrows
     */
-   public OutRange CDL3LINESTRIKE( int startIdx,
+   public OutRange cdl3linestrike( int startIdx,
                                    int endIdx,
                                    double inOpen[],
                                    double inHigh[],
@@ -248,7 +248,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDL3LINESTRIKE", startIdx, endIdx);
-      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, CDL3LINESTRIKE_Lookback());
+      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, cdl3linestrikeLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
@@ -258,7 +258,7 @@
       requireLength("CDL3LINESTRIKE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3LINESTRIKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdl3linestrikeImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDL3LINESTRIKE", retCode);
       }
@@ -284,7 +284,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDL3LINESTRIKE_Lookback} is a
+    * valid range shorter than {@link Core#cdl3linestrikeLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -311,10 +311,10 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDL3WHITESOLDIERS
-    * @see Core#CDL3BLACKCROWS
+    * @see Core#cdl3whitesoldiers
+    * @see Core#cdl3blackcrows
     */
-   public OutRange CDL3LINESTRIKE( int startIdx,
+   public OutRange cdl3linestrike( int startIdx,
                                    int endIdx,
                                    float inOpen[],
                                    float inHigh[],
@@ -323,7 +323,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDL3LINESTRIKE", startIdx, endIdx);
-      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, CDL3LINESTRIKE_Lookback());
+      int guardStart = clampedStart("CDL3LINESTRIKE", startIdx, cdl3linestrikeLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
@@ -333,7 +333,7 @@
       requireLength("CDL3LINESTRIKE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3LINESTRIKE_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdl3linestrikeImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDL3LINESTRIKE", retCode);
       }
@@ -343,7 +343,7 @@
 
    /**
     * A live CDL3LINESTRIKE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDL3LINESTRIKE} over the same series.
+    * closed bar, bit-identical to {@link Core#cdl3linestrike} over the same series.
     * Open with {@link Core#cdl3linestrikeOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -386,7 +386,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDL3LINESTRIKE} reports over the same bars: the
+       * <p>It is what {@link Core#cdl3linestrike} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -623,7 +623,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDL3LINESTRIKE_Lookback();
+      lookbackTotal = cdl3linestrikeLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -771,8 +771,8 @@
    /**
     * Open a live CDL3LINESTRIKE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDL3LINESTRIKE} at that bar.
-    * <p>The history must hold at least {@code CDL3LINESTRIKE_Lookback(...) + 1} bars
+    * to {@link Core#cdl3linestrike} at that bar.
+    * <p>The history must hold at least {@code cdl3linestrikeLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -793,7 +793,7 @@
    }
    /**
     * {@link Core#cdl3linestrikeOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDL3LINESTRIKE} over the whole history in the same single pass
+    * to {@link Core#cdl3linestrike} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -809,7 +809,7 @@
       requireArgument("CDL3LINESTRIKE openAndFill", "inHigh", inHigh);
       requireArgument("CDL3LINESTRIKE openAndFill", "inLow", inLow);
       requireArgument("CDL3LINESTRIKE openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDL3LINESTRIKE openAndFill", inOpen.length, CDL3LINESTRIKE_Lookback());
+      int guardOutLen = openFillCount("CDL3LINESTRIKE openAndFill", inOpen.length, cdl3linestrikeLookback());
       requireHistoryLength("CDL3LINESTRIKE openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDL3LINESTRIKE openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDL3LINESTRIKE openAndFill", "inClose", inClose.length, inOpen.length);

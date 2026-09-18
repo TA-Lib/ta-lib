@@ -111,7 +111,7 @@ const RIDE_JAVA_SUPPORT: &str = r#"
 
 #[allow(clippy::too_many_lines)]
 fn emit_java_ridealong_fn(func: &FuncDef) -> String {
-    let n = func.name.clone();
+    let n = crate::backends::common::camel_words(&func.name);
     let base = crate::backends::common::camel_words(&func.name);
     let input_names = expand_input_names(&func.inputs);
     let outs = &func.outputs;
@@ -226,7 +226,7 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
     // reads it. Everything between here and there must tolerate it.
     let _ = writeln!(
         s,
-        "        try {{ r.lb = core.{n}_Lookback({opt_bare}); }} catch (RuntimeException _e) {{ r.lb = -1; }}"
+        "        try {{ r.lb = core.{n}Lookback({opt_bare}); }} catch (RuntimeException _e) {{ r.lb = -1; }}"
     );
     s.push_str("        int lb = r.lb;\n");
     s.push_str("        int navail = endIdx + 1;\n");
@@ -248,7 +248,7 @@ fn emit_java_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("false) { r.skip = 4; return; }\n\n");
 
     s.push_str("        long hash = 0xcbf29ce484222325L;\n");
-    let _ = writeln!(s, "        hash = rideMixStr(hash, \"TA_{}\");", n.to_uppercase());
+    let _ = writeln!(s, "        hash = rideMixStr(hash, \"TA_{}\");", func.name.to_uppercase());
     s.push_str("        hash = rideMix(hash, m);\n");
     s.push_str("        hash = rideMix(hash, rideGen);\n");
     s.push_str("        hash = rideMix(hash, jsonInt(json, \"unstablePeriod\"));\n");

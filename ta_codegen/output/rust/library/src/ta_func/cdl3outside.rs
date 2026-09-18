@@ -64,16 +64,16 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::CDL3OUTSIDE`]: the number of leading input values consumed
+    /// Lookback period for [`Core::cdl3outside`]: the number of leading input values consumed
     /// before the first output value can be produced.
     #[doc(alias = "TA_CDL3OUTSIDE_Lookback")]
-    pub fn CDL3OUTSIDE_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn cdl3outside_lookback(&self) -> Result<usize, RetCode> {
         return Ok((3) as usize);
     }
-    /// C-shaped body behind [`Core::CDL3OUTSIDE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::cdl3outside`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn CDL3OUTSIDE_Impl(
+    pub(crate) fn cdl3outside_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -91,7 +91,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.CDL3OUTSIDE_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.cdl3outside_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -104,7 +104,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDL3OUTSIDE_Lookback().unwrap_or(usize::MAX);
+        lookbackTotal = self.cdl3outside_lookback().unwrap_or(usize::MAX);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -206,7 +206,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0i32; 252];
     ///
-    /// let out_range = core.CDL3OUTSIDE(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
+    /// let out_range = core.cdl3outside(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert_eq!(out_range.beg_idx + out_range.count, open.len());
     /// // a candlestick pattern reports 0 where it does not fire, and a signed
@@ -217,11 +217,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::CDL3INSIDE`] · [`Core::CDLENGULFING`] · [`Core::CDL3LINESTRIKE`]
+    /// [`CDL3INSIDE`](Core::cdl3inside) · [`CDLENGULFING`](Core::cdlengulfing) ·
+    /// [`CDL3LINESTRIKE`](Core::cdl3linestrike)
     #[doc(alias = "TA_CDL3OUTSIDE")]
     #[doc(alias = "ThreeOutsideUpDown")]
     #[doc(alias = "ThreeOutside")]
-    pub fn CDL3OUTSIDE(
+    pub fn cdl3outside(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -237,7 +238,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDL3OUTSIDE_Lookback()?;
+        let _guardLb = self.cdl3outside_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -257,7 +258,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDL3OUTSIDE_Impl(
+        let retCode = self.cdl3outside_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -277,7 +278,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDL3OUTSIDE stream: one value per closed bar, bit-identical to [`Core::CDL3OUTSIDE`]
+/// Live CDL3OUTSIDE stream: one value per closed bar, bit-identical to [`Core::cdl3outside`]
 /// over the same series. Open with [`Core::cdl3outside_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -359,7 +360,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.CDL3OUTSIDE_Lookback()?;
+        lookbackTotal = self.cdl3outside_lookback()?;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -429,7 +430,7 @@ impl Core {
     }
 
     /// Open a live CDL3OUTSIDE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDL3OUTSIDE`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::cdl3outside`] at that bar.
     ///
     /// # Errors
     ///
@@ -466,7 +467,7 @@ impl Core {
     }
 
     /// [`Core::cdl3outside_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDL3OUTSIDE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::cdl3outside`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -490,7 +491,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0_i32; 252];
-    /// let batch = core.CDL3OUTSIDE(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
+    /// let batch = core.cdl3outside(0, open.len() - 1, &open, &high, &low, &close, &mut batch_out)?;
     ///
     /// let mut out = vec![0_i32; 252];
     /// let (_stream, filled) = core.cdl3outside_open_and_fill(&open, &high, &low, &close, &mut out)?;
@@ -510,7 +511,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.CDL3OUTSIDE_Lookback()?;
+        let _guardLb = self.cdl3outside_lookback()?;
         if inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -631,7 +632,7 @@ impl Cdl3outsideStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::CDL3OUTSIDE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::cdl3outside`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

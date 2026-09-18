@@ -210,11 +210,11 @@ fn test_rust_backend_generates_mult() {
     let func = load_mult();
     let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
     assert!(
-        output.contains("MULT_Lookback"),
+        output.contains("mult_lookback"),
         "Rust output missing lookback function"
     );
     assert!(
-        output.contains("fn MULT("),
+        output.contains("fn mult("),
         "Rust output missing mult function"
     );
 }
@@ -230,8 +230,8 @@ fn test_rust_sma_from_c_produces_valid_output() {
     let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
 
     assert!(
-        output.contains("SMA_Lookback"),
-        "Missing SMA_Lookback function"
+        output.contains("sma_lookback"),
+        "Missing sma_lookback function"
     );
     assert!(
         !output.contains("_unguarded"),
@@ -272,7 +272,7 @@ fn test_java_backend_generates_mult() {
     let func = load_mult();
     let output = backends::java::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
     assert!(
-        output.contains("MULT_Lookback") || output.contains("Lookback"),
+        output.contains("multLookback("),
         "Java output missing lookback method"
     );
     assert!(
@@ -453,7 +453,7 @@ fn test_rust_generates_generic_variants() {
 
     // Guarded function (concrete f64)
     assert!(
-        output.contains("pub fn SMA("),
+        output.contains("pub fn sma("),
         "Missing sma function"
     );
 
@@ -486,7 +486,7 @@ fn test_rust_mult_generates_generic_variants() {
 
     // One batch entry point, concrete f64.
     assert!(
-        output.contains("pub fn MULT("),
+        output.contains("pub fn mult("),
         "Missing mult function"
     );
     assert!(

@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ERI`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::eri`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -76,7 +76,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_ERI_Lookback")]
     #[inline]
-    pub fn ERI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn eri_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 13;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -84,12 +84,12 @@ impl Core {
         }
         // Exactly the EMA of close underneath: its lookback, unstable period
         // included, is this function's lookback.
-        return Ok(self.EMA_Lookback(optInTimePeriod)?);
+        return Ok(self.ema_lookback(optInTimePeriod)?);
     }
-    /// C-shaped body behind [`Core::ERI`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::eri`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn ERI_Impl(
+    pub(crate) fn eri_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -103,13 +103,13 @@ impl Core {
         outBearPower: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ERI_Impl_fma, ERI_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower));
+        return ta_lib_dispatch::dispatch_fma!(self, eri_impl_fma, eri_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ERI_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
+        self.eri_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ERI_Impl_fma(
+    fn eri_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -122,10 +122,10 @@ impl Core {
         outBullPower: &mut [f64],
         outBearPower: &mut [f64],
     ) -> RetCode {
-        self.ERI_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
+        self.eri_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower)
     }
     #[inline(always)]
-    fn ERI_Impl_impl(
+    fn eri_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -149,7 +149,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ERI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.eri_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -184,7 +184,7 @@ impl Core {
         //
         // No division in the per-bar map: no 0/0, no NaN path (#112 by
         // construction). Bull >= Bear on every bar since high >= low.
-        lookbackTotal = self.ERI_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.eri_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -304,7 +304,7 @@ impl Core {
     /// let mut bull_power = vec![0.0; 252];
     /// let mut bear_power = vec![0.0; 252];
     ///
-    /// let out_range = core.ERI(
+    /// let out_range = core.eri(
     ///     0, high.len() - 1, &high, &low, &close, 13,
     ///     &mut bull_power, &mut bear_power,
     /// )?;
@@ -315,14 +315,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::EMA`] · [`Core::EFI`] · [`Core::MACD`]
+    /// [`EMA`](Core::ema) · [`EFI`](Core::efi) · [`MACD`](Core::macd)
     ///
     /// # References
     ///
     /// * Alexander Elder, *Trading for a Living* (Wiley, 1993), the Elder-Ray chapter
     #[doc(alias = "TA_ERI")]
     #[doc(alias = "Elder-RayIndexBullPowerBearPower")]
-    pub fn ERI(
+    pub fn eri(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -339,7 +339,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ERI_Lookback(optInTimePeriod)?;
+        let _guardLb = self.eri_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -359,7 +359,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ERI_Impl(
+        let retCode = self.eri_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -380,7 +380,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ERI stream: one value per closed bar, bit-identical to [`Core::ERI`]
+/// Live ERI stream: one value per closed bar, bit-identical to [`Core::eri`]
 /// over the same series. Open with [`Core::eri_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -489,7 +489,7 @@ impl Core {
             //
             // No division in the per-bar map: no 0/0, no NaN path (#112 by
             // construction). Bull >= Bear on every bar since high >= low.
-            lookbackTotal = self.ERI_Lookback(optInTimePeriod)?;
+            lookbackTotal = self.eri_lookback(optInTimePeriod)?;
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
             }
@@ -553,7 +553,7 @@ impl Core {
             //
             // No division in the per-bar map: no 0/0, no NaN path (#112 by
             // construction). Bull >= Bear on every bar since high >= low.
-            lookbackTotal = self.ERI_Lookback(optInTimePeriod)?;
+            lookbackTotal = self.eri_lookback(optInTimePeriod)?;
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
             }
@@ -628,7 +628,7 @@ impl Core {
     }
 
     /// Open a live ERI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ERI`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::eri`] at that bar.
     ///
     /// # Errors
     ///
@@ -663,7 +663,7 @@ impl Core {
     }
 
     /// [`Core::eri_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ERI`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::eri`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -685,7 +685,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_bull_power = vec![0.0; 252];
     /// let mut batch_bear_power = vec![0.0; 252];
-    /// let batch = core.ERI(0, high.len() - 1, &high, &low, &close, 13, &mut batch_bull_power, &mut batch_bear_power)?;
+    /// let batch = core.eri(0, high.len() - 1, &high, &low, &close, 13, &mut batch_bull_power, &mut batch_bear_power)?;
     ///
     /// let mut bull_power = vec![0.0; 252];
     /// let mut bear_power = vec![0.0; 252];
@@ -709,7 +709,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.ERI_Lookback(optInTimePeriod)?;
+        let _guardLb = self.eri_lookback(optInTimePeriod)?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -840,7 +840,7 @@ impl EriStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::ERI`] reports over the same bars: the opener sets it
+    /// It is what [`Core::eri`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

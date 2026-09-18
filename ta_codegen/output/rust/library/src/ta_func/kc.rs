@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::KC`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::kc`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_KC_Lookback")]
     #[inline]
-    pub fn KC_Lookback(&self, mut optInTimePeriod: i32, mut optInATRPeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
+    pub fn kc_lookback(&self, mut optInTimePeriod: i32, mut optInATRPeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -106,14 +106,14 @@ impl Core {
         // is what makes KC inherit TA_FUNC_UNST_EMA and TA_FUNC_UNST_ATR from its two
         // callees. Reporting the honest max keeps outBegIdx == lookback (issue #99),
         // which streaming's Open depends on.
-        emaLookback = self.EMA_Lookback(optInTimePeriod)?;
-        atrLookback = self.ATR_Lookback(optInATRPeriod)?;
+        emaLookback = self.ema_lookback(optInTimePeriod)?;
+        atrLookback = self.atr_lookback(optInATRPeriod)?;
         return Ok(((if emaLookback > atrLookback { emaLookback } else { atrLookback })) as usize);
     }
-    /// C-shaped body behind [`Core::KC`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::kc`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn KC_Impl(
+    pub(crate) fn kc_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -150,7 +150,7 @@ impl Core {
         } else if !((optInNbDev >= Self::REAL_MIN) && (optInNbDev <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
+        let _assertLb = self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -173,8 +173,8 @@ impl Core {
         let mut middle: f64 = 0.0_f64;
         let mut tempTP: Vec<f64> = Vec::new();
         let mut tempATR: Vec<f64> = Vec::new();
-        emaLookback = self.EMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
-        lookbackTotal = self.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
+        emaLookback = self.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        lookbackTotal = self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
         // Nothing to produce: the range is shorter than the lookback. Return before
         // touching anything, so that a caller-supplied input which stops short of
         // endIdx is never read past its end.
@@ -194,19 +194,19 @@ impl Core {
         tpStartIdx = startIdx - emaLookback;
         tempTP = vec![0.0_f64; ((endIdx - tpStartIdx + 1) * 1) as usize];
         tempATR = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        let _xr0 = match self.TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, &mut tempTP[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, &mut tempTP[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr0.beg_idx;
         tempNbElement = _xr0.count;
         retCode = RetCode::Success;
         // The ATR consumes the price inputs before the moving average below writes
         // the middle band, which may be aliased onto one of them.
-        let _xr1 = match self.ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, &mut tempATR[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr1 = match self.atr(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, &mut tempATR[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr1.beg_idx;
         tempNbElement = _xr1.count;
         retCode = RetCode::Success;
         // tempTP is bar-tpStartIdx relative, so entering the moving average at its
         // own lookback puts its first output on startIdx, where the ATR's already is.
-        let _xr2 = match self.EMA(emaLookback, endIdx - tpStartIdx, &tempTP, optInTimePeriod, outRealMiddleBand) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr2 = match self.ema(emaLookback, endIdx - tpStartIdx, &tempTP, optInTimePeriod, outRealMiddleBand) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr2.beg_idx;
         (*outNBElement) = _xr2.count;
         retCode = RetCode::Success;
@@ -286,7 +286,7 @@ impl Core {
     /// let mut middle_band = vec![0.0; 252];
     /// let mut lower_band = vec![0.0; 252];
     ///
-    /// let out_range = core.KC(
+    /// let out_range = core.kc(
     ///     0, high.len() - 1, &high, &low, &close, 20, 10, 2.0,
     ///     &mut upper_band, &mut middle_band, &mut lower_band,
     /// )?;
@@ -297,8 +297,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::EMA`] · [`Core::ATR`] · [`Core::TYPPRICE`] · [`Core::BBANDS`] ·
-    /// [`Core::ACCBANDS`]
+    /// [`EMA`](Core::ema) · [`ATR`](Core::atr) · [`TYPPRICE`](Core::typprice) ·
+    /// [`BBANDS`](Core::bbands) · [`ACCBANDS`](Core::accbands)
     ///
     /// # References
     ///
@@ -307,7 +307,7 @@ impl Core {
     ///   ChartSchool](https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/keltner-channels)
     #[doc(alias = "TA_KC")]
     #[doc(alias = "KeltnerChannel")]
-    pub fn KC(
+    pub fn kc(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -327,7 +327,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
+        let _guardLb = self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -350,7 +350,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.KC_Impl(
+        let retCode = self.kc_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -374,7 +374,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live KC stream: one value per closed bar, bit-identical to [`Core::KC`]
+/// Live KC stream: one value per closed bar, bit-identical to [`Core::kc`]
 /// over the same series. Open with [`Core::kc_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -494,8 +494,8 @@ impl Core {
         let mut middle: f64 = 0.0_f64;
         let mut tempTP: Vec<f64> = Vec::new();
         let mut tempATR: Vec<f64> = Vec::new();
-        emaLookback = self.EMA_Lookback(optInTimePeriod)?;
-        lookbackTotal = self.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
+        emaLookback = self.ema_lookback(optInTimePeriod)?;
+        lookbackTotal = self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
         // Nothing to produce: the range is shorter than the lookback. Return before
         // touching anything, so that a caller-supplied input which stops short of
         // endIdx is never read past its end.
@@ -593,7 +593,7 @@ impl Core {
     }
 
     /// Open a live KC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::KC`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::kc`] at that bar.
     ///
     /// # Errors
     ///
@@ -629,7 +629,7 @@ impl Core {
     }
 
     /// [`Core::kc_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::KC`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::kc`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -652,7 +652,7 @@ impl Core {
     /// let mut batch_upper_band = vec![0.0; 252];
     /// let mut batch_middle_band = vec![0.0; 252];
     /// let mut batch_lower_band = vec![0.0; 252];
-    /// let batch = core.KC(0, high.len() - 1, &high, &low, &close, 20, 10, 2.0, &mut batch_upper_band, &mut batch_middle_band, &mut batch_lower_band)?;
+    /// let batch = core.kc(0, high.len() - 1, &high, &low, &close, 20, 10, 2.0, &mut batch_upper_band, &mut batch_middle_band, &mut batch_lower_band)?;
     ///
     /// let mut upper_band = vec![0.0; 252];
     /// let mut middle_band = vec![0.0; 252];
@@ -679,7 +679,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
+        let _guardLb = self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -820,7 +820,7 @@ impl KcStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::KC`] reports over the same bars: the opener sets it
+    /// It is what [`Core::kc`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

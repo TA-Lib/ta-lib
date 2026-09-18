@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#COSH} consumes before it can
+    * Number of leading input bars {@link Core#cosh} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int COSH_Lookback( )
+   public int coshLookback( )
    {
       return 0 ;
 
    }
-   RetCode COSH_Impl( int startIdx,
-                      int endIdx,
-                      double inReal[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode coshImpl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode COSH_Impl( int startIdx,
-                      int endIdx,
-                      float inReal[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode coshImpl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -76,8 +76,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#COSH_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#coshLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -98,24 +98,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SINH
-    * @see Core#TANH
-    * @see Core#COS
+    * @see Core#sinh
+    * @see Core#tanh
+    * @see Core#cos
     */
-   public OutRange COSH( int startIdx,
+   public OutRange cosh( int startIdx,
                          int endIdx,
                          double inReal[],
                          double outReal[] )
    {
       requireIndexRange("COSH", startIdx, endIdx);
-      int guardStart = clampedStart("COSH", startIdx, COSH_Lookback());
+      int guardStart = clampedStart("COSH", startIdx, coshLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COSH", "inReal", inReal, guardInLen);
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = coshImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("COSH", retCode);
       }
@@ -131,8 +131,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#COSH_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#coshLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -153,24 +153,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#SINH
-    * @see Core#TANH
-    * @see Core#COS
+    * @see Core#sinh
+    * @see Core#tanh
+    * @see Core#cos
     */
-   public OutRange COSH( int startIdx,
+   public OutRange cosh( int startIdx,
                          int endIdx,
                          float inReal[],
                          double outReal[] )
    {
       requireIndexRange("COSH", startIdx, endIdx);
-      int guardStart = clampedStart("COSH", startIdx, COSH_Lookback());
+      int guardStart = clampedStart("COSH", startIdx, coshLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("COSH", "inReal", inReal, guardInLen);
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = coshImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("COSH", retCode);
       }
@@ -180,7 +180,7 @@
 
    /**
     * A live COSH stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#COSH} over the same series.
+    * closed bar, bit-identical to {@link Core#cosh} over the same series.
     * Open with {@link Core#coshOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -203,7 +203,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#COSH} reports over the same bars: the
+       * <p>It is what {@link Core#cosh} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -386,8 +386,8 @@
    /**
     * Open a live COSH stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#COSH} at that bar.
-    * <p>The history must hold at least {@code COSH_Lookback(...) + 1} bars
+    * to {@link Core#cosh} at that bar.
+    * <p>The history must hold at least {@code coshLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -402,7 +402,7 @@
    }
    /**
     * {@link Core#coshOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#COSH} over the whole history in the same single pass
+    * to {@link Core#cosh} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -415,7 +415,7 @@
    {
       requireArgument("COSH openAndFill", "inReal", inReal);
       requireHistory("COSH openAndFill", inReal.length);
-      int guardOutLen = openFillCount("COSH openAndFill", inReal.length, COSH_Lookback());
+      int guardOutLen = openFillCount("COSH openAndFill", inReal.length, coshLookback());
       requireLength("COSH openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("COSH openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

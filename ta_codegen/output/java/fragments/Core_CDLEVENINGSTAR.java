@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLEVENINGSTAR} consumes before
+    * Number of leading input bars {@link Core#cdleveningstar} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,7 +25,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLEVENINGSTAR_Lookback( double optInPenetration )
+   public int cdleveningstarLookback( double optInPenetration )
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
@@ -41,16 +41,16 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   RetCode CDLEVENINGSTAR_Impl( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                double optInPenetration,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdleveningstarImpl( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               double optInPenetration,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -80,7 +80,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
+      lookbackTotal = cdleveningstarLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -154,16 +154,16 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLEVENINGSTAR_Impl( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                double optInPenetration,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode cdleveningstarImpl( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               double optInPenetration,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -190,7 +190,7 @@
       } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BAD_PARAM;
       }
-      lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
+      lookbackTotal = cdleveningstarLookback(optInPenetration);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -249,7 +249,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLEVENINGSTAR_Lookback} is a
+    * valid range shorter than {@link Core#cdleveningstarLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -278,11 +278,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLEVENINGDOJISTAR
-    * @see Core#CDLMORNINGSTAR
-    * @see Core#CDLMORNINGDOJISTAR
+    * @see Core#cdleveningdojistar
+    * @see Core#cdlmorningstar
+    * @see Core#cdlmorningdojistar
     */
-   public OutRange CDLEVENINGSTAR( int startIdx,
+   public OutRange cdleveningstar( int startIdx,
                                    int endIdx,
                                    double inOpen[],
                                    double inHigh[],
@@ -292,7 +292,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLEVENINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart("CDLEVENINGSTAR", startIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
+      int guardStart = clampedStart("CDLEVENINGSTAR", startIdx, cdleveningstarLookback(optInPenetration));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLEVENINGSTAR", "inOpen", inOpen, guardInLen);
@@ -302,7 +302,7 @@
       requireLength("CDLEVENINGSTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdleveningstarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLEVENINGSTAR", retCode);
       }
@@ -326,7 +326,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLEVENINGSTAR_Lookback} is a
+    * valid range shorter than {@link Core#cdleveningstarLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -355,11 +355,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLEVENINGDOJISTAR
-    * @see Core#CDLMORNINGSTAR
-    * @see Core#CDLMORNINGDOJISTAR
+    * @see Core#cdleveningdojistar
+    * @see Core#cdlmorningstar
+    * @see Core#cdlmorningdojistar
     */
-   public OutRange CDLEVENINGSTAR( int startIdx,
+   public OutRange cdleveningstar( int startIdx,
                                    int endIdx,
                                    float inOpen[],
                                    float inHigh[],
@@ -369,7 +369,7 @@
                                    int outInteger[] )
    {
       requireIndexRange("CDLEVENINGSTAR", startIdx, endIdx);
-      int guardStart = clampedStart("CDLEVENINGSTAR", startIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
+      int guardStart = clampedStart("CDLEVENINGSTAR", startIdx, cdleveningstarLookback(optInPenetration));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLEVENINGSTAR", "inOpen", inOpen, guardInLen);
@@ -379,7 +379,7 @@
       requireLength("CDLEVENINGSTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLEVENINGSTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdleveningstarImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLEVENINGSTAR", retCode);
       }
@@ -389,7 +389,7 @@
 
    /**
     * A live CDLEVENINGSTAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLEVENINGSTAR} over the same series.
+    * closed bar, bit-identical to {@link Core#cdleveningstar} over the same series.
     * Open with {@link Core#cdleveningstarOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -437,7 +437,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLEVENINGSTAR} reports over the same bars: the
+       * <p>It is what {@link Core#cdleveningstar} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -678,7 +678,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
+      lookbackTotal = cdleveningstarLookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -840,8 +840,8 @@
    /**
     * Open a live CDLEVENINGSTAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLEVENINGSTAR} at that bar.
-    * <p>The history must hold at least {@code CDLEVENINGSTAR_Lookback(...) + 1} bars
+    * to {@link Core#cdleveningstar} at that bar.
+    * <p>The history must hold at least {@code cdleveningstarLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
@@ -864,7 +864,7 @@
    }
    /**
     * {@link Core#cdleveningstarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLEVENINGSTAR} over the whole history in the same single pass
+    * to {@link Core#cdleveningstar} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -880,7 +880,7 @@
       requireArgument("CDLEVENINGSTAR openAndFill", "inHigh", inHigh);
       requireArgument("CDLEVENINGSTAR openAndFill", "inLow", inLow);
       requireArgument("CDLEVENINGSTAR openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLEVENINGSTAR openAndFill", inOpen.length, CDLEVENINGSTAR_Lookback(optInPenetration));
+      int guardOutLen = openFillCount("CDLEVENINGSTAR openAndFill", inOpen.length, cdleveningstarLookback(optInPenetration));
       requireHistoryLength("CDLEVENINGSTAR openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLEVENINGSTAR openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLEVENINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);

@@ -65,7 +65,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::SUPERTREND`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::supertrend`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// default value.
     #[doc(alias = "TA_SUPERTREND_Lookback")]
     #[inline]
-    pub fn SUPERTREND_Lookback(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64) -> Result<usize, RetCode> {
+    pub fn supertrend_lookback(&self, mut optInTimePeriod: i32, mut optInMultiplier: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 10;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -96,12 +96,12 @@ impl Core {
         // Every output bar needs the Average True Range at the same bar, and nothing
         // else reaches further back, so the lookback is exactly the callee's. Never
         // restated here, which is what makes SUPERTREND inherit TA_FUNC_UNST_ATR.
-        return Ok(self.ATR_Lookback(optInTimePeriod)?);
+        return Ok(self.atr_lookback(optInTimePeriod)?);
     }
-    /// C-shaped body behind [`Core::SUPERTREND`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::supertrend`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn SUPERTREND_Impl(
+    pub(crate) fn supertrend_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -116,13 +116,13 @@ impl Core {
         outTrend: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, SUPERTREND_Impl_fma, SUPERTREND_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend));
+        return ta_lib_dispatch::dispatch_fma!(self, supertrend_impl_fma, supertrend_impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend));
         #[cfg(not(target_arch = "x86_64"))]
-        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
+        self.supertrend_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn SUPERTREND_Impl_fma(
+    fn supertrend_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -136,10 +136,10 @@ impl Core {
         outSupertrend: &mut [f64],
         outTrend: &mut [i32],
     ) -> RetCode {
-        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
+        self.supertrend_impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
     }
     #[inline(always)]
-    fn SUPERTREND_Impl_impl(
+    fn supertrend_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -169,7 +169,7 @@ impl Core {
         } else if !((optInMultiplier >= 0e0) && (optInMultiplier <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier).unwrap_or(usize::MAX);
+        let _assertLb = self.supertrend_lookback(optInTimePeriod, optInMultiplier).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -202,7 +202,7 @@ impl Core {
         let mut prevClose: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier).unwrap_or(usize::MAX);
+        lookbackTotal = self.supertrend_lookback(optInTimePeriod, optInMultiplier).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -399,7 +399,7 @@ impl Core {
     /// let mut supertrend = vec![0.0; 252];
     /// let mut trend = vec![0i32; 252];
     ///
-    /// let out_range = core.SUPERTREND(
+    /// let out_range = core.supertrend(
     ///     0, high.len() - 1, &high, &low, &close, 10, 3.0,
     ///     &mut supertrend, &mut trend,
     /// )?;
@@ -413,7 +413,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ATR`] · [`Core::MEDPRICE`] · [`Core::SAR`] · [`Core::SAREXT`] · [`Core::KC`]
+    /// [`ATR`](Core::atr) · [`MEDPRICE`](Core::medprice) · [`SAR`](Core::sar) ·
+    /// [`SAREXT`](Core::sarext) · [`KC`](Core::kc)
     ///
     /// # References
     ///
@@ -424,7 +425,7 @@ impl Core {
     /// * Olivier Seban, *Tout le monde mérite d'être riche*, Maxima
     #[doc(alias = "TA_SUPERTREND")]
     #[doc(alias = "SupertrendIndicator")]
-    pub fn SUPERTREND(
+    pub fn supertrend(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -442,7 +443,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier)?;
+        let _guardLb = self.supertrend_lookback(optInTimePeriod, optInMultiplier)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -462,7 +463,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.SUPERTREND_Impl(
+        let retCode = self.supertrend_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -484,7 +485,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live SUPERTREND stream: one value per closed bar, bit-identical to [`Core::SUPERTREND`]
+/// Live SUPERTREND stream: one value per closed bar, bit-identical to [`Core::supertrend`]
 /// over the same series. Open with [`Core::supertrend_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -650,7 +651,7 @@ impl Core {
         let mut prevClose: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier)?;
+        lookbackTotal = self.supertrend_lookback(optInTimePeriod, optInMultiplier)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -818,7 +819,7 @@ impl Core {
     }
 
     /// Open a live SUPERTREND stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::SUPERTREND`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::supertrend`] at that bar.
     ///
     /// # Errors
     ///
@@ -853,7 +854,7 @@ impl Core {
     }
 
     /// [`Core::supertrend_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::SUPERTREND`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::supertrend`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -875,7 +876,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_supertrend = vec![0.0; 252];
     /// let mut batch_trend = vec![0_i32; 252];
-    /// let batch = core.SUPERTREND(0, high.len() - 1, &high, &low, &close, 10, 3.0, &mut batch_supertrend, &mut batch_trend)?;
+    /// let batch = core.supertrend(0, high.len() - 1, &high, &low, &close, 10, 3.0, &mut batch_supertrend, &mut batch_trend)?;
     ///
     /// let mut supertrend = vec![0.0; 252];
     /// let mut trend = vec![0_i32; 252];
@@ -898,7 +899,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier)?;
+        let _guardLb = self.supertrend_lookback(optInTimePeriod, optInMultiplier)?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1077,7 +1078,7 @@ impl SupertrendStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::SUPERTREND`] reports over the same bars: the opener sets it
+    /// It is what [`Core::supertrend`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

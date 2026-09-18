@@ -31,7 +31,7 @@ use ta_lib::Core;
 
 let core = Core::new();
 
-// Seed with warm-up history (>= SMA_Lookback(period) + 1 bars).
+// Seed with warm-up history (>= sma_lookback(period) + 1 bars).
 let history: Vec<f64> = /* ...your closing prices... */;
 let (mut s, last) = core.sma_open(&history, 30)?;   // stream + value at the last history bar
 
@@ -48,7 +48,7 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 
 ## Rules
 
-- **Warm-up.** `open` succeeds only if `history.len() >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
+- **Warm-up.** `open` succeeds only if `history.len() >= <name>_lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/rust/#numerical_stability) and [candle settings](/api/rust/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
 - **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.

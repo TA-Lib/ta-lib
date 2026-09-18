@@ -65,10 +65,10 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::HT_DCPHASE`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::ht_dcphase`]: the number of leading input values consumed before
     /// the first output value can be produced.
     #[doc(alias = "TA_HT_DCPHASE_Lookback")]
-    pub fn HT_DCPHASE_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn ht_dcphase_lookback(&self) -> Result<usize, RetCode> {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
         // ---
@@ -78,10 +78,10 @@ impl Core {
         // See mama_lookback for an explanation of the "32".
         return Ok((63 + self.unstable_period[FuncUnstId::HT_DCPHASE as usize]) as usize);
     }
-    /// C-shaped body behind [`Core::HT_DCPHASE`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::ht_dcphase`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn HT_DCPHASE_Impl(
+    pub(crate) fn ht_dcphase_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -91,13 +91,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, HT_DCPHASE_Impl_fma, HT_DCPHASE_Impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, ht_dcphase_impl_fma, ht_dcphase_impl_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.HT_DCPHASE_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.ht_dcphase_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn HT_DCPHASE_Impl_fma(
+    fn ht_dcphase_impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -106,10 +106,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.HT_DCPHASE_Impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.ht_dcphase_impl_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn HT_DCPHASE_Impl_impl(
+    fn ht_dcphase_impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -124,7 +124,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.HT_DCPHASE_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.ht_dcphase_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -564,7 +564,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.HT_DCPHASE(0, data.len() - 1, &data, &mut out)?;
+    /// let out_range = core.ht_dcphase(0, data.len() - 1, &data, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -572,8 +572,9 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::HT_DCPERIOD`] · [`Core::HT_PHASOR`] · [`Core::HT_SINE`] · [`Core::HT_TRENDLINE`]
-    /// · [`Core::HT_TRENDMODE`] · [`Core::MAMA`] · [`Core::WMA`]
+    /// [`HT_DCPERIOD`](Core::ht_dcperiod) · [`HT_PHASOR`](Core::ht_phasor) ·
+    /// [`HT_SINE`](Core::ht_sine) · [`HT_TRENDLINE`](Core::ht_trendline) ·
+    /// [`HT_TRENDMODE`](Core::ht_trendmode) · [`MAMA`](Core::mama) · [`WMA`](Core::wma)
     ///
     /// # References
     ///
@@ -581,7 +582,7 @@ impl Core {
     ///   Wiley & Sons (ISBN 0471405671)
     #[doc(alias = "TA_HT_DCPHASE")]
     #[doc(alias = "HilbertTransformDominantCyclePhase")]
-    pub fn HT_DCPHASE(
+    pub fn ht_dcphase(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -594,7 +595,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HT_DCPHASE_Lookback()?;
+        let _guardLb = self.ht_dcphase_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -605,7 +606,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.HT_DCPHASE_Impl(
+        let retCode = self.ht_dcphase_impl(
             startIdx,
             endIdx,
             inReal,
@@ -622,7 +623,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_DCPHASE stream: one value per closed bar, bit-identical to [`Core::HT_DCPHASE`]
+/// Live HT_DCPHASE stream: one value per closed bar, bit-identical to [`Core::ht_dcphase`]
 /// over the same series. Open with [`Core::ht_dcphase_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -1403,7 +1404,7 @@ impl Core {
     }
 
     /// Open a live HT_DCPHASE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::HT_DCPHASE`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ht_dcphase`] at that bar.
     ///
     /// # Errors
     ///
@@ -1433,7 +1434,7 @@ impl Core {
     }
 
     /// [`Core::ht_dcphase_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::HT_DCPHASE`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::ht_dcphase`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -1450,7 +1451,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.HT_DCPHASE(0, data.len() - 1, &data, &mut batch_out)?;
+    /// let batch = core.ht_dcphase(0, data.len() - 1, &data, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.ht_dcphase_open_and_fill(&data, &mut out)?;
@@ -1471,7 +1472,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HT_DCPHASE_Lookback()?;
+        let _guardLb = self.ht_dcphase_lookback()?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -1799,7 +1800,7 @@ impl HtDcphaseStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::HT_DCPHASE`] reports over the same bars: the opener sets it
+    /// It is what [`Core::ht_dcphase`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

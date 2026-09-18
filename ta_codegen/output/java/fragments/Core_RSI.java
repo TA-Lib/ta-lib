@@ -21,7 +21,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#RSI} consumes before it can
+    * Number of leading input bars {@link Core#rsi} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -34,7 +34,7 @@
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int RSI_Lookback( int optInTimePeriod )
+   public int rsiLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -46,13 +46,13 @@
       return retValue ;
 
    }
-   RetCode RSI_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode rsiImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -83,7 +83,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
+      lookbackTotal = (int)rsiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -208,13 +208,13 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode RSI_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode rsiImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -240,7 +240,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
+      lookbackTotal = (int)rsiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -333,7 +333,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RSI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#rsiLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -357,24 +357,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CMO
-    * @see Core#STOCHRSI
+    * @see Core#cmo
+    * @see Core#stochrsi
     */
-   public OutRange RSI( int startIdx,
+   public OutRange rsi( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("RSI", startIdx, endIdx);
-      int guardStart = clampedStart("RSI", startIdx, RSI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("RSI", startIdx, rsiLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RSI", "inReal", inReal, guardInLen);
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = rsiImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("RSI", retCode);
       }
@@ -392,7 +392,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#RSI_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#rsiLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -416,24 +416,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CMO
-    * @see Core#STOCHRSI
+    * @see Core#cmo
+    * @see Core#stochrsi
     */
-   public OutRange RSI( int startIdx,
+   public OutRange rsi( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("RSI", startIdx, endIdx);
-      int guardStart = clampedStart("RSI", startIdx, RSI_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("RSI", startIdx, rsiLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("RSI", "inReal", inReal, guardInLen);
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = rsiImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("RSI", retCode);
       }
@@ -443,7 +443,7 @@
 
    /**
     * A live RSI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#RSI} over the same series.
+    * closed bar, bit-identical to {@link Core#rsi} over the same series.
     * Open with {@link Core#rsiOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -471,7 +471,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#RSI} reports over the same bars: the
+       * <p>It is what {@link Core#rsi} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -670,7 +670,7 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod == 1 ) {
-         int fillLb = RSI_Lookback(optInTimePeriod);
+         int fillLb = rsiLookback(optInTimePeriod);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
             return RetCode.INSUFFICIENT_HISTORY;
@@ -699,7 +699,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
+      lookbackTotal = (int)rsiLookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -855,8 +855,8 @@
    /**
     * Open a live RSI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#RSI} at that bar.
-    * <p>The history must hold at least {@code RSI_Lookback(...) + 1} bars
+    * to {@link Core#rsi} at that bar.
+    * <p>The history must hold at least {@code rsiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -873,7 +873,7 @@
    }
    /**
     * {@link Core#rsiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#RSI} over the whole history in the same single pass
+    * to {@link Core#rsi} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -886,7 +886,7 @@
    {
       requireArgument("RSI openAndFill", "inReal", inReal);
       requireHistory("RSI openAndFill", inReal.length);
-      int guardOutLen = openFillCount("RSI openAndFill", inReal.length, RSI_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("RSI openAndFill", inReal.length, rsiLookback(optInTimePeriod));
       requireLength("RSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("RSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

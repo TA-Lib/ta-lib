@@ -63,7 +63,7 @@ public partial class Core
     *               the read was of an uninitialised local.
     */
    /// <summary>
-   /// Number of leading input bars <c>SAREXT</c> consumes before it can produce
+   /// Number of leading input bars <c>Sarext</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -72,63 +72,63 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// short at |value| (default 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
-   /// 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// 0; <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">Initial acceleration factor when long (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">Initial acceleration factor when short (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   public int SarextLookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
-      if( optInStartValue == REAL_DEFAULT ) {
+      if( optInStartValue == RealDefault ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
+      } else if( !(optInStartValue >= RealMin && optInStartValue <= RealMax) ) {
          return -1;
       }
-      if( optInOffsetOnReverse == REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == RealDefault ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= RealMax) ) {
          return -1;
       }
-      if( optInAccelerationInitLong == REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == RealDefault ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= RealMax) ) {
          return -1;
       }
-      if( optInAccelerationLong == REAL_DEFAULT ) {
+      if( optInAccelerationLong == RealDefault ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= RealMax) ) {
          return -1;
       }
-      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == RealDefault ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= RealMax) ) {
          return -1;
       }
-      if( optInAccelerationInitShort == REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == RealDefault ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= RealMax) ) {
          return -1;
       }
-      if( optInAccelerationShort == REAL_DEFAULT ) {
+      if( optInAccelerationShort == RealDefault ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= RealMax) ) {
          return -1;
       }
-      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == RealDefault ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= RealMax) ) {
          return -1;
       }
       /* SAR always sacrifices one price bar to establish the
@@ -137,21 +137,21 @@ public partial class Core
       return 1 ;
 
    }
-   internal RetCode SAREXT_Impl( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<double> inHigh,
-                                 ReadOnlySpan<double> inLow,
-                                 double optInStartValue,
-                                 double optInOffsetOnReverse,
-                                 double optInAccelerationInitLong,
-                                 double optInAccelerationLong,
-                                 double optInAccelerationMaxLong,
-                                 double optInAccelerationInitShort,
-                                 double optInAccelerationShort,
-                                 double optInAccelerationMaxShort,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<double> outReal )
+   internal RetCode SarextImpl( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inHigh,
+                                ReadOnlySpan<double> inLow,
+                                double optInStartValue,
+                                double optInOffsetOnReverse,
+                                double optInAccelerationInitLong,
+                                double optInAccelerationLong,
+                                double optInAccelerationMaxLong,
+                                double optInAccelerationInitShort,
+                                double optInAccelerationShort,
+                                double optInAccelerationMaxShort,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -169,50 +169,50 @@ public partial class Core
       double ep = 0;
       double sar = 0;
       double[] ep_temp = new double[1];
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInStartValue == REAL_DEFAULT ) {
+      if( optInStartValue == RealDefault ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
+      } else if( !(optInStartValue >= RealMin && optInStartValue <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == RealDefault ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == RealDefault ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == REAL_DEFAULT ) {
+      if( optInAccelerationLong == RealDefault ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == RealDefault ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == RealDefault ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == REAL_DEFAULT ) {
+      if( optInAccelerationShort == RealDefault ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == RealDefault ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= RealMax) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) ) {
@@ -319,7 +319,7 @@ public partial class Core
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         OutRange _xr0 = MinusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt = _xr0.BegIdx;
          tempInt = _xr0.Count;
          retCode = RetCode.Success;
@@ -489,21 +489,21 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode SAREXT_Impl( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<float> inHigh,
-                                 ReadOnlySpan<float> inLow,
-                                 double optInStartValue,
-                                 double optInOffsetOnReverse,
-                                 double optInAccelerationInitLong,
-                                 double optInAccelerationLong,
-                                 double optInAccelerationMaxLong,
-                                 double optInAccelerationInitShort,
-                                 double optInAccelerationShort,
-                                 double optInAccelerationMaxShort,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<double> outReal )
+   internal RetCode SarextImpl( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inHigh,
+                                ReadOnlySpan<float> inLow,
+                                double optInStartValue,
+                                double optInOffsetOnReverse,
+                                double optInAccelerationInitLong,
+                                double optInAccelerationLong,
+                                double optInAccelerationMaxLong,
+                                double optInAccelerationInitShort,
+                                double optInAccelerationShort,
+                                double optInAccelerationMaxShort,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -521,50 +521,50 @@ public partial class Core
       double ep = 0;
       double sar = 0;
       double[] ep_temp = new double[1];
-      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+      if( (startIdx < 0) || (startIdx > MaxIndex) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
-      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInStartValue == REAL_DEFAULT ) {
+      if( optInStartValue == RealDefault ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
+      } else if( !(optInStartValue >= RealMin && optInStartValue <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == RealDefault ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == RealDefault ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == REAL_DEFAULT ) {
+      if( optInAccelerationLong == RealDefault ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == RealDefault ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == RealDefault ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == REAL_DEFAULT ) {
+      if( optInAccelerationShort == RealDefault ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == RealDefault ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= RealMax) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
@@ -595,7 +595,7 @@ public partial class Core
          optInAccelerationShort = optInAccelerationMaxShort;
       }
       if( optInStartValue == 0 ) {
-         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         OutRange _xr0 = MinusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt = _xr0.BegIdx;
          tempInt = _xr0.Count;
          retCode = RetCode.Success;
@@ -736,8 +736,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SAREXT_Lookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>SarextLookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -745,28 +745,28 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// short at |value| (default 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
-   /// 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// 0; <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">Initial acceleration factor when long (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">Initial acceleration factor when short (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">SAR stop level; positive while long, negative while short. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -781,7 +781,7 @@ public partial class Core
    /// is how you decline.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
-   public OutRange SAREXT( int startIdx,
+   public OutRange Sarext( int startIdx,
                            int endIdx,
                            ReadOnlySpan<double> inHigh,
                            ReadOnlySpan<double> inLow,
@@ -795,13 +795,13 @@ public partial class Core
                            double optInAccelerationMaxShort,
                            Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardStart = ClampedStart(startIdx, endIdx, SarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("SAREXT", "inHigh", inHigh.Length, guardInLen);
       RequireLength("SAREXT", "inLow", inLow.Length, guardInLen);
       RequireLength("SAREXT", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SarextImpl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAREXT", retCode);
       }
@@ -829,8 +829,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SAREXT_Lookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>SarextLookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -838,28 +838,28 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// short at |value| (default 0; <see cref="Core.RealDefault"/> selects the
    /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
-   /// 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// 0; <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">Initial acceleration factor when long (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">Initial acceleration factor when short (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0;
-   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">SAR stop level; positive while long, negative while short. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
-   /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
+   /// <see cref="Core.MaxIndex"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
    /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
@@ -876,7 +876,7 @@ public partial class Core
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
    /// overlap of their byte ranges is rejected.</exception>
-   public OutRange SAREXT( int startIdx,
+   public OutRange Sarext( int startIdx,
                            int endIdx,
                            ReadOnlySpan<float> inHigh,
                            ReadOnlySpan<float> inLow,
@@ -890,13 +890,13 @@ public partial class Core
                            double optInAccelerationMaxShort,
                            Span<double> outReal )
    {
-      int guardStart = ClampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardStart = ClampedStart(startIdx, endIdx, SarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("SAREXT", "inHigh", inHigh.Length, guardInLen);
       RequireLength("SAREXT", "inLow", inLow.Length, guardInLen);
       RequireLength("SAREXT", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = SAREXT_Impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SarextImpl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAREXT", retCode);
       }
@@ -953,7 +953,7 @@ public partial class Core
       /// neither does <c>Peek</c> — and <c>Clone</c> carries it verbatim. A plain
       /// <c>Open</c> hands back only the last value, a subset of this range,
       /// because the caller chose not to take the fill.</para>
-      /// <para>The last bar it can reach is <see cref="Core.MAX_INDEX"/>; past that
+      /// <para>The last bar it can reach is <see cref="Core.MaxIndex"/>; past that
       /// <c>Update</c> and <c>Advance</c> throw.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
@@ -966,13 +966,13 @@ public partial class Core
       /// rejected and that will not be re-fed, or a session with no print. Without
       /// it two handles on one feed drift a bar apart when only one of them skips.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, the last one the batch tier
+      /// has reached bar <see cref="Core.MaxIndex"/>, the last one the batch tier
       /// can address and the last this handle will count. <c>Update</c> throws the
       /// same there.</para>
       /// </remarks>
       public void Advance()
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("SAREXT", "advance", RetCode.OutOfRangeEndIndex);
          outRangeCount++;
       }
@@ -1013,7 +1013,7 @@ public partial class Core
       /// which computes on whatever it is given: a handle retains its state, so a
       /// single non-finite bar would poison every later value it produces.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> once <see cref="OutRange"/>
-      /// has reached bar <see cref="Core.MAX_INDEX"/>, which no re-feed clears: the
+      /// has reached bar <see cref="Core.MaxIndex"/>, which no re-feed clears: the
       /// handle has run out of index domain and only a shorter history can start a
       /// new one.</para>
       /// </remarks>
@@ -1022,7 +1022,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inHigh, double inLow )
       {
-         if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )
+         if( outRangeBegIdx + outRangeCount > Core.MaxIndex )
             throw Core.StreamFailure("SAREXT", "update", RetCode.OutOfRangeEndIndex);
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "update", RetCode.BadParam);
          core.SarextStepImpl(this, inHigh, inLow);
@@ -1038,7 +1038,7 @@ public partial class Core
       /// concurrently with each other.</para>
       /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
-      /// <see cref="Core.MAX_INDEX"/> ceiling <c>Update</c> stops at.</para>
+      /// <see cref="Core.MaxIndex"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -1345,50 +1345,50 @@ public partial class Core
       if( historyLen < 1 ) {
          return RetCode.OutOfRangeStartIndex;
       }
-      if( historyLen > MAX_INDEX + 1 ) {
+      if( historyLen > MaxIndex + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inLow.Length != inHigh.Length ) {
          return RetCode.BadParam;
       }
-      if( optInStartValue == REAL_DEFAULT ) {
+      if( optInStartValue == RealDefault ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
+      } else if( !(optInStartValue >= RealMin && optInStartValue <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == RealDefault ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == RealDefault ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == REAL_DEFAULT ) {
+      if( optInAccelerationLong == RealDefault ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == RealDefault ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == RealDefault ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == REAL_DEFAULT ) {
+      if( optInAccelerationShort == RealDefault ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == RealDefault ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= RealMax) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -1497,7 +1497,7 @@ public partial class Core
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         OutRange _xr0 = MinusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt = _xr0.BegIdx;
          tempInt = _xr0.Count;
          retCode = RetCode.Success;
@@ -1716,39 +1716,39 @@ public partial class Core
    /// <remarks>
    /// <para>The handle's <see cref="SarextStream.Value"/> starts at the last history
    /// bar's value — bit-identical to what <c>SAREXT</c> reports for that bar.</para>
-   /// <para>The history must hold at least <c>SAREXT_Lookback(...) + 1</c> bars
+   /// <para>The history must hold at least <c>SarextLookback(...) + 1</c> bars
    /// (unstable-period aware). Nothing is written to any caller array; use
    /// <c>SarextOpenAndFill</c> to get the warm-up values as well.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
-   /// <param name="optInStartValue">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInStartValue">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SAREXT_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SarextLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public SarextStream SarextOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT open: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT open: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT open: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("SAREXT open: inLow is empty", nameof(inLow), RetCode.BadParam);
       RequireHistoryLength("SAREXT", "open", "inLow", inLow.Length, inHigh.Length);
       return SarextOpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -1759,49 +1759,49 @@ public partial class Core
    /// <remarks>
    /// <para>The values written are bit-identical to what <c>SAREXT</c> produces over
    /// the same series, so no separate batch call is needed for the warm-up plot.</para>
-   /// <para>Output arrays must hold <c>historyLen - SAREXT_Lookback(...)</c> values
-   /// and must not alias the inputs or each other — this path writes the outputs
-   /// and then reads the input tail to seed its rings, so the batch tier's
-   /// in-place allowance does not carry over here. Both are checked before
-   /// anything is written, so an undersized span is an <c>ArgumentException</c>
-   /// naming it rather than a fault from inside the fill.</para>
+   /// <para>Output arrays must hold <c>historyLen - SarextLookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here. Both are checked before anything is
+   /// written, so an undersized span is an <c>ArgumentException</c> naming it
+   /// rather than a fault from inside the fill.</para>
    /// <para>The range written is reported on the returned handle:
    /// <see cref="SarextStream.OutRange"/>.</para>
    /// </remarks>
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
-   /// <param name="optInStartValue">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
-   /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInStartValue">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SarextLookback"/> for its default and
+   /// range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">SAR stop level; positive while long, negative while short. Must hold at
-   /// least <c>historyLen - SAREXT_Lookback(...)</c> values.</param>
+   /// least <c>historyLen - SarextLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SAREXT_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SarextLookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
-   /// the two index faults an opener can have (rules S1 and S2).</exception>
+   /// cannot be null — or it is longer than <see cref="Core.MaxIndex"/> + 1, the
+   /// two index faults an opener can have (rules S1 and S2).</exception>
    public SarextStream SarextOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, Span<double> outReal )
    {
       if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
-      if( inHigh.Length > MAX_INDEX + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
+      if( inHigh.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT openAndFill: history is longer than MaxIndex + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("SAREXT openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      int guardOutLen = OpenFillCount("SAREXT", "openAndFill", inHigh.Length, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+      int guardOutLen = OpenFillCount("SAREXT", "openAndFill", inHigh.Length, SarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       RequireHistoryLength("SAREXT", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("SAREXT", "openAndFill", "outReal", outReal.Length, guardOutLen);
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {

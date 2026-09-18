@@ -22,7 +22,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#DX} consumes before it can
+    * Number of leading input bars {@link Core#dx} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -35,7 +35,7 @@
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int DX_Lookback( int optInTimePeriod )
+   public int dxLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -49,15 +49,15 @@
       }
 
    }
-   RetCode DX_Impl( int startIdx,
-                    int endIdx,
-                    double inHigh[],
-                    double inLow[],
-                    double inClose[],
-                    int optInTimePeriod,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode dxImpl( int startIdx,
+                   int endIdx,
+                   double inHigh[],
+                   double inLow[],
+                   double inClose[],
+                   int optInTimePeriod,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -376,15 +376,15 @@
       outNBElement.value = outIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode DX_Impl( int startIdx,
-                    int endIdx,
-                    float inHigh[],
-                    float inLow[],
-                    float inClose[],
-                    int optInTimePeriod,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode dxImpl( int startIdx,
+                   int endIdx,
+                   float inHigh[],
+                   float inLow[],
+                   float inClose[],
+                   int optInTimePeriod,
+                   MInteger outBegIdx,
+                   MInteger outNBElement,
+                   double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -578,7 +578,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#DX_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#dxLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -604,15 +604,15 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ADX
-    * @see Core#ADXR
-    * @see Core#PLUS_DI
-    * @see Core#MINUS_DI
-    * @see Core#PLUS_DM
-    * @see Core#MINUS_DM
-    * @see Core#TRANGE
+    * @see Core#adx
+    * @see Core#adxr
+    * @see Core#plusDi
+    * @see Core#minusDi
+    * @see Core#plusDm
+    * @see Core#minusDm
+    * @see Core#trange
     */
-   public OutRange DX( int startIdx,
+   public OutRange dx( int startIdx,
                        int endIdx,
                        double inHigh[],
                        double inLow[],
@@ -621,7 +621,7 @@
                        double outReal[] )
    {
       requireIndexRange("DX", startIdx, endIdx);
-      int guardStart = clampedStart("DX", startIdx, DX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("DX", startIdx, dxLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DX", "inHigh", inHigh, guardInLen);
@@ -630,7 +630,7 @@
       requireLength("DX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = dxImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("DX", retCode);
       }
@@ -654,7 +654,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#DX_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#dxLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -680,15 +680,15 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ADX
-    * @see Core#ADXR
-    * @see Core#PLUS_DI
-    * @see Core#MINUS_DI
-    * @see Core#PLUS_DM
-    * @see Core#MINUS_DM
-    * @see Core#TRANGE
+    * @see Core#adx
+    * @see Core#adxr
+    * @see Core#plusDi
+    * @see Core#minusDi
+    * @see Core#plusDm
+    * @see Core#minusDm
+    * @see Core#trange
     */
-   public OutRange DX( int startIdx,
+   public OutRange dx( int startIdx,
                        int endIdx,
                        float inHigh[],
                        float inLow[],
@@ -697,7 +697,7 @@
                        double outReal[] )
    {
       requireIndexRange("DX", startIdx, endIdx);
-      int guardStart = clampedStart("DX", startIdx, DX_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("DX", startIdx, dxLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("DX", "inHigh", inHigh, guardInLen);
@@ -706,7 +706,7 @@
       requireLength("DX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = dxImpl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("DX", retCode);
       }
@@ -716,7 +716,7 @@
 
    /**
     * A live DX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#DX} over the same series.
+    * closed bar, bit-identical to {@link Core#dx} over the same series.
     * Open with {@link Core#dxOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -748,7 +748,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#DX} reports over the same bars: the
+       * <p>It is what {@link Core#dx} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -1369,8 +1369,8 @@
    /**
     * Open a live DX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#DX} at that bar.
-    * <p>The history must hold at least {@code DX_Lookback(...) + 1} bars
+    * to {@link Core#dx} at that bar.
+    * <p>The history must hold at least {@code dxLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -1391,7 +1391,7 @@
    }
    /**
     * {@link Core#dxOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#DX} over the whole history in the same single pass
+    * to {@link Core#dx} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1406,7 +1406,7 @@
       requireHistory("DX openAndFill", inHigh.length);
       requireArgument("DX openAndFill", "inLow", inLow);
       requireArgument("DX openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("DX openAndFill", inHigh.length, DX_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("DX openAndFill", inHigh.length, dxLookback(optInTimePeriod));
       requireHistoryLength("DX openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("DX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("DX openAndFill", "outReal", outReal, guardOutLen);

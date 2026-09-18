@@ -29,7 +29,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#STOCHF} consumes before it can
+    * Number of leading input bars {@link Core#stochf} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -46,7 +46,7 @@
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   public int stochfLookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       if( optInFastK_Period == Integer.MIN_VALUE ) {
          optInFastK_Period = 5;
@@ -65,22 +65,22 @@
       /* Account for the initial data needed for Fast-K. */
       retValue = optInFastK_Period - 1;
       /* Add the smoothing being done for Fast-D */
-      retValue += MA_Lookback(optInFastD_Period, optInFastD_MAType);
+      retValue += maLookback(optInFastD_Period, optInFastD_MAType);
       return retValue ;
 
    }
-   RetCode STOCHF_Impl( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        int optInFastK_Period,
-                        int optInFastD_Period,
-                        MAType optInFastD_MAType,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outFastK[],
-                        double outFastD[] )
+   RetCode stochfImpl( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       int optInFastK_Period,
+                       int optInFastD_Period,
+                       MAType optInFastD_MAType,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outFastK[],
+                       double outFastD[] )
    {
       RetCode retCode;
       double lowest = 0;
@@ -152,7 +152,7 @@
        */
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
-      lookbackFastD = MA_Lookback(optInFastD_Period, optInFastD_MAType);
+      lookbackFastD = maLookback(optInFastD_Period, optInFastD_MAType);
       lookbackTotal = lookbackK + lookbackFastD;
       /* Move up the start index if there is not
        * enough initial data.
@@ -264,7 +264,7 @@
       /* Fast-K calculation completed. This K calculation is returned
        * to the caller. It is smoothed to become Fast-D.
        */
-      OutRange _xr0 = MA(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
@@ -289,18 +289,18 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode STOCHF_Impl( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        int optInFastK_Period,
-                        int optInFastD_Period,
-                        MAType optInFastD_MAType,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outFastK[],
-                        double outFastD[] )
+   RetCode stochfImpl( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       int optInFastK_Period,
+                       int optInFastD_Period,
+                       MAType optInFastD_MAType,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outFastK[],
+                       double outFastD[] )
    {
       RetCode retCode;
       double lowest = 0;
@@ -341,7 +341,7 @@
       }
       i = 0;
       lookbackK = optInFastK_Period - 1;
-      lookbackFastD = MA_Lookback(optInFastD_Period, optInFastD_MAType);
+      lookbackFastD = maLookback(optInFastD_Period, optInFastD_MAType);
       lookbackTotal = lookbackK + lookbackFastD;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -406,7 +406,7 @@
          trailingIdx += 1;
          today += 1;
       }
-      OutRange _xr0 = MA(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
+      OutRange _xr0 = ma(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD);
       outBegIdx.value = _xr0.begIdx();
       outNBElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
@@ -433,7 +433,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#STOCHF_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#stochfLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -468,11 +468,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STOCH
-    * @see Core#STOCHRSI
-    * @see Core#MA
+    * @see Core#stoch
+    * @see Core#stochrsi
+    * @see Core#ma
     */
-   public OutRange STOCHF( int startIdx,
+   public OutRange stochf( int startIdx,
                            int endIdx,
                            double inHigh[],
                            double inLow[],
@@ -485,7 +485,7 @@
    {
       requireIndexRange("STOCHF", startIdx, endIdx);
       requireArgument("STOCHF", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart("STOCHF", startIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardStart = clampedStart("STOCHF", startIdx, stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHF", "inHigh", inHigh, guardInLen);
@@ -495,7 +495,7 @@
       requireLength("STOCHF", "outFastD", outFastD, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STOCHF_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      RetCode retCode = stochfImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("STOCHF", retCode);
       }
@@ -518,7 +518,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#STOCHF_Lookback} is a <b>success with
+    * valid range shorter than {@link Core#stochfLookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -553,11 +553,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#STOCH
-    * @see Core#STOCHRSI
-    * @see Core#MA
+    * @see Core#stoch
+    * @see Core#stochrsi
+    * @see Core#ma
     */
-   public OutRange STOCHF( int startIdx,
+   public OutRange stochf( int startIdx,
                            int endIdx,
                            float inHigh[],
                            float inLow[],
@@ -570,7 +570,7 @@
    {
       requireIndexRange("STOCHF", startIdx, endIdx);
       requireArgument("STOCHF", "optInFastD_MAType", optInFastD_MAType);
-      int guardStart = clampedStart("STOCHF", startIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardStart = clampedStart("STOCHF", startIdx, stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("STOCHF", "inHigh", inHigh, guardInLen);
@@ -580,7 +580,7 @@
       requireLength("STOCHF", "outFastD", outFastD, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STOCHF_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+      RetCode retCode = stochfImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("STOCHF", retCode);
       }
@@ -590,7 +590,7 @@
 
    /**
     * A live STOCHF stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#STOCHF} over the same series.
+    * closed bar, bit-identical to {@link Core#stochf} over the same series.
     * Open with {@link Core#stochfOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -629,7 +629,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#STOCHF} reports over the same bars: the
+       * <p>It is what {@link Core#stochf} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -965,7 +965,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+      if( historyLen < stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
@@ -1003,7 +1003,7 @@
        */
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
-      lookbackFastD = MA_Lookback(optInFastD_Period, optInFastD_MAType);
+      lookbackFastD = maLookback(optInFastD_Period, optInFastD_MAType);
       lookbackTotal = lookbackK + lookbackFastD;
       /* Move up the start index if there is not
        * enough initial data.
@@ -1221,8 +1221,8 @@
    /**
     * Open a live STOCHF stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#STOCHF} at that bar.
-    * <p>The history must hold at least {@code STOCHF_Lookback(...) + 1} bars
+    * to {@link Core#stochf} at that bar.
+    * <p>The history must hold at least {@code stochfLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
@@ -1244,7 +1244,7 @@
    }
    /**
     * {@link Core#stochfOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#STOCHF} over the whole history in the same single pass
+    * to {@link Core#stochf} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1260,7 +1260,7 @@
       requireArgument("STOCHF openAndFill", "optInFastD_MAType", optInFastD_MAType);
       requireArgument("STOCHF openAndFill", "inLow", inLow);
       requireArgument("STOCHF openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("STOCHF openAndFill", inHigh.length, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+      int guardOutLen = openFillCount("STOCHF openAndFill", inHigh.length, stochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       requireHistoryLength("STOCHF openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("STOCHF openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("STOCHF openAndFill", "outFastK", outFastK, guardOutLen);

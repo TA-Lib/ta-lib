@@ -144,7 +144,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
         let at_width = body.find(&width).unwrap_or_else(|| {
             panic!("{}: OpenAndFill does not derive the fill width from the history", func.name)
         });
-        let lb = format!("let _guardLb = self.{}_Lookback(", sn.to_uppercase());
+        let lb = format!("let _guardLb = self.{}_lookback(", sn.to_lowercase());
         assert!(
             body[..at_width].contains(&lb),
             "{}: the fill width is not read from the function's own lookback",
@@ -272,7 +272,7 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
             // OWN lookback, never from the history's width.
             let at_width = (verb == "openAndFill").then(|| {
                 let width = format!(
-                    "int guardOutLen = OpenFillCount(\"{base}\", \"openAndFill\", {history}.Length, {base}_Lookback("
+                    "int guardOutLen = OpenFillCount(\"{base}\", \"openAndFill\", {history}.Length, {}Lookback(", backends::common::pascal_words(&base)
                 );
                 body.find(&width).unwrap_or_else(|| {
                     panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
@@ -401,7 +401,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
             // the fill has one — the plain open writes nothing.
             let at_width = with_outputs.then(|| {
                 let width = format!(
-                    "int guardOutLen = openFillCount(\"{base} {verb}\", {history}.length, {base}_Lookback("
+                    "int guardOutLen = openFillCount(\"{base} {verb}\", {history}.length, {}Lookback(", backends::common::camel_words(&base)
                 );
                 body.find(&width).unwrap_or_else(|| {
                     panic!("{}: openAndFill does not derive the fill width from its own lookback", func.name)
@@ -871,7 +871,11 @@ fn every_declared_input_is_checked_in_every_backend() {
         let f = &func.name;
         // The body proper: everything after the bounds-assert preamble, so the
         // asserts this test just demanded cannot themselves satisfy "is read".
-        let body = extract_section(&out.rust, "let mut startIdx = startIdx;", &format!("pub fn {f}("));
+        let body = extract_section(
+            &out.rust,
+            "let mut startIdx = startIdx;",
+            &format!("pub fn {}(", backends::common::snake_words(f)),
+        );
         assert!(
             body.contains("inClose["),
             "{f}: the control leg inClose is not indexed — the body extraction is wrong"
@@ -1366,7 +1370,11 @@ fn rust_category_index_lists_every_function_once() {
 
     // One bullet per function, spelled as the link rustdoc will resolve.
     for f in &funcs {
-        let line = format!("//! * [`{0}`](Core::{0})", f.name);
+        let line = format!(
+            "//! * [`{0}`](Core::{1})",
+            f.name,
+            backends::common::snake_words(&f.name)
+        );
         assert_eq!(
             index.matches(&line).count(),
             1,

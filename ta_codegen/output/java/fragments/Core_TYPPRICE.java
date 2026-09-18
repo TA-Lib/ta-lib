@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#TYPPRICE} consumes before it can
+    * Number of leading input bars {@link Core#typprice} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,20 +23,20 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int TYPPRICE_Lookback( )
+   public int typpriceLookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode TYPPRICE_Impl( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          double inClose[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode typpriceImpl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -55,14 +55,14 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode TYPPRICE_Impl( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          float inClose[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode typpriceImpl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -88,7 +88,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TYPPRICE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#typpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -112,11 +112,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MEDPRICE
-    * @see Core#WCLPRICE
-    * @see Core#AVGPRICE
+    * @see Core#medprice
+    * @see Core#wclprice
+    * @see Core#avgprice
     */
-   public OutRange TYPPRICE( int startIdx,
+   public OutRange typprice( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
@@ -124,7 +124,7 @@
                              double outReal[] )
    {
       requireIndexRange("TYPPRICE", startIdx, endIdx);
-      int guardStart = clampedStart("TYPPRICE", startIdx, TYPPRICE_Lookback());
+      int guardStart = clampedStart("TYPPRICE", startIdx, typpriceLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TYPPRICE", "inHigh", inHigh, guardInLen);
@@ -133,7 +133,7 @@
       requireLength("TYPPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TYPPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = typpriceImpl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TYPPRICE", retCode);
       }
@@ -150,7 +150,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#TYPPRICE_Lookback} is a <b>success
+    * valid range shorter than {@link Core#typpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -174,11 +174,11 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MEDPRICE
-    * @see Core#WCLPRICE
-    * @see Core#AVGPRICE
+    * @see Core#medprice
+    * @see Core#wclprice
+    * @see Core#avgprice
     */
-   public OutRange TYPPRICE( int startIdx,
+   public OutRange typprice( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
@@ -186,7 +186,7 @@
                              double outReal[] )
    {
       requireIndexRange("TYPPRICE", startIdx, endIdx);
-      int guardStart = clampedStart("TYPPRICE", startIdx, TYPPRICE_Lookback());
+      int guardStart = clampedStart("TYPPRICE", startIdx, typpriceLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("TYPPRICE", "inHigh", inHigh, guardInLen);
@@ -195,7 +195,7 @@
       requireLength("TYPPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TYPPRICE_Impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = typpriceImpl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("TYPPRICE", retCode);
       }
@@ -205,7 +205,7 @@
 
    /**
     * A live TYPPRICE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#TYPPRICE} over the same series.
+    * closed bar, bit-identical to {@link Core#typprice} over the same series.
     * Open with {@link Core#typpriceOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -228,7 +228,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#TYPPRICE} reports over the same bars: the
+       * <p>It is what {@link Core#typprice} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -416,8 +416,8 @@
    /**
     * Open a live TYPPRICE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#TYPPRICE} at that bar.
-    * <p>The history must hold at least {@code TYPPRICE_Lookback(...) + 1} bars
+    * to {@link Core#typprice} at that bar.
+    * <p>The history must hold at least {@code typpriceLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -436,7 +436,7 @@
    }
    /**
     * {@link Core#typpriceOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#TYPPRICE} over the whole history in the same single pass
+    * to {@link Core#typprice} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -451,7 +451,7 @@
       requireHistory("TYPPRICE openAndFill", inHigh.length);
       requireArgument("TYPPRICE openAndFill", "inLow", inLow);
       requireArgument("TYPPRICE openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("TYPPRICE openAndFill", inHigh.length, TYPPRICE_Lookback());
+      int guardOutLen = openFillCount("TYPPRICE openAndFill", inHigh.length, typpriceLookback());
       requireHistoryLength("TYPPRICE openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("TYPPRICE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TYPPRICE openAndFill", "outReal", outReal, guardOutLen);

@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#CDLTAKURI} consumes before it can
+    * Number of leading input bars {@link Core#cdltakuri} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int CDLTAKURI_Lookback( )
+   public int cdltakuriLookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].rangeType.ordinal();
       int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BODY_DOJI.ordinal()].avgPeriod;
@@ -35,15 +35,15 @@
       return Math.max(Math.max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod), ShadowVeryLong_avgPeriod) ;
 
    }
-   RetCode CDLTAKURI_Impl( int startIdx,
-                           int endIdx,
-                           double inOpen[],
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           int outInteger[] )
+   RetCode cdltakuriImpl( int startIdx,
+                          int endIdx,
+                          double inOpen[],
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -72,7 +72,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLTAKURI_Lookback();
+      lookbackTotal = cdltakuriLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -141,15 +141,15 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode CDLTAKURI_Impl( int startIdx,
-                           int endIdx,
-                           float inOpen[],
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           int outInteger[] )
+   RetCode cdltakuriImpl( int startIdx,
+                          int endIdx,
+                          float inOpen[],
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowVeryShortPeriodTotal = 0;
@@ -175,7 +175,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OUT_OF_RANGE_END_INDEX ;
       }
-      lookbackTotal = CDLTAKURI_Lookback();
+      lookbackTotal = cdltakuriLookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -238,7 +238,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLTAKURI_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdltakuriLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -265,12 +265,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDRAGONFLYDOJI
-    * @see Core#CDLDOJI
-    * @see Core#CDLHAMMER
-    * @see Core#CDLGRAVESTONEDOJI
+    * @see Core#cdldragonflydoji
+    * @see Core#cdldoji
+    * @see Core#cdlhammer
+    * @see Core#cdlgravestonedoji
     */
-   public OutRange CDLTAKURI( int startIdx,
+   public OutRange cdltakuri( int startIdx,
                               int endIdx,
                               double inOpen[],
                               double inHigh[],
@@ -279,7 +279,7 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLTAKURI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLTAKURI", startIdx, CDLTAKURI_Lookback());
+      int guardStart = clampedStart("CDLTAKURI", startIdx, cdltakuriLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTAKURI", "inOpen", inOpen, guardInLen);
@@ -289,7 +289,7 @@
       requireLength("CDLTAKURI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTAKURI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdltakuriImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLTAKURI", retCode);
       }
@@ -312,7 +312,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#CDLTAKURI_Lookback} is a <b>success
+    * valid range shorter than {@link Core#cdltakuriLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -339,12 +339,12 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#CDLDRAGONFLYDOJI
-    * @see Core#CDLDOJI
-    * @see Core#CDLHAMMER
-    * @see Core#CDLGRAVESTONEDOJI
+    * @see Core#cdldragonflydoji
+    * @see Core#cdldoji
+    * @see Core#cdlhammer
+    * @see Core#cdlgravestonedoji
     */
-   public OutRange CDLTAKURI( int startIdx,
+   public OutRange cdltakuri( int startIdx,
                               int endIdx,
                               float inOpen[],
                               float inHigh[],
@@ -353,7 +353,7 @@
                               int outInteger[] )
    {
       requireIndexRange("CDLTAKURI", startIdx, endIdx);
-      int guardStart = clampedStart("CDLTAKURI", startIdx, CDLTAKURI_Lookback());
+      int guardStart = clampedStart("CDLTAKURI", startIdx, cdltakuriLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("CDLTAKURI", "inOpen", inOpen, guardInLen);
@@ -363,7 +363,7 @@
       requireLength("CDLTAKURI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLTAKURI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = cdltakuriImpl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("CDLTAKURI", retCode);
       }
@@ -373,7 +373,7 @@
 
    /**
     * A live CDLTAKURI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#CDLTAKURI} over the same series.
+    * closed bar, bit-identical to {@link Core#cdltakuri} over the same series.
     * Open with {@link Core#cdltakuriOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -417,7 +417,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#CDLTAKURI} reports over the same bars: the
+       * <p>It is what {@link Core#cdltakuri} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -648,7 +648,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CDLTAKURI_Lookback();
+      lookbackTotal = cdltakuriLookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -809,8 +809,8 @@
    /**
     * Open a live CDLTAKURI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#CDLTAKURI} at that bar.
-    * <p>The history must hold at least {@code CDLTAKURI_Lookback(...) + 1} bars
+    * to {@link Core#cdltakuri} at that bar.
+    * <p>The history must hold at least {@code cdltakuriLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -831,7 +831,7 @@
    }
    /**
     * {@link Core#cdltakuriOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#CDLTAKURI} over the whole history in the same single pass
+    * to {@link Core#cdltakuri} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -847,7 +847,7 @@
       requireArgument("CDLTAKURI openAndFill", "inHigh", inHigh);
       requireArgument("CDLTAKURI openAndFill", "inLow", inLow);
       requireArgument("CDLTAKURI openAndFill", "inClose", inClose);
-      int guardOutLen = openFillCount("CDLTAKURI openAndFill", inOpen.length, CDLTAKURI_Lookback());
+      int guardOutLen = openFillCount("CDLTAKURI openAndFill", inOpen.length, cdltakuriLookback());
       requireHistoryLength("CDLTAKURI openAndFill", "inHigh", inHigh.length, inOpen.length);
       requireHistoryLength("CDLTAKURI openAndFill", "inLow", inLow.length, inOpen.length);
       requireHistoryLength("CDLTAKURI openAndFill", "inClose", inClose.length, inOpen.length);

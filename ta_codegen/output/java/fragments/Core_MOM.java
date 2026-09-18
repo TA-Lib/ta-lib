@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MOM} consumes before it can
+    * Number of leading input bars {@link Core#mom} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MOM_Lookback( int optInTimePeriod )
+   public int momLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
@@ -34,13 +34,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode MOM_Impl( int startIdx,
-                     int endIdx,
-                     double inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode momImpl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -114,13 +114,13 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode MOM_Impl( int startIdx,
-                     int endIdx,
-                     float inReal[],
-                     int optInTimePeriod,
-                     MInteger outBegIdx,
-                     MInteger outNBElement,
-                     double outReal[] )
+   RetCode momImpl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -163,7 +163,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MOM_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#momLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -187,26 +187,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ROC
-    * @see Core#ROCP
-    * @see Core#ROCR
-    * @see Core#ROCR100
+    * @see Core#roc
+    * @see Core#rocp
+    * @see Core#rocr
+    * @see Core#rocr100
     */
-   public OutRange MOM( int startIdx,
+   public OutRange mom( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("MOM", startIdx, endIdx);
-      int guardStart = clampedStart("MOM", startIdx, MOM_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MOM", startIdx, momLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MOM", "inReal", inReal, guardInLen);
       requireLength("MOM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MOM_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = momImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MOM", retCode);
       }
@@ -224,7 +224,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MOM_Lookback} is a <b>success with no
+    * valid range shorter than {@link Core#momLookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -248,26 +248,26 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#ROC
-    * @see Core#ROCP
-    * @see Core#ROCR
-    * @see Core#ROCR100
+    * @see Core#roc
+    * @see Core#rocp
+    * @see Core#rocr
+    * @see Core#rocr100
     */
-   public OutRange MOM( int startIdx,
+   public OutRange mom( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
                         double outReal[] )
    {
       requireIndexRange("MOM", startIdx, endIdx);
-      int guardStart = clampedStart("MOM", startIdx, MOM_Lookback(optInTimePeriod));
+      int guardStart = clampedStart("MOM", startIdx, momLookback(optInTimePeriod));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MOM", "inReal", inReal, guardInLen);
       requireLength("MOM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MOM_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = momImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MOM", retCode);
       }
@@ -277,7 +277,7 @@
 
    /**
     * A live MOM stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MOM} over the same series.
+    * closed bar, bit-identical to {@link Core#mom} over the same series.
     * Open with {@link Core#momOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -304,7 +304,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MOM} reports over the same bars: the
+       * <p>It is what {@link Core#mom} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -573,8 +573,8 @@
    /**
     * Open a live MOM stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MOM} at that bar.
-    * <p>The history must hold at least {@code MOM_Lookback(...) + 1} bars
+    * to {@link Core#mom} at that bar.
+    * <p>The history must hold at least {@code momLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
@@ -591,7 +591,7 @@
    }
    /**
     * {@link Core#momOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MOM} over the whole history in the same single pass
+    * to {@link Core#mom} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -604,7 +604,7 @@
    {
       requireArgument("MOM openAndFill", "inReal", inReal);
       requireHistory("MOM openAndFill", inReal.length);
-      int guardOutLen = openFillCount("MOM openAndFill", inReal.length, MOM_Lookback(optInTimePeriod));
+      int guardOutLen = openFillCount("MOM openAndFill", inReal.length, momLookback(optInTimePeriod));
       requireLength("MOM openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("MOM openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

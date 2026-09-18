@@ -30,7 +30,7 @@ fn main() -> Result<(), RetCode> {
     let core = Core::new();
     let mut sma = vec![0.0; close.len()];
 
-    let out = core.SMA(0, close.len() - 1, &close, 3, &mut sma)?;
+    let out = core.sma(0, close.len() - 1, &close, 3, &mut sma)?;
 
     // The first 3-period average lands at input index 2 (the lookback):
     assert_eq!((out.beg_idx, out.count), (2, 8));

@@ -80,7 +80,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::STOCHF`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::stochf`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -98,7 +98,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_STOCHF_Lookback")]
     #[inline]
-    pub fn STOCHF_Lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> Result<usize, RetCode> {
+    pub fn stochf_lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
@@ -116,13 +116,13 @@ impl Core {
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
         // Add the smoothing being done for Fast-D
-        retValue += self.MA_Lookback(optInFastD_Period, optInFastD_MAType)?;
+        retValue += self.ma_lookback(optInFastD_Period, optInFastD_MAType)?;
         return Ok(retValue);
     }
-    /// C-shaped body behind [`Core::STOCHF`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::stochf`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn STOCHF_Impl(
+    pub(crate) fn stochf_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -156,7 +156,7 @@ impl Core {
         if optInFastD_MAType == MAType::DEFAULT {
             optInFastD_MAType = MAType::SMA;
         }
-        let _assertLb = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
+        let _assertLb = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -214,7 +214,7 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
+        lookbackFastD = self.ma_lookback(optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
         lookbackTotal = lookbackK + lookbackFastD;
         // Move up the start index if there is not
         // enough initial data.
@@ -321,7 +321,7 @@ impl Core {
         }
         // Fast-K calculation completed. This K calculation is returned
         // to the caller. It is smoothed to become Fast-D.
-        let _xr0 = match self.MA(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD) { Ok(_r) => _r, Err(_e) => return _e };
+        let _xr0 = match self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outFastD) { Ok(_r) => _r, Err(_e) => return _e };
         (*outBegIdx) = _xr0.beg_idx;
         (*outNBElement) = _xr0.count;
         retCode = RetCode::Success;
@@ -405,7 +405,7 @@ impl Core {
     /// let mut fast_k = vec![0.0; 252];
     /// let mut fast_d = vec![0.0; 252];
     ///
-    /// let out_range = core.STOCHF(
+    /// let out_range = core.stochf(
     ///     0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA,
     ///     &mut fast_k, &mut fast_d,
     /// )?;
@@ -416,11 +416,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::STOCH`] · [`Core::STOCHRSI`] · [`Core::MA`]
+    /// [`STOCH`](Core::stoch) · [`STOCHRSI`](Core::stochrsi) · [`MA`](Core::ma)
     #[doc(alias = "TA_STOCHF")]
     #[doc(alias = "StochasticFast")]
     #[doc(alias = "FastStochasticOscillator")]
-    pub fn STOCHF(
+    pub fn stochf(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -439,7 +439,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        let _guardLb = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -459,7 +459,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.STOCHF_Impl(
+        let retCode = self.stochf_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -482,7 +482,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live STOCHF stream: one value per closed bar, bit-identical to [`Core::STOCHF`]
+/// Live STOCHF stream: one value per closed bar, bit-identical to [`Core::stochf`]
 /// over the same series. Open with [`Core::stochf_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -681,7 +681,7 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType)?;
+        lookbackFastD = self.ma_lookback(optInFastD_Period, optInFastD_MAType)?;
         lookbackTotal = lookbackK + lookbackFastD;
         // Move up the start index if there is not
         // enough initial data.
@@ -881,7 +881,7 @@ impl Core {
     }
 
     /// Open a live STOCHF stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::STOCHF`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::stochf`] at that bar.
     ///
     /// # Errors
     ///
@@ -916,7 +916,7 @@ impl Core {
     }
 
     /// [`Core::stochf_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::STOCHF`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::stochf`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -938,7 +938,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_fast_k = vec![0.0; 252];
     /// let mut batch_fast_d = vec![0.0; 252];
-    /// let batch = core.STOCHF(0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA, &mut batch_fast_k, &mut batch_fast_d)?;
+    /// let batch = core.stochf(0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA, &mut batch_fast_k, &mut batch_fast_d)?;
     ///
     /// let mut fast_k = vec![0.0; 252];
     /// let mut fast_d = vec![0.0; 252];
@@ -962,7 +962,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
+        let _guardLb = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
         if inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1149,7 +1149,7 @@ impl StochfStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::STOCHF`] reports over the same bars: the opener sets it
+    /// It is what [`Core::stochf`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

@@ -55,7 +55,7 @@
  *
  * <pre>{@code
  * double[] out = new double[close.length];
- * OutRange r = Core.DEFAULT.SMA(0, close.length - 1, close, 30, out);
+ * OutRange r = Core.DEFAULT.sma(0, close.length - 1, close, 30, out);
  * // out[0 .. r.count() - 1] are the values; r.begIdx() is where they start
  * }</pre>
  *

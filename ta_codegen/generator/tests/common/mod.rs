@@ -191,19 +191,20 @@ pub fn check_c_variants(c: &str, upper: &str, name: &str) {
 }
 
 /// Check that all Rust variants exist for a given indicator.
-/// `SMA` (guarded) plus `SMA_Lookback`, and `SMA_Private` only for the
+/// `sma` (guarded) plus `sma_lookback`, and `sma_private` only for the
 /// definitions that declare one. No `_unchecked` variants. Concrete f64 types,
 /// not generic.
 pub fn check_rust_generic_variants(r: &str, name: &str) {
+    let fold = backends::common::snake_words(name);
     // Lookback (non-generic)
     assert!(
-        r.contains(&format!("{name}_Lookback")),
-        "{name}: Rust missing {name}_Lookback"
+        r.contains(&format!("{fold}_lookback")),
+        "{name}: Rust missing {fold}_lookback"
     );
     // Guarded (concrete f64, no generics)
     assert!(
-        r.contains(&format!("fn {name}(")),
-        "{name}: Rust missing fn {name}("
+        r.contains(&format!("fn {fold}(")),
+        "{name}: Rust missing fn {fold}("
     );
     assert!(
         !r.contains("_Unguarded"),
@@ -213,19 +214,20 @@ pub fn check_rust_generic_variants(r: &str, name: &str) {
 
 /// Check that all Java variants exist for a given indicator.
 pub fn check_java_variants(j: &str, name: &str) {
+    let fold = backends::common::camel_words(name);
     assert!(
-        j.contains(&format!("{name}_Lookback(")),
-        "{name}: Java missing {name}_Lookback"
+        j.contains(&format!("{fold}Lookback(")),
+        "{name}: Java missing {fold}Lookback"
     );
     // #236 step 5 deleted the C-shaped tier. The body is what is left below
     // the public wrapper, and it is what must exist.
     assert!(
-        j.contains(&format!("RetCode {name}_Impl("))
-            || j.contains(&format!("RetCode {name}_Impl (")),
+        j.contains(&format!("RetCode {fold}Impl("))
+            || j.contains(&format!("RetCode {fold}Impl (")),
         "{name}: Java missing {name} body"
     );
     assert!(
-        !j.contains(&format!("{name}_Internal")),
+        !j.contains(&format!("{fold}_Internal")),
         "{name}: the deleted C-shaped tier must not come back"
     );
     assert!(
@@ -319,7 +321,7 @@ pub fn try_generate_all(
 
 /// Does `hay` contain a CALL to `name`, as opposed to merely the substring?
 ///
-/// `RSI_Lookback(` is a suffix of `STOCHRSI_Lookback(`, so a bare `contains`
+/// `rsiLookback(` is a suffix of `stochrsiLookback(`, so a bare `contains`
 /// asserting that STOCHRSI calls RSI is satisfied by STOCHRSI's own definition
 /// and can never fail. Requiring a non-identifier character before the name is
 /// what makes the assertion mean what it says.

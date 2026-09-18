@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#ATAN} consumes before it can
+    * Number of leading input bars {@link Core#atan} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int ATAN_Lookback( )
+   public int atanLookback( )
    {
       return 0 ;
 
    }
-   RetCode ATAN_Impl( int startIdx,
-                      int endIdx,
-                      double inReal[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode atanImpl( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -48,12 +48,12 @@
       outBegIdx.value = startIdx;
       return RetCode.SUCCESS ;
    }
-   RetCode ATAN_Impl( int startIdx,
-                      int endIdx,
-                      float inReal[],
-                      MInteger outBegIdx,
-                      MInteger outNBElement,
-                      double outReal[] )
+   RetCode atanImpl( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -77,8 +77,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ATAN_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#atanLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -99,24 +99,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#TAN
-    * @see Core#ACOS
-    * @see Core#ASIN
+    * @see Core#tan
+    * @see Core#acos
+    * @see Core#asin
     */
-   public OutRange ATAN( int startIdx,
+   public OutRange atan( int startIdx,
                          int endIdx,
                          double inReal[],
                          double outReal[] )
    {
       requireIndexRange("ATAN", startIdx, endIdx);
-      int guardStart = clampedStart("ATAN", startIdx, ATAN_Lookback());
+      int guardStart = clampedStart("ATAN", startIdx, atanLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ATAN", "inReal", inReal, guardInLen);
       requireLength("ATAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ATAN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = atanImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ATAN", retCode);
       }
@@ -132,8 +132,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ATAN_Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#atanLookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -154,24 +154,24 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#TAN
-    * @see Core#ACOS
-    * @see Core#ASIN
+    * @see Core#tan
+    * @see Core#acos
+    * @see Core#asin
     */
-   public OutRange ATAN( int startIdx,
+   public OutRange atan( int startIdx,
                          int endIdx,
                          float inReal[],
                          double outReal[] )
    {
       requireIndexRange("ATAN", startIdx, endIdx);
-      int guardStart = clampedStart("ATAN", startIdx, ATAN_Lookback());
+      int guardStart = clampedStart("ATAN", startIdx, atanLookback());
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("ATAN", "inReal", inReal, guardInLen);
       requireLength("ATAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ATAN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = atanImpl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("ATAN", retCode);
       }
@@ -181,7 +181,7 @@
 
    /**
     * A live ATAN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#ATAN} over the same series.
+    * closed bar, bit-identical to {@link Core#atan} over the same series.
     * Open with {@link Core#atanOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -204,7 +204,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#ATAN} reports over the same bars: the
+       * <p>It is what {@link Core#atan} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -388,8 +388,8 @@
    /**
     * Open a live ATAN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#ATAN} at that bar.
-    * <p>The history must hold at least {@code ATAN_Lookback(...) + 1} bars
+    * to {@link Core#atan} at that bar.
+    * <p>The history must hold at least {@code atanLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
@@ -404,7 +404,7 @@
    }
    /**
     * {@link Core#atanOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#ATAN} over the whole history in the same single pass
+    * to {@link Core#atan} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -417,7 +417,7 @@
    {
       requireArgument("ATAN openAndFill", "inReal", inReal);
       requireHistory("ATAN openAndFill", inReal.length);
-      int guardOutLen = openFillCount("ATAN openAndFill", inReal.length, ATAN_Lookback());
+      int guardOutLen = openFillCount("ATAN openAndFill", inReal.length, atanLookback());
       requireLength("ATAN openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
          throw new TALibArgumentException("ATAN openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);

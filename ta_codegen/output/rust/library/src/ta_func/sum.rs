@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::SUM`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::sum`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -77,7 +77,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_SUM_Lookback")]
     #[inline]
-    pub fn SUM_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
+    pub fn sum_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -85,10 +85,10 @@ impl Core {
         }
         return Ok((optInTimePeriod - 1) as usize);
     }
-    /// C-shaped body behind [`Core::SUM`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::sum`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn SUM_Impl(
+    pub(crate) fn sum_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -109,7 +109,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.SUM_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        let _assertLb = self.sum_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -204,7 +204,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.SUM(0, data.len() - 1, &data, 30, &mut out)?;
+    /// let out_range = core.sum(0, data.len() - 1, &data, 30, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -212,12 +212,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::SMA`]
+    /// [`SMA`](Core::sma)
     #[doc(alias = "TA_SUM")]
     #[doc(alias = "Summation")]
     #[doc(alias = "RollingSum")]
     #[doc(alias = "MovingSum")]
-    pub fn SUM(
+    pub fn sum(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -231,7 +231,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.SUM_Lookback(optInTimePeriod)?;
+        let _guardLb = self.sum_lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inReal.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -242,7 +242,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.SUM_Impl(
+        let retCode = self.sum_impl(
             startIdx,
             endIdx,
             inReal,
@@ -260,7 +260,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live SUM stream: one value per closed bar, bit-identical to [`Core::SUM`]
+/// Live SUM stream: one value per closed bar, bit-identical to [`Core::sum`]
 /// over the same series. Open with [`Core::sum_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -411,7 +411,7 @@ impl Core {
     }
 
     /// Open a live SUM stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::SUM`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::sum`] at that bar.
     ///
     /// # Errors
     ///
@@ -441,7 +441,7 @@ impl Core {
     }
 
     /// [`Core::sum_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::SUM`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::sum`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -458,7 +458,7 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.SUM(0, data.len() - 1, &data, 30, &mut batch_out)?;
+    /// let batch = core.sum(0, data.len() - 1, &data, 30, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
     /// let (_stream, filled) = core.sum_open_and_fill(&data, 30, &mut out)?;
@@ -479,7 +479,7 @@ impl Core {
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.SUM_Lookback(optInTimePeriod)?;
+        let _guardLb = self.sum_lookback(optInTimePeriod)?;
         let _guardOutLen = inReal.len().saturating_sub(_guardLb);
         if outReal.len() < _guardOutLen {
             return Err(RetCode::BadParam);
@@ -594,7 +594,7 @@ impl SumStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::SUM`] reports over the same bars: the opener sets it
+    /// It is what [`Core::sum`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

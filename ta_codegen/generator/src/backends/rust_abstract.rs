@@ -75,7 +75,9 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
         let _ = writeln!(
             o,
             "    /// {} — [`Core::{}`](crate::Core::{}).",
-            f.hint, f.name, f.name
+            f.hint,
+            super::common::snake_words(&f.name),
+            super::common::snake_words(&f.name)
         );
         let _ = writeln!(o, "    {},", f.name);
     }
@@ -711,7 +713,7 @@ mod binder_tests {
     fn an_output_sized_to_the_produced_count_is_enough() {
         let core = Core::new();
         let close = series(0.0);
-        let lookback = core.SMA_Lookback(30).unwrap();
+        let lookback = core.sma_lookback(30).unwrap();
         let mut exact = vec![0.0; N - lookback];
         let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close).unwrap();
@@ -903,11 +905,11 @@ fn emit_binder(
          \x20       match self.func {\n",
     );
     for f in sorted {
-        let snake = f.name.clone();
+        let snake = super::common::snake_words(&f.name);
         let args = opt_args(f, enum_params);
         let _ = writeln!(
             o,
-            "            FuncId::{} => self.core.{snake}_Lookback({args}),",
+            "            FuncId::{} => self.core.{snake}_lookback({args}),",
             f.name
         );
     }
@@ -1036,7 +1038,7 @@ fn emit_call_arm(
     f: &FuncRow,
     enum_params: &HashMap<String, HashMap<String, String>>,
 ) {
-    let snake = f.name.clone();
+    let snake = super::common::snake_words(&f.name);
     let _ = writeln!(o, "            FuncId::{} => {{", f.name);
 
     // Enum conversions happen FIRST, before any output is `take`n. A `?` after

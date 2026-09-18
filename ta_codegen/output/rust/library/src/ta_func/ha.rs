@@ -64,16 +64,16 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::HA`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ha`]: the number of leading input values consumed before the
     /// first output value can be produced.
     #[doc(alias = "TA_HA_Lookback")]
-    pub fn HA_Lookback(&self) -> Result<usize, RetCode> {
+    pub fn ha_lookback(&self) -> Result<usize, RetCode> {
         return Ok((self.unstable_period[FuncUnstId::HA as usize]) as usize);
     }
-    /// C-shaped body behind [`Core::HA`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::ha`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn HA_Impl(
+    pub(crate) fn ha_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -94,7 +94,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.HA_Lookback().unwrap_or(usize::MAX);
+        let _assertLb = self.ha_lookback().unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -122,7 +122,7 @@ impl Core {
         let mut tempClose: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.HA_Lookback().unwrap_or(usize::MAX);
+        lookbackTotal = self.ha_lookback().unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -273,7 +273,7 @@ impl Core {
     /// let mut ha_low = vec![0.0; 252];
     /// let mut ha_close = vec![0.0; 252];
     ///
-    /// let out_range = core.HA(
+    /// let out_range = core.ha(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut ha_open, &mut ha_high, &mut ha_low, &mut ha_close,
     /// )?;
@@ -284,7 +284,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::AVGPRICE`] · [`Core::MEDPRICE`] · [`Core::TYPPRICE`] · [`Core::WCLPRICE`]
+    /// [`AVGPRICE`](Core::avgprice) · [`MEDPRICE`](Core::medprice) · [`TYPPRICE`](Core::typprice)
+    /// · [`WCLPRICE`](Core::wclprice)
     ///
     /// # References
     ///
@@ -299,7 +300,7 @@ impl Core {
     #[doc(alias = "HeikinAshiCandles")]
     #[doc(alias = "HeikenAshi")]
     #[doc(alias = "AverageBar")]
-    pub fn HA(
+    pub fn ha(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -318,7 +319,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HA_Lookback()?;
+        let _guardLb = self.ha_lookback()?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inOpen.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -347,7 +348,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.HA_Impl(
+        let retCode = self.ha_impl(
             startIdx,
             endIdx,
             inOpen,
@@ -370,7 +371,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HA stream: one value per closed bar, bit-identical to [`Core::HA`]
+/// Live HA stream: one value per closed bar, bit-identical to [`Core::ha`]
 /// over the same series. Open with [`Core::ha_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -479,7 +480,7 @@ impl Core {
         let mut tempClose: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.HA_Lookback()?;
+        lookbackTotal = self.ha_lookback()?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -593,7 +594,7 @@ impl Core {
     }
 
     /// Open a live HA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::HA`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ha`] at that bar.
     ///
     /// # Errors
     ///
@@ -633,7 +634,7 @@ impl Core {
     }
 
     /// [`Core::ha_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::HA`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::ha`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -660,7 +661,7 @@ impl Core {
     /// let mut batch_ha_high = vec![0.0; 252];
     /// let mut batch_ha_low = vec![0.0; 252];
     /// let mut batch_ha_close = vec![0.0; 252];
-    /// let batch = core.HA(0, open.len() - 1, &open, &high, &low, &close, &mut batch_ha_open, &mut batch_ha_high, &mut batch_ha_low, &mut batch_ha_close)?;
+    /// let batch = core.ha(0, open.len() - 1, &open, &high, &low, &close, &mut batch_ha_open, &mut batch_ha_high, &mut batch_ha_low, &mut batch_ha_close)?;
     ///
     /// let mut ha_open = vec![0.0; 252];
     /// let mut ha_high = vec![0.0; 252];
@@ -690,7 +691,7 @@ impl Core {
         if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.HA_Lookback()?;
+        let _guardLb = self.ha_lookback()?;
         if inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -849,7 +850,7 @@ impl HaStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::HA`] reports over the same bars: the opener sets it
+    /// It is what [`Core::ha`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

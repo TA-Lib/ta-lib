@@ -62,9 +62,9 @@ default) in C# — with the acronym single-capitalized wherever it is recast
 | | Batch | Streaming Open | Streaming handle type |
 |---|---|---|---|
 | C | `TA_SMA`, `TA_SMA_Lookback` | `TA_SMA_Open` | `TA_SMA_Stream` |
-| Rust | `SMA`, `SMA_Lookback` | `sma_open` | `SmaStream` |
-| Java | `SMA`, `SMA_Lookback` | `smaOpen` | `SmaStream` |
-| C# | `SMA`, `SMA_Lookback` | `SmaOpen` | `SmaStream` |
+| Rust | `sma`, `sma_lookback` | `sma_open` | `SmaStream` |
+| Java | `sma`, `smaLookback` | `smaOpen` | `SmaStream` |
+| C# | `Sma`, `SmaLookback` | `SmaOpen` | `SmaStream` |
 
 `name`'s case-insensitive by-name lookup (`TA_GetFuncHandle` and each backend's
 metadata equivalent) is what a caller can now rely on spelling identically

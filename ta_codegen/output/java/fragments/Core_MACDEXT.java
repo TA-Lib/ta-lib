@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#MACDEXT} consumes before it can
+    * Number of leading input bars {@link Core#macdext} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -42,7 +42,7 @@
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int MACDEXT_Lookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   public int macdextLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 12;
@@ -71,29 +71,29 @@
       int tempInteger;
       int lookbackLargest;
       /* Find the MA with the largest lookback */
-      lookbackLargest = MA_Lookback(optInFastPeriod, optInFastMAType);
-      tempInteger = MA_Lookback(optInSlowPeriod, optInSlowMAType);
+      lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add to the largest MA lookback the signal line lookback */
-      return lookbackLargest + MA_Lookback(optInSignalPeriod, optInSignalMAType) ;
+      return lookbackLargest + maLookback(optInSignalPeriod, optInSignalMAType) ;
 
    }
-   RetCode MACDEXT_Impl( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInFastPeriod,
-                         MAType optInFastMAType,
-                         int optInSlowPeriod,
-                         MAType optInSlowMAType,
-                         int optInSignalPeriod,
-                         MAType optInSignalMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outMACD[],
-                         double outMACDSignal[],
-                         double outMACDHist[] )
+   RetCode macdextImpl( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInFastPeriod,
+                        MAType optInFastMAType,
+                        int optInSlowPeriod,
+                        MAType optInSlowMAType,
+                        int optInSignalPeriod,
+                        MAType optInSignalMAType,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outMACD[],
+                        double outMACDSignal[],
+                        double outMACDHist[] )
    {
       double[] slowMABuffer;
       double[] fastMABuffer;
@@ -154,7 +154,7 @@
           * block to the composed path (issue #181). Keep the comment INSIDE the
           * block: above it, the stream inherits it and reads as if it delegated.
           */
-         OutRange _xr0 = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
+         OutRange _xr0 = macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
          outBegIdx.value = _xr0.begIdx();
          outNBElement.value = _xr0.count();
          return RetCode.SUCCESS ;
@@ -173,13 +173,13 @@
          optInFastMAType = tempMAType;
       }
       /* Find the MA with the largest lookback */
-      lookbackLargest = MA_Lookback(optInFastPeriod, optInFastMAType);
-      tempInteger = MA_Lookback(optInSlowPeriod, optInSlowMAType);
+      lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
-      lookbackSignal = MA_Lookback(optInSignalPeriod, optInSignalMAType);
+      lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.
@@ -205,12 +205,12 @@
        * will start at the requested 'startIdx'.
        */
       tempInteger = startIdx - lookbackSignal;
-      OutRange _xr1 = MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, slowMABuffer);
+      OutRange _xr1 = ma(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, slowMABuffer);
       outBegIdx1.value = _xr1.begIdx();
       outNbElement1.value = _xr1.count();
       retCode = RetCode.SUCCESS;
       /* Calculate the fast MA. */
-      OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
+      OutRange _xr2 = ma(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
       outBegIdx2.value = _xr2.begIdx();
       outNbElement2.value = _xr2.count();
       retCode = RetCode.SUCCESS;
@@ -230,7 +230,7 @@
        */
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
-      OutRange _xr3 = MA(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
+      OutRange _xr3 = ma(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
       outBegIdx2.value = _xr3.begIdx();
       outNbElement2.value = _xr3.count();
       retCode = RetCode.SUCCESS;
@@ -243,20 +243,20 @@
       outNBElement.value = outNbElement2.value;
       return RetCode.SUCCESS ;
    }
-   RetCode MACDEXT_Impl( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInFastPeriod,
-                         MAType optInFastMAType,
-                         int optInSlowPeriod,
-                         MAType optInSlowMAType,
-                         int optInSignalPeriod,
-                         MAType optInSignalMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outMACD[],
-                         double outMACDSignal[],
-                         double outMACDHist[] )
+   RetCode macdextImpl( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInFastPeriod,
+                        MAType optInFastMAType,
+                        int optInSlowPeriod,
+                        MAType optInSlowMAType,
+                        int optInSignalPeriod,
+                        MAType optInSignalMAType,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outMACD[],
+                        double outMACDSignal[],
+                        double outMACDHist[] )
    {
       double[] slowMABuffer;
       double[] fastMABuffer;
@@ -305,7 +305,7 @@
          return RetCode.BAD_PARAM ;
       }
       if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         OutRange _xr0 = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
+         OutRange _xr0 = macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
          outBegIdx.value = _xr0.begIdx();
          outNBElement.value = _xr0.count();
          return RetCode.SUCCESS ;
@@ -318,12 +318,12 @@
          optInSlowMAType = optInFastMAType;
          optInFastMAType = tempMAType;
       }
-      lookbackLargest = MA_Lookback(optInFastPeriod, optInFastMAType);
-      tempInteger = MA_Lookback(optInSlowPeriod, optInSlowMAType);
+      lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
-      lookbackSignal = MA_Lookback(optInSignalPeriod, optInSignalMAType);
+      lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
       lookbackTotal = lookbackSignal + lookbackLargest;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -337,11 +337,11 @@
       fastMABuffer = new double[(int)(tempInteger * 1)];
       slowMABuffer = new double[(int)(tempInteger * 1)];
       tempInteger = startIdx - lookbackSignal;
-      OutRange _xr1 = MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, slowMABuffer);
+      OutRange _xr1 = ma(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, slowMABuffer);
       outBegIdx1.value = _xr1.begIdx();
       outNbElement1.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
+      OutRange _xr2 = ma(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
       outBegIdx2.value = _xr2.begIdx();
       outNbElement2.value = _xr2.count();
       retCode = RetCode.SUCCESS;
@@ -354,7 +354,7 @@
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      OutRange _xr3 = MA(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
+      OutRange _xr3 = ma(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
       outBegIdx2.value = _xr3.begIdx();
       outNbElement2.value = _xr3.count();
       retCode = RetCode.SUCCESS;
@@ -381,8 +381,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MACDEXT_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#macdextLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -425,14 +425,14 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MACD
-    * @see Core#MACDFIX
-    * @see Core#MA
-    * @see Core#EMA
-    * @see Core#APO
-    * @see Core#PPO
+    * @see Core#macd
+    * @see Core#macdfix
+    * @see Core#ma
+    * @see Core#ema
+    * @see Core#apo
+    * @see Core#ppo
     */
-   public OutRange MACDEXT( int startIdx,
+   public OutRange macdext( int startIdx,
                             int endIdx,
                             double inReal[],
                             int optInFastPeriod,
@@ -449,7 +449,7 @@
       requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
-      int guardStart = clampedStart("MACDEXT", startIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      int guardStart = clampedStart("MACDEXT", startIdx, macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDEXT", "inReal", inReal, guardInLen);
@@ -458,7 +458,7 @@
       requireLength("MACDEXT", "outMACDHist", outMACDHist, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDEXT_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = macdextImpl(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MACDEXT", retCode);
       }
@@ -483,8 +483,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#MACDEXT_Lookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#macdextLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -527,14 +527,14 @@
     *        exception: {@code null} is how you decline it. Checked before anything is
     *        written, so a rejected call leaves every buffer untouched.
     *
-    * @see Core#MACD
-    * @see Core#MACDFIX
-    * @see Core#MA
-    * @see Core#EMA
-    * @see Core#APO
-    * @see Core#PPO
+    * @see Core#macd
+    * @see Core#macdfix
+    * @see Core#ma
+    * @see Core#ema
+    * @see Core#apo
+    * @see Core#ppo
     */
-   public OutRange MACDEXT( int startIdx,
+   public OutRange macdext( int startIdx,
                             int endIdx,
                             float inReal[],
                             int optInFastPeriod,
@@ -551,7 +551,7 @@
       requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
-      int guardStart = clampedStart("MACDEXT", startIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      int guardStart = clampedStart("MACDEXT", startIdx, macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       requireLength("MACDEXT", "inReal", inReal, guardInLen);
@@ -560,7 +560,7 @@
       requireLength("MACDEXT", "outMACDHist", outMACDHist, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDEXT_Impl(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = macdextImpl(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.SUCCESS ) {
          throw failure("MACDEXT", retCode);
       }
@@ -570,7 +570,7 @@
 
    /**
     * A live MACDEXT stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#MACDEXT} over the same series.
+    * closed bar, bit-identical to {@link Core#macdext} over the same series.
     * Open with {@link Core#macdextOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
@@ -604,7 +604,7 @@
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#MACDEXT} reports over the same bars: the
+       * <p>It is what {@link Core#macdext} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -841,7 +841,7 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
+      if( historyLen < macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
@@ -861,13 +861,13 @@
          optInFastMAType = tempMAType;
       }
       /* Find the MA with the largest lookback */
-      lookbackLargest = MA_Lookback(optInFastPeriod, optInFastMAType);
-      tempInteger = MA_Lookback(optInSlowPeriod, optInSlowMAType);
+      lookbackLargest = maLookback(optInFastPeriod, optInFastMAType);
+      tempInteger = maLookback(optInSlowPeriod, optInSlowMAType);
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
-      lookbackSignal = MA_Lookback(optInSignalPeriod, optInSignalMAType);
+      lookbackSignal = maLookback(optInSignalPeriod, optInSignalMAType);
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.
@@ -991,8 +991,8 @@
    /**
     * Open a live MACDEXT stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#MACDEXT} at that bar.
-    * <p>The history must hold at least {@code MACDEXT_Lookback(...) + 1} bars
+    * to {@link Core#macdext} at that bar.
+    * <p>The history must hold at least {@code macdextLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
@@ -1012,7 +1012,7 @@
    }
    /**
     * {@link Core#macdextOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#MACDEXT} over the whole history in the same single pass
+    * to {@link Core#macdext} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
@@ -1028,7 +1028,7 @@
       requireArgument("MACDEXT openAndFill", "optInFastMAType", optInFastMAType);
       requireArgument("MACDEXT openAndFill", "optInSlowMAType", optInSlowMAType);
       requireArgument("MACDEXT openAndFill", "optInSignalMAType", optInSignalMAType);
-      int guardOutLen = openFillCount("MACDEXT openAndFill", inReal.length, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+      int guardOutLen = openFillCount("MACDEXT openAndFill", inReal.length, macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       requireLength("MACDEXT openAndFill", "outMACD", outMACD, guardOutLen);
       requireLength("MACDEXT openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDEXT openAndFill", "outMACDHist", outMACDHist, guardOutLen);

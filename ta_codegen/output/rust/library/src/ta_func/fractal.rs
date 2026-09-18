@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::FRACTAL`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::fractal`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -80,7 +80,7 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_FRACTAL_Lookback")]
     #[inline]
-    pub fn FRACTAL_Lookback(&self, mut optInLeftBars: i32, mut optInRightBars: i32) -> Result<usize, RetCode> {
+    pub fn fractal_lookback(&self, mut optInLeftBars: i32, mut optInRightBars: i32) -> Result<usize, RetCode> {
         if ((optInLeftBars) as i32) == (i32::MIN) {
             optInLeftBars = 2;
         } else if (((optInLeftBars) as i32) < 1) || (((optInLeftBars) as i32) > 100000) {
@@ -93,10 +93,10 @@ impl Core {
         }
         return Ok((optInLeftBars + optInRightBars) as usize);
     }
-    /// C-shaped body behind [`Core::FRACTAL`]: a `RetCode` plus two out-params,
+    /// C-shaped body behind [`Core::fractal`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
     /// callers are that wrapper and the phantom-I/O sweep.
-    pub(crate) fn FRACTAL_Impl(
+    pub(crate) fn fractal_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -125,7 +125,7 @@ impl Core {
         } else if (((optInRightBars) as i32) < 1) || (((optInRightBars) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.FRACTAL_Lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
+        let _assertLb = self.fractal_lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -147,7 +147,7 @@ impl Core {
         let mut tempLow: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.FRACTAL_Lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
+        lookbackTotal = self.fractal_lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -264,7 +264,7 @@ impl Core {
     /// let mut swing_high = vec![0i32; 252];
     /// let mut swing_low = vec![0i32; 252];
     ///
-    /// let out_range = core.FRACTAL(
+    /// let out_range = core.fractal(
     ///     0, high.len() - 1, &high, &low, 2, 2,
     ///     &mut swing_high, &mut swing_low,
     /// )?;
@@ -279,7 +279,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::AROON`] · [`Core::MAXINDEX`] · [`Core::MININDEX`] · [`Core::MINMAXINDEX`]
+    /// [`AROON`](Core::aroon) · [`MAXINDEX`](Core::maxindex) · [`MININDEX`](Core::minindex) ·
+    /// [`MINMAXINDEX`](Core::minmaxindex)
     ///
     /// # References
     ///
@@ -293,7 +294,7 @@ impl Core {
     #[doc(alias = "SwingLow")]
     #[doc(alias = "PivotHigh")]
     #[doc(alias = "PivotLow")]
-    pub fn FRACTAL(
+    pub fn fractal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -310,7 +311,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.FRACTAL_Lookback(optInLeftBars, optInRightBars)?;
+        let _guardLb = self.fractal_lookback(optInLeftBars, optInRightBars)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -327,7 +328,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.FRACTAL_Impl(
+        let retCode = self.fractal_impl(
             startIdx,
             endIdx,
             inHigh,
@@ -348,7 +349,7 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live FRACTAL stream: one value per closed bar, bit-identical to [`Core::FRACTAL`]
+/// Live FRACTAL stream: one value per closed bar, bit-identical to [`Core::fractal`]
 /// over the same series. Open with [`Core::fractal_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
@@ -483,7 +484,7 @@ impl Core {
         let mut tempLow: f64 = 0.0_f64;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.FRACTAL_Lookback(optInLeftBars, optInRightBars)?;
+        lookbackTotal = self.fractal_lookback(optInLeftBars, optInRightBars)?;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -573,7 +574,7 @@ impl Core {
     }
 
     /// Open a live FRACTAL stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::FRACTAL`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::fractal`] at that bar.
     ///
     /// # Errors
     ///
@@ -605,7 +606,7 @@ impl Core {
     }
 
     /// [`Core::fractal_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::FRACTAL`] over `0..len` in the same single pass, and reports the range it
+    /// [`Core::fractal`] over `0..len` in the same single pass, and reports the range it
     /// wrote as the [`OutRange`] beside the handle.
     ///
     /// # Errors
@@ -624,7 +625,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut batch_swing_high = vec![0_i32; 252];
     /// let mut batch_swing_low = vec![0_i32; 252];
-    /// let batch = core.FRACTAL(0, high.len() - 1, &high, &low, 2, 2, &mut batch_swing_high, &mut batch_swing_low)?;
+    /// let batch = core.fractal(0, high.len() - 1, &high, &low, 2, 2, &mut batch_swing_high, &mut batch_swing_low)?;
     ///
     /// let mut swing_high = vec![0_i32; 252];
     /// let mut swing_low = vec![0_i32; 252];
@@ -646,7 +647,7 @@ impl Core {
         if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.FRACTAL_Lookback(optInLeftBars, optInRightBars)?;
+        let _guardLb = self.fractal_lookback(optInLeftBars, optInRightBars)?;
         if inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -811,7 +812,7 @@ impl FractalStream {
     /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
-    /// It is what [`Core::FRACTAL`] reports over the same bars: the opener sets it
+    /// It is what [`Core::fractal`] reports over the same bars: the opener sets it
     /// to `(lookback, historyLen - lookback)`, every accepted `update` adds
     /// one to the count — a rejected one changes nothing, and neither does
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back

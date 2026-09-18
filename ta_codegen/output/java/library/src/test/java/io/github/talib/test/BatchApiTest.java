@@ -163,7 +163,7 @@ public class BatchApiTest {
         double[] input = { 2.0, 1.2, 1.5 };
         double[] output = new double[3];
 
-        OutRange r = Core.DEFAULT.MAX(0, 2, input, 2, output);
+        OutRange r = Core.DEFAULT.max(0, 2, input, 2, output);
 
         check(r.begIdx() == 1, "MAX begIdx == 1 (got " + r.begIdx() + ")");
         check(r.count() == 2, "MAX count == 2 (got " + r.count() + ")");
@@ -177,8 +177,8 @@ public class BatchApiTest {
         double[] in = closes(200);
         double[] out = new double[in.length];
 
-        OutRange r = Core.DEFAULT.MA(0, in.length - 1, in, 10, MAType.SMA, out);
-        check(r.begIdx() == Core.DEFAULT.MA_Lookback(10, MAType.SMA),
+        OutRange r = Core.DEFAULT.ma(0, in.length - 1, in, 10, MAType.SMA, out);
+        check(r.begIdx() == Core.DEFAULT.maLookback(10, MAType.SMA),
               "SMA begIdx == lookback");
         check(r.count() == in.length - r.begIdx(), "SMA count fills to the end");
     }
@@ -199,8 +199,8 @@ public class BatchApiTest {
         double[] out = new double[100];
         java.util.Arrays.fill(out, SENTINEL);
 
-        int lookback = Core.DEFAULT.CMO_Lookback(Integer.MIN_VALUE);
-        OutRange r = Core.DEFAULT.CMO(0, in.length - 1, in, Integer.MIN_VALUE, out);
+        int lookback = Core.DEFAULT.cmoLookback(Integer.MIN_VALUE);
+        OutRange r = Core.DEFAULT.cmo(0, in.length - 1, in, Integer.MIN_VALUE, out);
 
         check(r.begIdx() == lookback, "CMO begIdx == lookback");
         check(r.count() > 0, "CMO produced values (so the tail check is not vacuous)");
@@ -224,10 +224,10 @@ public class BatchApiTest {
         double[] in = closes(10);
         double[] out = new double[10];
 
-        check(Core.DEFAULT.SMA_Lookback(30) > 9,
+        check(Core.DEFAULT.smaLookback(30) > 9,
               "the 30-period lookback really does exceed this 10-bar range");
 
-        OutRange r = Core.DEFAULT.SMA(0, in.length - 1, in, 30, out);
+        OutRange r = Core.DEFAULT.sma(0, in.length - 1, in, 30, out);
         check(r.count() == 0, "too-short range yields count == 0");
         check(r.isEmpty(), "too-short range is isEmpty()");
         check(r.begIdx() == 0, "empty range reports begIdx 0");
@@ -239,24 +239,24 @@ public class BatchApiTest {
         final double[] out = new double[100];
 
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(-1, 50, in, 10, out), "negative startIdx -> IndexOutOfBounds");
+            () -> Core.DEFAULT.sma(-1, 50, in, 10, out), "negative startIdx -> IndexOutOfBounds");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(0, -1, in, 10, out), "negative endIdx -> IndexOutOfBounds");
+            () -> Core.DEFAULT.sma(0, -1, in, 10, out), "negative endIdx -> IndexOutOfBounds");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(50, 10, in, 10, out), "endIdx < startIdx -> IndexOutOfBounds");
+            () -> Core.DEFAULT.sma(50, 10, in, 10, out), "endIdx < startIdx -> IndexOutOfBounds");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 50, in, 0, out), "period below range -> IllegalArgument");
+            () -> Core.DEFAULT.sma(0, 50, in, 0, out), "period below range -> IllegalArgument");
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 50, (double[]) null, 10, out),
+            () -> Core.DEFAULT.sma(0, 50, (double[]) null, 10, out),
             "null input -> IllegalArgument");
 
         // Two outputs sharing one array has no correct answer (issue #108).
         final double[] shared = new double[100];
         final double[] third = new double[100];
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.BBANDS(0, 50, in, 20, 2.0, 2.0, MAType.SMA, shared, shared, third),
+            () -> Core.DEFAULT.bbands(0, 50, in, 20, 2.0, 2.0, MAType.SMA, shared, shared, third),
             "aliased output arrays -> IllegalArgument");
     }
 
@@ -285,7 +285,7 @@ public class BatchApiTest {
         final double[] out = new double[501];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 500, in, 10, out),
+            () -> Core.DEFAULT.sma(0, 500, in, 10, out),
             "endIdx past the input end -> IllegalArgument",
             "SMA", "inReal", "200", "501");
     }
@@ -297,12 +297,12 @@ public class BatchApiTest {
         final double[] out = new double[200];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.ADD(0, 199, longer, shorter, out),
+            () -> Core.DEFAULT.add(0, 199, longer, shorter, out),
             "mismatched input lengths -> IllegalArgument",
             "ADD", "inReal1", "50", "200");
         // Same call with the legs the right way round is the control: nothing
         // about ADD's shape makes it throw.
-        check(Core.DEFAULT.ADD(0, 49, longer, shorter, out).count() == 50,
+        check(Core.DEFAULT.add(0, 49, longer, shorter, out).count() == 50,
               "ADD over the range both legs cover succeeds");
     }
 
@@ -312,7 +312,7 @@ public class BatchApiTest {
         final double[] out = new double[3];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, in, 10, out),
+            () -> Core.DEFAULT.sma(0, 199, in, 10, out),
             "undersized output -> IllegalArgument",
             "SMA", "outReal", "3", "191");
     }
@@ -327,19 +327,19 @@ public class BatchApiTest {
         final double[] out = new double[200];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
+            () -> Core.DEFAULT.sma(0, 199, (double[]) null, 10, out),
             "null input names it", "SMA", "inReal");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, in, 10, (double[]) null),
+            () -> Core.DEFAULT.sma(0, 199, in, 10, (double[]) null),
             "null output names it", "SMA", "outReal");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, (float[]) null, 10, out),
+            () -> Core.DEFAULT.sma(0, 199, (float[]) null, 10, out),
             "null float input names it", "SMA", "inReal");
         // An argument that does not exist is a bug however little of it would
         // have been read: the null check outlives the lookback short-circuit
         // that switches the LENGTH check off.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 9, in, 30, (double[]) null),
+            () -> Core.DEFAULT.sma(0, 9, in, 30, (double[]) null),
             "null output on a range that produces nothing is still rejected",
             "SMA", "outReal");
     }
@@ -352,18 +352,18 @@ public class BatchApiTest {
      */
     static void bothSidesOfTheOutputBound() {
         double[] in = closes(200);
-        int lookback = Core.DEFAULT.SMA_Lookback(10);
+        int lookback = Core.DEFAULT.smaLookback(10);
         int produced = 199 - lookback + 1;
 
         check(produced == 191, "the produced count really is 191 (got " + produced + ")");
         check(produced < 200, "the produced count is shorter than the requested range");
 
-        OutRange r = Core.DEFAULT.SMA(0, 199, in, 10, new double[produced]);
+        OutRange r = Core.DEFAULT.sma(0, 199, in, 10, new double[produced]);
         check(r.count() == produced, "an exactly-sized output is accepted and filled");
 
         final double[] oneShort = new double[produced - 1];
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, in, 10, oneShort),
+            () -> Core.DEFAULT.sma(0, 199, in, 10, oneShort),
             "one element short of the produced count -> IllegalArgument",
             "outReal", String.valueOf(produced - 1), String.valueOf(produced));
     }
@@ -379,7 +379,7 @@ public class BatchApiTest {
         Arrays.fill(out, SENTINEL);
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, in, 10, out), "undersized output throws");
+            () -> Core.DEFAULT.sma(0, 199, in, 10, out), "undersized output throws");
 
         boolean untouched = true;
         for (double v : out) {
@@ -390,7 +390,7 @@ public class BatchApiTest {
         check(untouched, "a rejected call left the output buffer untouched");
         // Non-vacuity: the same buffer IS writable by a call that is accepted, so
         // the assertion above is about the rejection and not about the sentinel.
-        Core.DEFAULT.SMA(0, 2, in, 1, out);
+        Core.DEFAULT.sma(0, 2, in, 1, out);
         check(out[0] != SENTINEL, "the sentinel is overwritten by a call that runs");
     }
 
@@ -405,19 +405,19 @@ public class BatchApiTest {
         final double[] tiny = new double[3];
 
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(50, 10, in, 10, tiny),
+            () -> Core.DEFAULT.sma(50, 10, in, 10, tiny),
             "endIdx < startIdx still -> IndexOutOfBounds", "endIdx");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(-1, 199, in, 10, tiny),
+            () -> Core.DEFAULT.sma(-1, 199, in, 10, tiny),
             "negative startIdx still -> IndexOutOfBounds", "startIdx");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, in, 0, tiny),
+            () -> Core.DEFAULT.sma(0, 199, in, 0, tiny),
             "out-of-range period still -> the parameter message", "bad parameter");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(0, Core.MAX_INDEX + 1, in, 10, tiny),
+            () -> Core.DEFAULT.sma(0, Core.MAX_INDEX + 1, in, 10, tiny),
             "endIdx above MAX_INDEX still -> IndexOutOfBounds", "endIdx");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(Core.MAX_INDEX + 5, Core.MAX_INDEX + 9, in, 10, tiny),
+            () -> Core.DEFAULT.sma(Core.MAX_INDEX + 5, Core.MAX_INDEX + 9, in, 10, tiny),
             "startIdx above MAX_INDEX still -> IndexOutOfBounds", "startIdx");
     }
 
@@ -433,8 +433,8 @@ public class BatchApiTest {
     static void aRangeThatProducesNothingChecksNoLength() {
         double[] in = closes(10);
 
-        check(Core.DEFAULT.SMA_Lookback(30) > 9, "the 30-period lookback exceeds this range");
-        OutRange r = Core.DEFAULT.SMA(0, 9, in, 30, new double[0]);
+        check(Core.DEFAULT.smaLookback(30) > 9, "the 30-period lookback exceeds this range");
+        OutRange r = Core.DEFAULT.sma(0, 9, in, 30, new double[0]);
         check(r.count() == 0, "a zero-length output is fine when nothing is produced");
     }
 
@@ -464,34 +464,34 @@ public class BatchApiTest {
         final double[] volWide = new double[25];
         java.util.Arrays.fill(volWide, 1000.0);
 
-        check(Core.DEFAULT.APO_Lookback(12, 26, MAType.EMA) > 24,
+        check(Core.DEFAULT.apoLookback(12, 26, MAType.EMA) > 24,
               "APO's lookback really does exceed this range (so nothing is produced)");
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.APO(0, 24, in, 12, 26, MAType.EMA, new double[0]),
+            () -> Core.DEFAULT.apo(0, 24, in, 12, 26, MAType.EMA, new double[0]),
             "APO: endIdx past the input, producing nothing", "APO", "inReal", "24", "25");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.PPO(0, 24, in, 12, 26, MAType.EMA, new double[0]),
+            () -> Core.DEFAULT.ppo(0, 24, in, 12, 26, MAType.EMA, new double[0]),
             "PPO likewise", "PPO", "inReal", "24", "25");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.PVO(0, 24, vol, 12, 26, MAType.EMA, new double[0]),
+            () -> Core.DEFAULT.pvo(0, 24, vol, 12, 26, MAType.EMA, new double[0]),
             "PVO likewise", "PVO", "inVolume", "24", "25");
 
         // The controls. An input that DOES reach endIdx is an empty success again,
         // with a zero-length output — so the fix tightened the input bound only, and
         // did not turn the documented empty success into an error.
-        check(Core.DEFAULT.APO(0, 24, wide, 12, 26, MAType.EMA, new double[0]).count() == 0,
+        check(Core.DEFAULT.apo(0, 24, wide, 12, 26, MAType.EMA, new double[0]).count() == 0,
               "APO with an input reaching endIdx is an empty success, zero-length output");
-        check(Core.DEFAULT.PVO(0, 24, volWide, 12, 26, MAType.EMA, new double[0]).count() == 0,
+        check(Core.DEFAULT.pvo(0, 24, volWide, 12, 26, MAType.EMA, new double[0]).count() == 0,
               "PVO likewise");
-        check(Core.DEFAULT.SMA(0, 24, wide, 26, new double[0]).count() == 0,
+        check(Core.DEFAULT.sma(0, 24, wide, 26, new double[0]).count() == 0,
               "and a function that reads nothing is unaffected");
     }
 
     /** Every output is checked on its own, and named on its own. */
     static void eachOutputIsCheckedSeparately() {
         final double[] in = closes(200);
-        int produced = 199 - Core.DEFAULT.MACD_Lookback(12, 26, 9) + 1;
+        int produced = 199 - Core.DEFAULT.macdLookback(12, 26, 9) + 1;
         check(produced > 0, "MACD produces values over this range");
 
         final double[] big1 = new double[200];
@@ -499,15 +499,15 @@ public class BatchApiTest {
         final double[] small = new double[produced - 1];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MACD(0, 199, in, 12, 26, 9, small, big1, big2),
+            () -> Core.DEFAULT.macd(0, 199, in, 12, 26, 9, small, big1, big2),
             "short first output is named", "outMACD", String.valueOf(produced));
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MACD(0, 199, in, 12, 26, 9, big1, small, big2),
+            () -> Core.DEFAULT.macd(0, 199, in, 12, 26, 9, big1, small, big2),
             "short second output is named", "outMACDSignal", String.valueOf(produced));
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MACD(0, 199, in, 12, 26, 9, big1, big2, small),
+            () -> Core.DEFAULT.macd(0, 199, in, 12, 26, 9, big1, big2, small),
             "short third output is named", "outMACDHist", String.valueOf(produced));
-        check(Core.DEFAULT.MACD(0, 199, in, 12, 26, 9, big1, big2,
+        check(Core.DEFAULT.macd(0, 199, in, 12, 26, 9, big1, big2,
                                 new double[produced]).count() == produced,
               "three exactly-sized outputs are accepted");
     }
@@ -522,13 +522,13 @@ public class BatchApiTest {
         // Both sizes, not just the one allocated: the int[] and float[] overloads of
         // requireLength are two-line delegates, and forwarding a WRONG required count
         // is the only mutation of this guard the double[] assertions cannot see.
-        int produced = 199 - Core.DEFAULT.CDLDOJI_Lookback() + 1;
+        int produced = 199 - Core.DEFAULT.cdldojiLookback() + 1;
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.CDLDOJI(0, 199, o, h, l, c, new int[3]),
+            () -> Core.DEFAULT.cdldoji(0, 199, o, h, l, c, new int[3]),
             "short int[] output -> IllegalArgument",
             "CDLDOJI", "outInteger", "3", String.valueOf(produced));
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.CDLDOJI(0, 199, o, h, l, c, (int[]) null),
+            () -> Core.DEFAULT.cdldoji(0, 199, o, h, l, c, (int[]) null),
             "null int[] output -> IllegalArgument", "outInteger");
     }
 
@@ -542,12 +542,12 @@ public class BatchApiTest {
         final double[] tiny = new double[3];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, inF, 10, tiny),
+            () -> Core.DEFAULT.sma(0, 199, inF, 10, tiny),
             "float overload: undersized output", "SMA", "outReal", "191");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 500, inF, 10, new double[501]),
+            () -> Core.DEFAULT.sma(0, 500, inF, 10, new double[501]),
             "float overload: endIdx past the input end", "SMA", "inReal", "200", "501");
-        check(Core.DEFAULT.SMA(0, 199, inF, 10, new double[191]).count() == 191,
+        check(Core.DEFAULT.sma(0, 199, inF, 10, new double[191]).count() == 191,
               "float overload accepts an exactly-sized output");
     }
 
@@ -569,21 +569,21 @@ public class BatchApiTest {
         final int[] out = new int[200];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.CDL3OUTSIDE(0, 199, real, empty, empty, real, out),
+            () -> Core.DEFAULT.cdl3outside(0, 199, real, empty, empty, real, out),
             "an empty high leg the body never reads", "inHigh", "0", "200");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.CDL3OUTSIDE(0, 199, real, real, (double[]) null, real, out),
+            () -> Core.DEFAULT.cdl3outside(0, 199, real, real, (double[]) null, real, out),
             "a null low leg the body never reads", "inLow", "null");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.CDLHIKKAKE(0, 199, empty, real, real, real, out),
+            () -> Core.DEFAULT.cdlhikkake(0, 199, empty, real, real, real, out),
             "CDLHIKKAKE's open leg, the other shape of the same exemption",
             "inOpen", "0", "200");
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.CDL3OUTSIDE(0, 199, empty, real, real, real, out),
+            () -> Core.DEFAULT.cdl3outside(0, 199, empty, real, real, real, out),
             "the open leg, which IS read, is still checked", "inOpen", "0", "200");
         // Non-vacuity: every leg supplied and sized is the success these reject.
-        check(Core.DEFAULT.CDL3OUTSIDE(0, 199, real, real, real, real, out).count() > 0,
+        check(Core.DEFAULT.cdl3outside(0, 199, real, real, real, real, out).count() > 0,
               "CDL3OUTSIDE runs when every declared leg is supplied");
     }
 
@@ -621,11 +621,11 @@ public class BatchApiTest {
         // Non-vacuity: the reflection actually sees the surface it is asserting over.
         int sma = 0;
         for (java.lang.reflect.Method m : Core.class.getMethods()) {
-            if (m.getName().equals("SMA")) {
+            if (m.getName().equals("sma")) {
                 sma++;
             }
         }
-        check(sma >= 2, "reflection sees the SMA overloads it is filtering over");
+        check(sma >= 2, "reflection sees the sma overloads it is filtering over");
     }
 
     /** The float overload adopts the identical shape (C's TA_S_* parity). */
@@ -638,8 +638,8 @@ public class BatchApiTest {
         double[] outD = new double[100];
         double[] outF = new double[100];
 
-        OutRange rd = Core.DEFAULT.SMA(0, in.length - 1, in, 10, outD);
-        OutRange rf = Core.DEFAULT.SMA(0, inF.length - 1, inF, 10, outF);
+        OutRange rd = Core.DEFAULT.sma(0, in.length - 1, in, 10, outD);
+        OutRange rf = Core.DEFAULT.sma(0, inF.length - 1, inF, 10, outF);
 
         check(rd.equals(rf), "float overload reports the same OutRange");
         check(rf.count() > 0, "float overload produced values");
@@ -678,29 +678,29 @@ public class BatchApiTest {
 
         // Lossless, the pair the type cannot separate.
         checkCode(RetCode.OUT_OF_RANGE_START_INDEX,
-            () -> Core.DEFAULT.SMA(-1, 50, in, 10, out), "negative startIdx carries OutOfRangeStartIndex");
+            () -> Core.DEFAULT.sma(-1, 50, in, 10, out), "negative startIdx carries OutOfRangeStartIndex");
         checkCode(RetCode.OUT_OF_RANGE_END_INDEX,
-            () -> Core.DEFAULT.SMA(50, 10, in, 10, out), "endIdx < startIdx carries OutOfRangeEndIndex");
+            () -> Core.DEFAULT.sma(50, 10, in, 10, out), "endIdx < startIdx carries OutOfRangeEndIndex");
 
         // The rest of the batch tier's vocabulary.
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.SMA(0, 50, in, 0, out), "an out-of-range period carries BAD_PARAM");
+            () -> Core.DEFAULT.sma(0, 50, in, 0, out), "an out-of-range period carries BAD_PARAM");
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.MACD(0, 199, in, 12, 26, 9, out, out, new double[200]),
+            () -> Core.DEFAULT.macd(0, 199, in, 12, 26, 9, out, out, new double[200]),
             "two outputs sharing one array carries BAD_PARAM");
 
         // The two conditions C has no code for. They report the code C answers
         // for an absent argument it CAN detect, so the mapping stays total.
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out), "a null input carries BAD_PARAM");
+            () -> Core.DEFAULT.sma(0, 199, (double[]) null, 10, out), "a null input carries BAD_PARAM");
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.SMA(0, 199, in, 10, new double[3]), "a short output carries BAD_PARAM");
+            () -> Core.DEFAULT.sma(0, 199, in, 10, new double[3]), "a short output carries BAD_PARAM");
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out), "a null enum carries BAD_PARAM");
+            () -> Core.DEFAULT.ma(0, 199, in, 10, null, out), "a null enum carries BAD_PARAM");
 
         // Streaming's one recoverable condition, which is why it has a code.
         checkCode(RetCode.INSUFFICIENT_HISTORY,
-            () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
+            () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.smaLookback(30)), 30),
             "a short history carries InsufficientHistory");
 
         // ...and the REST of the streaming tier, which is a separate reject
@@ -719,7 +719,7 @@ public class BatchApiTest {
         // ...and it is still an InsufficientHistoryException, so an existing
         // catch keeps working.
         checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
+            () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.smaLookback(30)), 30),
             "a short history is still typed");
 
         // The numbers the cross-language harness compares. Hardcoded, because
@@ -781,20 +781,20 @@ public class BatchApiTest {
         final double[] out = new double[200];
 
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(-1, 50, (double[]) null, 10, out),
+            () -> Core.DEFAULT.sma(-1, 50, (double[]) null, 10, out),
             "a negative startIdx outranks a null input", "startIdx");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(50, 10, in, 10, (double[]) null),
+            () -> Core.DEFAULT.sma(50, 10, in, 10, (double[]) null),
             "endIdx < startIdx outranks a null output", "endIdx");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.SMA(0, Core.MAX_INDEX + 1, (double[]) null, 10, out),
+            () -> Core.DEFAULT.sma(0, Core.MAX_INDEX + 1, (double[]) null, 10, out),
             "an endIdx above MAX_INDEX outranks a null input", "endIdx");
 
         // The control, and what makes the three above about ORDER rather than
         // about the null check having been deleted: with the indices valid, the
         // null IS the diagnosis.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
+            () -> Core.DEFAULT.sma(0, 199, (double[]) null, 10, out),
             "a valid range still reports the null", "SMA", "inReal");
     }
 
@@ -812,17 +812,17 @@ public class BatchApiTest {
         final double[] out = new double[200];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 0, out),
+            () -> Core.DEFAULT.sma(0, 199, (double[]) null, 0, out),
             "a bad period outranks a null input", "bad parameter");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, in, 0, (double[]) null),
+            () -> Core.DEFAULT.sma(0, 199, in, 0, (double[]) null),
             "a bad period outranks a null output", "bad parameter");
 
         // The control: with the period valid, the buffer IS the diagnosis. Without
         // it the two above would pass against a wrapper that had simply stopped
         // checking buffers.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
+            () -> Core.DEFAULT.sma(0, 199, (double[]) null, 10, out),
             "a valid period still reports the null", "SMA", "inReal");
     }
 
@@ -838,14 +838,14 @@ public class BatchApiTest {
         final double[] out = new double[200];
 
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
+            () -> Core.DEFAULT.ma(0, 199, in, 10, null, out),
             "a null enum names the function and the parameter", "MA", "optInMAType");
         checkCode(RetCode.BAD_PARAM,
-            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
+            () -> Core.DEFAULT.ma(0, 199, in, 10, null, out),
             "a null enum carries BAD_PARAM");
         // ...and neither outranks the index rules.
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.MA(-1, 199, in, 10, null, out),
+            () -> Core.DEFAULT.ma(-1, 199, in, 10, null, out),
             "a negative startIdx outranks a null enum", "startIdx");
     }
 
@@ -868,13 +868,13 @@ public class BatchApiTest {
         final double[] in = closes(252);
         final double[] mamaRef = new double[252];
         final double[] famaRef = new double[252];
-        OutRange ref = Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, mamaRef, famaRef);
+        OutRange ref = Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mamaRef, famaRef);
         check(ref.count() > 0, "the reference call produces values");
 
         final double CANARY = -1.2345678901234e300;
         double[] mama = new double[252];
         Arrays.fill(mama, CANARY);
-        OutRange r = Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, mama, null);
+        OutRange r = Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mama, null);
 
         check(r.begIdx() == ref.begIdx() && r.count() == ref.count(),
             "declining outFAMA leaves the reported range alone");
@@ -891,15 +891,15 @@ public class BatchApiTest {
 
         // The supplied output only has to hold the produced count; the declined
         // one has no size to hold at all.
-        Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, new double[ref.count()], null);
+        Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, new double[ref.count()], null);
 
         // Controls, so the acceptance above is about the FLAG and not about
         // MAMA having stopped checking its outputs.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, null, famaRef),
+            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, null, famaRef),
             "the non-nullable output is still required", "MAMA", "outMAMA");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.MAMA(0, 251, in, 0.5, 0.05, mamaRef, new double[1]),
+            () -> Core.DEFAULT.mama(0, 251, in, 0.5, 0.05, mamaRef, new double[1]),
             "a SUPPLIED nullable output is still length-checked", "MAMA", "outFAMA");
     }
 
@@ -916,10 +916,10 @@ public class BatchApiTest {
     static void distinctEmptyOutputsAreNotAliases() {
         final double[] in = closes(252);
         final int period = 253;
-        check(Core.DEFAULT.ACCBANDS_Lookback(period) > 251,
+        check(Core.DEFAULT.accbandsLookback(period) > 251,
             "the probe needs a lookback past the range, or it proves nothing");
 
-        OutRange r = Core.DEFAULT.ACCBANDS(0, 251, in, in, in, period,
+        OutRange r = Core.DEFAULT.accbands(0, 251, in, in, in, period,
             new double[0], new double[0], new double[0]);
         check(r.count() == 0, "a sub-lookback range needs no output space");
 
@@ -927,13 +927,13 @@ public class BatchApiTest {
         // values are still rejected, so this is about the count and not about
         // the bound having gone away.
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.ACCBANDS(0, 251, in, in, in, 20,
+            () -> Core.DEFAULT.accbands(0, 251, in, in, in, 20,
                 new double[0], new double[0], new double[0]),
             "an output that has to hold values is still bounded", "ACCBANDS");
         // And a REAL alias of two outputs is still rejected.
         double[] shared = new double[252];
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.ACCBANDS(0, 251, in, in, in, 20,
+            () -> Core.DEFAULT.accbands(0, 251, in, in, in, 20,
                 shared, shared, new double[252]),
             "two outputs that are one array are still rejected", "ACCBANDS");
     }
@@ -1107,7 +1107,7 @@ public class BatchApiTest {
      * still rejected, so "declinable" did not become "unchecked".
      */
     private static void aDeclinedFillOutputIsStillComputed(double[] in) {
-        int lb = Core.DEFAULT.MAMA_Lookback(0.5, 0.05);
+        int lb = Core.DEFAULT.mamaLookback(0.5, 0.05);
         int produced = in.length - lb;
 
         double[] refMama = new double[produced];
@@ -1178,7 +1178,7 @@ public class BatchApiTest {
      */
     static void theFillOutputBoundFromBothSides() {
         final double[] in = closes(252);
-        final int lookback = Core.DEFAULT.SMA_Lookback(30);
+        final int lookback = Core.DEFAULT.smaLookback(30);
         final int produced = in.length - lookback;
 
         check(lookback == 29, "the probe needs a lookback it can be one short of");
@@ -1236,7 +1236,7 @@ public class BatchApiTest {
 
         for (int[] arm : new int[][] { {30, 0}, {1, 0} }) {
             final int period = arm[0];
-            final int lb = Core.DEFAULT.MA_Lookback(period, MAType.EMA);
+            final int lb = Core.DEFAULT.maLookback(period, MAType.EMA);
             final int produced = in.length - lb;
             Core.DEFAULT.maOpenAndFill(in, period, MAType.EMA, new double[produced]);
             checkThrows(IllegalArgumentException.class,
@@ -1245,7 +1245,7 @@ public class BatchApiTest {
             s5Reject++;
         }
 
-        final int mavpLb = Core.DEFAULT.MAVP_Lookback(2, 30, MAType.SMA);
+        final int mavpLb = Core.DEFAULT.mavpLookback(2, 30, MAType.SMA);
         final int mavpProduced = in.length - mavpLb;
         Core.DEFAULT.mavpOpenAndFill(in, periods, 2, 30, MAType.SMA, new double[mavpProduced]);
         checkThrows(IllegalArgumentException.class,
@@ -1254,7 +1254,7 @@ public class BatchApiTest {
             "MAVP one short of the bound", "MAVP openAndFill", "outReal");
         s5Reject++;
 
-        final int bbLb = Core.DEFAULT.BBANDS_Lookback(20, 2.0, 2.0, MAType.SMA);
+        final int bbLb = Core.DEFAULT.bbandsLookback(20, 2.0, 2.0, MAType.SMA);
         final int bbProduced = in.length - bbLb;
         Core.DEFAULT.bbandsOpenAndFill(in, 20, 2.0, 2.0, MAType.SMA,
             new double[bbProduced], new double[bbProduced], new double[bbProduced]);
