@@ -11124,13 +11124,13 @@ const V_KURTOSIS: &[(&str, i32)] = &[
 fn sub_KURTOSIS(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_KURTOSIS {
-        let Ok(lb) = core.KURTOSIS_Lookback(optInTimePeriod) else { continue; };
+        let Ok(lb) = core.kurtosis_lookback(optInTimePeriod) else { continue; };
         r.control("KURTOSIS", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.KURTOSIS_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.kurtosis_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
         if lb < 1 { r.no_quiet_range("KURTOSIS", label); continue; }
@@ -11139,7 +11139,7 @@ fn sub_KURTOSIS(r: &mut Report) {
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.KURTOSIS_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.kurtosis_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -11148,7 +11148,7 @@ fn sub_KURTOSIS(r: &mut Report) {
 fn legs_KURTOSIS(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let Ok(lb) = core.KURTOSIS_Lookback(optInTimePeriod) else { r.no_legs("KURTOSIS"); return; };
+    let Ok(lb) = core.kurtosis_lookback(optInTimePeriod) else { r.no_legs("KURTOSIS"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = series("real", endIdx + 1);
@@ -11156,7 +11156,7 @@ fn legs_KURTOSIS(r: &mut Report) {
         r.legs_control("KURTOSIS", run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.KURTOSIS_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.kurtosis_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -11166,7 +11166,7 @@ fn legs_KURTOSIS(r: &mut Report) {
         r.leg("KURTOSIS", "inReal", 0, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.KURTOSIS_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.kurtosis_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }

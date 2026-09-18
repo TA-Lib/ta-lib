@@ -813,7 +813,7 @@ internal static class NoPhantomIoBinder
         },
         ["KURTOSIS"] = static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.KURTOSIS_Impl(
+            RetCode rc = core.KurtosisImpl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },

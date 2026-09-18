@@ -238,6 +238,7 @@ public final class Functions {
       put(m, f_KAMA());
       put(m, f_KC());
       put(m, f_KDJ());
+      put(m, f_KURTOSIS());
       put(m, f_LINEARREG());
       put(m, f_LINEARREG_ANGLE());
       put(m, f_LINEARREG_INTERCEPT());
@@ -2116,6 +2117,24 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outK", 0x00000001),
             new OutputInfo(OutputType.REAL, "outD", 0x00000001),
             new OutputInfo(OutputType.REAL, "outJ", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_KURTOSIS() {
+      return new FuncInfo(
+         "KURTOSIS", "Statistic Functions", "Rolling Excess Kurtosis", 0x42000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 30.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               4, 100000, 10, 200, 5, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 

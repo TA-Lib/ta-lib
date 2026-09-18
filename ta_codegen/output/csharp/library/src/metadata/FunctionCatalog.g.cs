@@ -231,6 +231,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeKama(),
             MakeKc(),
             MakeKdj(),
+            MakeKurtosis(),
             MakeLinearreg(),
             MakeLinearregAngle(),
             MakeLinearregIntercept(),
@@ -2885,6 +2886,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Kdj(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
+    private static FuncInfo MakeKurtosis() => new(
+        name: "KURTOSIS",
+        group: FunctionGroup.StatisticFunctions,
+        hint: "Rolling Excess Kurtosis",
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(4, 100000, 30, 10, 200, 5)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.KurtosisLookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Kurtosis(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeLinearreg() => new(
         name: "LINEARREG",
