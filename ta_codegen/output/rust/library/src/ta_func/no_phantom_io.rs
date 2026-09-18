@@ -9200,13 +9200,13 @@ const V_CTI: &[(&str, i32)] = &[
 fn sub_CTI(r: &mut Report) {
     let core = Core::new();
     for &(label, optInTimePeriod) in V_CTI {
-        let Ok(lb) = core.CTI_Lookback(optInTimePeriod) else { continue; };
+        let Ok(lb) = core.cti_lookback(optInTimePeriod) else { continue; };
         r.control("CTI", label, run(|| {
             let inReal: Vec<f64> = Vec::with_capacity(1);
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.CTI_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.cti_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
         if lb < 1 { r.no_quiet_range("CTI", label); continue; }
@@ -9215,7 +9215,7 @@ fn sub_CTI(r: &mut Report) {
             let mut outReal: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.CTI_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.cti_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -9224,7 +9224,7 @@ fn sub_CTI(r: &mut Report) {
 fn legs_CTI(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let Ok(lb) = core.CTI_Lookback(optInTimePeriod) else { r.no_legs("CTI"); return; };
+    let Ok(lb) = core.cti_lookback(optInTimePeriod) else { r.no_legs("CTI"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inReal: Vec<f64> = series("real", endIdx + 1);
@@ -9232,7 +9232,7 @@ fn legs_CTI(r: &mut Report) {
         r.legs_control("CTI", run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.CTI_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.cti_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
@@ -9242,7 +9242,7 @@ fn legs_CTI(r: &mut Report) {
         r.leg("CTI", "inReal", 0, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.CTI_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            let rc = core.cti_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
             (rc, _n)
         }));
     }
