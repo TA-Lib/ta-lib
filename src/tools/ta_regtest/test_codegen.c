@@ -795,6 +795,16 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * via their internal ADX/RSI, like the EMA-derived set above. */
     {"ADXR",         TA_FUNC_UNST_ADX},
     {"STOCHRSI",     TA_FUNC_UNST_RSI},
+    /* RVIR averages two RVI legs, one over the highs and one over the lows, and
+     * each leg is the same converging RVI recurrence, so both anchors move with
+     * UNST_RVI. Unlike KC above, ONE row covers both legs: the two legs carry
+     * the SAME id, so sweeping it warms both, where KC's legs carry different
+     * ids and needed a row each. Measured at bar 380 with the defaults: 16.80
+     * at startIdx 0, 48.09 at 40, 89.68 at 80 -- whole multiples, the same
+     * shape RVI itself shows, where a genuine EPSILON function moves by
+     * ~1e-13. Without this row it classified EPSILON and the post-cutover
+     * range gate failed it by 5.8%. */
+    {"RVIR",         TA_FUNC_UNST_RVI},
     /* SUPERTREND is listed for the SECOND consumer of this map, not the first.
      * It carries `path_dependent`, so stability_class() answers SKIP before it
      * ever asks about an unstable id and the range envelope is not what this row

@@ -8666,6 +8666,57 @@ static void icount_RVI(int iters) {
     g_sink += (int)acc + outNBElement;
 }
 
+static void icount_RVIR(int iters) {
+    const char *nm = "RVIR";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_RVIR_Stream *st = NULL;
+    TA_RVIR_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_RVIR(0, g_nPoints - 1, g_high, g_low, 14, 10, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("RVIR/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_RVIR_OpenAndFill(&stf, g_high, g_low, g_nPoints, 14, 10, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("RVIR/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_RVIR_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_RVIR_Open(&st, g_high, g_low, g_nPoints, 14, 10, &v0);
+    ICOUNT_DUMP("RVIR/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_RVIR_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("RVIR/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_RVIR_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("RVIR/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_RVIR_Close(st);
+    g_sink += (int)acc + outNBElement;
+}
+
 static void icount_RVOL(int iters) {
     const char *nm = "RVOL";
     int outBegIdx = 0, outNBElement = 0;
@@ -10698,6 +10749,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "ROCR100") ) { icount_ROCR100(iters); fflush(stdout); }
     if( func_matches(filter, "RSI") ) { icount_RSI(iters); fflush(stdout); }
     if( func_matches(filter, "RVI") ) { icount_RVI(iters); fflush(stdout); }
+    if( func_matches(filter, "RVIR") ) { icount_RVIR(iters); fflush(stdout); }
     if( func_matches(filter, "RVOL") ) { icount_RVOL(iters); fflush(stdout); }
     if( func_matches(filter, "SAR") ) { icount_SAR(iters); fflush(stdout); }
     if( func_matches(filter, "SAREXT") ) { icount_SAREXT(iters); fflush(stdout); }
