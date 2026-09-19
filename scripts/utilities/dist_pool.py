@@ -13,7 +13,7 @@ THE INVARIANT THIS PROTECTS
 ---------------------------
 main REUSES the binary dev built and tested -- it does not rebuild it. See
 package.py is_build_skipping_allowed(): scheduled nightlies rebuild, but a manual
-workflow_dispatch (which is how a release is cut, README-DEVS.md step 6) SKIPS and reuses.
+workflow_dispatch (which is how a release is cut, c-publish-runbook.md step CP6) SKIPS and reuses.
 That is only possible if the exact tested bytes are retrievable, which is what the pool is
 for. dev and main may legitimately hold different builds of the same filename, so assets are
 named by content hash -- <sha256>__<original_name> -- and never collide.

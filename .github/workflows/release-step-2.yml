@@ -1,6 +1,6 @@
 # Upgrade a draft release to an official public release.
 #
-# More info: README-DEVS.md
+# More info: docs/release-runbooks/c-publish-runbook.md
 
 name: Release (step 2)
 

@@ -37,7 +37,7 @@ inside `build.py` / `regtest.py`.
 | `package.py` | Build this platform's `dist/` assets. Run by both nightlies |
 | `test-dist.py` | Verify those assets as a user would, including a ta-lib-python build. Run by both nightlies |
 | `pre-release-checks.py` | Gate for `release-step-1`/`-2`: version consistency, digest, CHANGELOG entry, assets present, `ABI.released` is the latest published release |
-| `post-release-vcpkg.py` | After a release, update the microsoft/vcpkg port. README-DEVS.md step (11) |
+| `post-release-vcpkg.py` | After a release, update the microsoft/vcpkg port. `docs/release-runbooks/c-publish-runbook.md` step CP11 |
 | `sync-website.py` | The website half of `sync.py` on its own; `--check` exits non-zero if the page is behind or the release could not be looked up |
 
 ## Support (imported or called, never run directly)

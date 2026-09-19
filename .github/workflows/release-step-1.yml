@@ -6,7 +6,7 @@
 # Once you are satisfied with the draft release (review the notes and all expected
 # assets are attached), you can trigger release-step-2.yml to make the release public.
 #
-# More info: README-DEVS.md
+# More info: docs/release-runbooks/c-publish-runbook.md
 
 name: Release (step 1)
 

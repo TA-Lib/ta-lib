@@ -758,7 +758,7 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         # Without these, editing the packaging and then cutting a release ships a stale
         # package with a green digest: scheduled nightlies always rebuild and would
         # self-correct within a day, but the release path is a MANUAL dispatch
-        # (README-DEVS.md step 6), which takes the build-SKIP branch of
+        # (c-publish-runbook.md step CP6), which takes the build-SKIP branch of
         # is_build_skipping_allowed().
         "scripts/package.py",
         "scripts/utilities/common.py",

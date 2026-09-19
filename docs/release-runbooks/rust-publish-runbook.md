@@ -1,15 +1,21 @@
-# Rust Publish Runbook — releasing the `ta-lib` crate to crates.io
+# Rust Publish Runbook
+
+Releasing the `ta-lib` crate to crates.io.
+
+**`c-publish-runbook.md` must be completed first.** The C release of this version
+has to be public before the crate publishes; `README.md` in this directory holds
+the order.
 
 **Status:** `ta-lib-dispatch` 0.1.2 published 2026-08-12. `ta-lib` not yet published; the
 remaining blockers are tracked in issue #179.
 
 This is a **per-release** procedure, not a one-off: the crate version is locked to the repo
-`VERSION`, and a release in practice changes something every backend shares. It runs on its
-own path, though — cutting a release publishes the C assets and nothing else.
+`VERSION`, and a release in practice changes something every backend shares. It runs on its own path, though: cutting a release publishes the C assets and
+nothing else.
 
 ---
 
-## 1. What ships
+## What ships
 
 The Rust workspace (`ta_codegen/output/rust/`) has three members; **two of them publish.**
 
@@ -28,7 +34,7 @@ Both crate manifests, both READMEs and both `LICENSE` files are **generated**
 (`generate_rust_crate_scaffolding`, `ta_codegen/generator/src/main.rs`). Never hand-edit
 them; the regen-check gate fails if you do.
 
-## 2. Version policy
+## Version policy
 
 **One number, every backend.** C, the Rust crate and the Java artifact all carry the repo
 `VERSION` — they are one generated library, not four that ship together.
@@ -43,7 +49,7 @@ published version to compare against, so it can only be added *after* the first 
 
 `ta-lib-dispatch` is exempt: it carries its own version and is not bound to a release.
 
-## 3. Publish order, and why it is not optional
+## Publish order, and why it is not optional
 
 **`ta-lib-dispatch` first, then `ta-lib`** — and only when dispatch actually changed.
 
@@ -61,7 +67,19 @@ A published `.crate` is immutable. Changing *anything* inside one — the LICENS
 badge, a keyword — is only expressible as a new version. That is what turned dispatch 0.1.1
 into 0.1.2. Get the contents right before publishing, not after.
 
-## 4. Pre-flight
+## Credentials
+
+Not yet decided (#179 A6). Today: a maintainer's personal crates.io token, stored by
+`cargo login`, publishing from a local machine. That is what published dispatch 0.1.2.
+
+The alternative is crates.io **Trusted Publishing** — OIDC from a named GitHub Actions
+workflow, no long-lived secret anywhere. The repo currently has zero Actions secrets and
+both crates report `trustpub_only: false`. Worth revisiting now that publication is
+per-release rather than one-off: a personal token on one machine is a bus factor.
+
+## Publishing
+
+(RP1) Pre-flight.
 
 `main nightly tests` runs these same gates against `main` every night (#179 E5). Run
 them here anyway: the nightly can predate the commit being tagged, and the release path
@@ -100,17 +118,7 @@ tar tzf target/package/ta-lib-<VERSION>.crate | grep -Ev '^ta-lib-[^/]+/src/ta_f
 #         src/abstract_api.rs, src/ta_func_api.xml
 ```
 
-## 5. Credentials
-
-Not yet decided (#179 A6). Today: a maintainer's personal crates.io token, stored by
-`cargo login`, publishing from a local machine. That is what published dispatch 0.1.2.
-
-The alternative is crates.io **Trusted Publishing** — OIDC from a named GitHub Actions
-workflow, no long-lived secret anywhere. The repo currently has zero Actions secrets and
-both crates report `trustpub_only: false`. Worth revisiting now that publication is
-per-release rather than one-off: a personal token on one machine is a bus factor.
-
-## 6. Publish
+(RP2) Publish `ta-lib-dispatch`, only when it changed, then (RP3) `ta-lib`.
 
 ```bash
 cd ta_codegen/output/rust
@@ -125,20 +133,18 @@ cargo publish -p ta-lib                        # permanent
 If the second publish cannot resolve the pin immediately after the first, that is index
 lag — retry in a minute. It is not a manifest problem.
 
-## 7. After
-
-- **Check docs.rs actually built** — `https://docs.rs/ta-lib/<VERSION>`. docs.rs compiles
+(RP4) **Check docs.rs actually built** — `https://docs.rs/ta-lib/<VERSION>`. docs.rs compiles
   independently of `cargo publish`, so a rustdoc failure there is invisible from a
   successful publish.
-- **Badges lag by minutes.** The README badges are live shields.io / docs.rs renders keyed
+**Badges lag by minutes.** The README badges are live shields.io / docs.rs renders keyed
   on crate *name*; they report the registry's newest version and know nothing about the
   tree. Nothing to update.
-- **Flip the website** (#179 B4) — `website/src/api/rust/README.md` and
+(RP5) **Flip the website** (#179 B4) — `website/src/api/rust/README.md` and
   `website/src/install/README.md` still carry pre-release banners. The site deploys from
   `main` on push.
-- **`cargo owner --list`** on both crates if the maintainer set changed.
+(RP6) **`cargo owner --list`** on both crates if the maintainer set changed.
 
-## 8. Known, not covered here
+## Known, not covered here
 
 - `ta-lib` 0.1.0–0.1.2 on crates.io are an **unrelated third-party FFI wrapper**, not ours:
   5097 downloads, zero reverse dependencies. Until the first real publish, the `ta-lib`
