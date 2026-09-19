@@ -208,6 +208,13 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <version>3.2.8</version>
+            <configuration>
+              <!-- Named, because gpg otherwise signs with the first secret key
+                   in the keyring. An absent key fails here; a wrong one fails
+                   at Central, after the upload. Rotating the key is this line
+                   and nothing else: the namespace is bound to the account. -->
+              <keyname>B351CC3D856EE4AC3DBFD4C44F36E9F467C8547D</keyname>
+            </configuration>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
