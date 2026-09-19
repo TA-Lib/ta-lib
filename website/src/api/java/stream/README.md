@@ -4,10 +4,6 @@ description: "Java streaming API for live feeds: a stream carries indicator stat
 toc: false
 ---
 
-::: warning Not yet released
-The Java API is not yet released. Estimated release: **Q1 2027**.
-:::
-
 The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/java/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole array.
 
 Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):

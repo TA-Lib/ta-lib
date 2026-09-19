@@ -4,10 +4,6 @@ description: "io.github.talib: a native Java port with no JNI, indicators as met
 toc: false
 ---
 
-::: warning Not yet released
-The Java API is not yet released. Estimated release: **Q1 2027**.
-:::
-
 <p><a href="#intro">1.0 Introduction</a></p>
 
 <p><a href="#build">2.0 Add it to your project</a></p>
@@ -57,6 +53,8 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
     <version>0.8.1</version>
 </dependency>
 ```
+
+Every released version is listed on [Maven Central](https://central.sonatype.com/artifact/io.github.ta-lib/ta-lib).
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
