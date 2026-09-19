@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <!-- A consumer of the published coordinate, used at release time. It depends
+       on ta-lib the way a user does, so it proves resolution and not just that
+       a jar exists on disk. Deliberately NOT a module of the library build:
+       a reactor build would satisfy the dependency from the reactor. -->
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.talib.check</groupId>
+  <artifactId>consumer-check</artifactId>
+  <version>1</version>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Overridden per run: -Dtalib.version=$(cat VERSION). The placeholder is
+         not a real version, so a forgotten -D fails to resolve. -->
+    <talib.version>unset</talib.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.github.ta-lib</groupId>
+      <artifactId>ta-lib</artifactId>
+      <version>${talib.version}</version>
+    </dependency>
+  </dependencies>
+</project>
