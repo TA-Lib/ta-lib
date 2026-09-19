@@ -76231,6 +76231,1213 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
+     *  091526 KL     First version (proposal-drafts issue #74).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#cti} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of trailing values correlated against the
+        *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int ctiLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          return optInTimePeriod - 1 ;
+
+       }
+       RetCode ctiImpl( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          double sumX = 0;
+          double sumX2 = 0;
+          double sumXY = 0;
+          double x = 0;
+          double trailingX = 0;
+          double leavingX = 0;
+          double shift = 0;
+          double ssX = 0;
+          double spXY = 0;
+          double tempReal = 0;
+          double invPeriod = 0;
+          double dPeriod = 0;
+          double sumY = 0;
+          double ssY = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int j = 0;
+          int barsSinceReseed = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          lookbackTotal = optInTimePeriod - 1;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          outBegIdx.value = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
+          dPeriod = (double)optInTimePeriod;
+          invPeriod = 1.0 / dPeriod;
+          /* The ramp side is data-independent and collapses to two constants. With y
+           * running 0..optInTimePeriod-1 as BARS AGO,
+           *
+           *    sumY = n(n-1)/2            ssY = sumY2 - sumY*sumY/n = n(n*n-1)/12
+           *
+           * Both are computed in double because their integer forms overflow: at the
+           * top of the parameter range n*n*n is 1e15, far past what an int holds, and
+           * the product would wrap silently rather than fail. ssY is strictly positive
+           * for every n >= 2, which is why only the price side can make a window
+           * degenerate.
+           */
+          sumY = dPeriod * (dPeriod - 1.0) * 0.5;
+          ssY = dPeriod * (dPeriod * dPeriod - 1.0) / 12.0;
+          /* Measure the price side against a shift near the window, as correl.c does
+           * (#242). Transcribing the author's listing literally would carry
+           * n*Sxx - Sx*Sx on raw price levels, which is the quantity that returned 0,
+           * -1 and -1.73 from a perfectly correlated pair: MEASURED on the card, the
+           * naive form errs by 5.7e-03 at a 1e2 price level with a 1e-5 spread, on an
+           * indicator whose entire range is [-1, +1].
+           *
+           * Anchor on the first window value here; every later re-anchor uses the
+           * window mean, which is better centred but costs a pass this one cannot
+           * afford before the sums exist.
+           */
+          shift = inReal[trailingIdx];
+          /* The initial window, less its last bar. This bar's y is startIdx-j, since
+           * the first output is computed with `today` at startIdx.
+           */
+          sumXY = 0.0;
+          sumX2 = sumXY;
+          sumX = sumX2;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             x = inReal[j] - shift;
+             sumX += x;
+             sumX2 += x * x;
+             sumXY += x * (double)(startIdx - j);
+          }
+          today = startIdx;
+          outIdx = 0;
+          barsSinceReseed = 32 * optInTimePeriod;
+          leavingX = 0.0;
+          do {
+             /* The incoming bar is zero bars ago, so it moves sumX and sumX2 and
+              * leaves sumXY alone.
+              */
+             x = inReal[today] - shift;
+             sumX += x;
+             sumX2 += x * x;
+             ssX = sumX2 - sumX * sumX * invPeriod;
+             spXY = sumXY - sumX * sumY * invPeriod;
+             /* Re-anchor and rebuild when the shift has gone stale: the price sum of
+              * squares has shrunk below 1e-6 of the squared deviations it is extracted
+              * from; OR the value the PREVIOUS bar removed sat so far from the shift
+              * that its squared term dwarfs what remains; OR at least every 32
+              * windows. Same three triggers as correl.c, watching the price side only
+              * -- the ramp side is exact constants and cannot drift.
+              *
+              * A vanishing spXY is NOT a trigger. It is a legitimate answer, a window
+              * with no linear trend, and reseeding on it would rebuild on every bar of
+              * ordinary sideways data.
+              */
+             barsSinceReseed -= 1;
+             if( ssX < 0.000001 * sumX2 || leavingX > 1000000.0 * sumX2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInTimePeriod;
+                windowStart = today - lookbackTotal;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                sumXY = 0.0;
+                sumX2 = sumXY;
+                sumX = sumX2;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   x = inReal[j] - shift;
+                   sumX += x;
+                   sumX2 += x * x;
+                   sumXY += x * (double)(today - j);
+                }
+                ssX = sumX2 - sumX * sumX * invPeriod;
+                spXY = sumXY - sumX * sumY * invPeriod;
+                /* A sum of squares is non-negative by definition, but this one is
+                 * extracted as a difference, so its SIGN is not guaranteed on a window
+                 * sitting inside a flat stretch. Enforced here rather than at the
+                 * divide, exactly as correl.c does: a negative ssX always reseeds on
+                 * the same bar, so the divide below can rely on it being >= 0.
+                 */
+                if( ssX < 0.0 ) {
+                   ssX = 0.0;
+                }
+             }
+             /* Save the trailing value before writing the output, since the input and
+              * output might be the same array.
+              */
+             trailingX = inReal[trailingIdx] - shift;
+             trailingIdx += 1;
+             /* THE SIGN. y here is BARS AGO, so it runs backward in time and a rising
+              * series correlates NEGATIVELY with it. Ehlers' listing counts the same
+              * way and takes Y = -count, which is the positively-sloped line the
+              * indicator is defined against; negating the coefficient once is the same
+              * thing, and it keeps the O(1) slide identity below written the way
+              * linearreg.c:102-114 states it. Dropping this negation silently inverts
+              * the whole indicator -- Pearson r is odd in either variable -- and a
+              * magnitude or |r| assertion cannot see it.
+              *
+              * ssY is a positive constant, so only ssX can make the window degenerate.
+              * It is tested against its own scale rather than an absolute band: the
+              * product carries the fourth power of the window's spread, so a fixed
+              * threshold rejects a well-defined correlation as soon as the data is
+              * small. The product is tested on its own because neither factor's test
+              * implies it -- at that fourth power it can underflow to exactly 0.0
+              * while both are still ordinary normals, and a zero divisor there gives
+              * NaN, which the clamp does not catch.
+              *
+              * An all-flat window therefore emits exactly 0.0 rather than NaN, which
+              * is correl.c's precedent and what #112 requires of a successful call.
+              */
+             if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
+                tempReal = (0 - spXY) / Math.sqrt(ssX * ssY);
+                /* A correlation coefficient cannot leave [-1,1]; rounding in the
+                 * three sums can still put it a few ulp outside.
+                 */
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                } else if( tempReal < 0 - 1.0 ) {
+                   tempReal = 0 - 1.0;
+                }
+                outReal[outIdx++] = tempReal;
+             } else {
+                outReal[outIdx++] = 0.0;
+             }
+             /* Slide the window one bar in O(1). Advancing it ages every retained
+              * value by one bar, which raises each of their weights by 1 and so adds
+              * the whole deviation sum; the departing value leaves at the full weight
+              * optInTimePeriod-1 and also loses its place in that sum, which is the
+              * remaining -1. The two together are exactly -optInTimePeriod*trailingX,
+              * and sumX must still be the COMPLETE window's sum when it is read here
+              * -- it is decremented on the line below, not above.
+              */
+             leavingX = trailingX * trailingX;
+             sumXY = sumXY + sumX - dPeriod * trailingX;
+             sumX -= trailingX;
+             sumX2 -= leavingX;
+             today += 1;
+          } while( today <= endIdx );
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode ctiImpl( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+       {
+          double sumX = 0;
+          double sumX2 = 0;
+          double sumXY = 0;
+          double x = 0;
+          double trailingX = 0;
+          double leavingX = 0;
+          double shift = 0;
+          double ssX = 0;
+          double spXY = 0;
+          double tempReal = 0;
+          double invPeriod = 0;
+          double dPeriod = 0;
+          double sumY = 0;
+          double ssY = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int j = 0;
+          int barsSinceReseed = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          lookbackTotal = optInTimePeriod - 1;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          outBegIdx.value = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
+          dPeriod = (double)optInTimePeriod;
+          invPeriod = 1.0 / dPeriod;
+          sumY = dPeriod * (dPeriod - 1.0) * 0.5;
+          ssY = dPeriod * (dPeriod * dPeriod - 1.0) / 12.0;
+          shift = (double)inReal[trailingIdx];
+          sumXY = 0.0;
+          sumX2 = sumXY;
+          sumX = sumX2;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             x = (double)inReal[j] - shift;
+             sumX += x;
+             sumX2 += x * x;
+             sumXY += x * (double)(startIdx - j);
+          }
+          today = startIdx;
+          outIdx = 0;
+          barsSinceReseed = 32 * optInTimePeriod;
+          leavingX = 0.0;
+          do {
+             x = (double)inReal[today] - shift;
+             sumX += x;
+             sumX2 += x * x;
+             ssX = sumX2 - sumX * sumX * invPeriod;
+             spXY = sumXY - sumX * sumY * invPeriod;
+             barsSinceReseed -= 1;
+             if( ssX < 0.000001 * sumX2 || leavingX > 1000000.0 * sumX2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInTimePeriod;
+                windowStart = today - lookbackTotal;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += (double)inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                sumXY = 0.0;
+                sumX2 = sumXY;
+                sumX = sumX2;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   x = (double)inReal[j] - shift;
+                   sumX += x;
+                   sumX2 += x * x;
+                   sumXY += x * (double)(today - j);
+                }
+                ssX = sumX2 - sumX * sumX * invPeriod;
+                spXY = sumXY - sumX * sumY * invPeriod;
+                if( ssX < 0.0 ) {
+                   ssX = 0.0;
+                }
+             }
+             trailingX = (double)inReal[trailingIdx] - shift;
+             trailingIdx += 1;
+             if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
+                tempReal = (0 - spXY) / Math.sqrt(ssX * ssY);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                } else if( tempReal < 0 - 1.0 ) {
+                   tempReal = 0 - 1.0;
+                }
+                outReal[outIdx++] = tempReal;
+             } else {
+                outReal[outIdx++] = 0.0;
+             }
+             leavingX = trailingX * trailingX;
+             sumXY = sumXY + sumX - dPeriod * trailingX;
+             sumX -= trailingX;
+             sumX2 -= leavingX;
+             today += 1;
+          } while( today <= endIdx );
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * John F. Ehlers' Correlation Trend Indicator: the Pearson correlation of
+        * the last {@code optInTimePeriod} closes against a straight line of
+        * positive slope. Bounded in -1..+1 by construction — {@code +1} is a
+        * perfectly linear uptrend, {@code -1} a perfectly linear downtrend,
+        * {@code 0} no linear trend. Trend strength and direction in one bounded
+        * number, with no smoothing, no recursion and no filter coefficients.
+        * Arithmetically it is <a
+        * href="https://ta-lib.org/functions/correl">{@code CORREL}</a> of the
+        * series against a ramp, with the ramp side collapsed to closed-form
+        * constants.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The ramp's direction is the whole sign of the indicator.</b> This implementation carries {@code y} as <i>bars ago</i>, which runs backward in time, so a rising series correlates negatively with it and the coefficient is negated once at the output. Ehlers' own listing counts the same way and takes {@code Y = -count}, which is the same thing. Getting this wrong inverts the indicator completely rather than perturbing it, because Pearson's {@code r} is odd in either variable — and no magnitude or {@code |r|} assertion can see it. The bars-ago orientation is kept because the O(1) window slide is written for it.</li>
+        * <li><b>The sums are taken against a shift, not on raw price levels.</b> Transcribing the published listing literally would compute {@code n·Σx² − (Σx)²} on the levels themselves, which is the cancellation that made {@code CORREL} return {@code 0}, {@code -1} and {@code -1.73} from perfectly correlated inputs. MEASURED: at a price level of 1e2 with a 1e-5 spread the naive form errs by 5.7e-03 absolute — on an indicator whose entire range is 2 wide — against 1.6e-10 for the shift-and-reseed form.</li>
+        * <li><b>There is a conditioning floor, and it is not a defect.</b> Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
+        * <li><b>A window with no spread returns exactly {@code 0.0}.</b> Only the price side can degenerate — the ramp's sum of squares is a positive constant for every {@code n ≥ 2} — and the answer follows {@code CORREL}'s precedent rather than the author's listing, which holds the previous value. Holding would make this function path-dependent; returning NaN from a successful call is not permitted. Implementations disagree here: the listing holds, {@code CORREL} gives {@code 0}, pandas gives {@code NaN}, Pine gives {@code na}.</li>
+        * <li><b>The result is clamped into -1..+1</b>, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
+        * <li>{@code optInTimePeriod} starts at 2, not 1: at {@code n = 1} the closed form {@code n²(n²−1)/12} is identically zero and every window is degenerate.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#ctiLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to measure the trend of.
+        * @param optInTimePeriod Number of trailing values correlated against the
+        *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal Correlation against the ramp, in -1..+1. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#correl
+        * @see Core#linearregSlope
+        * @see Core#vhf
+        */
+       public OutRange cti( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInTimePeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("CTI", startIdx, endIdx);
+          int guardStart = clampedStart("CTI", startIdx, ctiLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CTI", "inReal", inReal, guardInLen);
+          requireLength("CTI", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ctiImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CTI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * John F. Ehlers' Correlation Trend Indicator: the Pearson correlation of
+        * the last {@code optInTimePeriod} closes against a straight line of
+        * positive slope. Bounded in -1..+1 by construction — {@code +1} is a
+        * perfectly linear uptrend, {@code -1} a perfectly linear downtrend,
+        * {@code 0} no linear trend. Trend strength and direction in one bounded
+        * number, with no smoothing, no recursion and no filter coefficients.
+        * Arithmetically it is <a
+        * href="https://ta-lib.org/functions/correl">{@code CORREL}</a> of the
+        * series against a ramp, with the ramp side collapsed to closed-form
+        * constants.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li><b>The ramp's direction is the whole sign of the indicator.</b> This implementation carries {@code y} as <i>bars ago</i>, which runs backward in time, so a rising series correlates negatively with it and the coefficient is negated once at the output. Ehlers' own listing counts the same way and takes {@code Y = -count}, which is the same thing. Getting this wrong inverts the indicator completely rather than perturbing it, because Pearson's {@code r} is odd in either variable — and no magnitude or {@code |r|} assertion can see it. The bars-ago orientation is kept because the O(1) window slide is written for it.</li>
+        * <li><b>The sums are taken against a shift, not on raw price levels.</b> Transcribing the published listing literally would compute {@code n·Σx² − (Σx)²} on the levels themselves, which is the cancellation that made {@code CORREL} return {@code 0}, {@code -1} and {@code -1.73} from perfectly correlated inputs. MEASURED: at a price level of 1e2 with a 1e-5 spread the naive form errs by 5.7e-03 absolute — on an indicator whose entire range is 2 wide — against 1.6e-10 for the shift-and-reseed form.</li>
+        * <li><b>There is a conditioning floor, and it is not a defect.</b> Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
+        * <li><b>A window with no spread returns exactly {@code 0.0}.</b> Only the price side can degenerate — the ramp's sum of squares is a positive constant for every {@code n ≥ 2} — and the answer follows {@code CORREL}'s precedent rather than the author's listing, which holds the previous value. Holding would make this function path-dependent; returning NaN from a successful call is not permitted. Implementations disagree here: the listing holds, {@code CORREL} gives {@code 0}, pandas gives {@code NaN}, Pine gives {@code na}.</li>
+        * <li><b>The result is clamped into -1..+1</b>, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
+        * <li>{@code optInTimePeriod} starts at 2, not 1: at {@code n = 1} the closed form {@code n²(n²−1)/12} is identically zero and every window is degenerate.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#ctiLookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to measure the trend of.
+        * @param optInTimePeriod Number of trailing values correlated against the
+        *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal Correlation against the ramp, in -1..+1. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#correl
+        * @see Core#linearregSlope
+        * @see Core#vhf
+        */
+       public OutRange cti( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInTimePeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("CTI", startIdx, endIdx);
+          int guardStart = clampedStart("CTI", startIdx, ctiLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CTI", "inReal", inReal, guardInLen);
+          requireLength("CTI", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ctiImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("CTI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live CTI stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#cti} over the same series.
+        * Open with {@link Core#ctiOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class CtiStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double sumX;
+          private double sumX2;
+          private double sumXY;
+          private double leavingX;
+          private double shift;
+          private double invPeriod;
+          private double dPeriod;
+          private double sumY;
+          private double ssY;
+          private int lookbackTotal;
+          private int trailingIdx;
+          private int barsSinceReseed;
+          private int j;
+          private int today;
+          private int xMask;
+          private double[] x_inReal;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private CtiStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#cti} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CTI advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private CtiStream( CtiStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.sumX = other.sumX;
+             this.sumX2 = other.sumX2;
+             this.sumXY = other.sumXY;
+             this.leavingX = other.leavingX;
+             this.shift = other.shift;
+             this.invPeriod = other.invPeriod;
+             this.dPeriod = other.dPeriod;
+             this.sumY = other.sumY;
+             this.ssY = other.ssY;
+             this.lookbackTotal = other.lookbackTotal;
+             this.trailingIdx = other.trailingIdx;
+             this.barsSinceReseed = other.barsSinceReseed;
+             this.j = other.j;
+             this.today = other.today;
+             this.xMask = other.xMask;
+             this.x_inReal = other.x_inReal.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CTI update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw new TALibArgumentException("CTI update: BAD_PARAM", RetCode.BAD_PARAM);
+             core.ctiStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw new TALibArgumentException("CTI peek: BAD_PARAM", RetCode.BAD_PARAM);
+             CtiStream sp = this;
+             double x = 0.0;
+             double ssX = 0.0;
+             double spXY = 0.0;
+             double tempReal = 0.0;
+             int windowStart = 0;
+             int barsSinceReseed = sp.barsSinceReseed;
+             double cur_outReal = 0.0;
+             int j = sp.j;
+             double shift = sp.shift;
+             double sumX = sp.sumX;
+             double sumX2 = sp.sumX2;
+             double sumXY = sp.sumXY;
+             int trailingIdx = sp.trailingIdx;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             pkSlot0 = sp.today & sp.xMask;
+             pkVal0 = inReal;
+             /* The incoming bar is zero bars ago, so it moves sumX and sumX2 and
+              * leaves sumXY alone.
+              */
+             x = (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0) - shift;
+             sumX += x;
+             sumX2 += x * x;
+             ssX = sumX2 - sumX * sumX * sp.invPeriod;
+             spXY = sumXY - sumX * sp.sumY * sp.invPeriod;
+             /* Re-anchor and rebuild when the shift has gone stale: the price sum of
+              * squares has shrunk below 1e-6 of the squared deviations it is extracted
+              * from; OR the value the PREVIOUS bar removed sat so far from the shift
+              * that its squared term dwarfs what remains; OR at least every 32
+              * windows. Same three triggers as correl.c, watching the price side only
+              * -- the ramp side is exact constants and cannot drift.
+              *
+              * A vanishing spXY is NOT a trigger. It is a legitimate answer, a window
+              * with no linear trend, and reseeding on it would rebuild on every bar of
+              * ordinary sideways data.
+              */
+             barsSinceReseed -= 1;
+             if( ssX < 0.000001 * sumX2 || sp.leavingX > 1000000.0 * sumX2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * sp.optInTimePeriod;
+                windowStart = sp.today - sp.lookbackTotal;
+                tempReal = 0.0;
+                for( j = windowStart; j <= sp.today; j += 1 ) {
+                   tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+                }
+                shift = tempReal * sp.invPeriod;
+                sumXY = 0.0;
+                sumX2 = sumXY;
+                sumX = sumX2;
+                for( j = windowStart; j <= sp.today; j += 1 ) {
+                   x = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
+                   sumX += x;
+                   sumX2 += x * x;
+                   sumXY += x * (double)(sp.today - j);
+                }
+                ssX = sumX2 - sumX * sumX * sp.invPeriod;
+                spXY = sumXY - sumX * sp.sumY * sp.invPeriod;
+                /* A sum of squares is non-negative by definition, but this one is
+                 * extracted as a difference, so its SIGN is not guaranteed on a window
+                 * sitting inside a flat stretch. Enforced here rather than at the
+                 * divide, exactly as correl.c does: a negative ssX always reseeds on
+                 * the same bar, so the divide below can rely on it being >= 0.
+                 */
+                if( ssX < 0.0 ) {
+                   ssX = 0.0;
+                }
+             }
+             trailingIdx += 1;
+             /* THE SIGN. y here is BARS AGO, so it runs backward in time and a rising
+              * series correlates NEGATIVELY with it. Ehlers' listing counts the same
+              * way and takes Y = -count, which is the positively-sloped line the
+              * indicator is defined against; negating the coefficient once is the same
+              * thing, and it keeps the O(1) slide identity below written the way
+              * linearreg.c:102-114 states it. Dropping this negation silently inverts
+              * the whole indicator -- Pearson r is odd in either variable -- and a
+              * magnitude or |r| assertion cannot see it.
+              *
+              * ssY is a positive constant, so only ssX can make the window degenerate.
+              * It is tested against its own scale rather than an absolute band: the
+              * product carries the fourth power of the window's spread, so a fixed
+              * threshold rejects a well-defined correlation as soon as the data is
+              * small. The product is tested on its own because neither factor's test
+              * implies it -- at that fourth power it can underflow to exactly 0.0
+              * while both are still ordinary normals, and a zero divisor there gives
+              * NaN, which the clamp does not catch.
+              *
+              * An all-flat window therefore emits exactly 0.0 rather than NaN, which
+              * is correl.c's precedent and what #112 requires of a successful call.
+              */
+             if( ssX > 0.00000000000001 * sumX2 && ssX * sp.ssY > 0.0 ) {
+                tempReal = (0 - spXY) / Math.sqrt(ssX * sp.ssY);
+                /* A correlation coefficient cannot leave [-1,1]; rounding in the
+                 * three sums can still put it a few ulp outside.
+                 */
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                } else if( tempReal < 0 - 1.0 ) {
+                   tempReal = 0 - 1.0;
+                }
+                cur_outReal = tempReal;
+             } else {
+                cur_outReal = 0.0;
+             }
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public CtiStream clone() {
+             return new CtiStream(this);
+          }
+       }
+       private void ctiStepImpl( CtiStream sp, double inReal )
+       {
+          double x = 0.0;
+          double trailingX = 0.0;
+          double ssX = 0.0;
+          double spXY = 0.0;
+          double tempReal = 0.0;
+          int windowStart = 0;
+          sp.x_inReal[sp.today & sp.xMask] = inReal;
+          /* The incoming bar is zero bars ago, so it moves sumX and sumX2 and
+           * leaves sumXY alone.
+           */
+          x = sp.x_inReal[sp.today & sp.xMask] - sp.shift;
+          sp.sumX += x;
+          sp.sumX2 += x * x;
+          ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+          spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
+           * squares has shrunk below 1e-6 of the squared deviations it is extracted
+           * from; OR the value the PREVIOUS bar removed sat so far from the shift
+           * that its squared term dwarfs what remains; OR at least every 32
+           * windows. Same three triggers as correl.c, watching the price side only
+           * -- the ramp side is exact constants and cannot drift.
+           *
+           * A vanishing spXY is NOT a trigger. It is a legitimate answer, a window
+           * with no linear trend, and reseeding on it would rebuild on every bar of
+           * ordinary sideways data.
+           */
+          sp.barsSinceReseed -= 1;
+          if( ssX < 0.000001 * sp.sumX2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.barsSinceReseed <= 0 ) {
+             sp.barsSinceReseed = 32 * sp.optInTimePeriod;
+             windowStart = sp.today - sp.lookbackTotal;
+             tempReal = 0.0;
+             for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
+                tempReal += sp.x_inReal[sp.j & sp.xMask];
+             }
+             sp.shift = tempReal * sp.invPeriod;
+             sp.sumXY = 0.0;
+             sp.sumX2 = sp.sumXY;
+             sp.sumX = sp.sumX2;
+             for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
+                x = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
+                sp.sumX += x;
+                sp.sumX2 += x * x;
+                sp.sumXY += x * (double)(sp.today - sp.j);
+             }
+             ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+             spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+             /* A sum of squares is non-negative by definition, but this one is
+              * extracted as a difference, so its SIGN is not guaranteed on a window
+              * sitting inside a flat stretch. Enforced here rather than at the
+              * divide, exactly as correl.c does: a negative ssX always reseeds on
+              * the same bar, so the divide below can rely on it being >= 0.
+              */
+             if( ssX < 0.0 ) {
+                ssX = 0.0;
+             }
+          }
+          /* Save the trailing value before writing the output, since the input and
+           * output might be the same array.
+           */
+          trailingX = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
+          sp.trailingIdx += 1;
+          /* THE SIGN. y here is BARS AGO, so it runs backward in time and a rising
+           * series correlates NEGATIVELY with it. Ehlers' listing counts the same
+           * way and takes Y = -count, which is the positively-sloped line the
+           * indicator is defined against; negating the coefficient once is the same
+           * thing, and it keeps the O(1) slide identity below written the way
+           * linearreg.c:102-114 states it. Dropping this negation silently inverts
+           * the whole indicator -- Pearson r is odd in either variable -- and a
+           * magnitude or |r| assertion cannot see it.
+           *
+           * ssY is a positive constant, so only ssX can make the window degenerate.
+           * It is tested against its own scale rather than an absolute band: the
+           * product carries the fourth power of the window's spread, so a fixed
+           * threshold rejects a well-defined correlation as soon as the data is
+           * small. The product is tested on its own because neither factor's test
+           * implies it -- at that fourth power it can underflow to exactly 0.0
+           * while both are still ordinary normals, and a zero divisor there gives
+           * NaN, which the clamp does not catch.
+           *
+           * An all-flat window therefore emits exactly 0.0 rather than NaN, which
+           * is correl.c's precedent and what #112 requires of a successful call.
+           */
+          if( ssX > 0.00000000000001 * sp.sumX2 && ssX * sp.ssY > 0.0 ) {
+             tempReal = (0 - spXY) / Math.sqrt(ssX * sp.ssY);
+             /* A correlation coefficient cannot leave [-1,1]; rounding in the
+              * three sums can still put it a few ulp outside.
+              */
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             } else if( tempReal < 0 - 1.0 ) {
+                tempReal = 0 - 1.0;
+             }
+             sp.cur_outReal = tempReal;
+          } else {
+             sp.cur_outReal = 0.0;
+          }
+          /* Slide the window one bar in O(1). Advancing it ages every retained
+           * value by one bar, which raises each of their weights by 1 and so adds
+           * the whole deviation sum; the departing value leaves at the full weight
+           * optInTimePeriod-1 and also loses its place in that sum, which is the
+           * remaining -1. The two together are exactly -optInTimePeriod*trailingX,
+           * and sumX must still be the COMPLETE window's sum when it is read here
+           * -- it is decremented on the line below, not above.
+           */
+          sp.leavingX = trailingX * trailingX;
+          sp.sumXY = sp.sumXY + sp.sumX - sp.dPeriod * trailingX;
+          sp.sumX -= trailingX;
+          sp.sumX2 -= sp.leavingX;
+          sp.today += 1;
+       }
+       private RetCode ctiOpenImpl( CtiStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double sumX = 0;
+          double sumX2 = 0;
+          double sumXY = 0;
+          double x = 0;
+          double trailingX = 0;
+          double leavingX = 0;
+          double shift = 0;
+          double ssX = 0;
+          double spXY = 0;
+          double tempReal = 0;
+          double invPeriod = 0;
+          double dPeriod = 0;
+          double sumY = 0;
+          double ssY = 0;
+          int lookbackTotal = 0;
+          int outIdx = 0;
+          int today = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int j = 0;
+          int barsSinceReseed = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          lookbackTotal = optInTimePeriod - 1;
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          outBegIdx.value = startIdx;
+          trailingIdx = startIdx - lookbackTotal;
+          dPeriod = (double)optInTimePeriod;
+          invPeriod = 1.0 / dPeriod;
+          /* The ramp side is data-independent and collapses to two constants. With y
+           * running 0..optInTimePeriod-1 as BARS AGO,
+           *
+           *    sumY = n(n-1)/2            ssY = sumY2 - sumY*sumY/n = n(n*n-1)/12
+           *
+           * Both are computed in double because their integer forms overflow: at the
+           * top of the parameter range n*n*n is 1e15, far past what an int holds, and
+           * the product would wrap silently rather than fail. ssY is strictly positive
+           * for every n >= 2, which is why only the price side can make a window
+           * degenerate.
+           */
+          sumY = dPeriod * (dPeriod - 1.0) * 0.5;
+          ssY = dPeriod * (dPeriod * dPeriod - 1.0) / 12.0;
+          /* Measure the price side against a shift near the window, as correl.c does
+           * (#242). Transcribing the author's listing literally would carry
+           * n*Sxx - Sx*Sx on raw price levels, which is the quantity that returned 0,
+           * -1 and -1.73 from a perfectly correlated pair: MEASURED on the card, the
+           * naive form errs by 5.7e-03 at a 1e2 price level with a 1e-5 spread, on an
+           * indicator whose entire range is [-1, +1].
+           *
+           * Anchor on the first window value here; every later re-anchor uses the
+           * window mean, which is better centred but costs a pass this one cannot
+           * afford before the sums exist.
+           */
+          shift = inReal[trailingIdx];
+          /* The initial window, less its last bar. This bar's y is startIdx-j, since
+           * the first output is computed with `today` at startIdx.
+           */
+          sumXY = 0.0;
+          sumX2 = sumXY;
+          sumX = sumX2;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             x = inReal[j] - shift;
+             sumX += x;
+             sumX2 += x * x;
+             sumXY += x * (double)(startIdx - j);
+          }
+          today = startIdx;
+          outIdx = 0;
+          barsSinceReseed = 32 * optInTimePeriod;
+          leavingX = 0.0;
+          do {
+             /* The incoming bar is zero bars ago, so it moves sumX and sumX2 and
+              * leaves sumXY alone.
+              */
+             x = inReal[today] - shift;
+             sumX += x;
+             sumX2 += x * x;
+             ssX = sumX2 - sumX * sumX * invPeriod;
+             spXY = sumXY - sumX * sumY * invPeriod;
+             /* Re-anchor and rebuild when the shift has gone stale: the price sum of
+              * squares has shrunk below 1e-6 of the squared deviations it is extracted
+              * from; OR the value the PREVIOUS bar removed sat so far from the shift
+              * that its squared term dwarfs what remains; OR at least every 32
+              * windows. Same three triggers as correl.c, watching the price side only
+              * -- the ramp side is exact constants and cannot drift.
+              *
+              * A vanishing spXY is NOT a trigger. It is a legitimate answer, a window
+              * with no linear trend, and reseeding on it would rebuild on every bar of
+              * ordinary sideways data.
+              */
+             barsSinceReseed -= 1;
+             if( ssX < 0.000001 * sumX2 || leavingX > 1000000.0 * sumX2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInTimePeriod;
+                windowStart = today - lookbackTotal;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                sumXY = 0.0;
+                sumX2 = sumXY;
+                sumX = sumX2;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   x = inReal[j] - shift;
+                   sumX += x;
+                   sumX2 += x * x;
+                   sumXY += x * (double)(today - j);
+                }
+                ssX = sumX2 - sumX * sumX * invPeriod;
+                spXY = sumXY - sumX * sumY * invPeriod;
+                /* A sum of squares is non-negative by definition, but this one is
+                 * extracted as a difference, so its SIGN is not guaranteed on a window
+                 * sitting inside a flat stretch. Enforced here rather than at the
+                 * divide, exactly as correl.c does: a negative ssX always reseeds on
+                 * the same bar, so the divide below can rely on it being >= 0.
+                 */
+                if( ssX < 0.0 ) {
+                   ssX = 0.0;
+                }
+             }
+             /* Save the trailing value before writing the output, since the input and
+              * output might be the same array.
+              */
+             trailingX = inReal[trailingIdx] - shift;
+             trailingIdx += 1;
+             /* THE SIGN. y here is BARS AGO, so it runs backward in time and a rising
+              * series correlates NEGATIVELY with it. Ehlers' listing counts the same
+              * way and takes Y = -count, which is the positively-sloped line the
+              * indicator is defined against; negating the coefficient once is the same
+              * thing, and it keeps the O(1) slide identity below written the way
+              * linearreg.c:102-114 states it. Dropping this negation silently inverts
+              * the whole indicator -- Pearson r is odd in either variable -- and a
+              * magnitude or |r| assertion cannot see it.
+              *
+              * ssY is a positive constant, so only ssX can make the window degenerate.
+              * It is tested against its own scale rather than an absolute band: the
+              * product carries the fourth power of the window's spread, so a fixed
+              * threshold rejects a well-defined correlation as soon as the data is
+              * small. The product is tested on its own because neither factor's test
+              * implies it -- at that fourth power it can underflow to exactly 0.0
+              * while both are still ordinary normals, and a zero divisor there gives
+              * NaN, which the clamp does not catch.
+              *
+              * An all-flat window therefore emits exactly 0.0 rather than NaN, which
+              * is correl.c's precedent and what #112 requires of a successful call.
+              */
+             if( ssX > 0.00000000000001 * sumX2 && ssX * ssY > 0.0 ) {
+                tempReal = (0 - spXY) / Math.sqrt(ssX * ssY);
+                /* A correlation coefficient cannot leave [-1,1]; rounding in the
+                 * three sums can still put it a few ulp outside.
+                 */
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                } else if( tempReal < 0 - 1.0 ) {
+                   tempReal = 0 - 1.0;
+                }
+                outReal[outIdx++ * outStride] = tempReal;
+             } else {
+                outReal[outIdx++ * outStride] = 0.0;
+             }
+             /* Slide the window one bar in O(1). Advancing it ages every retained
+              * value by one bar, which raises each of their weights by 1 and so adds
+              * the whole deviation sum; the departing value leaves at the full weight
+              * optInTimePeriod-1 and also loses its place in that sum, which is the
+              * remaining -1. The two together are exactly -optInTimePeriod*trailingX,
+              * and sumX must still be the COMPLETE window's sum when it is read here
+              * -- it is decremented on the line below, not above.
+              */
+             leavingX = trailingX * trailingX;
+             sumXY = sumXY + sumX - dPeriod * trailingX;
+             sumX -= trailingX;
+             sumX2 -= leavingX;
+             today += 1;
+          } while( today <= endIdx );
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = today - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inReal = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.sumX = sumX;
+          sp.sumX2 = sumX2;
+          sp.sumXY = sumXY;
+          sp.leavingX = leavingX;
+          sp.shift = shift;
+          sp.invPeriod = invPeriod;
+          sp.dPeriod = dPeriod;
+          sp.sumY = sumY;
+          sp.ssY = ssY;
+          sp.lookbackTotal = lookbackTotal;
+          sp.trailingIdx = trailingIdx;
+          sp.barsSinceReseed = barsSinceReseed;
+          sp.j = j;
+          sp.today = today;
+          sp.xMask = physX - 1;
+          sp.x_inReal = capX_inReal;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* ctiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       CtiStream ctiOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          CtiStream sp = new CtiStream(this);
+          RetCode retCode = ctiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw new InsufficientHistoryException("CTI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.INTERNAL_ERROR ) {
+             throw new TALibStateException("CTI openAndFill: internal error", retCode);
+          }
+          throw new TALibArgumentException("CTI openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind ctiOpen (composition seam). */
+       CtiStream ctiOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          CtiStream sp = new CtiStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = ctiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw new InsufficientHistoryException("CTI open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.INTERNAL_ERROR ) {
+             throw new TALibStateException("CTI open: internal error", retCode);
+          }
+          throw new TALibArgumentException("CTI open: " + retCode, retCode);
+       }
+       /**
+        * Open a live CTI stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#cti} at that bar.
+        * <p>The history must hold at least {@code ctiLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public CtiStream ctiOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("CTI open", "inReal", inReal);
+          requireHistory("CTI open", inReal.length);
+          return ctiOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#ctiOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#cti} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link CtiStream#outRange()}.
+        */
+       public CtiStream ctiOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("CTI openAndFill", "inReal", inReal);
+          requireHistory("CTI openAndFill", inReal.length);
+          int guardOutLen = openFillCount("CTI openAndFill", inReal.length, ctiLookback(optInTimePeriod));
+          requireLength("CTI openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw new TALibArgumentException("CTI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return ctiOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  KL       Kevin Lin
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
      *  090526 KL     First version (issue #372).
      */
 
@@ -181105,7 +182312,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "1cd904081de55433";
+    static final String SPLICED_GENCODE_DIGEST = "5baed1d61d441453";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -181632,6 +182839,10 @@ public class TaCodegenServe {
         ABSTRACT.put("COSH", new AbsFunc("COSH", "Math Transform", "Vector Trigonometric Cosh", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("CTI", new AbsFunc("CTI", "Momentum Indicators", "Correlation Trend Indicator", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars correlated against the ramp",20.0, 0,0,0,0,0,0, 2,100000,5,100,5, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("CUMSUM", new AbsFunc("CUMSUM", "Math Operators", "Cumulative Sum", 570425344,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -182290,6 +183501,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_CORREL\"")) return handle_CORREL(json);
         else if (json.contains("\"TA_COS\"")) return handle_COS(json);
         else if (json.contains("\"TA_COSH\"")) return handle_COSH(json);
+        else if (json.contains("\"TA_CTI\"")) return handle_CTI(json);
         else if (json.contains("\"TA_CUMSUM\"")) return handle_CUMSUM(json);
         else if (json.contains("\"TA_CVI\"")) return handle_CVI(json);
         else if (json.contains("\"TA_DEMA\"")) return handle_DEMA(json);
@@ -182588,6 +183800,8 @@ public class TaCodegenServe {
             sb.append("\"TA_COS\"");
             sb.append(",");
             sb.append("\"TA_COSH\"");
+            sb.append(",");
+            sb.append("\"TA_CTI\"");
             sb.append(",");
             sb.append("\"TA_CUMSUM\"");
             sb.append(",");
@@ -197748,6 +198962,153 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideCosh(core, json, endIdx, inReal, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_CTI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
+            inReal = _tmp_inReal;
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.ctiLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.ctiImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.cti(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.ctiOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.CtiStream _wh = core.ctiOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.cti(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            rideCti(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideCti(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -228342,6 +229703,157 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_CTI(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.ctiImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.ctiLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.ctiOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.CtiStream _fh = c2.ctiOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.ctiOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.CtiStream st;
+                try { st = c2.ctiOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.CtiStream sA = c2.ctiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.CtiStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            double uB = sB.update(fz_c[t]);
+                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.ctiOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.CtiStream sD = c2.ctiOpen(fz_c, Integer.MIN_VALUE);
+                Core.CtiStream sE = c2.ctiOpen(fz_c, 20);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ctiImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.CtiStream stA = c2.ctiOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_CUMSUM(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -245571,6 +247083,7 @@ public class TaCodegenServe {
         case "TA_CORREL": return sv_CORREL(json);
         case "TA_COS": return sv_COS(json);
         case "TA_COSH": return sv_COSH(json);
+        case "TA_CTI": return sv_CTI(json);
         case "TA_CUMSUM": return sv_CUMSUM(json);
         case "TA_CVI": return sv_CVI(json);
         case "TA_DEMA": return sv_DEMA(json);
@@ -254985,6 +256498,103 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.CoshStream st2 = core.coshOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideCti(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyCti(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyCti(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.ctiLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_CTI");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.cti(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.ctiOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.ctiOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.CtiStream st = core.ctiOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.CtiStream st2 = core.ctiOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

@@ -10,6 +10,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Added
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
   target. An autotools install still provides `ta-lib.pc` only. (#422)
+- New TA Functions:
+  - CTI: Correlation Trend Indicator (proposal-drafts#74)
 
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)

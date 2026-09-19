@@ -60,6 +60,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [CMO](/functions/cmo.md) — Chande Momentum Oscillator
 - [CMOU](/functions/cmou.md) — Chande Momentum Oscillator (Unsmoothed)
 - [COPPOCK](/functions/coppock.md) — Coppock Curve
+- [CTI](/functions/cti.md) — Correlation Trend Indicator
 - [DPO](/functions/dpo.md) — Detrended Price Oscillator
 - [DX](/functions/dx.md) — Directional Movement Index
 - [ER](/functions/er.md) — Kaufman Efficiency Ratio

@@ -329,6 +329,9 @@ final class Dispatch {
          case "COSH":
             return core.cosh(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "CTI":
+            return core.cti(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "CUMSUM":
             return core.cumsum(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -852,6 +855,8 @@ final class Dispatch {
             return core.cosLookback();
          case "COSH":
             return core.coshLookback();
+         case "CTI":
+            return core.ctiLookback(h.intOpt(0));
          case "CUMSUM":
             return core.cumsumLookback();
          case "CVI":
