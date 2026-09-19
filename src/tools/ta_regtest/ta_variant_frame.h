@@ -5053,6 +5053,45 @@ static const TA_VOptSpec TA_VOpt_KDJ[] = {
    { "optInSlowD_MAType", TA_VOPT_ENUM, 0.0, 13.0, 13.0 },
 };
 
+static TA_RetCode TA_KURTOSIS_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_KURTOSIS(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_KURTOSIS_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_KURTOSIS(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_KURTOSIS[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_KURTOSIS[] = { 0 };
+static const TA_VOptSpec TA_VOpt_KURTOSIS[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 4.0, 100000.0, 30.0 },
+};
+
 static TA_RetCode TA_LINEARREG_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8734,6 +8773,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_KC, 3, TA_VOpt_KC, 3, TA_VOutIsInt_KC, 0 },
    { "KDJ", TA_KDJ_VFrameD, TA_KDJ_VFrameS,
      3, TA_VIn_KDJ, 5, TA_VOpt_KDJ, 3, TA_VOutIsInt_KDJ, 0 },
+   { "KURTOSIS", TA_KURTOSIS_VFrameD, TA_KURTOSIS_VFrameS,
+     1, TA_VIn_KURTOSIS, 1, TA_VOpt_KURTOSIS, 1, TA_VOutIsInt_KURTOSIS, 0 },
    { "LINEARREG", TA_LINEARREG_VFrameD, TA_LINEARREG_VFrameS,
      1, TA_VIn_LINEARREG, 1, TA_VOpt_LINEARREG, 1, TA_VOutIsInt_LINEARREG, 0 },
    { "LINEARREG_ANGLE", TA_LINEARREG_ANGLE_VFrameD, TA_LINEARREG_ANGLE_VFrameS,
@@ -8902,6 +8943,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 201
+#define TA_VARIANT_TABLE_SIZE 202
 
 #endif /* TA_VARIANT_FRAME_H */

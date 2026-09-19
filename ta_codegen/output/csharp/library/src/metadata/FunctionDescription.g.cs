@@ -5153,6 +5153,48 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- KURTOSIS -->
+	<FinancialFunction>
+		<Abbreviation>KURTOSIS</Abbreviation>
+		<ShortDescription>Rolling Excess Kurtosis</ShortDescription>
+		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>4</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>10</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>5</SuggestedIncrement>
+				</Range>
+				<DefaultValue>30</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- LINEARREG -->
 	<FinancialFunction>
 		<Abbreviation>LINEARREG</Abbreviation>

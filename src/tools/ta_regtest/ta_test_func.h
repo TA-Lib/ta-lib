@@ -9,6 +9,7 @@ ErrorNumber test_func_rsi     ( TA_History *history );
 ErrorNumber test_func_po      ( TA_History *history );
 ErrorNumber test_func_macd    ( TA_History *history );
 ErrorNumber test_func_stddev  ( TA_History *history );
+ErrorNumber test_func_kurtosis( TA_History *history );
 ErrorNumber test_func_correl  ( TA_History *history );
 ErrorNumber test_func_beta    ( TA_History *history );
 ErrorNumber test_func_linearreg( TA_History *history );

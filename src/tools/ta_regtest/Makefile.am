@@ -54,6 +54,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_vwap.c \
 	ta_test_func/test_cmf.c \
 	ta_test_func/test_kc.c \
+	ta_test_func/test_kurtosis.c \
 	ta_test_func/test_donchian.c \
 	ta_test_func/test_rma.c \
 	ta_test_func/test_supertrend.c \
