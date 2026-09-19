@@ -247,6 +247,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeMavp(),
             MakeMax(),
             MakeMaxindex(),
+            MakeMedian(),
             MakeMedprice(),
             MakeMfi(),
             MakeMidpoint(),
@@ -3264,6 +3265,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Maxindex(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOut(0)));
+
+    private static FuncInfo MakeMedian() => new(
+        name: "MEDIAN",
+        group: FunctionGroup.StatisticFunctions,
+        hint: "Rolling Median",
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 30, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.MedianLookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Median(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeMedprice() => new(
         name: "MEDPRICE",

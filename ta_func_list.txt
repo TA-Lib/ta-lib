@@ -132,6 +132,7 @@ MASSI               Mass Index
 MAVP                Moving average with variable period
 MAX                 Highest value over a specified period
 MAXINDEX            Index of highest value over a specified period
+MEDIAN              Rolling Median
 MEDPRICE            Median Price
 MFI                 Money Flow Index
 MIDPOINT            MidPoint over period

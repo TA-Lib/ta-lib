@@ -1253,6 +1253,15 @@ TA_RetCode TA_MAXINDEX_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MAXINDEX_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_MEDIAN_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_MEDIAN_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_MEDPRICE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -137,6 +137,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_MAVP.c \
 	ta_MAX.c \
 	ta_MAXINDEX.c \
+	ta_MEDIAN.c \
 	ta_MEDPRICE.c \
 	ta_MFI.c \
 	ta_MIDPOINT.c \

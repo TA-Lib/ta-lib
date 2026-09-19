@@ -61,7 +61,7 @@ TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrap
 
 ## Aliases
 
-Percentile Nearest Rank, Rolling Percentile, Rolling Quantile, Rolling Median
+Percentile Nearest Rank, Rolling Percentile, Rolling Quantile
 
 ## See Also
 

@@ -876,6 +876,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST_LBL_NOSV( test_func_reference, "REFERENCE,GOLDEN,ORACLE,NUMERICS",
                                 "Statistical reference: NIST StRD, Wilkinson" );
    DO_TEST( test_func_stddev,   "STDDEV,VAR" );
+   DO_TEST( test_func_median,   "MEDIAN" );
    /* CORREL numerical robustness (#242). Separate from the per_hl group so the
     * probes can be reached on their own; --function=CORREL matches both. */
    DO_TEST( test_func_correl,   "CORREL/NUMERICS" );
