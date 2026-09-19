@@ -12,9 +12,12 @@
 #      the ABI baseline (ABI.released) and derive the shared library version
 #      (ABI.manifest, TALIB_LIBRARY_VERSION in configure.ac) from the public
 #      headers; update the TA-Lib source digest in ta_common.h; and point the
-#      website install page at the latest published release. That last one is
-#      the only thing that puts a new release on the website: it lands with the
-#      post-release commit and deploys when that commit reaches main.
+#      website pages at the latest published release of each backend (the C
+#      install page from the GitHub release, the Java API page from Maven
+#      Central, so a backend that publishes on its own cadence is not pinned to
+#      VERSION). That last one is the only thing that puts a new release on the
+#      website: it lands with the post-release commit and deploys when that
+#      commit reaches main.
 #
 #      Exits non-zero, leaving ABI.manifest and TALIB_LIBRARY_VERSION as they
 #      were, when public API that shipped was removed or changed: put it back, or
@@ -51,7 +54,7 @@ import sys
 
 from utilities.common import verify_git_repo, run_command
 from utilities.versions import sync_sources_digest, sync_versions
-from utilities.website import latest_release_version, sync_install_page
+from utilities.website import latest_release_version, sync_all
 import abi
 
 def generate_short_unique_id(length=20) -> str:
@@ -120,7 +123,7 @@ def main(argv=None):
         if blocked:
             print(f"Skipping the dev/main merge: {blocked}.")
             print("Doing the metadata half only (versions, shared library version, sources "
-                  "digest, website install page). That half needs "
+                  "digest, website pages). That half needs "
                   "no branch switching, and updating dev is not what a feature branch "
                   "wants before a commit anyway.")
         else:
@@ -237,12 +240,10 @@ def main(argv=None):
         else:
             print(f"No changes to sources digest (ta_common.h) [{digest}]")
 
-        if released is None:
-            print("Warning: website install page NOT synced; re-run once GitHub is reachable.")
-        elif sync_install_page(root_dir, released):
-            print(f"Updated website install page to released [{released}]")
-        else:
-            print(f"No changes to website install page [{released}]")
+        # Every backend's page, not just C's. `released` is passed in because the
+        # ABI gate above already paid for that lookup.
+        for message in sync_all(root_dir, known={"C": released})[0]:
+            print(message)
 
         if not abi_ok:
             sys.exit(1)
