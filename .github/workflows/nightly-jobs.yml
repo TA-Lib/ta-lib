@@ -1526,9 +1526,11 @@ jobs:
       # so both see the default branch's scope while the key is a pure tree
       # fingerprint. A shared key would let whichever ran first skip the other's
       # measurement. main measures every night, ~1 min beside a 22 min job.
+      #
+      # Never on accept: a skip would drop the rows it names and read green.
       - name: Has this exact tree already been measured?
         id: seen
-        if: env.FORCE != 'true' && env.IS_MAIN != '1'
+        if: env.FORCE != 'true' && env.IS_MAIN != '1' && env.MODE != 'accept'
         uses: actions/cache/restore@v5
         with:
           path: ${{ runner.temp }}/perf
