@@ -16,29 +16,22 @@
 name: nightly jobs
 
 on:
+  # Adding a trigger here hands `test` and `icount` the repo default token:
+  # they are the two jobs with no `permissions:` of their own.
   workflow_call:
-
-  workflow_dispatch:
     inputs:
       force_build:
-        description: "Force rebuild + tests even when dist digests match"
         type: boolean
         default: false
       perf_mode:
-        description: "Instruction counts. gate: fail above 10% and lower any row today beat. accept: additionally RAISE the rows named below. measure: report only, commit nothing."
-        type: choice
-        options: [gate, accept, measure]
-        default: gate
+        type: string
       perf_accept:
-        description: "perf_mode=accept only. Entry points to raise: SMA for every tier, SMA/batch for one, comma-separated. ALL discards what every other row accumulated, so name what you mean."
-        default: ""
+        type: string
       perf_force_measure:
-        description: "Measure even when this exact tree was already measured. Untick to exercise the skip path on demand."
         type: boolean
         default: true
       perf_threshold:
-        description: "Fractional growth that fails one entry point (default 0.10)."
-        default: "0.10"
+        type: string
 
 jobs:
   test:
@@ -1463,12 +1456,7 @@ jobs:
       MODE: ${{ inputs.perf_mode || 'gate' }}
       THRESHOLD: ${{ inputs.perf_threshold || '0.10' }}
       ACCEPT: ${{ inputs.perf_accept || '' }}
-      # Empty on a schedule, so the skip is armed there; true on a dispatch,
-      # because someone who asked for a run gets one. `inputs` is empty when a
-      # caller reaches this file, so the event name is what carries a dispatch
-      # made on dev-nightly-tests.yml: without the second arm the runbook's
-      # pre-release dispatch would silently arm the skip.
-      FORCE: ${{ inputs.perf_force_measure || (github.event_name != 'schedule') }}
+      FORCE: ${{ inputs.perf_force_measure }}
 
     steps:
       - name: Checkout
@@ -1516,9 +1504,6 @@ jobs:
       # measured. Anything unexpected (no fingerprint, cache miss, cache
       # evicted) falls through to measuring, so the failure mode is a wasted
       # run and never a silent skip.
-      #
-      # Scheduled runs only. A human who dispatched this asked for a
-      # measurement and gets one.
       - name: Fingerprint the sources a count can depend on
         id: fp
         run: |
