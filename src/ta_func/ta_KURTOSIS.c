@@ -832,7 +832,7 @@ static TA_RetCode TA_KURTOSIS_OpenImpl( struct TA_KURTOSIS_Stream **stream, cons
       sp->windowStart = windowStart;
       sp->i = i;
       sp->xCap = (int)(i - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_KURTOSIS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(429); }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_KURTOSIS_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(430); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

@@ -17485,7 +17485,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 203, "probe count");
+    assert_eq!(PROBES.len(), 204, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),
