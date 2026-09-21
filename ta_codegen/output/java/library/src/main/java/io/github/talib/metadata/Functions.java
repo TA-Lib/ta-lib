@@ -1658,7 +1658,7 @@ public final class Functions {
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
                "Time Period", "Number of bars correlated against the ramp", 20.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 5, 100, 5, null)
+               2, 100000, 5, 50, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

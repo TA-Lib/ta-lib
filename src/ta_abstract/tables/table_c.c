@@ -1725,8 +1725,8 @@ static const TA_IntegerRange TA_DEF_CTI_TimePeriod =
    2,
    100000,
    5,
-   100,
-   5
+   50,
+   1
 };
 
 static const TA_OptInputParameterInfo TA_DEF_UI_D_CTI_TimePeriod =

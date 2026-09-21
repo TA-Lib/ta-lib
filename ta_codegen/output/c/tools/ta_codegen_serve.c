@@ -3445,7 +3445,7 @@ static int sv_steq_TA_CTI( const struct TA_CTI_Stream *a, const struct TA_CTI_St
    if( sv_xtier_ne(a->sumX, b->sumX, z) ) { *w = "sumX"; return 1; }
    if( sv_xtier_ne(a->sumX2, b->sumX2, z) ) { *w = "sumX2"; return 1; }
    if( sv_xtier_ne(a->sumXY, b->sumXY, z) ) { *w = "sumXY"; return 1; }
-   if( sv_xtier_ne(a->leavingX, b->leavingX, z) ) { *w = "leavingX"; return 1; }
+   if( sv_xtier_ne(a->peakX2, b->peakX2, z) ) { *w = "peakX2"; return 1; }
    if( sv_xtier_ne(a->shift, b->shift, z) ) { *w = "shift"; return 1; }
    if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->dPeriod, b->dPeriod, z) ) { *w = "dPeriod"; return 1; }

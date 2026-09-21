@@ -2290,7 +2290,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         optInputs:
         [
-            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars correlated against the ramp", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 5, 100, 5)),
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars correlated against the ramp", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 5, 50, 1)),
         ],
         outputs:
         [

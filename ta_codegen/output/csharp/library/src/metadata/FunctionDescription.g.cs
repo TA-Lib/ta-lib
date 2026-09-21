@@ -3958,8 +3958,8 @@ public static class FunctionDescription
 					<Minimum>2</Minimum>
 					<Maximum>100000</Maximum>
 					<SuggestedStart>5</SuggestedStart>
-					<SuggestedEnd>100</SuggestedEnd>
-					<SuggestedIncrement>5</SuggestedIncrement>
+					<SuggestedEnd>50</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
 				</Range>
 				<DefaultValue>20</DefaultValue>
 			</OptionalInputArgument>
