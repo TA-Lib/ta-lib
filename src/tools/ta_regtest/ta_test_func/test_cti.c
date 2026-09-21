@@ -44,8 +44,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  091626 KL     First version (proposal-drafts issue #74).
- *  092126 MF,CC  External-oracle goldens; reseed, flat-tail and two-bar
- *                legs (issue #430).
+ *  092126 MF,CC  External-oracle goldens and legs 9 to 14 (issue #430).
  *
  */
 
@@ -786,11 +785,11 @@ static ErrorNumber test_cti_bounds( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (6) A window with no spread returns exactly 0.0, as TA_CORREL does. The flat
- * stretch follows real closes, so the running sums enter it carrying residue
- * from the values that left; which residue survives depends on the period, so
- * every period runs. Holding the previous output, as the author's listing
- * does, fails here.
+/* (6) A window with no spread returns exactly 0.0, TA_CORREL's convention.
+ * The flat stretch follows real closes, so the running sums enter it carrying
+ * residue from the values that left; which residue survives depends on the
+ * period, so every period runs. Holding the previous output, as the author's
+ * listing does, fails here.
  */
 static ErrorNumber test_cti_flat( const TA_History *history )
 {
@@ -1050,9 +1049,11 @@ static ErrorNumber test_cti_long( void )
    {
       n = periods[pr];
       retCode = TA_CTI( 0, CTI_LONG_BARS-1, in, n, &begIdx, &nbElement, out );
-      if( retCode != TA_SUCCESS )
+      if( retCode != TA_SUCCESS || begIdx != n-1
+          || nbElement != CTI_LONG_BARS-begIdx )
       {
-         printf( "CTI long walk Fail [N=%d]: rc=%d\n", n, (int)retCode );
+         printf( "CTI long walk Fail [N=%d]: rc=%d (%d,%d)\n", n, (int)retCode,
+                 begIdx, nbElement );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
       for( bar = begIdx; bar < CTI_LONG_BARS; bar++ )
@@ -1110,9 +1111,11 @@ static ErrorNumber test_cti_ulp( void )
 
    retCode = TA_CTI( 0, CTI_ULP_BARS-1, in, CTI_ULP_PERIOD,
                      &begIdx, &nbElement, out );
-   if( retCode != TA_SUCCESS )
+   if( retCode != TA_SUCCESS || begIdx != CTI_ULP_PERIOD-1
+       || nbElement != CTI_ULP_BARS-begIdx )
    {
-      printf( "CTI one-ulp Fail: rc=%d\n", (int)retCode );
+      printf( "CTI one-ulp Fail: rc=%d (%d,%d)\n", (int)retCode, begIdx,
+              nbElement );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
    CTI_SERVER_VERIFY( 0, CTI_ULP_BARS-1, CTI_ULP_BARS, retCode, begIdx,

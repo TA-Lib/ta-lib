@@ -11,7 +11,7 @@ Arithmetically it is [`CORREL`](/functions/correl.md) of the series against a ra
 
 ## Formula
 
-With the window's closes `x` and `y` a straight line rising with time:
+With `n` = `optInTimePeriod`, `x` the window's closes and `y` a straight line rising with time:
 
     CTI = ( n·Σxy − Σx·Σy ) / sqrt( ( n·Σx² − (Σx)² ) · ( n·Σy² − (Σy)² ) ), or 0 when the window is flat
 
@@ -75,4 +75,4 @@ Correlation Trend Indicator, Ehlers Correlation Trend Indicator, Correlation Tre
 
 ## References
 
-- Ehlers, John F. "Correlation As A Trend Indicator." *Technical Analysis of Stocks & Commodities*, May 2020 — Code Listing 1, marked (c) 2013-2019 John F. Ehlers.
+- John F. Ehlers, "Correlation As A Trend Indicator", *Technical Analysis of Stocks & Commodities*, V.38:5 (May 2020), Code Listing 1, [author's PDF](https://www.mesasoftware.com/papers/CORRELATION%20AS%20A%20TREND%20INDICATOR.pdf)

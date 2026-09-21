@@ -363,8 +363,9 @@ impl Core {
     ///
     /// # References
     ///
-    /// * Ehlers, John F. "Correlation As A Trend Indicator." *Technical Analysis of Stocks &
-    ///   Commodities*, May 2020 — Code Listing 1, marked (c) 2013-2019 John F. Ehlers.
+    /// * John F. Ehlers, "Correlation As A Trend Indicator", *Technical Analysis of Stocks &
+    ///   Commodities*, V.38:5 (May 2020), Code Listing 1, [author's
+    ///   PDF](https://www.mesasoftware.com/papers/CORRELATION%20AS%20A%20TREND%20INDICATOR.pdf)
     #[doc(alias = "TA_CTI")]
     #[doc(alias = "CorrelationTrendIndicator")]
     #[doc(alias = "EhlersCorrelationTrendIndicator")]
