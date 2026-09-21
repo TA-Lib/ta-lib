@@ -1643,7 +1643,7 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 10] = [
+    let expected: [(&str, &str); 11] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
         ("KC", "the moving average is entered at exactly ema_lookback over a typical-price buffer \
@@ -1658,6 +1658,11 @@ fn composed_sub_call_destination_funcs() {
                  and bails otherwise, so signal count == N_MACDEXT"),
         ("PPO", "as APO -- the slow/fast swap is the precondition"),
         ("PVO", "as APO -- the slow/fast swap is the precondition"),
+        ("RVIR", "as KDJ -- the low leg is handed outBegIdx/outNBElement themselves and RVIR \
+                 returns them unmodified, so the final count IS that callee's count. \
+                 rvir_lookback delegates to rvi_lookback, so the high leg entered at the same \
+                 startIdx agrees by construction and the averaging loop runs over one count, \
+                 not two"),
         ("STDDEV", "stddev_lookback DELEGATES to var_lookback in the source, so the counts are \
                  equal by construction rather than by arithmetic coincidence"),
         ("STOCH", "the callee is handed tempBuffer[..*outNBElement], so its output cannot exceed \
