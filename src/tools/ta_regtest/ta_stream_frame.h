@@ -8566,6 +8566,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 202
+#define TA_STREAM_TABLE_SIZE 203
 
 #endif /* TA_STREAM_FRAME_H */
