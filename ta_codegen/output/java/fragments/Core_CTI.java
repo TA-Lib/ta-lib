@@ -389,9 +389,8 @@
     * href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
     * <li>A flat window returns exactly {@code 0.0} rather than holding the previous value as the author's listing does; holding would make the function path-dependent.</li>
-    * <li>The result is clamped into -1..+1, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
+    * <li>The result is clamped into -1..+1, as {@code CORREL} is: rounding in three sums can put a coefficient slightly outside its own range.</li>
     * <li>{@code optInTimePeriod} starts at 2, not 1: at {@code n = 1} the closed form {@code n²(n²−1)/12} is identically zero and every window is degenerate.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -461,9 +460,8 @@
     * href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
     * <li>A flat window returns exactly {@code 0.0} rather than holding the previous value as the author's listing does; holding would make the function path-dependent.</li>
-    * <li>The result is clamped into -1..+1, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
+    * <li>The result is clamped into -1..+1, as {@code CORREL} is: rounding in three sums can put a coefficient slightly outside its own range.</li>
     * <li>{@code optInTimePeriod} starts at 2, not 1: at {@code n = 1} the closed form {@code n²(n²−1)/12} is identically zero and every window is degenerate.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in

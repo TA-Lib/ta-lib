@@ -444,9 +444,8 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</description></item>
    /// <item><description>A flat window returns exactly <c>0.0</c> rather than holding the previous value as the author's listing does; holding would make the function path-dependent.</description></item>
-   /// <item><description>The result is clamped into -1..+1, as <c>CORREL</c> is: rounding in three sums can put a coefficient a few ulp outside its own range.</description></item>
+   /// <item><description>The result is clamped into -1..+1, as <c>CORREL</c> is: rounding in three sums can put a coefficient slightly outside its own range.</description></item>
    /// <item><description><c>optInTimePeriod</c> starts at 2, not 1: at <c>n = 1</c> the closed form <c>n²(n²−1)/12</c> is identically zero and every window is degenerate.</description></item>
    /// </list>
    /// <para>
@@ -516,9 +515,8 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</description></item>
    /// <item><description>A flat window returns exactly <c>0.0</c> rather than holding the previous value as the author's listing does; holding would make the function path-dependent.</description></item>
-   /// <item><description>The result is clamped into -1..+1, as <c>CORREL</c> is: rounding in three sums can put a coefficient a few ulp outside its own range.</description></item>
+   /// <item><description>The result is clamped into -1..+1, as <c>CORREL</c> is: rounding in three sums can put a coefficient slightly outside its own range.</description></item>
    /// <item><description><c>optInTimePeriod</c> starts at 2, not 1: at <c>n = 1</c> the closed form <c>n²(n²−1)/12</c> is identically zero and every window is degenerate.</description></item>
    /// </list>
    /// <para>

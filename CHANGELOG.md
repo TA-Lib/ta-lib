@@ -11,7 +11,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - New TA Functions:
-  - CTI: Correlation Trend Indicator (proposal-drafts#74)
+  - CTI: Correlation Trend Indicator (#430)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
 
 ### Faster

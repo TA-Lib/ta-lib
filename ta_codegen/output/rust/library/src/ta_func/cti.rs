@@ -366,6 +366,9 @@ impl Core {
     /// * Ehlers, John F. "Correlation As A Trend Indicator." *Technical Analysis of Stocks &
     ///   Commodities*, May 2020 — Code Listing 1, marked (c) 2013-2019 John F. Ehlers.
     #[doc(alias = "TA_CTI")]
+    #[doc(alias = "CorrelationTrendIndicator")]
+    #[doc(alias = "EhlersCorrelationTrendIndicator")]
+    #[doc(alias = "CorrelationTrend")]
     pub fn cti(
         &self,
         startIdx: usize,

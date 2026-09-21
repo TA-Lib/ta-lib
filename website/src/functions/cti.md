@@ -19,9 +19,8 @@ A rising series therefore reads positive. The `y` side is data-independent and c
 
 ## Notes
 
-- Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.
 - A flat window returns exactly `0.0` rather than holding the previous value as the author's listing does; holding would make the function path-dependent.
-- The result is clamped into -1..+1, as `CORREL` is: rounding in three sums can put a coefficient a few ulp outside its own range.
+- The result is clamped into -1..+1, as `CORREL` is: rounding in three sums can put a coefficient slightly outside its own range.
 - `optInTimePeriod` starts at 2, not 1: at `n = 1` the closed form `n²(n²−1)/12` is identically zero and every window is degenerate.
 
 ## Inputs
@@ -37,14 +36,6 @@ A rising series therefore reads positive. The `y` side is data-independent and c
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
 | `optInTimePeriod` | integer | 20 | 2–100000 | Number of trailing values correlated against the ramp |
-
-## See Also
-
-[CORREL](/functions/correl.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [VHF](/functions/vhf.md)
-
-## References
-
-- Ehlers, John F. "Correlation As A Trend Indicator." *Technical Analysis of Stocks & Commodities*, May 2020 — Code Listing 1, marked (c) 2013-2019 John F. Ehlers.
 
 ## Properties
 
@@ -62,3 +53,26 @@ A rising series therefore reads positive. The `y` side is data-independent and c
 
 </div>
 
+## Implementation
+
+TA-Lib Definition: [`cti.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cti/cti.c) · [`cti.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cti/cti.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_CTI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CTI.c) |
+| Rust | [`cti.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cti.rs) |
+| Java | [`Core_CTI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CTI.java) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Correlation Trend Indicator, Ehlers Correlation Trend Indicator, Correlation Trend
+
+## See Also
+
+[CORREL](/functions/correl.md) · [LINEARREG_SLOPE](/functions/linearreg_slope.md) · [VHF](/functions/vhf.md)
+
+## References
+
+- Ehlers, John F. "Correlation As A Trend Indicator." *Technical Analysis of Stocks & Commodities*, May 2020 — Code Listing 1, marked (c) 2013-2019 John F. Ehlers.
