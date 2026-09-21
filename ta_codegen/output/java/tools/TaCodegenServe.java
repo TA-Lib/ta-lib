@@ -76593,11 +76593,9 @@ class Core {
         * href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li><b>The ramp's direction is the whole sign of the indicator.</b> This implementation carries {@code y} as <i>bars ago</i>, which runs backward in time, so a rising series correlates negatively with it and the coefficient is negated once at the output. Ehlers' own listing counts the same way and takes {@code Y = -count}, which is the same thing. Getting this wrong inverts the indicator completely rather than perturbing it, because Pearson's {@code r} is odd in either variable — and no magnitude or {@code |r|} assertion can see it. The bars-ago orientation is kept because the O(1) window slide is written for it.</li>
-        * <li><b>The sums are taken against a shift, not on raw price levels.</b> Transcribing the published listing literally would compute {@code n·Σx² − (Σx)²} on the levels themselves, which is the cancellation that made {@code CORREL} return {@code 0}, {@code -1} and {@code -1.73} from perfectly correlated inputs. MEASURED: at a price level of 1e2 with a 1e-5 spread the naive form errs by 5.7e-03 absolute — on an indicator whose entire range is 2 wide — against 1.6e-10 for the shift-and-reseed form.</li>
-        * <li><b>There is a conditioning floor, and it is not a defect.</b> Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
-        * <li><b>A window with no spread returns exactly {@code 0.0}.</b> Only the price side can degenerate — the ramp's sum of squares is a positive constant for every {@code n ≥ 2} — and the answer follows {@code CORREL}'s precedent rather than the author's listing, which holds the previous value. Holding would make this function path-dependent; returning NaN from a successful call is not permitted. Implementations disagree here: the listing holds, {@code CORREL} gives {@code 0}, pandas gives {@code NaN}, Pine gives {@code na}.</li>
-        * <li><b>The result is clamped into -1..+1</b>, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
+        * <li>Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
+        * <li>A flat window returns exactly {@code 0.0} rather than holding the previous value as the author's listing does; holding would make the function path-dependent.</li>
+        * <li>The result is clamped into -1..+1, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
         * <li>{@code optInTimePeriod} starts at 2, not 1: at {@code n = 1} the closed form {@code n²(n²−1)/12} is identically zero and every window is degenerate.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -76667,11 +76665,9 @@ class Core {
         * href="https://ta-lib.org/functions/cti">ta-lib.org/functions/cti</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li><b>The ramp's direction is the whole sign of the indicator.</b> This implementation carries {@code y} as <i>bars ago</i>, which runs backward in time, so a rising series correlates negatively with it and the coefficient is negated once at the output. Ehlers' own listing counts the same way and takes {@code Y = -count}, which is the same thing. Getting this wrong inverts the indicator completely rather than perturbing it, because Pearson's {@code r} is odd in either variable — and no magnitude or {@code |r|} assertion can see it. The bars-ago orientation is kept because the O(1) window slide is written for it.</li>
-        * <li><b>The sums are taken against a shift, not on raw price levels.</b> Transcribing the published listing literally would compute {@code n·Σx² − (Σx)²} on the levels themselves, which is the cancellation that made {@code CORREL} return {@code 0}, {@code -1} and {@code -1.73} from perfectly correlated inputs. MEASURED: at a price level of 1e2 with a 1e-5 spread the naive form errs by 5.7e-03 absolute — on an indicator whose entire range is 2 wide — against 1.6e-10 for the shift-and-reseed form.</li>
-        * <li><b>There is a conditioning floor, and it is not a defect.</b> Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
-        * <li><b>A window with no spread returns exactly {@code 0.0}.</b> Only the price side can degenerate — the ramp's sum of squares is a positive constant for every {@code n ≥ 2} — and the answer follows {@code CORREL}'s precedent rather than the author's listing, which holds the previous value. Holding would make this function path-dependent; returning NaN from a successful call is not permitted. Implementations disagree here: the listing holds, {@code CORREL} gives {@code 0}, pandas gives {@code NaN}, Pine gives {@code na}.</li>
-        * <li><b>The result is clamped into -1..+1</b>, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
+        * <li>Once the window's spread falls below roughly 1e-8 of its level, the input doubles no longer carry the answer and no re-anchoring can recover it. That regime is a property of the input, not of this function.</li>
+        * <li>A flat window returns exactly {@code 0.0} rather than holding the previous value as the author's listing does; holding would make the function path-dependent.</li>
+        * <li>The result is clamped into -1..+1, as {@code CORREL} is: rounding in three sums can put a coefficient a few ulp outside its own range.</li>
         * <li>{@code optInTimePeriod} starts at 2, not 1: at {@code n = 1} the closed form {@code n²(n²−1)/12} is identically zero and every window is degenerate.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -182998,7 +182994,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "274022b152cd9344";
+    static final String SPLICED_GENCODE_DIGEST = "33fc4a08efe6dff4";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
