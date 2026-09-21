@@ -879,6 +879,7 @@ static ErrorNumber testTAFunction_ALL( void )
    /* CORREL numerical robustness (#242). Separate from the per_hl group so the
     * probes can be reached on their own; --function=CORREL matches both. */
    DO_TEST( test_func_correl,   "CORREL/NUMERICS" );
+   DO_TEST( test_func_cti,      "CTI" );
    DO_TEST( test_func_beta,     "BETA/NUMERICS" );
    /* The TA_LINEARREG family and TA_TSF had no DEDICATED reference file before
     * #251. They were not uncovered: test_period_boundary.c's
