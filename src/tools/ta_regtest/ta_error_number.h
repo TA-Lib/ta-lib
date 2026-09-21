@@ -514,7 +514,7 @@ typedef enum
   TA_OPEN_CONTRACT_WROTE             = 1680,
   TA_OPEN_CONTRACT_VACUOUS           = 1682,
 
-  /* (proposal-drafts #74) CTI legs that ran while comparing nothing. */
+  /* (#430) CTI legs that ran while comparing nothing. */
   TA_CTI_VACUOUS                     = 1684,
 
   /* One code for every suite that routes a fixed vector through server_verify
