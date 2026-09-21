@@ -20,7 +20,7 @@ Both legs use the same `optInTimePeriod` and `optInStdDevPeriod`, so they warm o
 ## Notes
 
 - The name is contested, and in the opposite direction from what the abbreviation suggests. Some vendors reserve the bare name RVI for *this* revision and call the 1993 close-only form RVIorig; others default the other way. This library ships the 1993 form as [`RVI`](/functions/rvi.md) and the 1995 revision here.
-- The two legs are computed in one pass rather than by calling `RVI` twice, but the arithmetic of each leg is `RVI`'s in `RVI`'s order. The result is the average of two `RVI` calls bit for bit, which is what the regression test asserts.
+- Averaging `RVI` of the highs and `RVI` of the lows, at the same parameters and over the same requested range, reproduces this function bit for bit.
 - A bar whose high equals the previous high feeds neither bucket of the high leg, and likewise for the lows. Descriptions that write a leg's denominator as a smoothed deviation instead of `U + D` are counting ties as down bars, which is a different indicator: on a 252-bar equity series that flip moves this function by up to 4.6 index points.
 - Each leg reports 50 when its own smoothed legs are both exactly zero, for the reason `RVI` does. The average is taken after each leg has resolved that, so a tie in one series does not drag the other.
 - On a series whose high equals its low at every bar the two legs are the same computation, and this function returns exactly `RVI` of it.

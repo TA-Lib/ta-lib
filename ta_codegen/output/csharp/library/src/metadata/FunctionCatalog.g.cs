@@ -3983,7 +3983,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         optInputs:
         [
-            new OptInputInfo("optInTimePeriod", "Time Period", "Time period of the Wilder smoothing applied to both legs", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 4, 200, 1)),
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period of the Wilder smoothing applied to both indices", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 4, 200, 1)),
             new OptInputInfo("optInStdDevPeriod", "StdDev Period", "Time period of the standard deviation", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 4, 200, 1)),
         ],
         outputs:

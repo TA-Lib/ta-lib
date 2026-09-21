@@ -7343,7 +7343,7 @@ public static class FunctionDescription
 		<OptionalInputArguments>
 			<OptionalInputArgument>
 				<Name>Time Period</Name>
-				<ShortDescription>Time period of the Wilder smoothing applied to both legs</ShortDescription>
+				<ShortDescription>Time period of the Wilder smoothing applied to both indices</ShortDescription>
 				<Type>Integer</Type>
 				<Range>
 					<Minimum>1</Minimum>

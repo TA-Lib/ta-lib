@@ -149087,7 +149087,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The name is contested, and in the opposite direction from what the abbreviation suggests. Some vendors reserve the bare name RVI for <i>this</i> revision and call the 1993 close-only form RVIorig; others default the other way. This library ships the 1993 form as <a href="https://ta-lib.org/functions/rvi">{@code RVI}</a> and the 1995 revision here.</li>
-        * <li>The two legs are computed in one pass rather than by calling {@code RVI} twice, but the arithmetic of each leg is {@code RVI}'s in {@code RVI}'s order. The result is the average of two {@code RVI} calls bit for bit, which is what the regression test asserts.</li>
+        * <li>Averaging {@code RVI} of the highs and {@code RVI} of the lows, at the same parameters and over the same requested range, reproduces this function bit for bit.</li>
         * <li>A bar whose high equals the previous high feeds neither bucket of the high leg, and likewise for the lows. Descriptions that write a leg's denominator as a smoothed deviation instead of {@code U + D} are counting ties as down bars, which is a different indicator: on a 252-bar equity series that flip moves this function by up to 4.6 index points.</li>
         * <li>Each leg reports 50 when its own smoothed legs are both exactly zero, for the reason {@code RVI} does. The average is taken after each leg has resolved that, so a tie in one series does not drag the other.</li>
         * <li>On a series whose high equals its low at every bar the two legs are the same computation, and this function returns exactly {@code RVI} of it.</li>
@@ -149170,7 +149170,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The name is contested, and in the opposite direction from what the abbreviation suggests. Some vendors reserve the bare name RVI for <i>this</i> revision and call the 1993 close-only form RVIorig; others default the other way. This library ships the 1993 form as <a href="https://ta-lib.org/functions/rvi">{@code RVI}</a> and the 1995 revision here.</li>
-        * <li>The two legs are computed in one pass rather than by calling {@code RVI} twice, but the arithmetic of each leg is {@code RVI}'s in {@code RVI}'s order. The result is the average of two {@code RVI} calls bit for bit, which is what the regression test asserts.</li>
+        * <li>Averaging {@code RVI} of the highs and {@code RVI} of the lows, at the same parameters and over the same requested range, reproduces this function bit for bit.</li>
         * <li>A bar whose high equals the previous high feeds neither bucket of the high leg, and likewise for the lows. Descriptions that write a leg's denominator as a smoothed deviation instead of {@code U + D} are counting ties as down bars, which is a different indicator: on a 252-bar equity series that flip moves this function by up to 4.6 index points.</li>
         * <li>Each leg reports 50 when its own smoothed legs are both exactly zero, for the reason {@code RVI} does. The average is taken after each leg has resolved that, so a tie in one series does not drag the other.</li>
         * <li>On a series whose high equals its low at every bar the two legs are the same computation, and this function returns exactly {@code RVI} of it.</li>
@@ -181815,7 +181815,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "7110d88d1f04d3aa";
+    static final String SPLICED_GENCODE_DIGEST = "534d8e6df51eff58";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -182641,7 +182641,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("RVIR", new AbsFunc("RVIR", "Volatility Indicators", "Relative Volatility Index, refined high/low form", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period of the Wilder smoothing applied to both legs",14.0, 0,0,0,0,0,0, 1,100000,4,200,1, null), new AbsOpt(2,"optInStdDevPeriod",0,"StdDev Period","Time period of the standard deviation",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period of the Wilder smoothing applied to both indices",14.0, 0,0,0,0,0,0, 1,100000,4,200,1, null), new AbsOpt(2,"optInStdDevPeriod",0,"StdDev Period","Time period of the standard deviation",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("RVOL", new AbsFunc("RVOL", "Volume Indicators", "Relative Volume", 1107296256,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },

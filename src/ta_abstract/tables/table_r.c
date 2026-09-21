@@ -270,7 +270,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_RVIR_TimePeriod =
    "Time Period",
    (const void *)&TA_DEF_RVIR_TimePeriod,
    14,
-   "Time period of the Wilder smoothing applied to both legs",
+   "Time period of the Wilder smoothing applied to both indices",
 
    NULL
 };

@@ -14389,7 +14389,7 @@ TA_LIB_API TA_RetCode TA_RVI_Clone( const TA_RVI_Stream *stream, TA_RVI_Stream *
  * Optional Parameters
  * -------------------
  * optInTimePeriod:(From 1 to 100000)
- *    Time period of the Wilder smoothing applied to both legs
+ *    Time period of the Wilder smoothing applied to both indices
  * 
  * optInStdDevPeriod:(From 2 to 100000)
  *    Time period of the standard deviation

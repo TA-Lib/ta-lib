@@ -526,7 +526,7 @@ done:
  * At optInTimePeriod == 1 the smoothing has no memory, so each leg is decided
  * by the sign of its own bar alone and takes one of {0, 50, 100}. The average
  * of two such legs takes {0, 25, 50, 75, 100}, and the quarter-points are the
- * bars where the high and the low disagree. A tie routed to the down bucket
+ * bars where one series is flat while the other moves. A tie routed to the down bucket
  * instead of to neither would erase them: both legs would be in {0, 100} and
  * the set would collapse to {0, 50, 100}.
  */
@@ -575,8 +575,8 @@ static ErrorNumber test_rvir_tie( const TA_History *history )
    if( nbQuarter == 0 )
    {
       printf( "RVIR tie Fail: no bar landed on 25 or 75, so this leg saw no bar "
-              "where the high and the low disagree and would pass against a "
-              "single-leg implementation\n" );
+              "where one series was flat while the other moved and would pass "
+              "against a single-leg implementation\n" );
       return TA_RVIR_VACUOUS;
    }
 

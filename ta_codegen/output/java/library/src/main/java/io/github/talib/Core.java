@@ -149417,7 +149417,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The name is contested, and in the opposite direction from what the abbreviation suggests. Some vendors reserve the bare name RVI for <i>this</i> revision and call the 1993 close-only form RVIorig; others default the other way. This library ships the 1993 form as <a href="https://ta-lib.org/functions/rvi">{@code RVI}</a> and the 1995 revision here.</li>
-    * <li>The two legs are computed in one pass rather than by calling {@code RVI} twice, but the arithmetic of each leg is {@code RVI}'s in {@code RVI}'s order. The result is the average of two {@code RVI} calls bit for bit, which is what the regression test asserts.</li>
+    * <li>Averaging {@code RVI} of the highs and {@code RVI} of the lows, at the same parameters and over the same requested range, reproduces this function bit for bit.</li>
     * <li>A bar whose high equals the previous high feeds neither bucket of the high leg, and likewise for the lows. Descriptions that write a leg's denominator as a smoothed deviation instead of {@code U + D} are counting ties as down bars, which is a different indicator: on a 252-bar equity series that flip moves this function by up to 4.6 index points.</li>
     * <li>Each leg reports 50 when its own smoothed legs are both exactly zero, for the reason {@code RVI} does. The average is taken after each leg has resolved that, so a tie in one series does not drag the other.</li>
     * <li>On a series whose high equals its low at every bar the two legs are the same computation, and this function returns exactly {@code RVI} of it.</li>
@@ -149500,7 +149500,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The name is contested, and in the opposite direction from what the abbreviation suggests. Some vendors reserve the bare name RVI for <i>this</i> revision and call the 1993 close-only form RVIorig; others default the other way. This library ships the 1993 form as <a href="https://ta-lib.org/functions/rvi">{@code RVI}</a> and the 1995 revision here.</li>
-    * <li>The two legs are computed in one pass rather than by calling {@code RVI} twice, but the arithmetic of each leg is {@code RVI}'s in {@code RVI}'s order. The result is the average of two {@code RVI} calls bit for bit, which is what the regression test asserts.</li>
+    * <li>Averaging {@code RVI} of the highs and {@code RVI} of the lows, at the same parameters and over the same requested range, reproduces this function bit for bit.</li>
     * <li>A bar whose high equals the previous high feeds neither bucket of the high leg, and likewise for the lows. Descriptions that write a leg's denominator as a smoothed deviation instead of {@code U + D} are counting ties as down bars, which is a different indicator: on a 252-bar equity series that flip moves this function by up to 4.6 index points.</li>
     * <li>Each leg reports 50 when its own smoothed legs are both exactly zero, for the reason {@code RVI} does. The average is taken after each leg has resolved that, so a tie in one series does not drag the other.</li>
     * <li>On a series whose high equals its low at every bar the two legs are the same computation, and this function returns exactly {@code RVI} of it.</li>

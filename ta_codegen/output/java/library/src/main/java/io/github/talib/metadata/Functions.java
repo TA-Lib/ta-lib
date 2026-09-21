@@ -3023,7 +3023,7 @@ public final class Functions {
          List.of(
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
-               "Time Period", "Time period of the Wilder smoothing applied to both legs", 14.0,
+               "Time Period", "Time period of the Wilder smoothing applied to both indices", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                1, 100000, 4, 200, 1, null),
             new OptInputInfo(
