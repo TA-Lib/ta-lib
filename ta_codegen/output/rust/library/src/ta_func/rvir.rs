@@ -263,6 +263,7 @@ impl Core {
     /// * Dorsey, Donald. "The Relative Volatility Index." *Technical Analysis of Stocks &
     ///   Commodities*, V.11:6 (June 1993), 253-256.
     #[doc(alias = "TA_RVIR")]
+    #[doc(alias = "RelativeVolatilityIndex1995revision")]
     pub fn rvir(
         &self,
         startIdx: usize,
