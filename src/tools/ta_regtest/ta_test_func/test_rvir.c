@@ -36,12 +36,16 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  091126 KL     First version (proposal-drafts issue #68).
+ *  092026 MF,CC  Freeze the trading-signals and pandas-ta-classic goldens
+ *                (issue #416).
  *
  */
 
@@ -52,30 +56,15 @@
  *     WHAT EACH LEG CAN AND CANNOT SEE. The function is implemented by calling
  *     TA_RVI twice, so a leg written against TA_RVI is structurally true and
  *     cannot fail for an arithmetic reason -- it pins the API contract for a
- *     later rewrite, nothing more. Leg 1 is therefore the one that carries the
- *     arithmetic: it rebuilds both legs from TA_STDDEV and TA_RMA, so it holds
- *     even if TA_RVI and TA_RVIR are both wrong in the same way.
+ *     later rewrite, nothing more. Leg 1 carries the arithmetic: it rebuilds
+ *     both legs from TA_STDDEV and TA_RMA, so it holds even if TA_RVI and
+ *     TA_RVIR are both wrong in the same way. Legs 2 and 3 are the only ones
+ *     that check the FORMULA against code TA-Lib did not write.
  *
- *     The discriminating power of each leg was measured by mutation rather than
- *     assumed, each mutation applied to the generator input and regenerated:
- *
- *       averaging dropped, the high leg returned alone
- *                          -> leg 1 RED, leg 2 RED, leg 4 RED, leg 3 green
- *       the two TA_RVI calls swapped
- *                          -> every leg green, and correctly so: TA_RVI's write
- *                             index trails its read index, so neither order can
- *                             corrupt an aliased input. The order is not what
- *                             makes leg 6 pass, which is why leg 5 reaches for
- *                             the scratch buffer's extent instead.
- *       lookback raised by one
- *                          -> leg 3 RED, leg 1 green. Leg 1 anchors its
- *                             reference at the reported outBegIdx, so it
- *                             follows a shifted window instead of catching it.
- *       every scratch allocation one element short
- *                          -> leg 5 RED (heap overflow on the last bar)
- *
- *     Leg 3 and leg 1 are the pair that covers the warm-up: neither sees what
- *     the other does.
+ *     Leg 1 anchors its reference at the outBegIdx this function reports, so a
+ *     lookback that drifts by one bar shifts both sides together and is
+ *     invisible to it. Legs 2 and 3 index ABSOLUTE bars, which is what catches
+ *     that class.
  */
 
 /**** Headers ****/
@@ -91,13 +80,148 @@
 /**** Local declarations. ****/
 #define RVIR_CAP 1100
 
+/* Leg 2. Each trading-signals leg carries TA_RVI's three FP spellings apart
+ * from ours (see test_rvi.c), and the average adds the two legs' residuals.
+ * Relative term: measured worst 3.7e-12 over the whole (2,2) series, the
+ * narrowest deviation window, so 27x. Absolute term: (1,10) has 88 bars where
+ * the golden is exactly 0 and relative error is undefined; the deviation is
+ * exactly 0 on all of them. */
+#define RVIR_TS_REL 1e-10
+#define RVIR_TS_ABS 1e-12
+
+/* Leg 3. Converged tail only, so what is left is FP noise: measured worst
+ * 1.5e-13 relative over the frozen bars, where the relative term governs. */
+#define RVIR_PANDAS_REL 1e-9
+#define RVIR_PANDAS_ABS 1e-9
+
+typedef struct { int period; int sdPeriod; int bar; double want; } RvirGolden;
+
+/* Captured by ta-lib-oracles/trading_signals_serve/capture_416_rvir.mjs on the
+ * 252-bar TA_SREF high and low series, at %.17g. `bar` is the ABSOLUTE bar index.
+ *
+ * ORACLE: trading-signals 8.3.0 (TypeScript, MIT), driven 2026-09-13. The
+ * library ships only the close form, so the arm is COMPOSED: one
+ * `RelativeVolatilityIndex` fed the highs, one fed the lows, averaged in the
+ * harness. Each leg is the arm test_rvi.c froze TA_RVI against; what this
+ * table adds is the leg assignment, the average, and the n1 != n2 default pair,
+ * which pandas cannot reach.
+ *
+ * Tuples as test_rvi.c: (14,10) the defaults, (30,30) equal windows, (1,10) no
+ * smoothing memory, (2,2) the narrowest deviation window. Per tuple: the first
+ * three output bars, the lowest bar, the bar of the worst absolute deviation, a
+ * spread to the last bar, and the six tie bars (highs 66, 88, 250; lows 81,
+ * 176, 191). At (1,10) a tie reads a literal: 75 or 25 under ties-feed-neither,
+ * where ties-to-down would print 50 or 0. */
+static const RvirGolden rvirTradingSignals[] =
+{
+   /* (14, 10): outBegIdx 22, outNBElement 230 */
+   {  14,  10,  22,        43.834741790037512 },
+   {  14,  10,  23,         40.77374430876857 },
+   {  14,  10,  24,        37.279696373902446 },
+   {  14,  10,  66,        66.903540746366005 },
+   {  14,  10,  81,        55.038451097956369 },
+   {  14,  10,  88,        66.475488651760941 },
+   {  14,  10, 130,        69.532254289972755 },
+   {  14,  10, 160,        54.453504657419614 },
+   {  14,  10, 176,         59.71553016588912 },
+   {  14,  10, 190,        43.207283551951889 },
+   {  14,  10, 191,        42.114446624474176 },
+   {  14,  10, 197,        30.103611556830717 },
+   {  14,  10, 220,        51.853545388720846 },
+   {  14,  10, 250,        53.521391948420103 },
+   {  14,  10, 251,        52.847645335991672 },
+   /* (30, 30): outBegIdx 58, outNBElement 194 */
+   {  30,  30,  58,        56.068615861509272 },
+   {  30,  30,  59,        57.233831712375022 },
+   {  30,  30,  60,        57.051528886620581 },
+   {  30,  30,  66,        59.832630648346139 },
+   {  30,  30,  81,        54.010003772515546 },
+   {  30,  30,  88,        65.395682542795669 },
+   {  30,  30, 130,        60.748543399744833 },
+   {  30,  30, 160,        54.001348179556217 },
+   {  30,  30, 173,        58.338042240109715 },
+   {  30,  30, 176,        55.622472925677386 },
+   {  30,  30, 190,        47.894782786787374 },
+   {  30,  30, 191,        47.132821157584125 },
+   {  30,  30, 197,        39.408095166996944 },
+   {  30,  30, 220,        51.103847013845694 },
+   {  30,  30, 250,        53.365991863635259 },
+   {  30,  30, 251,        52.179727694709939 },
+   /* (1, 10): outBegIdx 9, outNBElement 243. Bar 116 is the oracle's
+    * `(100*U)/T` rounding one ulp past 100 where ours is exact. */
+   {   1,  10,   9,                       100 },
+   {   1,  10,  10,                       100 },
+   {   1,  10,  11,                       100 },
+   {   1,  10,  12,                         0 },
+   {   1,  10,  66,                        75 },
+   {   1,  10,  81,                        75 },
+   {   1,  10,  88,                        75 },
+   {   1,  10, 116,        100.00000000000001 },
+   {   1,  10, 130,                       100 },
+   {   1,  10, 160,                       100 },
+   {   1,  10, 176,                        75 },
+   {   1,  10, 190,                       100 },
+   {   1,  10, 191,                        25 },
+   {   1,  10, 220,                         0 },
+   {   1,  10, 250,                        25 },
+   {   1,  10, 251,                         0 },
+   /* (2, 2): outBegIdx 2, outNBElement 250 */
+   {   2,   2,   2,                       100 },
+   {   2,   2,   3,        79.706723891273185 },
+   {   2,   2,   4,        59.331323234255507 },
+   {   2,   2,  66,        86.857488948631499 },
+   {   2,   2,  73,       0.44422411013126006 },
+   {   2,   2,  81,        61.165537915375296 },
+   {   2,   2,  88,         94.11601868471412 },
+   {   2,   2, 130,        98.553548758222831 },
+   {   2,   2, 160,        47.176306319817677 },
+   {   2,   2, 176,        49.879101818014568 },
+   {   2,   2, 190,         72.85692467201622 },
+   {   2,   2, 191,        65.931783243236012 },
+   {   2,   2, 209,        81.241982015637376 },
+   {   2,   2, 220,        24.230690810514364 },
+   {   2,   2, 250,         47.03563025544014 },
+   {   2,   2, 251,        7.3249335697861042 },
+};
+#define NB_RVIR_TS ((int)(sizeof(rvirTradingSignals)/sizeof(RvirGolden)))
+
+typedef struct { int length; int bar; double want; } RvirPandasGolden;
+
+/* Captured by ta-lib-oracles/pandas_serve/capture_416_rvir.py against
+ * pandas-ta-classic 0.6.52 / pandas 3.0.3 / numpy 2.5.1 (CPython 3.12):
+ * `ta.rvi(close, high=, low=, length=L, mamode='rma', refined=True)`, the
+ * library's NATIVE refined form, so unlike leg 2 the average is its code too.
+ *
+ * TAIL-ONLY for test_rvi.c's two reasons: one `length` feeds both windows, and
+ * its `rma` seeds off a single sample. The first frozen bar is outBegIdx + 168,
+ * where the transient has decayed to FP noise; the same arm is 13.2 index
+ * points away at outBegIdx itself (L=3).
+ *
+ * {3, 5} is where the noise still fits RVIR_PANDAS_REL: the same tail is
+ * 4.1e-12 at L=10 and 5.8e-9 at L=14, so a longer window needs its own
+ * tolerance, not this table. */
+static const RvirPandasGolden rvirPandas[] =
+{
+   {   3, 172,        93.863274259268735 },
+   {   3, 173,        96.039919686896539 },
+   {   3, 200,        37.333838623496639 },
+   {   3, 225,        96.825942774942291 },
+   {   3, 250,        39.532209962368356 },
+   {   3, 251,        18.128116997522341 },
+   {   5, 176,        66.188035983194098 },
+   {   5, 177,        52.774106499207271 },
+   {   5, 200,        38.588496220743195 },
+   {   5, 225,        90.713792267953266 },
+   {   5, 250,        48.129912462543267 },
+   {   5, 251,        40.335119357911168 },
+};
+#define NB_RVIR_PANDAS ((int)(sizeof(rvirPandas)/sizeof(RvirPandasGolden)))
 /* The legs below diff their own corpora against the language servers
- * bit-for-bit (issue #427). Without it every vector in this file is checked
- * against in-process C alone: the RMA differential, the two-leg composite
- * identity and the degenerate high==low case are written specifically to pin
- * this function's shape, and a Rust/Java/C# port that averaged the legs in the
- * wrong order or mis-seeded the RMA would satisfy all of them while
- * disagreeing with C.
+ * bit-for-bit (issue #427). Without it a vector reaches in-process C and
+ * nothing else: the RMA differential, the two-leg composite identity and the
+ * degenerate high==low case are written specifically to pin this function's
+ * shape, and a Rust/Java/C# port that averaged the legs in the wrong order or
+ * mis-seeded the RMA would satisfy all of them while disagreeing with C.
  *
  * MEASURED that this compares rather than merely runs -- see the commit that
  * added it: feeding the servers a different optInTimePeriod than C used fails
@@ -121,7 +245,7 @@
           * unreachable and the count must advance.  */                          \
          if( server_verify_value_comparisons() == svCmp_ )                       \
          {                                                                       \
-            printf( "RVIR oracle [N=%d SD=%d]: server_verify compared no "       \
+            printf( "RVIR [N=%d SD=%d]: server_verify compared no "              \
                     "server despite live pipes\n", (int)(per), (int)(sdPer) );   \
             return TA_RVIR_VACUOUS;                                              \
          }                                                                       \
@@ -150,7 +274,7 @@
          }                                                                       \
          if( server_verify_value_comparisons() == svCmp_ )                       \
          {                                                                       \
-            printf( "RVIR oracle [N=%d SD=%d]: server_verify compared no "       \
+            printf( "RVIR [N=%d SD=%d]: server_verify compared no "              \
                     "server despite live pipes\n", (int)(per), (int)(sdPer) );   \
             err = TA_RVIR_VACUOUS;                                               \
             goto done;                                                           \
@@ -159,7 +283,7 @@
    } while(0)
 
 /* optInStdDevPeriod >= 2: a one-bar deviation window is identically zero.
- * optInTimePeriod == 1 is the no-memory case both leg 3 and leg 4 need. */
+ * optInTimePeriod == 1 puts the no-memory case into every sweep below. */
 static const int rvirSdPeriods[]   = { 2, 3, 10, 14, 30 };
 static const int rvirTimePeriods[] = { 1, 2, 14, 30 };
 #define NB_RVIR_SD   ((int)(sizeof(rvirSdPeriods)/sizeof(int)))
@@ -168,6 +292,8 @@ static const int rvirTimePeriods[] = { 1, 2, 14, 30 };
 /* Coverage counters. Every leg is silent on success, so a count that reached
  * zero is the only remaining way one could run while comparing nothing. */
 static int g_rvirDiffCmp;
+static int g_rvirTsCmp;
+static int g_rvirPandasCmp;
 static int g_rvirCompCmp;
 static int g_rvirDegenCmp;
 static int g_rvirTieCmp;
@@ -179,6 +305,8 @@ static ErrorNumber rvir_reference_leg( const TA_Real *in, int nbBars, int startI
                                        int period, int sdPeriod, int unst,
                                        TA_Real *ref, int *nbRef, const char *tag );
 static ErrorNumber test_rvir_differential( const TA_History *history );
+static ErrorNumber test_rvir_oracle( const TA_History *history );
+static ErrorNumber test_rvir_pandas( const TA_History *history );
 static ErrorNumber test_rvir_composite( const TA_History *history );
 static ErrorNumber test_rvir_degenerate( const TA_History *history );
 static ErrorNumber test_rvir_tie( const TA_History *history );
@@ -193,10 +321,19 @@ ErrorNumber test_func_rvir( TA_History *history )
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
-   g_rvirDiffCmp = g_rvirCompCmp = g_rvirDegenCmp = 0;
+   g_rvirDiffCmp = g_rvirTsCmp = g_rvirPandasCmp = 0;
+   g_rvirCompCmp = g_rvirDegenCmp = 0;
    g_rvirTieCmp = g_rvirEdgeCmp = g_rvirAliasCmp = 0;
 
    err = test_rvir_differential( history );
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_rvir_oracle( history );
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_rvir_pandas( history );
    if( err != TA_TEST_PASS )
       return err;
 
@@ -228,17 +365,32 @@ ErrorNumber test_func_rvir( TA_History *history )
 
    /* LITERAL counts rather than floors: on the shipped 252-bar corpus every
     * leg above is deterministic. */
-   if( history->nbBars == 252
-       && ( g_rvirDiffCmp != 39757 || g_rvirCompCmp != 4609
-            || g_rvirDegenCmp != 13707 || g_rvirTieCmp != 243
-            || g_rvirEdgeCmp != 106592 || g_rvirAliasCmp != 9218 ) )
+   if( history->nbBars == 252 )
    {
-      printf( "RVIR Fail: coverage counters (diff %d, composite %d, degenerate "
-              "%d, tie %d, edges %d, alias %d) are not what this file was "
-              "written with (39757, 4609, 13707, 243, 106592, 9218)\n",
-              g_rvirDiffCmp, g_rvirCompCmp, g_rvirDegenCmp, g_rvirTieCmp,
-              g_rvirEdgeCmp, g_rvirAliasCmp );
-      return TA_RVIR_VACUOUS;
+      /* One source for each count: a second copy in the message can disagree
+       * with the one the gate tests, and only a mutation would show it.  */
+      static const struct { const char *leg; int want; const int *got; } cov[] = {
+         { "differential",     39757, &g_rvirDiffCmp   },
+         { "trading-signals",     63, &g_rvirTsCmp     },
+         { "pandas",              12, &g_rvirPandasCmp },
+         { "composite",         4609, &g_rvirCompCmp   },
+         { "degenerate",       13707, &g_rvirDegenCmp  },
+         { "tie",                243, &g_rvirTieCmp    },
+         { "edges",           106592, &g_rvirEdgeCmp   },
+         { "alias",             9218, &g_rvirAliasCmp  },
+      };
+      unsigned int c;
+
+      for( c = 0; c < sizeof(cov)/sizeof(cov[0]); c++ )
+      {
+         if( *cov[c].got != cov[c].want )
+         {
+            printf( "RVIR Fail: the %s leg compared %d times, not the %d this "
+                    "file was written with\n",
+                    cov[c].leg, *cov[c].got, cov[c].want );
+            return TA_RVIR_VACUOUS;
+         }
+      }
    }
 
    return TA_TEST_PASS;
@@ -387,15 +539,144 @@ done:
    return err;
 }
 
-/* (2) The published contract: this function is the average of TA_RVI over the
+/* Recomputes a golden tuple's whole series and replays it through every live
+ * language server. */
+static ErrorNumber rvir_golden_series( const TA_History *history, int period,
+                                       int sdPeriod, const char *tag,
+                                       TA_Real *out, int *begIdx, int *nbElement )
+{
+   TA_RetCode retCode;
+   int nbBars = (int)history->nbBars;
+   int lookback = TA_RVIR_Lookback( period, sdPeriod );
+
+   retCode = TA_RVIR( 0, nbBars-1, history->high, history->low, period, sdPeriod,
+                      begIdx, nbElement, out );
+   if( retCode != TA_SUCCESS || *begIdx != lookback
+       || *nbElement != nbBars - lookback )
+   {
+      printf( "RVIR %s Fail [N=%d SD=%d]: rc=%d (%d,%d) expected (%d,%d)\n",
+              tag, period, sdPeriod, (int)retCode, *begIdx, *nbElement,
+              lookback, nbBars - lookback );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   RVIR_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, *begIdx, *nbElement,
+                       history->high, history->low, period, sdPeriod, out );
+
+   return TA_TEST_PASS;
+}
+
+/* A golden's bar is hand-transcribed and indexes `out` unchecked: a bar
+ * outside the output is a silent out-of-bounds read, not a mismatch. */
+static ErrorNumber rvir_check_golden( const char *tag, int period, int sdPeriod,
+                                      int bar, double want, const TA_Real *out,
+                                      int begIdx, int nbElement,
+                                      double relTol, double absTol )
+{
+   double got, err;
+   const char *mode;
+
+   if( bar < begIdx || bar - begIdx >= nbElement )
+   {
+      printf( "RVIR %s Fail [N=%d SD=%d]: golden bar %d is outside the output "
+              "[%d..%d]\n", tag, period, sdPeriod, bar, begIdx,
+              begIdx + nbElement - 1 );
+      return TA_RVIR_VACUOUS;
+   }
+
+   got = out[bar - begIdx];
+   if( !checkOracleValue( got, want, relTol, absTol, &err, &mode ) )
+   {
+      printf( "RVIR %s Fail [N=%d SD=%d] at bar %d: got %.17g expected %.17g "
+              "(%s err %.3g, tol rel %g abs %g)\n", tag, period, sdPeriod, bar,
+              got, want, mode, err, relTol, absTol );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (2) The frozen trading-signals goldens, plus the cross-language replay. */
+static ErrorNumber test_rvir_oracle( const TA_History *history )
+{
+   static TA_Real out[RVIR_CAP];
+   TA_Integer begIdx = 0, nbElement = 0;
+   int k, lastPeriod = -1, lastSd = -1;
+   ErrorNumber err;
+
+   if( history->nbBars != 252 )
+   {
+      printf( "RVIR oracle skip: goldens were captured on the 252-bar corpus, "
+              "got %d\n", (int)history->nbBars );
+      return TA_TEST_PASS;
+   }
+
+   for( k = 0; k < NB_RVIR_TS; k++ )
+   {
+      const RvirGolden *g = &rvirTradingSignals[k];
+
+      if( g->period != lastPeriod || g->sdPeriod != lastSd )
+      {
+         lastPeriod = g->period;
+         lastSd     = g->sdPeriod;
+         err = rvir_golden_series( history, lastPeriod, lastSd, "oracle",
+                                   out, &begIdx, &nbElement );
+         if( err != TA_TEST_PASS )
+            return err;
+      }
+
+      g_rvirTsCmp++;
+      err = rvir_check_golden( "oracle", g->period, g->sdPeriod, g->bar, g->want,
+                               out, begIdx, nbElement,
+                               RVIR_TS_REL, RVIR_TS_ABS );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3) The second oracle, on its converged tail. */
+static ErrorNumber test_rvir_pandas( const TA_History *history )
+{
+   static TA_Real out[RVIR_CAP];
+   TA_Integer begIdx = 0, nbElement = 0;
+   int k, lastLength = -1;
+   ErrorNumber err;
+
+   if( history->nbBars != 252 )
+      return TA_TEST_PASS;
+
+   for( k = 0; k < NB_RVIR_PANDAS; k++ )
+   {
+      const RvirPandasGolden *g = &rvirPandas[k];
+
+      if( g->length != lastLength )
+      {
+         lastLength = g->length;
+         err = rvir_golden_series( history, lastLength, lastLength, "pandas",
+                                   out, &begIdx, &nbElement );
+         if( err != TA_TEST_PASS )
+            return err;
+      }
+
+      g_rvirPandasCmp++;
+      err = rvir_check_golden( "pandas", g->length, g->length, g->bar, g->want,
+                               out, begIdx, nbElement,
+                               RVIR_PANDAS_REL, RVIR_PANDAS_ABS );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (4) The published contract: this function is the average of TA_RVI over the
  * highs and TA_RVI over the lows, bit for bit.
  *
- * STRUCTURALLY TRUE against the current body, which calls TA_RVI twice, so it
- * cannot fail for an arithmetic reason. It is here for the rewrite that fuses
- * the two legs into one pass -- the shape the proposal asked for, which the
- * streaming analyzer rejects today because it carries two window cursors. A
- * fused body would have to reproduce this equality, and nothing else in this
- * file would notice if it drifted.
+ * STRUCTURALLY TRUE against a body that calls TA_RVI twice. It pins the
+ * contract against TA_RVI itself, where leg 1 pins it against TA_STDDEV and
+ * TA_RMA.
  */
 static ErrorNumber test_rvir_composite( const TA_History *history )
 {
@@ -454,14 +735,13 @@ static ErrorNumber test_rvir_composite( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (3) A series whose high equals its low at every bar: the two legs are the
+/* (5) A series whose high equals its low at every bar: the two legs are the
  * same computation, so this function must return exactly TA_RVI of it.
  *
- * This is the leg that sees the warm-up. It compares outBegIdx as well as the
- * values, and it does so against a function whose lookback is established, so a
- * lookback that drifts by one bar is caught here and nowhere else -- leg 1
- * anchors its reference at whatever outBegIdx this function reports and would
- * follow the drift instead of failing on it.
+ * It compares outBegIdx against a function whose lookback is established, so a
+ * lookback that drifts by one bar is caught here, as it is by leg 2's first
+ * golden bars -- leg 1 anchors its reference at whatever outBegIdx this
+ * function reports and follows the drift instead of failing on it.
  */
 static ErrorNumber test_rvir_degenerate( const TA_History *history )
 {
@@ -521,14 +801,14 @@ done:
    return err;
 }
 
-/* (4) The tie rule, made observable.
+/* (6) The tie rule, made observable.
  *
  * At optInTimePeriod == 1 the smoothing has no memory, so each leg is decided
  * by the sign of its own bar alone and takes one of {0, 50, 100}. The average
  * of two such legs takes {0, 25, 50, 75, 100}, and the quarter-points are the
- * bars where one series is flat while the other moves. A tie routed to the down bucket
- * instead of to neither would erase them: both legs would be in {0, 100} and
- * the set would collapse to {0, 50, 100}.
+ * bars where one series is flat while the other moves. A tie routed to the
+ * down bucket instead of to neither would erase them: both legs would be in
+ * {0, 100} and the set would collapse to {0, 50, 100}.
  */
 static ErrorNumber test_rvir_tie( const TA_History *history )
 {
@@ -536,7 +816,11 @@ static ErrorNumber test_rvir_tie( const TA_History *history )
    TA_RetCode retCode;
    TA_Integer begIdx, nbElement;
    int nbBars = (int)history->nbBars;
-   int i, nbQuarter = 0, nbHalf = 0, nbEnd = 0;
+   /* Census of {0, 25, 50, 75, 100} on the 252-bar corpus. The quarter-points
+    * are the six single-series tie bars: highs 66, 88, 250 and lows 81, 176,
+    * 191, where exactly one leg reads 50. */
+   static const int want[5] = { 88, 2, 47, 4, 102 };
+   int i, k, count[5] = { 0, 0, 0, 0, 0 };
 
    if( nbBars != 252 )
       return TA_TEST_PASS;
@@ -556,13 +840,8 @@ static ErrorNumber test_rvir_tie( const TA_History *history )
    for( i = 0; i < nbElement; i++ )
    {
       g_rvirTieCmp++;
-      if( out[i] == 25.0 || out[i] == 75.0 )
-         nbQuarter++;
-      else if( out[i] == 50.0 )
-         nbHalf++;
-      else if( out[i] == 0.0 || out[i] == 100.0 )
-         nbEnd++;
-      else
+      k = out[i] >= 0.0 && out[i] <= 100.0 ? (int)(out[i] / 25.0) : -1;
+      if( k < 0 || out[i] != 25.0 * k )
       {
          printf( "RVIR tie Fail at bar %d: %.17g is not one of "
                  "{0, 25, 50, 75, 100}. With no smoothing memory each leg is "
@@ -570,28 +849,29 @@ static ErrorNumber test_rvir_tie( const TA_History *history )
                  "carries state it should not\n", begIdx+i, out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
+      count[k]++;
    }
 
-   if( nbQuarter == 0 )
+   for( k = 0; k < 5; k++ )
    {
-      printf( "RVIR tie Fail: no bar landed on 25 or 75, so this leg saw no bar "
-              "where one series was flat while the other moved and would pass "
-              "against a single-leg implementation\n" );
-      return TA_RVIR_VACUOUS;
+      if( count[k] != want[k] )
+      {
+         printf( "RVIR tie Fail: %d bars read %d, expected %d. Ties routed to "
+                 "a bucket move bars off 25 and 75\n", count[k], 25*k, want[k] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
    }
 
    return TA_TEST_PASS;
 }
 
-/* (5) Flat input, the two shape edges, and the scratch buffer's extent.
+/* (7) Flat input, the two shape edges, and the scratch buffer's extent.
  *
  * A flat window has zero deviation in both legs, so each resolves to 50 through
  * its own zero-total guard and the average is 50 -- without the guard every
  * value below is NaN, and NaN fails the equality.
  *
- * The single-bar range is the one that sizes the scratch buffer to exactly one
- * element. Allocating one short is invisible to every other leg and to a plain
- * run; it was confirmed to abort this leg under AddressSanitizer.
+ * The single-bar range sizes the scratch buffer to exactly one element.
  */
 static ErrorNumber test_rvir_edges( void )
 {
@@ -662,7 +942,7 @@ static ErrorNumber test_rvir_edges( void )
    return TA_TEST_PASS;
 }
 
-/* (6) In-place aliasing, outReal over each input in turn, bitwise.
+/* (8) In-place aliasing, outReal over each input in turn, bitwise.
  *
  * Two cases rather than one: the two inputs are consumed by different calls at
  * different points, so aliasing one is not evidence about the other.
@@ -729,7 +1009,7 @@ static ErrorNumber test_rvir_aliasing( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (7) The startIdx/endIdx range sweep. TA_STABLE_CONVERGING for TA_RVI's
+/* (9) The startIdx/endIdx range sweep. TA_STABLE_CONVERGING for TA_RVI's
  * reason, inherited through both legs: the smoothed legs are IIR recurrences
  * seeded at startIdx - lookback, so an earlier start moves a value by a
  * residual the unstable period bounds. */
