@@ -15,11 +15,8 @@ With `W` the window sorted ascending and `W[1]` its smallest value:
 
 ## Notes
 
-- **This is not [`PERCENTILE`](/functions/percentile) at 50.** `PERCENTILE` reports the nearest rank, `ceil(P·n/100)` clamped to the window. At odd `n` that ordinal *is* the median and the two functions agree bit for bit. At even `n`, `ceil(n/2) = n/2` selects the **lower** of the two central values, which is not the median: on a 4-bar window of `1, 2, 3, 4` this function returns `2.5` and `PERCENTILE` returns `2`.
-- **At even `n` the output can be a value the series never traded at.** That is the deliberate opposite of `PERCENTILE`'s design property, and it is the whole reason the two are separate functions rather than one with a mode selector — `PERCENTILE`'s parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it without changing its arity.
-- **The even-`n` mean is not a variant to choose.** NumPy, R's `median()`, scipy and Excel's `MEDIAN` all take it, and there is no original author to arbitrate against. Nor is the spelling a variant: `(lo + hi) / 2.0` and `0.5 * (lo + hi)` are the same double.
-- **The odd case is a branch, not `(v + v) / 2`.** The arithmetic form is exact for any value this library is realistically handed, but it overflows above `DBL_MAX/2`, and this function does not declare `nan_inf_output`. The branch is loop-invariant and costs nothing. At even `n` the sum of the two central values can still overflow near `DBL_MAX`, which is what NumPy does with such inputs as well.
-- **Equal values keep insertion order.** The window is carried twice, once by age and once by value, and the by-value copy shifts only strictly greater entries on insertion. A run of equal values therefore stays in age order, which is what lets the removal evict the oldest of the run by value alone, with no slot array.
+- This is not [`PERCENTILE`](/functions/percentile) at 50. `PERCENTILE` reports the nearest rank, which at even `n` selects the **lower** of the two central values: on a 4-bar window of `1, 2, 3, 4` this function returns `2.5` and `PERCENTILE` returns `2`. At odd `n` the two agree bit for bit.
+- At even `n` the output can therefore be a value the series never traded at, which is the deliberate opposite of `PERCENTILE`'s design property.
 - `optInTimePeriod` is not restricted to odd values: TA-Lib has no odd-only range mechanism, and it would surprise any caller reaching for a 20-bar median.
 
 ## Inputs
