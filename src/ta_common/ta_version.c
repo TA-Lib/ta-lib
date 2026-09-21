@@ -44,7 +44,7 @@
 /* Package versioning. Written by scripts/sync.py from VERSION; do not edit. */
 #define MAJOR "0"
 #define MINOR "8"
-#define PATCH "1"
+#define PATCH "2"
 
 /* Deprecated: Use PATCH instead. */
 #define BUILD PATCH
