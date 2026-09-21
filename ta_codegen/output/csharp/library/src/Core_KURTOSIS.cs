@@ -440,10 +440,7 @@ public partial class Core
    /// 0 it is flatter. The companion to the shipped
    /// <see href="https://ta-lib.org/functions/var"><c>VAR</c></see> and
    /// <see href="https://ta-lib.org/functions/stddev"><c>STDDEV</c></see> in the
-   /// same group. <c>SKEW</c>, the third-moment sibling, is deliberately a
-   /// separate question — it carries its own convention fork and its own
-   /// references, and two functions that share only a word get independent docs
-   /// and decisions.
+   /// same group.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -451,11 +448,9 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kurtosis">ta-lib.org/functions/kurtosis</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description><b>Which estimator.</b> This is <c>G2</c>, what Excel <c>KURT</c>, <c>scipy.stats.kurtosis(bias=False)</c> and R <c>e1071::kurtosis(type=2)</c> all compute, and the one that is unbiased under normality. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments, which NIST/SEMATECH gives. They are not a rounding convention apart: on a 9-point normal sample <c>G2 = 1.79450407519901</c> against <c>g2 = 0.342114639479481</c>.</description></item>
-   /// <item><description><b>A window with no spread returns NaN, not a number.</b> Excess kurtosis has no defensible neutral to fall back on — <c>0</c> asserts normality and <c>−1.2</c> asserts uniformity, and a point mass supports neither. <c>scipy.stats.kurtosis</c> returns <c>nan</c> at both bias settings, and Excel <c>KURT</c> documents <c>#DIV/0!</c> when the sample's standard deviation is zero. This function declares <c>nan_inf_output</c> and leaves the division unguarded, so the answer arrives from IEEE rather than from a branch. It is deliberately a <i>different</i> answer from <c>VAR</c>'s floor-to-zero: a variance of zero says something true about the window, a kurtosis of a point mass does not.</description></item>
-   /// <item><description><b>Cancellation, and why the rebuild period is not <c>VAR</c>'s.</b> Deviations are taken against a shift near the window and the central moments recovered from the shifted sums, as <c>var.c</c> does. What does not carry over is the period: a fourth moment recovered against a stale shift pays <c>(u/σ)⁴</c> where a second pays <c>(u/σ)²</c>, so the shift goes stale four times faster in the exponent. MEASURED on 1200-bar series at <c>n = 30</c>, worst relative error per bar against a 60-digit reference: | rebuild every | 32n (<c>VAR</c>'s) | 8n | 2n | n | n/4 | |---|---|---|---|---|---| | random walk around 100 | 1.18e-06 | 9.33e-07 | 1.61e-08 | 1.28e-09 | 4.58e-12 | | random walk on 3.1e10 | 4.99e-06 | 4.99e-06 | 6.27e-10 | 1.45e-09 | 1.76e-12 | | outlier 1e5 every 200 bars | 2.84e-13 | 2.84e-13 | 2.68e-13 | 1.51e-13 | 4.48e-14 | <c>VAR</c>'s <c>32n</c> leaves 1e-6 on an ordinary random walk, and the collapse trigger cannot catch it — the ratio it tests sits around 0.24 there, six orders from firing. Hence <c>n/4</c>.</description></item>
-   /// <item><description><b>Rebuilding beats rescanning.</b> Rescanning the whole window every bar measures 5.34e-11 and 4.30e-11 on those two walks — worse than the <c>n/4</c> rebuild, at roughly ten times the arithmetic. The rebuild anchors the shift at the window <i>mean</i>; a per-bar rescan can only anchor it at a window <i>value</i>, which sits further from centre.</description></item>
-   /// <item><description><b>The result is not bounded.</b> There is no clamp and no range assertion; a window dominated by one outlier is legitimately far above 0.</description></item>
+   /// <item><description>This is <c>G2</c>, the form Excel <c>KURT</c>, <c>scipy.stats.kurtosis(bias=False)</c> and R <c>e1071::kurtosis(type=2)</c> compute. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments; the two are far apart, not a rounding convention apart — on a 9-point normal sample <c>G2 = 1.79450407519901</c> against <c>g2 = 0.342114639479481</c>.</description></item>
+   /// <item><description>A point mass has no defensible excess kurtosis, so the degenerate window is NaN rather than a number: <c>0</c> would assert normality and <c>−1.2</c> uniformity. This is deliberately unlike <c>VAR</c>, which floors to zero — a variance of zero says something true about the window.</description></item>
+   /// <item><description>The result is not bounded. A window dominated by one outlier is legitimately far above 0.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -514,10 +509,7 @@ public partial class Core
    /// 0 it is flatter. The companion to the shipped
    /// <see href="https://ta-lib.org/functions/var"><c>VAR</c></see> and
    /// <see href="https://ta-lib.org/functions/stddev"><c>STDDEV</c></see> in the
-   /// same group. <c>SKEW</c>, the third-moment sibling, is deliberately a
-   /// separate question — it carries its own convention fork and its own
-   /// references, and two functions that share only a word get independent docs
-   /// and decisions.
+   /// same group.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -525,11 +517,9 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kurtosis">ta-lib.org/functions/kurtosis</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description><b>Which estimator.</b> This is <c>G2</c>, what Excel <c>KURT</c>, <c>scipy.stats.kurtosis(bias=False)</c> and R <c>e1071::kurtosis(type=2)</c> all compute, and the one that is unbiased under normality. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments, which NIST/SEMATECH gives. They are not a rounding convention apart: on a 9-point normal sample <c>G2 = 1.79450407519901</c> against <c>g2 = 0.342114639479481</c>.</description></item>
-   /// <item><description><b>A window with no spread returns NaN, not a number.</b> Excess kurtosis has no defensible neutral to fall back on — <c>0</c> asserts normality and <c>−1.2</c> asserts uniformity, and a point mass supports neither. <c>scipy.stats.kurtosis</c> returns <c>nan</c> at both bias settings, and Excel <c>KURT</c> documents <c>#DIV/0!</c> when the sample's standard deviation is zero. This function declares <c>nan_inf_output</c> and leaves the division unguarded, so the answer arrives from IEEE rather than from a branch. It is deliberately a <i>different</i> answer from <c>VAR</c>'s floor-to-zero: a variance of zero says something true about the window, a kurtosis of a point mass does not.</description></item>
-   /// <item><description><b>Cancellation, and why the rebuild period is not <c>VAR</c>'s.</b> Deviations are taken against a shift near the window and the central moments recovered from the shifted sums, as <c>var.c</c> does. What does not carry over is the period: a fourth moment recovered against a stale shift pays <c>(u/σ)⁴</c> where a second pays <c>(u/σ)²</c>, so the shift goes stale four times faster in the exponent. MEASURED on 1200-bar series at <c>n = 30</c>, worst relative error per bar against a 60-digit reference: | rebuild every | 32n (<c>VAR</c>'s) | 8n | 2n | n | n/4 | |---|---|---|---|---|---| | random walk around 100 | 1.18e-06 | 9.33e-07 | 1.61e-08 | 1.28e-09 | 4.58e-12 | | random walk on 3.1e10 | 4.99e-06 | 4.99e-06 | 6.27e-10 | 1.45e-09 | 1.76e-12 | | outlier 1e5 every 200 bars | 2.84e-13 | 2.84e-13 | 2.68e-13 | 1.51e-13 | 4.48e-14 | <c>VAR</c>'s <c>32n</c> leaves 1e-6 on an ordinary random walk, and the collapse trigger cannot catch it — the ratio it tests sits around 0.24 there, six orders from firing. Hence <c>n/4</c>.</description></item>
-   /// <item><description><b>Rebuilding beats rescanning.</b> Rescanning the whole window every bar measures 5.34e-11 and 4.30e-11 on those two walks — worse than the <c>n/4</c> rebuild, at roughly ten times the arithmetic. The rebuild anchors the shift at the window <i>mean</i>; a per-bar rescan can only anchor it at a window <i>value</i>, which sits further from centre.</description></item>
-   /// <item><description><b>The result is not bounded.</b> There is no clamp and no range assertion; a window dominated by one outlier is legitimately far above 0.</description></item>
+   /// <item><description>This is <c>G2</c>, the form Excel <c>KURT</c>, <c>scipy.stats.kurtosis(bias=False)</c> and R <c>e1071::kurtosis(type=2)</c> compute. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments; the two are far apart, not a rounding convention apart — on a 9-point normal sample <c>G2 = 1.79450407519901</c> against <c>g2 = 0.342114639479481</c>.</description></item>
+   /// <item><description>A point mass has no defensible excess kurtosis, so the degenerate window is NaN rather than a number: <c>0</c> would assert normality and <c>−1.2</c> uniformity. This is deliberately unlike <c>VAR</c>, which floors to zero — a variance of zero says something true about the window.</description></item>
+   /// <item><description>The result is not bounded. A window dominated by one outlier is legitimately far above 0.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

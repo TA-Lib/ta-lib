@@ -339,9 +339,7 @@ impl Core {
     /// tail-weight measure: above 0 the window has fatter tails and a sharper peak than a normal
     /// distribution of the same variance, below 0 it is flatter. The companion to the shipped
     /// [`VAR`](https://ta-lib.org/functions/var) and
-    /// [`STDDEV`](https://ta-lib.org/functions/stddev) in the same group. `SKEW`, the third-moment
-    /// sibling, is deliberately a separate question — it carries its own convention fork and its
-    /// own references, and two functions that share only a word get independent docs and decisions.
+    /// [`STDDEV`](https://ta-lib.org/functions/stddev) in the same group.
     ///
     /// Formula and more info at
     /// [ta-lib.org/functions/kurtosis](https://ta-lib.org/functions/kurtosis).
