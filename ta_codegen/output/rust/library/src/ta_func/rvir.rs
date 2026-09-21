@@ -194,12 +194,10 @@ impl Core {
     }
     /// Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of his own indicator,
     /// which runs the 1993 RVI over the daily highs and again over the daily lows and averages the
-    /// two indices. Each leg is the shipped [`RVI`](https://ta-lib.org/functions/rvi) unchanged —
-    /// the same rolling standard deviation routed to an up or a down bucket by the direction of the
-    /// bar, the same Wilder smoothing, the same treatment of a tie. Bounded in 0..100 and read like
-    /// the close-only form: above 50 the recent volatility arrived mostly on up bars, below 50
-    /// mostly on down bars. Dorsey's stated reason for the revision is that a high and a low carry
-    /// the day's range, so the pair answers the question the close alone can only approximate.
+    /// two indices. Output is bounded \[0..100] and is interpreted like RVI: above 50 the highs and
+    /// lows have been more volatile while rising than while falling, below 50 the reverse. Dorsey's
+    /// stated reason for the revision is that a high and a low carry the day's range, so the pair
+    /// answers the question the close alone can only approximate.
     ///
     /// Formula and more info at [ta-lib.org/functions/rvir](https://ta-lib.org/functions/rvir).
     ///

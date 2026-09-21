@@ -12,17 +12,16 @@ With `S` the standard deviation of the last `optInStdDevPeriod` values of `inRea
 
     U[i] = S[i] if C[i] > C[i-1], else 0
     D[i] = S[i] if C[i] < C[i-1], else 0
-    RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
+    Up   = RMA(U, optInTimePeriod)
+    Down = RMA(D, optInTimePeriod)
+    RVI  = 100 * Up / ( Up + Down ), or 50 when Up + Down = 0
 
 `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
 
 ## Notes
 
-- This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.
-- A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed `S` instead of `U + D` are counting ties as down bars, which is a different indicator.
-- Both smoothed legs can be exactly zero at the same bar, which happens whenever the smoothing carries no memory and the bar is a tie. RVI reports its neutral centre, 50, there rather than a non-finite value.
-- The standard deviation is the population form. The sample form differs by a constant factor that cancels in the ratio, so it is not a variant.
-- Sources publishing something else under this name, and how far from this function they land on a 252-bar equity series: a plain exponential smoother instead of Wilder's, up to 11.6 index points; one shared period for both the deviation and the smoothing, up to 15.6; an RSI taken over the standard-deviation series, up to 35.2; a linear-regression residual, up to 36.0. These are different indicators, not errors.
+- RVI is the 1993 version; [`RVIR`](/functions/rvir) is the 1995 revision.
+- A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed `S` instead of `Up + Down` are counting ties as down bars, which is a different indicator.
 - Unrelated to the Relative Vigor Index, which several platforms also abbreviate RVI.
 
 ## Inputs

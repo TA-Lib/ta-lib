@@ -245,12 +245,9 @@ public partial class Core
    /// <summary>
    /// Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of
    /// his own indicator, which runs the 1993 RVI over the daily highs and again
-   /// over the daily lows and averages the two indices. Each leg is the shipped
-   /// <see href="https://ta-lib.org/functions/rvi"><c>RVI</c></see> unchanged —
-   /// the same rolling standard deviation routed to an up or a down bucket by
-   /// the direction of the bar, the same Wilder smoothing, the same treatment of
-   /// a tie. Bounded in 0..100 and read like the close-only form: above 50 the
-   /// recent volatility arrived mostly on up bars, below 50 mostly on down bars.
+   /// over the daily lows and averages the two indices. Output is bounded
+   /// [0..100] and is interpreted like RVI: above 50 the highs and lows have
+   /// been more volatile while rising than while falling, below 50 the reverse.
    /// Dorsey's stated reason for the revision is that a high and a low carry the
    /// day's range, so the pair answers the question the close alone can only
    /// approximate.
@@ -261,13 +258,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/rvir">ta-lib.org/functions/rvir</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The name is contested, and in the opposite direction from what the abbreviation suggests. Some vendors reserve the bare name RVI for <i>this</i> revision and call the 1993 close-only form RVIorig; others default the other way. This library ships the 1993 form as <see href="https://ta-lib.org/functions/rvi"><c>RVI</c></see> and the 1995 revision here.</description></item>
-   /// <item><description>Averaging <c>RVI</c> of the highs and <c>RVI</c> of the lows, at the same parameters and over the same requested range, reproduces this function bit for bit.</description></item>
-   /// <item><description>A bar whose high equals the previous high feeds neither bucket of the high leg, and likewise for the lows. Descriptions that write a leg's denominator as a smoothed deviation instead of <c>U + D</c> are counting ties as down bars, which is a different indicator: on a 252-bar equity series that flip moves this function by up to 4.6 index points.</description></item>
-   /// <item><description>Each leg reports 50 when its own smoothed legs are both exactly zero, for the reason <c>RVI</c> does. The average is taken after each leg has resolved that, so a tie in one series does not drag the other.</description></item>
-   /// <item><description>On a series whose high equals its low at every bar the two legs are the same computation, and this function returns exactly <c>RVI</c> of it.</description></item>
-   /// <item><description>Sources publishing something else under this name, and how far from this function they land on a 252-bar equity series: a plain exponential smoother instead of Wilder's, up to 12.9 index points; averaging the <i>prices</i> and taking one index of the result instead of averaging the two indices, up to 13.6; adding the close as a third leg, up to 6.0; a 9-period deviation, up to 3.2. These are different indicators, not errors.</description></item>
-   /// <item><description>This is not a re-parameterisation of <c>RVI</c>: against <c>RVI</c> of the closes at the shared defaults the two series differ by up to 18.1 index points on the same corpus.</description></item>
+   /// <item><description>RVIR is the 1995 revision; <see href="https://ta-lib.org/functions/rvi"><c>RVI</c></see> is the 1993 version.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -328,12 +319,9 @@ public partial class Core
    /// <summary>
    /// Relative Volatility Index, refined form: Donald Dorsey's 1995 revision of
    /// his own indicator, which runs the 1993 RVI over the daily highs and again
-   /// over the daily lows and averages the two indices. Each leg is the shipped
-   /// <see href="https://ta-lib.org/functions/rvi"><c>RVI</c></see> unchanged —
-   /// the same rolling standard deviation routed to an up or a down bucket by
-   /// the direction of the bar, the same Wilder smoothing, the same treatment of
-   /// a tie. Bounded in 0..100 and read like the close-only form: above 50 the
-   /// recent volatility arrived mostly on up bars, below 50 mostly on down bars.
+   /// over the daily lows and averages the two indices. Output is bounded
+   /// [0..100] and is interpreted like RVI: above 50 the highs and lows have
+   /// been more volatile while rising than while falling, below 50 the reverse.
    /// Dorsey's stated reason for the revision is that a high and a low carry the
    /// day's range, so the pair answers the question the close alone can only
    /// approximate.
@@ -344,13 +332,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/rvir">ta-lib.org/functions/rvir</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The name is contested, and in the opposite direction from what the abbreviation suggests. Some vendors reserve the bare name RVI for <i>this</i> revision and call the 1993 close-only form RVIorig; others default the other way. This library ships the 1993 form as <see href="https://ta-lib.org/functions/rvi"><c>RVI</c></see> and the 1995 revision here.</description></item>
-   /// <item><description>Averaging <c>RVI</c> of the highs and <c>RVI</c> of the lows, at the same parameters and over the same requested range, reproduces this function bit for bit.</description></item>
-   /// <item><description>A bar whose high equals the previous high feeds neither bucket of the high leg, and likewise for the lows. Descriptions that write a leg's denominator as a smoothed deviation instead of <c>U + D</c> are counting ties as down bars, which is a different indicator: on a 252-bar equity series that flip moves this function by up to 4.6 index points.</description></item>
-   /// <item><description>Each leg reports 50 when its own smoothed legs are both exactly zero, for the reason <c>RVI</c> does. The average is taken after each leg has resolved that, so a tie in one series does not drag the other.</description></item>
-   /// <item><description>On a series whose high equals its low at every bar the two legs are the same computation, and this function returns exactly <c>RVI</c> of it.</description></item>
-   /// <item><description>Sources publishing something else under this name, and how far from this function they land on a 252-bar equity series: a plain exponential smoother instead of Wilder's, up to 12.9 index points; averaging the <i>prices</i> and taking one index of the result instead of averaging the two indices, up to 13.6; adding the close as a third leg, up to 6.0; a 9-period deviation, up to 3.2. These are different indicators, not errors.</description></item>
-   /// <item><description>This is not a re-parameterisation of <c>RVI</c>: against <c>RVI</c> of the closes at the shared defaults the two series differ by up to 18.1 index points on the same corpus.</description></item>
+   /// <item><description>RVIR is the 1995 revision; <see href="https://ta-lib.org/functions/rvi"><c>RVI</c></see> is the 1993 version.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

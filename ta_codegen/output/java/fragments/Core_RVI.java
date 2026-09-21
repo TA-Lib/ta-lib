@@ -572,11 +572,8 @@
     * href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
-    * <li>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed {@code S} instead of {@code U + D} are counting ties as down bars, which is a different indicator.</li>
-    * <li>Both smoothed legs can be exactly zero at the same bar, which happens whenever the smoothing carries no memory and the bar is a tie. RVI reports its neutral centre, 50, there rather than a non-finite value.</li>
-    * <li>The standard deviation is the population form. The sample form differs by a constant factor that cancels in the ratio, so it is not a variant.</li>
-    * <li>Sources publishing something else under this name, and how far from this function they land on a 252-bar equity series: a plain exponential smoother instead of Wilder's, up to 11.6 index points; one shared period for both the deviation and the smoothing, up to 15.6; an RSI taken over the standard-deviation series, up to 35.2; a linear-regression residual, up to 36.0. These are different indicators, not errors.</li>
+    * <li>RVI is the 1993 version; <a href="https://ta-lib.org/functions/rvir">{@code RVIR}</a> is the 1995 revision.</li>
+    * <li>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed {@code S} instead of {@code Up + Down} are counting ties as down bars, which is a different indicator.</li>
     * <li>Unrelated to the Relative Vigor Index, which several platforms also abbreviate RVI.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -650,11 +647,8 @@
     * href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
-    * <li>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed {@code S} instead of {@code U + D} are counting ties as down bars, which is a different indicator.</li>
-    * <li>Both smoothed legs can be exactly zero at the same bar, which happens whenever the smoothing carries no memory and the bar is a tie. RVI reports its neutral centre, 50, there rather than a non-finite value.</li>
-    * <li>The standard deviation is the population form. The sample form differs by a constant factor that cancels in the ratio, so it is not a variant.</li>
-    * <li>Sources publishing something else under this name, and how far from this function they land on a 252-bar equity series: a plain exponential smoother instead of Wilder's, up to 11.6 index points; one shared period for both the deviation and the smoothing, up to 15.6; an RSI taken over the standard-deviation series, up to 35.2; a linear-regression residual, up to 36.0. These are different indicators, not errors.</li>
+    * <li>RVI is the 1993 version; <a href="https://ta-lib.org/functions/rvir">{@code RVIR}</a> is the 1995 revision.</li>
+    * <li>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed {@code S} instead of {@code Up + Down} are counting ties as down bars, which is a different indicator.</li>
     * <li>Unrelated to the Relative Vigor Index, which several platforms also abbreviate RVI.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
