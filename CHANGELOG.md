@@ -12,6 +12,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - New TA Functions:
   - CTI: Correlation Trend Indicator (#430)
+  - KURTOSIS: Rolling Excess Kurtosis (#433)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
 
 ### Faster
