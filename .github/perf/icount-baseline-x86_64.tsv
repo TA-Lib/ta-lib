@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	c22ced4c3144c2689592961055365de536078270
-#generated	2026-09-15T22:06:23Z
+#commit	c21fdba7079ac8ff6a90f08aa41c63a4ee4d8b80
+#generated	2026-09-21T03:16:29Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -833,6 +833,11 @@ RVI	open	0	1818497
 RVI	openfill	0	1818448
 RVI	peek	0	103775
 RVI	update	0	166052
+RVIR	batch	0	1957516
+RVIR	open	0	3718735
+RVIR	openfill	0	3717858
+RVIR	peek	0	245815
+RVIR	update	0	377167
 RVOL	batch	0	219941
 RVOL	open	0	180280
 RVOL	openfill	0	220234
@@ -865,7 +870,7 @@ SMA	peek	0	33805
 SMA	update	0	63501
 SMI	batch	0	1512073
 SMI	open	0	2891466
-SMI	openfill	0	2891742
+SMI	openfill	0	2891658
 SMI	peek	0	109581
 SMI	update	0	249650
 SQRT	batch	0	60083
@@ -874,7 +879,7 @@ SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
 STDDEV	batch	0	772914
-STDDEV	open	0	794780
+STDDEV	open	0	794727
 STDDEV	openfill	0	793739
 STDDEV	peek	0	112653
 STDDEV	update	0	147530
@@ -969,8 +974,8 @@ VAR	openfill	0	733565
 VAR	peek	0	72717
 VAR	update	0	99402
 VHF	batch	0	9926174
-VHF	open	0	9906489
-VHF	openfill	0	9926489
+VHF	open	0	9906488
+VHF	openfill	0	9926487
 VHF	peek	0	787468
 VHF	update	0	721049
 VORTEX	batch	0	1219748
