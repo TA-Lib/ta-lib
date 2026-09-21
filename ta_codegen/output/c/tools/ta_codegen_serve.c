@@ -4351,12 +4351,13 @@ static int sv_steq_TA_KURTOSIS( const struct TA_KURTOSIS_Stream *a, const struct
    if( sv_xtier_ne(a->coefA, b->coefA, z) ) { *w = "coefA"; return 1; }
    if( sv_xtier_ne(a->coefB, b->coefB, z) ) { *w = "coefB"; return 1; }
    if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
+   if( sv_xtier_ne(a->peak2, b->peak2, z) ) { *w = "peak2"; return 1; }
+   if( sv_xtier_ne(a->peak4, b->peak4, z) ) { *w = "peak4"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( a->nbInitialElementNeeded != b->nbInitialElementNeeded ) { *w = "nbInitialElementNeeded"; return 1; }
    if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
    if( a->reseedPeriod != b->reseedPeriod ) { *w = "reseedPeriod"; return 1; }
    if( a->j != b->j ) { *w = "j"; return 1; }
-   if( a->windowStart != b->windowStart ) { *w = "windowStart"; return 1; }
    if( a->i != b->i ) { *w = "i"; return 1; }
    if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
    if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }

@@ -45,12 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  091526 KL     First version (proposal-drafts issue #72).
+ *  092126 MF,CC  Rebuild against the peak moments (issue #433).
  */
 
 // Import types from parent module
@@ -163,6 +166,8 @@ impl Core {
         let mut coefB: f64 = 0.0_f64;
         let mut invPeriod: f64 = 0.0_f64;
         let mut kurt: f64 = 0.0_f64;
+        let mut peak2: f64 = 0.0_f64;
+        let mut peak4: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -182,8 +187,7 @@ impl Core {
         }
         // G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
         // computed in double because their integer forms overflow: at the top of the
-        // parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds, and
-        // the product would wrap silently rather than fail.
+        // parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
         //
         // The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
         // The argument contract rejects anything below it, and the n-1 lookback
@@ -193,32 +197,13 @@ impl Core {
         coefA = dPeriod * (dPeriod + 1.0) / ((dPeriod - 1.0) * (dPeriod - 2.0) * (dPeriod - 3.0));
         coefB = 3.0 * (dPeriod - 1.0) * (dPeriod - 1.0) / ((dPeriod - 2.0) * (dPeriod - 3.0));
         invPeriod = 1.0 / dPeriod;
-        // Deviations are measured against a shift near the window, as var.c does, so
-        // the running sums stay at deviation scale instead of at price scale. The
-        // central moments are then recovered from the shifted sums by the binomial
-        // expansion below, which puts back the residue the shift left behind.
-        //
-        // The RESEED PERIOD IS NOT var.c's. MEASURED on 1200-bar series at n=30,
-        // worst relative error against a 60-digit reference computed per window:
-        //
-        //   rebuild every    32n (var.c)    8n        2n        n         n/4
-        //   walk around 100   1.18e-06   9.33e-07  1.61e-08  1.28e-09  4.58e-12
-        //   walk on 3.1e10    4.99e-06   4.99e-06  6.27e-10  1.45e-09  1.76e-12
-        //   outlier 1e5/200   2.84e-13   2.84e-13  2.68e-13  1.51e-13  4.48e-14
-        //
-        // A fourth moment recovered against a stale shift pays (u/sigma)^4 where a
-        // second pays (u/sigma)^2, so the shift goes stale four times faster in the
-        // exponent and var.c's 32n leaves 1e-6 on an ordinary random walk. The
-        // collapse trigger cannot catch that case -- the ratio it tests sits around
-        // 0.24 there, six orders from firing -- so only the periodic rebuild can,
-        // and it has to run at n/4.
-        //
-        // Rebuilding that often also beats rescanning the window every bar
-        // (5.34e-11 and 4.30e-11 on the two walks): the rebuild anchors the shift at
-        // the window MEAN, while a per-bar rescan can only anchor it at a window
-        // VALUE, which sits further from centre and leaves a larger u. About a tenth
-        // of the arithmetic, and more accurate.
-        reseedPeriod = (optInTimePeriod / 4) as usize;
+        // Deviations are measured against a shift near the window, so the running
+        // sums stay at deviation scale instead of at price scale, and the central
+        // moments are recovered from them by the binomial expansion below. The
+        // period bounds the rounding the slide accumulates and is the only way out
+        // of a NaN or Inf input, on which every trigger comparison is false; a stale
+        // shift is caught by the triggers in the loop, not by this.
+        reseedPeriod = (32 * optInTimePeriod) as usize;
         trailingIdx = startIdx - nbInitialElementNeeded;
         shift = inReal[trailingIdx];
         total1 = 0.0;
@@ -236,11 +221,11 @@ impl Core {
             total4 += dev2 * dev2;
             j += 1;
         }
-        // inReal and outReal may be the same buffer: each trailing value is consumed
-        // before its slot is overwritten by the output.
         i = startIdx;
         outIdx = 0;
         barsSinceReseed = reseedPeriod;
+        peak2 = total2;
+        peak4 = total4;
         loop {
             dev = inReal[i] - shift;
             dev2 = dev * dev;
@@ -248,31 +233,24 @@ impl Core {
             total2 += dev2;
             total3 += dev2 * dev;
             total4 += dev2 * dev2;
-            // Central moments from the shifted sums. `residue` is what the shift
-            // left behind: ~0 right after a rebuild, growing as the window walks
-            // away from the anchor. That growth is the quantity the rebuild period
-            // bounds, and the reason a fourth moment needs a shorter period than a
-            // second -- it enters here raised to the fourth power.
+            if total2 > peak2 {
+                peak2 = total2;
+            }
+            if total4 > peak4 {
+                peak4 = total4;
+            }
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
             moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
-            // Remove the trailing value (prepares the next window).
-            dev = inReal[trailingIdx] - shift;
-            dev2 = dev * dev;
-            total1 -= dev;
-            total2 -= dev2;
-            total3 -= dev2 * dev;
-            total4 -= dev2 * dev2;
-            trailingIdx += 1;
-            // Rebuild when the window walked far enough from the anchor for the
-            // expansion above to be subtracting like-sized quantities; when the value
-            // just removed sat so far from the shift that its fourth power dwarfs
-            // what survives (a large outlier passing through buries the small terms
-            // below its ulp, and the residue it leaves is cancellation garbage); or
-            // on the period derived above regardless.
+            // Rebuild once either central moment falls below 1% of the largest
+            // shifted sum of its power held since the last rebuild. That catches a
+            // shift several sigma stale, where the expansion above cancels as
+            // (u/sigma)^4, and a series decaying back onto the shift or an outlier
+            // leaving the window, which leave current sums made mostly of rounding
+            // that scales with the peaks.
             barsSinceReseed -= 1;
-            if moment2 < 0.000001 * total2 || dev2 * dev2 > 1000000.0 * total4 || barsSinceReseed <= 0 {
+            if moment2 < 0.01 * peak2 || moment4 < 0.01 * peak4 || barsSinceReseed <= 0 {
                 barsSinceReseed = reseedPeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -298,34 +276,50 @@ impl Core {
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
                 moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
-                // Re-remove the trailing value under the new shift so the carried
-                // state matches the non-rebuild path.
-                dev = inReal[windowStart] - shift;
-                dev2 = dev * dev;
-                total1 -= dev;
-                total2 -= dev2;
-                total3 -= dev2 * dev;
-                total4 -= dev2 * dev2;
+                // The left-to-right sum misses the mean by many ulps at a long
+                // period, and a window whose spread is under that miss would fire a
+                // trigger again on every bar. The residue just measured is the
+                // miss: adding it back lands within about an ulp of the mean, where
+                // a flat window's deviations are exactly 0.
+                if moment2 < 0.01 * total2 || moment4 < 0.01 * total4 {
+                    shift += residue;
+                    total1 = 0.0;
+                    total2 = 0.0;
+                    total3 = 0.0;
+                    total4 = 0.0;
+                    for j in (windowStart as usize)..(i as usize) + 1 {
+                        dev = inReal[j] - shift;
+                        dev2 = dev * dev;
+                        total1 += dev;
+                        total2 += dev2;
+                        total3 += dev2 * dev;
+                        total4 += dev2 * dev2;
+                    }
+                    j = (i as usize) + 1;
+                    residue = total1 * invPeriod;
+                    residueSq = residue * residue;
+                    moment2 = total2 - dPeriod * residueSq;
+                    moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                }
+                peak2 = total2;
+                peak4 = total4;
             }
-            // A window with no spread has no kurtosis to report, and there is no
-            // defensible neutral to substitute: 0 asserts normality and -1.2 asserts
-            // uniformity, neither of which a point mass supports. scipy returns nan
-            // at both bias settings and Excel KURT answers #DIV/0!.
-            //
-            // So the division is left UNGUARDED, as rvol.c leaves its own, and the
-            // function declares nan_inf_output. On a point mass the rebuild anchors
-            // the shift at the single value, every deviation is exactly 0, and both
-            // moments are exactly 0 -- so this is 0/0 and IEEE answers NaN without a
-            // branch. A guard with an absolute epsilon would be a cliff at a price
-            // level rather than a noise floor, which is the mistake #243 fixed in the
-            // var/stddev/bbands family: a $100 instrument quoted in 1e-8 ticks had
-            // every bar zeroed.
-            //
-            // Nothing NaN re-enters the running sums -- the division happens here, at
-            // the output write, on sums that stay finite.
+            // No spread, no kurtosis: 0 would assert normality and -1.2 uniformity.
+            // A flat window reaches here with every deviation exactly 0, so this is
+            // 0/0 and IEEE answers NaN without a branch. A guard with an absolute
+            // epsilon would be a cliff at a price level, not a noise floor (#243).
             sampleVar = moment2 / (dPeriod - 1.0);
             varSquared = sampleVar * sampleVar;
             kurt = coefA * (moment4 / varSquared) - coefB;
+            // inReal and outReal may be the same buffer: read the trailing value
+            // before the output write.
+            dev = inReal[trailingIdx] - shift;
+            dev2 = dev * dev;
+            total1 -= dev;
+            total2 -= dev2;
+            total3 -= dev2 * dev;
+            total4 -= dev2 * dev2;
+            trailingIdx += 1;
             outReal[outIdx] = kurt;
             outIdx += 1;
             i += 1;
@@ -474,12 +468,13 @@ struct KurtosisStreamState {
     coefA: f64,
     coefB: f64,
     invPeriod: f64,
+    peak2: f64,
+    peak4: f64,
     trailingIdx: i32,
     nbInitialElementNeeded: usize,
     barsSinceReseed: usize,
     reseedPeriod: usize,
     j: i32,
-    windowStart: i32,
     i: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
@@ -503,6 +498,7 @@ impl Core {
         let mut sampleVar: f64 = 0.0_f64;
         let mut varSquared: f64 = 0.0_f64;
         let mut kurt: f64 = 0.0_f64;
+        let mut windowStart: usize = 0_usize;
         sp.x_inReal[(sp.i & sp.xMask) as usize] = inReal;
         dev = sp.x_inReal[(sp.i & sp.xMask) as usize] - sp.shift;
         dev2 = dev * dev;
@@ -510,36 +506,29 @@ impl Core {
         sp.total2 += dev2;
         sp.total3 += dev2 * dev;
         sp.total4 += dev2 * dev2;
-        // Central moments from the shifted sums. `residue` is what the shift
-        // left behind: ~0 right after a rebuild, growing as the window walks
-        // away from the anchor. That growth is the quantity the rebuild period
-        // bounds, and the reason a fourth moment needs a shorter period than a
-        // second -- it enters here raised to the fourth power.
+        if sp.total2 > sp.peak2 {
+            sp.peak2 = sp.total2;
+        }
+        if sp.total4 > sp.peak4 {
+            sp.peak4 = sp.total4;
+        }
         residue = sp.total1 * sp.invPeriod;
         residueSq = residue * residue;
         moment2 = sp.total2 - sp.dPeriod * residueSq;
         moment4 = (6.0 * residueSq as f64).mul_add(sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
-        // Remove the trailing value (prepares the next window).
-        dev = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize] - sp.shift;
-        dev2 = dev * dev;
-        sp.total1 -= dev;
-        sp.total2 -= dev2;
-        sp.total3 -= dev2 * dev;
-        sp.total4 -= dev2 * dev2;
-        sp.trailingIdx += 1;
-        // Rebuild when the window walked far enough from the anchor for the
-        // expansion above to be subtracting like-sized quantities; when the value
-        // just removed sat so far from the shift that its fourth power dwarfs
-        // what survives (a large outlier passing through buries the small terms
-        // below its ulp, and the residue it leaves is cancellation garbage); or
-        // on the period derived above regardless.
+        // Rebuild once either central moment falls below 1% of the largest
+        // shifted sum of its power held since the last rebuild. That catches a
+        // shift several sigma stale, where the expansion above cancels as
+        // (u/sigma)^4, and a series decaying back onto the shift or an outlier
+        // leaving the window, which leave current sums made mostly of rounding
+        // that scales with the peaks.
         sp.barsSinceReseed -= 1;
-        if moment2 < 0.000001 * sp.total2 || dev2 * dev2 > 1000000.0 * sp.total4 || sp.barsSinceReseed <= 0 {
+        if moment2 < 0.01 * sp.peak2 || moment4 < 0.01 * sp.peak4 || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = sp.reseedPeriod;
-            sp.windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
+            windowStart = (sp.i - ((sp.nbInitialElementNeeded) as i32)) as usize;
             tempReal = 0.0;
-            // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
-            sp.j = sp.windowStart;
+            // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
+            sp.j = (windowStart) as i32;
             while sp.j <= sp.i {
                 tempReal += sp.x_inReal[(sp.j & sp.xMask) as usize];
                 sp.j += 1;
@@ -549,8 +538,8 @@ impl Core {
             sp.total2 = 0.0;
             sp.total3 = 0.0;
             sp.total4 = 0.0;
-            // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
-            sp.j = sp.windowStart;
+            // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
+            sp.j = (windowStart) as i32;
             while sp.j <= sp.i {
                 dev = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                 dev2 = dev * dev;
@@ -564,34 +553,52 @@ impl Core {
             residueSq = residue * residue;
             moment2 = sp.total2 - sp.dPeriod * residueSq;
             moment4 = (6.0 * residueSq as f64).mul_add(sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
-            // Re-remove the trailing value under the new shift so the carried
-            // state matches the non-rebuild path.
-            dev = sp.x_inReal[(sp.windowStart & sp.xMask) as usize] - sp.shift;
-            dev2 = dev * dev;
-            sp.total1 -= dev;
-            sp.total2 -= dev2;
-            sp.total3 -= dev2 * dev;
-            sp.total4 -= dev2 * dev2;
+            // The left-to-right sum misses the mean by many ulps at a long
+            // period, and a window whose spread is under that miss would fire a
+            // trigger again on every bar. The residue just measured is the
+            // miss: adding it back lands within about an ulp of the mean, where
+            // a flat window's deviations are exactly 0.
+            if moment2 < 0.01 * sp.total2 || moment4 < 0.01 * sp.total4 {
+                sp.shift += residue;
+                sp.total1 = 0.0;
+                sp.total2 = 0.0;
+                sp.total3 = 0.0;
+                sp.total4 = 0.0;
+                // for( sp.j = (windowStart) as i32; sp.j <= sp.i; sp.j += 1 )
+                sp.j = (windowStart) as i32;
+                while sp.j <= sp.i {
+                    dev = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
+                    dev2 = dev * dev;
+                    sp.total1 += dev;
+                    sp.total2 += dev2;
+                    sp.total3 += dev2 * dev;
+                    sp.total4 += dev2 * dev2;
+                    sp.j += 1;
+                }
+                residue = sp.total1 * sp.invPeriod;
+                residueSq = residue * residue;
+                moment2 = sp.total2 - sp.dPeriod * residueSq;
+                moment4 = (6.0 * residueSq as f64).mul_add(sp.total2, sp.total4 - 4.0 * residue * sp.total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+            }
+            sp.peak2 = sp.total2;
+            sp.peak4 = sp.total4;
         }
-        // A window with no spread has no kurtosis to report, and there is no
-        // defensible neutral to substitute: 0 asserts normality and -1.2 asserts
-        // uniformity, neither of which a point mass supports. scipy returns nan
-        // at both bias settings and Excel KURT answers #DIV/0!.
-        //
-        // So the division is left UNGUARDED, as rvol.c leaves its own, and the
-        // function declares nan_inf_output. On a point mass the rebuild anchors
-        // the shift at the single value, every deviation is exactly 0, and both
-        // moments are exactly 0 -- so this is 0/0 and IEEE answers NaN without a
-        // branch. A guard with an absolute epsilon would be a cliff at a price
-        // level rather than a noise floor, which is the mistake #243 fixed in the
-        // var/stddev/bbands family: a $100 instrument quoted in 1e-8 ticks had
-        // every bar zeroed.
-        //
-        // Nothing NaN re-enters the running sums -- the division happens here, at
-        // the output write, on sums that stay finite.
+        // No spread, no kurtosis: 0 would assert normality and -1.2 uniformity.
+        // A flat window reaches here with every deviation exactly 0, so this is
+        // 0/0 and IEEE answers NaN without a branch. A guard with an absolute
+        // epsilon would be a cliff at a price level, not a noise floor (#243).
         sampleVar = moment2 / (sp.dPeriod - 1.0);
         varSquared = sampleVar * sampleVar;
         kurt = sp.coefA * (moment4 / varSquared) - sp.coefB;
+        // inReal and outReal may be the same buffer: read the trailing value
+        // before the output write.
+        dev = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize] - sp.shift;
+        dev2 = dev * dev;
+        sp.total1 -= dev;
+        sp.total2 -= dev2;
+        sp.total3 -= dev2 * dev;
+        sp.total4 -= dev2 * dev2;
+        sp.trailingIdx += 1;
         (*outReal) = kurt;
         sp.i += 1;
         sp.cur_outReal = (*outReal);
@@ -642,6 +649,8 @@ impl Core {
         let mut coefB: f64 = 0.0_f64;
         let mut invPeriod: f64 = 0.0_f64;
         let mut kurt: f64 = 0.0_f64;
+        let mut peak2: f64 = 0.0_f64;
+        let mut peak4: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -661,8 +670,7 @@ impl Core {
         }
         // G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
         // computed in double because their integer forms overflow: at the top of the
-        // parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds, and
-        // the product would wrap silently rather than fail.
+        // parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
         //
         // The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
         // The argument contract rejects anything below it, and the n-1 lookback
@@ -672,32 +680,13 @@ impl Core {
         coefA = dPeriod * (dPeriod + 1.0) / ((dPeriod - 1.0) * (dPeriod - 2.0) * (dPeriod - 3.0));
         coefB = 3.0 * (dPeriod - 1.0) * (dPeriod - 1.0) / ((dPeriod - 2.0) * (dPeriod - 3.0));
         invPeriod = 1.0 / dPeriod;
-        // Deviations are measured against a shift near the window, as var.c does, so
-        // the running sums stay at deviation scale instead of at price scale. The
-        // central moments are then recovered from the shifted sums by the binomial
-        // expansion below, which puts back the residue the shift left behind.
-        //
-        // The RESEED PERIOD IS NOT var.c's. MEASURED on 1200-bar series at n=30,
-        // worst relative error against a 60-digit reference computed per window:
-        //
-        //   rebuild every    32n (var.c)    8n        2n        n         n/4
-        //   walk around 100   1.18e-06   9.33e-07  1.61e-08  1.28e-09  4.58e-12
-        //   walk on 3.1e10    4.99e-06   4.99e-06  6.27e-10  1.45e-09  1.76e-12
-        //   outlier 1e5/200   2.84e-13   2.84e-13  2.68e-13  1.51e-13  4.48e-14
-        //
-        // A fourth moment recovered against a stale shift pays (u/sigma)^4 where a
-        // second pays (u/sigma)^2, so the shift goes stale four times faster in the
-        // exponent and var.c's 32n leaves 1e-6 on an ordinary random walk. The
-        // collapse trigger cannot catch that case -- the ratio it tests sits around
-        // 0.24 there, six orders from firing -- so only the periodic rebuild can,
-        // and it has to run at n/4.
-        //
-        // Rebuilding that often also beats rescanning the window every bar
-        // (5.34e-11 and 4.30e-11 on the two walks): the rebuild anchors the shift at
-        // the window MEAN, while a per-bar rescan can only anchor it at a window
-        // VALUE, which sits further from centre and leaves a larger u. About a tenth
-        // of the arithmetic, and more accurate.
-        reseedPeriod = (optInTimePeriod / 4) as usize;
+        // Deviations are measured against a shift near the window, so the running
+        // sums stay at deviation scale instead of at price scale, and the central
+        // moments are recovered from them by the binomial expansion below. The
+        // period bounds the rounding the slide accumulates and is the only way out
+        // of a NaN or Inf input, on which every trigger comparison is false; a stale
+        // shift is caught by the triggers in the loop, not by this.
+        reseedPeriod = (32 * optInTimePeriod) as usize;
         trailingIdx = startIdx - nbInitialElementNeeded;
         shift = inReal[trailingIdx];
         total1 = 0.0;
@@ -715,11 +704,11 @@ impl Core {
             total4 += dev2 * dev2;
             j += 1;
         }
-        // inReal and outReal may be the same buffer: each trailing value is consumed
-        // before its slot is overwritten by the output.
         i = startIdx;
         outIdx = 0;
         barsSinceReseed = reseedPeriod;
+        peak2 = total2;
+        peak4 = total4;
         loop {
             dev = inReal[i] - shift;
             dev2 = dev * dev;
@@ -727,31 +716,24 @@ impl Core {
             total2 += dev2;
             total3 += dev2 * dev;
             total4 += dev2 * dev2;
-            // Central moments from the shifted sums. `residue` is what the shift
-            // left behind: ~0 right after a rebuild, growing as the window walks
-            // away from the anchor. That growth is the quantity the rebuild period
-            // bounds, and the reason a fourth moment needs a shorter period than a
-            // second -- it enters here raised to the fourth power.
+            if total2 > peak2 {
+                peak2 = total2;
+            }
+            if total4 > peak4 {
+                peak4 = total4;
+            }
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
             moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
-            // Remove the trailing value (prepares the next window).
-            dev = inReal[trailingIdx] - shift;
-            dev2 = dev * dev;
-            total1 -= dev;
-            total2 -= dev2;
-            total3 -= dev2 * dev;
-            total4 -= dev2 * dev2;
-            trailingIdx += 1;
-            // Rebuild when the window walked far enough from the anchor for the
-            // expansion above to be subtracting like-sized quantities; when the value
-            // just removed sat so far from the shift that its fourth power dwarfs
-            // what survives (a large outlier passing through buries the small terms
-            // below its ulp, and the residue it leaves is cancellation garbage); or
-            // on the period derived above regardless.
+            // Rebuild once either central moment falls below 1% of the largest
+            // shifted sum of its power held since the last rebuild. That catches a
+            // shift several sigma stale, where the expansion above cancels as
+            // (u/sigma)^4, and a series decaying back onto the shift or an outlier
+            // leaving the window, which leave current sums made mostly of rounding
+            // that scales with the peaks.
             barsSinceReseed -= 1;
-            if moment2 < 0.000001 * total2 || dev2 * dev2 > 1000000.0 * total4 || barsSinceReseed <= 0 {
+            if moment2 < 0.01 * peak2 || moment4 < 0.01 * peak4 || barsSinceReseed <= 0 {
                 barsSinceReseed = reseedPeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -777,34 +759,50 @@ impl Core {
                 residueSq = residue * residue;
                 moment2 = total2 - dPeriod * residueSq;
                 moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
-                // Re-remove the trailing value under the new shift so the carried
-                // state matches the non-rebuild path.
-                dev = inReal[windowStart] - shift;
-                dev2 = dev * dev;
-                total1 -= dev;
-                total2 -= dev2;
-                total3 -= dev2 * dev;
-                total4 -= dev2 * dev2;
+                // The left-to-right sum misses the mean by many ulps at a long
+                // period, and a window whose spread is under that miss would fire a
+                // trigger again on every bar. The residue just measured is the
+                // miss: adding it back lands within about an ulp of the mean, where
+                // a flat window's deviations are exactly 0.
+                if moment2 < 0.01 * total2 || moment4 < 0.01 * total4 {
+                    shift += residue;
+                    total1 = 0.0;
+                    total2 = 0.0;
+                    total3 = 0.0;
+                    total4 = 0.0;
+                    for j in (windowStart as usize)..(i as usize) + 1 {
+                        dev = inReal[j] - shift;
+                        dev2 = dev * dev;
+                        total1 += dev;
+                        total2 += dev2;
+                        total3 += dev2 * dev;
+                        total4 += dev2 * dev2;
+                    }
+                    j = (i as usize) + 1;
+                    residue = total1 * invPeriod;
+                    residueSq = residue * residue;
+                    moment2 = total2 - dPeriod * residueSq;
+                    moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * dPeriod * residueSq * residueSq;
+                }
+                peak2 = total2;
+                peak4 = total4;
             }
-            // A window with no spread has no kurtosis to report, and there is no
-            // defensible neutral to substitute: 0 asserts normality and -1.2 asserts
-            // uniformity, neither of which a point mass supports. scipy returns nan
-            // at both bias settings and Excel KURT answers #DIV/0!.
-            //
-            // So the division is left UNGUARDED, as rvol.c leaves its own, and the
-            // function declares nan_inf_output. On a point mass the rebuild anchors
-            // the shift at the single value, every deviation is exactly 0, and both
-            // moments are exactly 0 -- so this is 0/0 and IEEE answers NaN without a
-            // branch. A guard with an absolute epsilon would be a cliff at a price
-            // level rather than a noise floor, which is the mistake #243 fixed in the
-            // var/stddev/bbands family: a $100 instrument quoted in 1e-8 ticks had
-            // every bar zeroed.
-            //
-            // Nothing NaN re-enters the running sums -- the division happens here, at
-            // the output write, on sums that stay finite.
+            // No spread, no kurtosis: 0 would assert normality and -1.2 uniformity.
+            // A flat window reaches here with every deviation exactly 0, so this is
+            // 0/0 and IEEE answers NaN without a branch. A guard with an absolute
+            // epsilon would be a cliff at a price level, not a noise floor (#243).
             sampleVar = moment2 / (dPeriod - 1.0);
             varSquared = sampleVar * sampleVar;
             kurt = coefA * (moment4 / varSquared) - coefB;
+            // inReal and outReal may be the same buffer: read the trailing value
+            // before the output write.
+            dev = inReal[trailingIdx] - shift;
+            dev2 = dev * dev;
+            total1 -= dev;
+            total2 -= dev2;
+            total3 -= dev2 * dev;
+            total4 -= dev2 * dev2;
+            trailingIdx += 1;
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = kurt;
             i += 1;
             if !(i <= endIdx) { break; }
@@ -840,12 +838,13 @@ impl Core {
             coefA,
             coefB,
             invPeriod,
+            peak2,
+            peak4,
             trailingIdx: (trailingIdx) as i32,
             nbInitialElementNeeded,
             barsSinceReseed,
             reseedPeriod,
             j: (j) as i32,
-            windowStart: (windowStart) as i32,
             i: (i) as i32,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
@@ -1027,15 +1026,17 @@ impl KurtosisStream {
             let mut sampleVar: f64 = 0.0_f64;
             let mut varSquared: f64 = 0.0_f64;
             let mut kurt: f64 = 0.0_f64;
+            let mut windowStart: usize = 0_usize;
             let mut barsSinceReseed = sp.barsSinceReseed;
             let mut j = sp.j;
+            let mut peak2 = sp.peak2;
+            let mut peak4 = sp.peak4;
             let mut shift = sp.shift;
             let mut total1 = sp.total1;
             let mut total2 = sp.total2;
             let mut total3 = sp.total3;
             let mut total4 = sp.total4;
             let mut trailingIdx = sp.trailingIdx;
-            let mut windowStart = sp.windowStart;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             pkSlot0 = (sp.i & sp.xMask) as usize;
@@ -1046,36 +1047,29 @@ impl KurtosisStream {
             total2 += dev2;
             total3 += dev2 * dev;
             total4 += dev2 * dev2;
-            // Central moments from the shifted sums. `residue` is what the shift
-            // left behind: ~0 right after a rebuild, growing as the window walks
-            // away from the anchor. That growth is the quantity the rebuild period
-            // bounds, and the reason a fourth moment needs a shorter period than a
-            // second -- it enters here raised to the fourth power.
+            if total2 > peak2 {
+                peak2 = total2;
+            }
+            if total4 > peak4 {
+                peak4 = total4;
+            }
             residue = total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - sp.dPeriod * residueSq;
             moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
-            // Remove the trailing value (prepares the next window).
-            dev = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 }) - shift;
-            dev2 = dev * dev;
-            total1 -= dev;
-            total2 -= dev2;
-            total3 -= dev2 * dev;
-            total4 -= dev2 * dev2;
-            trailingIdx += 1;
-            // Rebuild when the window walked far enough from the anchor for the
-            // expansion above to be subtracting like-sized quantities; when the value
-            // just removed sat so far from the shift that its fourth power dwarfs
-            // what survives (a large outlier passing through buries the small terms
-            // below its ulp, and the residue it leaves is cancellation garbage); or
-            // on the period derived above regardless.
+            // Rebuild once either central moment falls below 1% of the largest
+            // shifted sum of its power held since the last rebuild. That catches a
+            // shift several sigma stale, where the expansion above cancels as
+            // (u/sigma)^4, and a series decaying back onto the shift or an outlier
+            // leaving the window, which leave current sums made mostly of rounding
+            // that scales with the peaks.
             barsSinceReseed -= 1;
-            if moment2 < 0.000001 * total2 || dev2 * dev2 > 1000000.0 * total4 || barsSinceReseed <= 0 {
+            if moment2 < 0.01 * peak2 || moment4 < 0.01 * peak4 || barsSinceReseed <= 0 {
                 barsSinceReseed = sp.reseedPeriod;
-                windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
+                windowStart = (sp.i - ((sp.nbInitialElementNeeded) as i32)) as usize;
                 tempReal = 0.0;
-                // for( j = windowStart; j <= sp.i; j += 1 )
-                j = windowStart;
+                // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
+                j = (windowStart) as i32;
                 while j <= sp.i {
                     tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
                     j += 1;
@@ -1085,8 +1079,8 @@ impl KurtosisStream {
                 total2 = 0.0;
                 total3 = 0.0;
                 total4 = 0.0;
-                // for( j = windowStart; j <= sp.i; j += 1 )
-                j = windowStart;
+                // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
+                j = (windowStart) as i32;
                 while j <= sp.i {
                     dev = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                     dev2 = dev * dev;
@@ -1100,34 +1094,52 @@ impl KurtosisStream {
                 residueSq = residue * residue;
                 moment2 = total2 - sp.dPeriod * residueSq;
                 moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
-                // Re-remove the trailing value under the new shift so the carried
-                // state matches the non-rebuild path.
-                dev = (if ((windowStart & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(windowStart & sp.xMask) as usize] } else { pkVal0 }) - shift;
-                dev2 = dev * dev;
-                total1 -= dev;
-                total2 -= dev2;
-                total3 -= dev2 * dev;
-                total4 -= dev2 * dev2;
+                // The left-to-right sum misses the mean by many ulps at a long
+                // period, and a window whose spread is under that miss would fire a
+                // trigger again on every bar. The residue just measured is the
+                // miss: adding it back lands within about an ulp of the mean, where
+                // a flat window's deviations are exactly 0.
+                if moment2 < 0.01 * total2 || moment4 < 0.01 * total4 {
+                    shift += residue;
+                    total1 = 0.0;
+                    total2 = 0.0;
+                    total3 = 0.0;
+                    total4 = 0.0;
+                    // for( j = (windowStart) as i32; j <= sp.i; j += 1 )
+                    j = (windowStart) as i32;
+                    while j <= sp.i {
+                        dev = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
+                        dev2 = dev * dev;
+                        total1 += dev;
+                        total2 += dev2;
+                        total3 += dev2 * dev;
+                        total4 += dev2 * dev2;
+                        j += 1;
+                    }
+                    residue = total1 * sp.invPeriod;
+                    residueSq = residue * residue;
+                    moment2 = total2 - sp.dPeriod * residueSq;
+                    moment4 = (6.0 * residueSq as f64).mul_add(total2, total4 - 4.0 * residue * total3) - 3.0 * sp.dPeriod * residueSq * residueSq;
+                }
+                peak2 = total2;
+                peak4 = total4;
             }
-            // A window with no spread has no kurtosis to report, and there is no
-            // defensible neutral to substitute: 0 asserts normality and -1.2 asserts
-            // uniformity, neither of which a point mass supports. scipy returns nan
-            // at both bias settings and Excel KURT answers #DIV/0!.
-            //
-            // So the division is left UNGUARDED, as rvol.c leaves its own, and the
-            // function declares nan_inf_output. On a point mass the rebuild anchors
-            // the shift at the single value, every deviation is exactly 0, and both
-            // moments are exactly 0 -- so this is 0/0 and IEEE answers NaN without a
-            // branch. A guard with an absolute epsilon would be a cliff at a price
-            // level rather than a noise floor, which is the mistake #243 fixed in the
-            // var/stddev/bbands family: a $100 instrument quoted in 1e-8 ticks had
-            // every bar zeroed.
-            //
-            // Nothing NaN re-enters the running sums -- the division happens here, at
-            // the output write, on sums that stay finite.
+            // No spread, no kurtosis: 0 would assert normality and -1.2 uniformity.
+            // A flat window reaches here with every deviation exactly 0, so this is
+            // 0/0 and IEEE answers NaN without a branch. A guard with an absolute
+            // epsilon would be a cliff at a price level, not a noise floor (#243).
             sampleVar = moment2 / (sp.dPeriod - 1.0);
             varSquared = sampleVar * sampleVar;
             kurt = sp.coefA * (moment4 / varSquared) - sp.coefB;
+            // inReal and outReal may be the same buffer: read the trailing value
+            // before the output write.
+            dev = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 }) - shift;
+            dev2 = dev * dev;
+            total1 -= dev;
+            total2 -= dev2;
+            total3 -= dev2 * dev;
+            total4 -= dev2 * dev2;
+            trailingIdx += 1;
             (*outReal) = kurt;
         }
         Ok(outReal)
