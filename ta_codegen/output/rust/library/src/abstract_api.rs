@@ -280,6 +280,8 @@ pub enum FuncId {
     KC,
     /// KDJ Stochastic — [`Core::kdj`](crate::Core::kdj).
     KDJ,
+    /// Rolling Excess Kurtosis — [`Core::kurtosis`](crate::Core::kurtosis).
+    KURTOSIS,
     /// Linear Regression — [`Core::linearreg`](crate::Core::linearreg).
     LINEARREG,
     /// Linear Regression Angle — [`Core::linearreg_angle`](crate::Core::linearreg_angle).
@@ -452,7 +454,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 203;
+    pub const COUNT: usize = 204;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -777,7 +779,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 203] = [
+static FUNC_TABLE: [FuncInfo; 204] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2088,6 +2090,17 @@ static FUNC_TABLE: [FuncInfo; 203] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::KURTOSIS,
+        name: "KURTOSIS",
+        group: Group::StatisticFunctions,
+        hint: "Rolling Excess Kurtosis",
+        flags: FuncFlags(0x42000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 4, max: 100000, default: 30, suggested: (10, 200, 5) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::LINEARREG,
         name: "LINEARREG",
         group: Group::StatisticFunctions,
@@ -3148,6 +3161,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "KAMA" => FuncId::KAMA,
         "KC" => FuncId::KC,
         "KDJ" => FuncId::KDJ,
+        "KURTOSIS" => FuncId::KURTOSIS,
         "LINEARREG" => FuncId::LINEARREG,
         "LINEARREG_ANGLE" => FuncId::LINEARREG_ANGLE,
         "LINEARREG_INTERCEPT" => FuncId::LINEARREG_INTERCEPT,
@@ -3608,6 +3622,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::KAMA => self.core.kama_lookback(self.int_opt[0]),
             FuncId::KC => self.core.kc_lookback(self.int_opt[0], self.int_opt[1], self.real_opt[2]),
             FuncId::KDJ => self.core.kdj_lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
+            FuncId::KURTOSIS => self.core.kurtosis_lookback(self.int_opt[0]),
             FuncId::LINEARREG => self.core.linearreg_lookback(self.int_opt[0]),
             FuncId::LINEARREG_ANGLE => self.core.linearreg_angle_lookback(self.int_opt[0]),
             FuncId::LINEARREG_INTERCEPT => self.core.linearreg_intercept_lookback(self.int_opt[0]),
@@ -5196,6 +5211,16 @@ impl<'a> ParamHolder<'a> {
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::KURTOSIS => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.kurtosis(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,
