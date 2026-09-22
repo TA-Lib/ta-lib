@@ -1,9 +1,9 @@
 {
     "asset_file_name": "ta-lib-0.8.2-windows-x86_32.msi",
-    "sources_digest": "5cffdc89f46f4009e81b1569aee8fad8",
+    "sources_digest": "d8680bb5dfc78eda62784d8aa8b513f1",
     "builder_id": "github-actions[bot]",
     "built_success": "True",
-    "package_sha256": "18c34c5fbf4d9910646b8b75f18a2633ab35d2a2841e7af4ab1741ed2bfc7c78",
+    "package_sha256": "3c2b084395182fc3957fbe51251af98afc635bce80b627d91b1030a412fd3d84",
     "ta_regtest_pass": "Disabled",
     "dist_test_pass": "True"
 }
