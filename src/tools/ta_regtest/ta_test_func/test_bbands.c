@@ -110,7 +110,7 @@ typedef struct
 static ErrorNumber do_test( const TA_History *history,
                             const TA_Test *test );
 static ErrorNumber test_bbands_mama_alignment( const TA_History *history );
-static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *history );
+static ErrorNumber test_bbands_sma_fastpath_equivalence( const char *tag, const TA_Real *in, int nbBars );
 static ErrorNumber test_bbands_sma_stable_variance( void );
 static ErrorNumber test_bbands_small_scale( void );
 static ErrorNumber test_bbands_reference_datasets( void );
@@ -269,7 +269,15 @@ ErrorNumber test_func_bbands( TA_History *history )
     * bit-identical to the independent TA_MA(SMA) + TA_STDDEV composition that
     * the general path (and the stream) computes.
     */
-   retValue = test_bbands_sma_fastpath_equivalence( history );
+   retValue = test_bbands_sma_fastpath_equivalence( "TA_SREF close", history->close,
+                                                    (int)history->nbBars );
+   if( retValue == TA_TEST_PASS )
+   {
+      static TA_Real peg[TA_TEST_REF_PEG_N], walk[TA_TEST_REF_PEG_N];
+      ta_test_ref_peg_ema( peg, walk );
+      retValue = test_bbands_sma_fastpath_equivalence( "peg EMA (#434)", peg,
+                                                       TA_TEST_REF_PEG_N );
+   }
    if( retValue != TA_TEST_PASS )
    {
       printf( "%s Failed BBANDS/SMA fast-path equivalence regression test (#117) (Code=%d)\n",
@@ -777,9 +785,9 @@ done:
  * periods, both band-multiplier branches, and several start indices; also
  * cross-checks every active language server (under --codegen).
  */
-static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *history )
+static ErrorNumber test_bbands_sma_fastpath_equivalence( const char *tag, const TA_Real *in, int nbBars )
 {
-   static const int periods[] = { 2, 3, 5, 14, 20, 50 };
+   static const int periods[] = { 2, 3, 5, 14, 20, 50, 200 };
    static const struct { double up, dn; } devs[] = {
       { 1.0, 1.0 }, { 2.0, 2.0 }, { 2.0, 1.5 }, { 0.5, 3.0 },
       { 1.5, 2.0 }   /* distinct with a non-power-of-2 upper: exercises the fma
@@ -789,17 +797,17 @@ static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *histo
    const int nbPer   = (int)( sizeof(periods) / sizeof(periods[0]) );
    const int nbDev   = (int)( sizeof(devs)    / sizeof(devs[0])    );
    const int nbStart = (int)( sizeof(starts)  / sizeof(starts[0])  );
-   const int endIdx  = (int)history->nbBars - 1;
+   const int endIdx  = nbBars - 1;
    int pi, di, si, i;
    ErrorNumber errNb = TA_TEST_PASS;
 
    double *sma, *sd, *up, *mid, *low;
 
-   sma = (double *)TA_Malloc( history->nbBars * sizeof(double) );
-   sd  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
-   up  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
-   mid = (double *)TA_Malloc( history->nbBars * sizeof(double) );
-   low = (double *)TA_Malloc( history->nbBars * sizeof(double) );
+   sma = (double *)TA_Malloc( nbBars * sizeof(double) );
+   sd  = (double *)TA_Malloc( nbBars * sizeof(double) );
+   up  = (double *)TA_Malloc( nbBars * sizeof(double) );
+   mid = (double *)TA_Malloc( nbBars * sizeof(double) );
+   low = (double *)TA_Malloc( nbBars * sizeof(double) );
    if( !sma || !sd || !up || !mid || !low )
    {
       errNb = TA_TESTUTIL_TFRR_BAD_PARAM;
@@ -821,19 +829,19 @@ static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *histo
          /* Independent references from the SAME startIdx BBANDS uses internally.
           * For SMA both the MA lookback and the stddev lookback are period-1, so
           * all three functions clamp to the identical begIdx / element count. */
-         rc = TA_MA( s, endIdx, history->close, period, TA_MAType_SMA,
+         rc = TA_MA( s, endIdx, in, period, TA_MAType_SMA,
                      &maBeg, &maNb, sma );
          if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
 
-         rc = TA_STDDEV( s, endIdx, history->close, period, 1.0,
+         rc = TA_STDDEV( s, endIdx, in, period, 1.0,
                          &sdBeg, &sdNb, sd );
          if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
 
          if( maBeg != sdBeg || maNb != sdNb )
          {
-            printf( "BBANDS/SMA #117: period=%d startIdx=%d MA(beg=%d,nb=%d) != "
+            printf( "BBANDS/SMA #117 [%s]: period=%d startIdx=%d MA(beg=%d,nb=%d) != "
                     "STDDEV(beg=%d,nb=%d)\n",
-                    period, s, (int)maBeg, (int)maNb, (int)sdBeg, (int)sdNb );
+                    tag, period, s, (int)maBeg, (int)maNb, (int)sdBeg, (int)sdNb );
             errNb = TA_TESTUTIL_TFRR_BAD_BEGIDX;
             goto done;
          }
@@ -844,15 +852,15 @@ static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *histo
             const double nbDevDn = devs[di].dn;
             TA_Integer bbBeg, bbNb;
 
-            rc = TA_BBANDS( s, endIdx, history->close, period, nbDevUp, nbDevDn,
+            rc = TA_BBANDS( s, endIdx, in, period, nbDevUp, nbDevDn,
                             TA_MAType_SMA, &bbBeg, &bbNb, up, mid, low );
             if( rc != TA_SUCCESS ) { errNb = TA_TESTUTIL_TFRR_BAD_RETCODE; goto done; }
 
             if( bbBeg != maBeg || (int)bbNb != (int)maNb )
             {
-               printf( "BBANDS/SMA #117: period=%d startIdx=%d up=%g dn=%g "
+               printf( "BBANDS/SMA #117 [%s]: period=%d startIdx=%d up=%g dn=%g "
                        "BBANDS(beg=%d,nb=%d) != MA(beg=%d,nb=%d)\n",
-                       period, s, nbDevUp, nbDevDn, (int)bbBeg, (int)bbNb,
+                       tag, period, s, nbDevUp, nbDevDn, (int)bbBeg, (int)bbNb,
                        (int)maBeg, (int)maNb );
                errNb = TA_TESTUTIL_TFRR_BAD_BEGIDX;
                goto done;
@@ -885,10 +893,10 @@ static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *histo
 
                if( mid[i] != expMid || up[i] != expUp || low[i] != expLow )
                {
-                  printf( "BBANDS/SMA #117: period=%d startIdx=%d up=%g dn=%g "
+                  printf( "BBANDS/SMA #117 [%s]: period=%d startIdx=%d up=%g dn=%g "
                           "i=%d (bar %d) mid=%.17g/%.17g up=%.17g/%.17g "
                           "low=%.17g/%.17g\n",
-                          period, s, nbDevUp, nbDevDn, i, (int)bbBeg + i,
+                          tag, period, s, nbDevUp, nbDevDn, i, (int)bbBeg + i,
                           mid[i], expMid, up[i], expUp, low[i], expLow );
                   errNb = TA_TESTUTIL_TFRR_BAD_CALCULATION;
                   goto done;
@@ -898,9 +906,9 @@ static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *histo
             /* Cross-check every active language server for the same call. */
             if( server_verify_active() )
             {
-               errNb = server_verify( "BBANDS", s, endIdx, (int)history->nbBars,
+               errNb = server_verify( "BBANDS", s, endIdx, nbBars,
                                       rc, bbBeg, bbNb,
-                                      (const TA_Real*[]){ history->close, NULL },
+                                      (const TA_Real*[]){ in, NULL },
                                       (double[]){ (double)period, nbDevUp, nbDevDn,
                                                   (double)TA_MAType_SMA }, 4,
                                       (const TA_Real*[]){ up, mid, low, NULL }, NULL );

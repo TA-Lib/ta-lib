@@ -101,6 +101,7 @@ static ErrorNumber test_correl_affine_invariance( void );
 static ErrorNumber test_correl_range_invariant( void );
 static ErrorNumber test_correl_degenerate( void );
 static ErrorNumber test_correl_small_scale( void );
+static ErrorNumber test_correl_peg_history( void );
 
 /**** Local variables definitions.     ****/
 static double cr_out[4096];
@@ -126,6 +127,8 @@ ErrorNumber test_func_correl( TA_History *history )
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed CORREL degenerate contract (#242) (Code=%d)\n", __FILE__, retValue ); return retValue; }
    retValue = test_correl_small_scale();
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed CORREL small-scale product (#395) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+   retValue = test_correl_peg_history();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed CORREL peg history (#434) (Code=%d)\n", __FILE__, retValue ); return retValue; }
 
    return TA_TEST_PASS;
 }
@@ -747,6 +750,121 @@ static ErrorNumber test_correl_small_scale( void )
                  (int)begIdx + i, cr_out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
+   }
+   return TA_TEST_PASS;
+}
+
+/* #434: an EMA settling back onto a peg, against a walk that keeps moving. The
+ * EMA side's rolling sum of squares drains far below its peak while the window
+ * sits on the level it was last anchored on. Every window must agree with the
+ * double-double reference, both argument orders, a window with either side made
+ * of identical values must be exactly 0, and the stream must match batch bit for
+ * bit through Peek and Update.
+ */
+static ErrorNumber test_correl_peg_history( void )
+{
+   static const int periods[4] = { 14, 20, 50, 200 };
+   static double peg[TA_TEST_REF_PEG_N], walk[TA_TEST_REF_PEG_N];
+   TA_Integer b, nb;
+   TA_RetCode rc;
+   ErrorNumber e;
+   int pi, o, k, s, period, flatCmp = 0, refCmp = 0, streamCmp = 0, bad, worstBar;
+   double ref, d, worst, v, pv;
+   TA_CORREL_Stream *cs;
+   const double *x, *y;
+
+   ta_test_ref_peg_ema( peg, walk );
+
+   for( pi = 0; pi < 4; pi++ )
+   for( o = 0; o < 2; o++ )
+   {
+      period = periods[pi];
+      x = o ? walk : peg;
+      y = o ? peg : walk;
+      rc = TA_CORREL( 0, TA_TEST_REF_PEG_N-1, x, y, period, &b, &nb, cr_out );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "CORREL #434 peg: rc=%d period=%d\n", (int)rc, period );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( server_verify_active() )
+      {
+         int cmpBefore = server_verify_comparisons();
+         e = server_verify( "CORREL", 0, TA_TEST_REF_PEG_N-1, TA_TEST_REF_PEG_N,
+                            rc, b, nb,
+                            (const TA_Real*[]){ x, y, NULL },
+                            (double[]){ (double)period }, 1,
+                            (const TA_Real*[]){ cr_out, NULL }, NULL );
+         if( e != TA_TEST_PASS ) return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "CORREL #434 peg: compared no server despite live pipes\n" );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
+      bad = 0;
+      worst = 0.0;
+      worstBar = -1;
+      for( k = 0; k < (int)nb; k++ )
+      {
+         s = (int)b + k - ( period - 1 );
+         if( ta_test_ref_window_is_constant( x, s, period )
+             || ta_test_ref_window_is_constant( y, s, period ) )
+         {
+            flatCmp++;
+            d = cr_out[k] == 0.0 ? 0.0 : HUGE_VAL;
+         }
+         else
+         {
+            ref = ta_test_ref_corr( x, y, s, period );
+            refCmp++;
+            d = fabs( cr_out[k] - ref );
+         }
+         if( !( d <= 1.0e-8 ) ) bad++;
+         if( !( d <= worst ) ) { worst = d; worstBar = (int)b + k; }
+      }
+      if( bad )
+      {
+         printf( "CORREL #434 peg: period=%d order=%d, %d windows over 1e-8 "
+                 "(inf = nonzero with a side of identical values), worst %.3g "
+                 "at bar %d\n", period, o, bad, worst, worstBar );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      cs = NULL;
+      rc = TA_CORREL_Open( &cs, x, y, period, period, &v );
+      if( rc != TA_SUCCESS || memcmp( &v, &cr_out[0], sizeof(double) ) != 0 )
+      {
+         printf( "CORREL #434 peg stream: period=%d order=%d Open rc=%d "
+                 "val=%.17g, batch %.17g\n", period, o, (int)rc, v, cr_out[0] );
+         if( cs ) TA_CORREL_Close( cs );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( k = period; k < TA_TEST_REF_PEG_N; k++ )
+      {
+         rc = TA_CORREL_Peek( cs, x[k], y[k], &pv );
+         if( rc == TA_SUCCESS )
+            rc = TA_CORREL_Update( cs, x[k], y[k], &v );
+         streamCmp++;
+         if( rc != TA_SUCCESS
+             || memcmp( &pv, &v, sizeof(double) ) != 0
+             || memcmp( &v, &cr_out[k-(period-1)], sizeof(double) ) != 0 )
+         {
+            printf( "CORREL #434 peg stream: period=%d order=%d bar=%d rc=%d "
+                    "Peek %.17g Update %.17g batch %.17g\n", period, o, k,
+                    (int)rc, pv, v, cr_out[k-(period-1)] );
+            TA_CORREL_Close( cs );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      TA_CORREL_Close( cs );
+   }
+
+   if( flatCmp == 0 || refCmp == 0 || streamCmp == 0 )
+   {
+      printf( "CORREL #434 peg: %d flat, %d reference and %d stream comparisons, "
+              "all must be nonzero\n", flatCmp, refCmp, streamCmp );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
    return TA_TEST_PASS;
 }

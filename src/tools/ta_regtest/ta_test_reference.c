@@ -617,6 +617,51 @@ double ta_test_ref_xorshift_unit( void )
    return (double)( ( s >> 8 ) & 0xffffu ) / 65535.0;
 }
 
+static int ta_test_ref_peg_step( unsigned int *state )
+{
+   *state = ( *state * 1103515245u + 12345u ) & 0x7fffffffu;
+   return (int)( ( *state >> 8 ) % 5u ) - 2;
+}
+
+void ta_test_ref_peg_ema( double pegEma[TA_TEST_REF_PEG_N],
+                          double walk[TA_TEST_REF_PEG_N] )
+{
+   const double k = 2.0 / 11.0;
+   unsigned int state = 7919u;
+   int cycle, i, j = 0;
+   long ticks;
+   double ema, step;
+
+   for( cycle = 0; cycle < 2; cycle++ )
+   {
+      ticks = 10001;
+      for( i = 0; i < 60; i++ )
+      {
+         ticks += ta_test_ref_peg_step( &state );
+         pegEma[j++] = (double)ticks / 10000.0;
+      }
+      for( i = 0; i < 480; i++ )
+         pegEma[j++] = 10001.0 / 10000.0;
+   }
+
+   /* In place: pegEma[i] still holds the price when it is read. */
+   ema = pegEma[0];
+   for( i = 1; i < TA_TEST_REF_PEG_N; i++ )
+   {
+      step = k * ( pegEma[i] - ema );
+      ema = ema + step;
+      pegEma[i] = ema;
+   }
+
+   state = 7919u ^ 0x5a5a5a5au;
+   ticks = 4437;
+   for( i = 0; i < TA_TEST_REF_PEG_N; i++ )
+   {
+      ticks += ta_test_ref_peg_step( &state );
+      walk[i] = (double)ticks / 100.0;
+   }
+}
+
 /* ===========================================================================
  * NIST StRD univariate stressors, built rather than transcribed.
  * ========================================================================= */

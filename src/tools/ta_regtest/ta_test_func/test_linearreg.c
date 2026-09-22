@@ -1151,9 +1151,9 @@ static ErrorNumber test_linearreg_reseed_interval( void )
  * same reason L10 uses a ratio: it cancels the price level, the period and the
  * corpus, and leaves only the contamination.
  *
- * WHY 100 AND NOT CORREL's 1e6: TA_CORREL's guard compares a departing SQUARED
- * deviation against a sum of squares -- a degree-2 quantity, where 1e6 means a
- * factor of 1e3 in the values. SumY is degree 1, so the same "three decimal
+ * WHY 100 AND NOT 1e6: a departing SQUARED deviation against a sum of squares is
+ * a degree-2 quantity, where 1e6 means a factor of 1e3 in the values. SumY is
+ * degree 1, so the same "three decimal
  * digits" threshold is 1e3... and 100 is chosen below that, because a spike
  * sweep showed the residue from a print too small to trip 1e3 still sits inside
  * the interval's own bound, while 100 catches everything that does not. #242

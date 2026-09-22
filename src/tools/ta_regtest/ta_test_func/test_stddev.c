@@ -640,16 +640,10 @@ static ErrorNumber test_stddev_small_scale( void )
  * not turn a genuinely flat stretch into band noise.
  *
  * A window sitting wholly inside a flat region ENTERED MID-SERIES is not the same
- * case as an all-constant input. The reseed re-anchors on the window MEAN, which
- * is itself only correct to an ulp, so every deviation is that same ulp and the
- * corrected two-pass differences two equal quantities -- leaving a residue of
- * about eps^3*price^2 (~2e-44 at $100). The absolute clamp swallowed it below the
- * 1e-14 line and nowhere else; the scale-relative floor that replaces it swallows
- * it at every price level, because it asks whether the fresh anchor resolved any
- * spread at all rather than comparing a squared quantity to a constant.
- *
- * Un-fixed this is red on TA_VAR (~2e-44, not 0) and green on TA_STDDEV for the
- * wrong reason -- the clamp is what zeroes it.
+ * case as an all-constant input. Its mean is only correct to an ulp, so anchored
+ * there every deviation is that same ulp and the two-pass leaves a residue of
+ * about eps^3*price^2 (~2e-44 at $100). It must come out exactly 0 at every price
+ * level, which rules out any absolute clamp on the squared quantity.
  */
 static ErrorNumber test_stddev_flat_tail_exact_zero( void )
 {
@@ -709,6 +703,127 @@ static ErrorNumber test_stddev_flat_tail_exact_zero( void )
    return TA_TEST_PASS;
 }
 
+/* #434: an EMA settling back onto a peg drains the rolling sum of squares far
+ * below its peak while the window sits on the level the sums were last anchored
+ * on. Every window must agree with the double-double reference, a window of
+ * identical values must be exactly 0, and the stream must match batch bit for
+ * bit through Peek and Update, which carry the peak from bar to bar.
+ */
+static ErrorNumber test_stddev_peg_history( void )
+{
+   static const int periods[4] = { 14, 20, 50, 200 };
+   static double x[TA_TEST_REF_PEG_N], walk[TA_TEST_REF_PEG_N];
+   static double out[TA_TEST_REF_PEG_N];
+   TA_Integer b, nb;
+   TA_RetCode rc;
+   ErrorNumber e;
+   int pi, f, k, s, period, flatCmp = 0, refCmp = 0, streamCmp = 0, bad, worstBar;
+   double ref, d, tol, worst, v, pv;
+   TA_VAR_Stream *vs;
+   TA_STDDEV_Stream *ss;
+
+   ta_test_ref_peg_ema( x, walk );
+
+   for( pi = 0; pi < 4; pi++ )
+   for( f = 0; f < 2; f++ )
+   {
+      const char *name = f ? "STDDEV" : "VAR";
+      period = periods[pi];
+      tol    = f ? 5.0e-8 : 1.0e-7;
+      rc = f ? TA_STDDEV( 0, TA_TEST_REF_PEG_N-1, x, period, 1.0, &b, &nb, out )
+             : TA_VAR   ( 0, TA_TEST_REF_PEG_N-1, x, period, 1.0, &b, &nb, out );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "%s #434 peg: rc=%d period=%d\n", name, (int)rc, period );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( server_verify_active() )
+      {
+         int cmpBefore = server_verify_comparisons();
+         e = server_verify( name, 0, TA_TEST_REF_PEG_N-1, TA_TEST_REF_PEG_N,
+                            rc, b, nb,
+                            (const TA_Real*[]){ x, NULL },
+                            (double[]){ (double)period, 1.0 }, 2,
+                            (const TA_Real*[]){ out, NULL }, NULL );
+         if( e != TA_TEST_PASS ) return e;
+         if( server_verify_comparisons() == cmpBefore )
+         {
+            printf( "%s #434 peg: compared no server despite live pipes\n", name );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
+      bad = 0;
+      worst = 0.0;
+      worstBar = -1;
+      for( k = 0; k < (int)nb; k++ )
+      {
+         s = (int)b + k - ( period - 1 );
+         if( ta_test_ref_window_is_constant( x, s, period ) )
+         {
+            flatCmp++;
+            d = out[k] == 0.0 ? 0.0 : HUGE_VAL;
+         }
+         else
+         {
+            ref = f ? ta_test_ref_stddev( x, s, period, NULL )
+                    : ta_test_ref_var( x, s, period, NULL );
+            refCmp++;
+            d = fabs( out[k] - ref ) / ref;
+         }
+         if( !( d <= tol ) ) bad++;
+         if( !( d <= worst ) ) { worst = d; worstBar = (int)b + k; }
+      }
+      if( bad )
+      {
+         printf( "%s #434 peg: period=%d, %d windows over %.0e relative (inf = "
+                 "nonzero on identical values), worst %.3g at bar %d\n", name,
+                 period, bad, tol, worst, worstBar );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      vs = NULL;
+      ss = NULL;
+      rc = f ? TA_STDDEV_Open( &ss, x, period, period, 1.0, &v )
+             : TA_VAR_Open( &vs, x, period, period, 1.0, &v );
+      if( rc != TA_SUCCESS || memcmp( &v, &out[0], sizeof(double) ) != 0 )
+      {
+         printf( "%s #434 peg stream: period=%d Open rc=%d val=%.17g, batch "
+                 "%.17g\n", name, period, (int)rc, v, out[0] );
+         if( vs ) TA_VAR_Close( vs );
+         if( ss ) TA_STDDEV_Close( ss );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( k = period; k < TA_TEST_REF_PEG_N; k++ )
+      {
+         rc = f ? TA_STDDEV_Peek( ss, x[k], &pv ) : TA_VAR_Peek( vs, x[k], &pv );
+         if( rc == TA_SUCCESS )
+            rc = f ? TA_STDDEV_Update( ss, x[k], &v ) : TA_VAR_Update( vs, x[k], &v );
+         streamCmp++;
+         if( rc != TA_SUCCESS
+             || memcmp( &pv, &v, sizeof(double) ) != 0
+             || memcmp( &v, &out[k-(period-1)], sizeof(double) ) != 0 )
+         {
+            printf( "%s #434 peg stream: period=%d bar=%d rc=%d Peek %.17g "
+                    "Update %.17g batch %.17g\n", name, period, k, (int)rc, pv,
+                    v, out[k-(period-1)] );
+            if( vs ) TA_VAR_Close( vs );
+            if( ss ) TA_STDDEV_Close( ss );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      if( vs ) TA_VAR_Close( vs );
+      if( ss ) TA_STDDEV_Close( ss );
+   }
+
+   if( flatCmp == 0 || refCmp == 0 || streamCmp == 0 )
+   {
+      printf( "VAR/STDDEV #434 peg: %d flat, %d reference and %d stream "
+              "comparisons, all must be nonzero\n", flatCmp, refCmp, streamCmp );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   return TA_TEST_PASS;
+}
+
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_stddev( TA_History *history )
 {
@@ -750,6 +865,9 @@ ErrorNumber test_func_stddev( TA_History *history )
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed STDDEV small-scale ladder (#243) (Code=%d)\n", __FILE__, retValue ); return retValue; }
    retValue = test_stddev_flat_tail_exact_zero();
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed VAR/STDDEV flat-tail exact zero (#243) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+
+   retValue = test_stddev_peg_history();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed VAR/STDDEV peg history (#434) (Code=%d)\n", __FILE__, retValue ); return retValue; }
 
    /* All test succeed. */
    return TA_TEST_PASS;

@@ -160,6 +160,14 @@ double ta_test_ref_lcg_half( void );   /* uniform [-0.5, 0.5)  */
 void   ta_test_ref_xorshift_seed( unsigned int seed );
 double ta_test_ref_xorshift_unit( void );   /* uniform [0.0, 1.0] */
 
+/* An EMA(10) of a price pegged at 1.0001 in 1e-4 ticks: 60 bars off the peg,
+ * then 480 back on it, twice. `walk` is an unpegged cent walk to pair it with.
+ * The second return settles the EMA back onto the level the first one left the
+ * rolling sums anchored on, the shape #434 is about. */
+#define TA_TEST_REF_PEG_N 1080
+void ta_test_ref_peg_ema( double pegEma[TA_TEST_REF_PEG_N],
+                          double walk[TA_TEST_REF_PEG_N] );
+
 /* ---------------------------------------------------------------------------
  * Datasets. All public domain (NIST StRD is a US Government work) or
  * BSD-3-Clause (the Wilkinson arrays via scipy, the pandas arrays), into a

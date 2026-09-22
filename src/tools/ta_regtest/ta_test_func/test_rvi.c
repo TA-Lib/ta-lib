@@ -103,6 +103,7 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 #include "server_verify.h"
+#include "ta_test_reference.h"
 
 /**** External variables declarations. ****/
 extern double gDataClose[];
@@ -262,6 +263,10 @@ static const int rviSdPeriods[]   = { 2, 3, 10, 14, 30 };
 static const int rviTimePeriods[] = { 1, 2, 14, 30 };
 #define NB_RVI_SD   ((int)(sizeof(rviSdPeriods)/sizeof(int)))
 #define NB_RVI_TIME ((int)(sizeof(rviTimePeriods)/sizeof(int)))
+/* 400 and 900 start the seed and unstable-skip loops inside the peg series'
+ * holds, where the variance step re-anchors; shorter inputs skip them. */
+static const int rviAnchors[]     = { 0, 20, 40, 400, 900 };
+#define NB_RVI_ANCHOR ((int)(sizeof(rviAnchors)/sizeof(int)))
 
 /* Coverage counters. Every leg is silent on success, so a count that reached
  * zero is the only remaining way one could run while comparing nothing. */
@@ -300,6 +305,14 @@ ErrorNumber test_func_rvi( TA_History *history )
    if( err != TA_TEST_PASS )
       return err;
 
+   {
+      static TA_Real peg[TA_TEST_REF_PEG_N], walk[TA_TEST_REF_PEG_N];
+      ta_test_ref_peg_ema( peg, walk );
+      err = test_rvi_differential( "peg EMA (#434)", peg, TA_TEST_REF_PEG_N );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
    err = test_rvi_oracle( history );
    if( err != TA_TEST_PASS )
       return err;
@@ -333,13 +346,13 @@ ErrorNumber test_func_rvi( TA_History *history )
    /* LITERAL counts rather than floors: on the shipped 252-bar corpus every
     * leg above is deterministic. */
    if( nbBars == 252
-       && ( g_rviDiffCmp != 214154 || g_rviTsCmp != NB_RVI_TS
+       && ( g_rviDiffCmp != 496551 || g_rviTsCmp != NB_RVI_TS
             || g_rviPandasCmp != NB_RVI_PANDAS || g_rviTieCmp != 243
             || g_rviEdgeCmp != 106592 || g_rviAliasCmp != 24178 ) )
    {
       printf( "RVI Fail: coverage counters (diff %d, trading-signals %d, "
               "pandas %d, tie %d, edges %d, alias %d) are not what this file "
-              "was written with (214154, %d, %d, 243, 106592, 24178)\n",
+              "was written with (496551, %d, %d, 243, 106592, 24178)\n",
               g_rviDiffCmp, g_rviTsCmp, g_rviPandasCmp, g_rviTieCmp,
               g_rviEdgeCmp, g_rviAliasCmp, NB_RVI_TS, NB_RVI_PANDAS );
       return TA_RVI_VACUOUS;
@@ -372,15 +385,16 @@ static ErrorNumber test_rvi_differential( const char *tag, const TA_Real *in, in
    static TA_Real refUp[RVI_CAP], refDn[RVI_CAP], out[RVI_CAP];
    TA_Integer begSd, nbSd, begU, nbU, begD, nbD, begIdx, nbElement;
    TA_RetCode retCode;
-   int a, b, k, unst, anchor, startIdx, sdStart, lookbackTotal;
+   int a, b, k, unst, an, anchor, startIdx, sdStart, lookbackTotal;
    int sdPeriod, period;
    ErrorNumber err = TA_TEST_PASS;
 
    for( a = 0; a < NB_RVI_SD; a++ )
    for( b = 0; b < NB_RVI_TIME; b++ )
    for( unst = 0; unst <= 4; unst += 2 )
-   for( anchor = 0; anchor <= 40; anchor += 20 )
+   for( an = 0; an < NB_RVI_ANCHOR; an++ )
    {
+      anchor   = rviAnchors[an];
       sdPeriod = rviSdPeriods[a];
       period   = rviTimePeriods[b];
 
