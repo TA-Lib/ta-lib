@@ -13,6 +13,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - New TA Functions:
   - CTI: Correlation Trend Indicator (#430)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
+  - MEDIAN: Rolling Median (#432)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
 
 ### Faster

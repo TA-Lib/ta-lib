@@ -123,7 +123,7 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(429);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(431);
    if( (int)optInTimePeriod > (int)(sizeof(local_ring)/sizeof(double)) )
    {
       ring = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -138,7 +138,7 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
    }
    maxIdx_ring = (optInTimePeriod-1);
    ring_Idx = 0;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(430);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(432);
    if( (int)optInTimePeriod > (int)(sizeof(local_sorted)/sizeof(double)) )
    {
       sorted = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -337,7 +337,7 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(429);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(431);
    if( (int)optInTimePeriod > (int)(sizeof(local_ring)/sizeof(double)) )
    {
       ring = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -352,7 +352,7 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
    }
    maxIdx_ring = (optInTimePeriod-1);
    ring_Idx = 0;
-   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(430);
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(432);
    if( (int)optInTimePeriod > (int)(sizeof(local_sorted)/sizeof(double)) )
    {
       sorted = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -647,7 +647,7 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(429);
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(431);
       if( (int)optInTimePeriod > (int)(sizeof(local_ring)/sizeof(double)) )
       {
          ring = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -662,7 +662,7 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
       }
       maxIdx_ring = (optInTimePeriod-1);
       ring_Idx = 0;
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(430);
+      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(432);
       if( (int)optInTimePeriod > (int)(sizeof(local_sorted)/sizeof(double)) )
       {
          sorted = TA_Malloc( sizeof(double)*optInTimePeriod );
@@ -817,12 +817,12 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
       sp->sorted_Idx = sorted_Idx;
       sp->maxIdx_sorted = maxIdx_sorted;
       sp->cbSize_ring = maxIdx_ring + 1;
-      if( sp->cbSize_ring < 1 || sp->cbSize_ring > historyLen + 1 ) { if( ring != &local_ring[0] ) { TA_Free( ring ); } if( sorted != &local_sorted[0] ) { TA_Free( sorted ); } TA_MEDIAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(431); }
+      if( sp->cbSize_ring < 1 || sp->cbSize_ring > historyLen + 1 ) { if( ring != &local_ring[0] ) { TA_Free( ring ); } if( sorted != &local_sorted[0] ) { TA_Free( sorted ); } TA_MEDIAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(433); }
       sp->cb_ring = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_ring );
       if( !sp->cb_ring ) { if( ring != &local_ring[0] ) { TA_Free( ring ); } if( sorted != &local_sorted[0] ) { TA_Free( sorted ); } TA_MEDIAN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_ring, ring, sizeof(double) * (size_t)sp->cbSize_ring );
       sp->cbSize_sorted = maxIdx_sorted + 1;
-      if( sp->cbSize_sorted < 1 || sp->cbSize_sorted > historyLen + 1 ) { if( ring != &local_ring[0] ) { TA_Free( ring ); } if( sorted != &local_sorted[0] ) { TA_Free( sorted ); } TA_MEDIAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(432); }
+      if( sp->cbSize_sorted < 1 || sp->cbSize_sorted > historyLen + 1 ) { if( ring != &local_ring[0] ) { TA_Free( ring ); } if( sorted != &local_sorted[0] ) { TA_Free( sorted ); } TA_MEDIAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(434); }
       sp->cb_sorted = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_sorted );
       if( !sp->cb_sorted ) { if( ring != &local_ring[0] ) { TA_Free( ring ); } if( sorted != &local_sorted[0] ) { TA_Free( sorted ); } TA_MEDIAN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_sorted, sorted, sizeof(double) * (size_t)sp->cbSize_sorted );

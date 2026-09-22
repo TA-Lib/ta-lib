@@ -328,7 +328,7 @@
 //! * [`TYPPRICE`](Core::typprice) — Typical Price
 //! * [`WCLPRICE`](Core::wclprice) — Weighted Close Price
 //!
-//! ## Statistic Functions (12)
+//! ## Statistic Functions (13)
 //!
 //! * [`BETA`](Core::beta) — Beta
 //! * [`CORREL`](Core::correl) — Pearson's Correlation Coefficient (r)

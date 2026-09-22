@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2487
+function-count 2499
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
