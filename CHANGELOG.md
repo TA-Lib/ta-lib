@@ -31,6 +31,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   per bar as a 10000-bar one. A longer period is now rejected.
 
 ### Fixed
+- (#434) VAR, STDDEV, BBANDS, CORREL, RVI and RVIR no longer return stale values, or rebuild
+  the window on every bar, once a series settles onto the level their rolling sums were last
+  anchored on. Values move at periods 2 to 5 by at most 1e-9 relative.
 - `ta_func.h` is plain ASCII again. In 0.8.1 its comments had non-ASCII characters, so MSVC could warn (C4819) when reading it under a Chinese, Japanese or Korean code page.
 - CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.
 
