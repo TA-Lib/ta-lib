@@ -803,10 +803,9 @@ static ErrorNumber test_kurt_aliasing( const TA_History *history )
 }
 
 /* (6) The (n-2)(n-3) denominators are why the range starts at 4, and the
- * contract is what enforces it -- there is no runtime branch for a short
- * window, so this leg is the only thing standing between a caller and a
- * division by zero. The top is 10000: on piecewise-constant data the running
- * sums drift past 1e-9 from exact above ~3e4 bars.
+ * contract is what enforces it: there is no runtime branch for a short window.
+ * The top is 10000: on piecewise-constant data the running sums drift past
+ * 1e-9 from exact above ~3e4 bars.
  */
 static ErrorNumber test_kurt_contract( const TA_History *history )
 {

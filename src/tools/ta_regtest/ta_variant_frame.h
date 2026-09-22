@@ -6445,7 +6445,7 @@ static TA_RetCode TA_PERCENTILE_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_PERCENTILE[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_PERCENTILE[] = { 0 };
 static const TA_VOptSpec TA_VOpt_PERCENTILE[] = {
-   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 10000.0, 30.0 },
    { "optInPercentile", TA_VOPT_REAL, 0.0, 100.0, 50.0 },
 };
 
@@ -6485,7 +6485,7 @@ static TA_RetCode TA_PERCENTRANK_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_PERCENTRANK[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_PERCENTRANK[] = { 0 };
 static const TA_VOptSpec TA_VOpt_PERCENTRANK[] = {
-   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 100.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 10000.0, 100.0 },
 };
 
 static TA_RetCode TA_PLUS_DI_VFrameD( int startIdx, int endIdx,

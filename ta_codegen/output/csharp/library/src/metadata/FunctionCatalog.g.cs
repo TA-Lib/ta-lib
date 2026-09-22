@@ -3663,7 +3663,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         optInputs:
         [
-            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 30, 4, 200, 1)),
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 10000, 30, 4, 200, 1)),
             new OptInputInfo("optInPercentile", "Percentile", "Percentile to report", OptInputFlags.IsPercent, new OptInputDomain.RealRange(0.0, 100.0, 2, 50.0, 10.0, 90.0, 5.0)),
         ],
         outputs:
@@ -3687,7 +3687,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         optInputs:
         [
-            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 100, 20, 200, 20)),
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 10000, 100, 20, 200, 20)),
         ],
         outputs:
         [

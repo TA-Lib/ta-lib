@@ -13154,7 +13154,7 @@ TA_LIB_API TA_RetCode TA_OBV_Clone( const TA_OBV_Stream *stream, TA_OBV_Stream *
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 10000)
  *    Number of bars in the window
  * 
  * optInPercentile:(From 0 to 100)
@@ -13165,7 +13165,7 @@ TA_LIB_API TA_RetCode TA_OBV_Clone( const TA_OBV_Stream *stream, TA_OBV_Stream *
 TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
                                      int    endIdx,
                                                 const double inReal[],
-                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int           optInTimePeriod, /* From 2 to 10000 */
                                                 double        optInPercentile, /* From 0 to 100 */
                                                 int          *outBegIdx,
                                                 int          *outNBElement,
@@ -13174,13 +13174,13 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
 TA_LIB_API TA_RetCode TA_S_PERCENTILE( int    startIdx,
                                        int    endIdx,
                                                   const float  inReal[],
-                                                  int           optInTimePeriod, /* From 2 to 100000 */
+                                                  int           optInTimePeriod, /* From 2 to 10000 */
                                                   double        optInPercentile, /* From 0 to 100 */
                                                   int          *outBegIdx,
                                                   int          *outNBElement,
                                                   double        outReal[] );
 
-TA_LIB_API int TA_PERCENTILE_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+TA_LIB_API int TA_PERCENTILE_Lookback( int           optInTimePeriod, /* From 2 to 10000 */
                                                 double        optInPercentile );  /* From 0 to 100 */
 
 
@@ -13246,7 +13246,7 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_Clone( const TA_PERCENTILE_Stream *stream, T
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 10000)
  *    Time period
  * 
  * 
@@ -13254,7 +13254,7 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_Clone( const TA_PERCENTILE_Stream *stream, T
 TA_LIB_API TA_RetCode TA_PERCENTRANK( int    startIdx,
                                       int    endIdx,
                                                  const double inReal[],
-                                                 int           optInTimePeriod, /* From 2 to 100000 */
+                                                 int           optInTimePeriod, /* From 2 to 10000 */
                                                  int          *outBegIdx,
                                                  int          *outNBElement,
                                                  double        outReal[] );
@@ -13262,12 +13262,12 @@ TA_LIB_API TA_RetCode TA_PERCENTRANK( int    startIdx,
 TA_LIB_API TA_RetCode TA_S_PERCENTRANK( int    startIdx,
                                         int    endIdx,
                                                    const float  inReal[],
-                                                   int           optInTimePeriod, /* From 2 to 100000 */
+                                                   int           optInTimePeriod, /* From 2 to 10000 */
                                                    int          *outBegIdx,
                                                    int          *outNBElement,
                                                    double        outReal[] );
 
-TA_LIB_API int TA_PERCENTRANK_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_PERCENTRANK_Lookback( int           optInTimePeriod );  /* From 2 to 10000 */
 
 
 

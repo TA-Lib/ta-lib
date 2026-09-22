@@ -70,7 +70,7 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInTimePeriod` — Number of preceding values the current value is ranked against
-    ///   (default 100, range 2..=100000)
+    ///   (default 100, range 2..=10000)
     ///
     /// # Errors
     ///
@@ -81,7 +81,7 @@ impl Core {
     pub fn percentrank_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 100;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod) as usize);
@@ -107,7 +107,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 100;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return RetCode::BadParam;
         }
         let _assertLb = self.percentrank_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -175,7 +175,7 @@ impl Core {
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — Source price/value series.
     /// * `optInTimePeriod` — Number of preceding values the current value is ranked against
-    ///   (default 100, range 2..=100000)
+    ///   (default 100, range 2..=10000)
     /// * `outReal` — Percentage of the preceding window strictly below the current value, 0 to
     ///   100.
     ///
@@ -337,7 +337,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 100;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();

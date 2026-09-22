@@ -20,7 +20,7 @@
     * output.
     *
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
-    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
     *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
@@ -29,7 +29,7 @@
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return -1;
       }
       if( optInPercentile == REAL_DEFAULT ) {
@@ -73,7 +73,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInPercentile == REAL_DEFAULT ) {
@@ -211,7 +211,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInPercentile == REAL_DEFAULT ) {
@@ -324,7 +324,7 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source series to take the percentile of.
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
-    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
     *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
@@ -397,7 +397,7 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source series to take the percentile of.
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
-    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
     *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
@@ -692,7 +692,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( optInPercentile == REAL_DEFAULT ) {

@@ -20,7 +20,7 @@
     * output.
     *
     * @param optInTimePeriod Number of preceding values the current value is
-    *        ranked against (default 100; range 2..100000; {@code Integer.MIN_VALUE}
+    *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
@@ -28,7 +28,7 @@
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return -1;
       }
       return optInTimePeriod ;
@@ -56,7 +56,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
@@ -112,7 +112,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       outBegIdx.value = 0;
@@ -173,7 +173,7 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source price/value series.
     * @param optInTimePeriod Number of preceding values the current value is
-    *        ranked against (default 100; range 2..100000; {@code Integer.MIN_VALUE}
+    *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param outReal Percentage of the preceding window strictly below the
     *        current value, 0 to 100. Must hold at least {@code endIdx - startIdx + 1}
@@ -250,7 +250,7 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source price/value series.
     * @param optInTimePeriod Number of preceding values the current value is
-    *        ranked against (default 100; range 2..100000; {@code Integer.MIN_VALUE}
+    *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param outReal Percentage of the preceding window strictly below the
     *        current value, 0 to 100. Must hold at least {@code endIdx - startIdx + 1}
@@ -496,7 +496,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {

@@ -298,12 +298,12 @@ ErrorNumber test_func_percentrank( TA_History *history )
        && ( g_prOracleCmp != NB_PR_ORACLE || g_prCountMapCmp != 137
             || g_prIdentityCmp != 124371 || g_prMidCmp != 96419
             || g_prEdgeCmp != 12324 || g_prAliasCmp != 86190
-            || g_prShapeCmp != 6 ) )
+            || g_prShapeCmp != 9 ) )
    {
       printf( "PERCENTRANK Fail: coverage counters (oracle %d, count-map %d, "
               "identity %d, mid-range %d, edges %d, alias %d, shape %d) are not "
               "what this file was written with (%d, 137, 124371, 96419, 12324, "
-              "86190, 6)\n",
+              "86190, 9)\n",
               g_prOracleCmp, g_prCountMapCmp, g_prIdentityCmp, g_prMidCmp,
               g_prEdgeCmp, g_prAliasCmp, g_prShapeCmp, NB_PR_ORACLE );
       return TA_PERCENTRANK_VACUOUS;
@@ -764,6 +764,36 @@ static ErrorNumber test_pr_shape( const TA_Real *in, int nbBars )
    {
       printf( "PERCENTRANK shape Fail: period 1 returned rc=%d, expected "
               "TA_BAD_PARAM\n", (int)retCode );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   /* The top is 10000: every bar recounts its window, so the cost grows with
+    * the period. */
+   g_prShapeCmp++;
+   if( TA_PERCENTRANK_Lookback( 10000 ) != 10000
+       || TA_PERCENTRANK_Lookback( 10001 ) != -1 )
+   {
+      printf( "PERCENTRANK shape Fail: lookback %d at 10000 and %d at 10001, "
+              "expected 10000 and -1\n", TA_PERCENTRANK_Lookback( 10000 ),
+              TA_PERCENTRANK_Lookback( 10001 ) );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   retCode = TA_PERCENTRANK( 0, 251, in, 10001, &begIdx, &nbElement, out );
+   g_prShapeCmp++;
+   if( retCode != TA_BAD_PARAM )
+   {
+      printf( "PERCENTRANK shape Fail: period 10001 returned rc=%d, expected "
+              "TA_BAD_PARAM\n", (int)retCode );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   retCode = TA_PERCENTRANK( 0, 251, in, 10000, &begIdx, &nbElement, out );
+   g_prShapeCmp++;
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "PERCENTRANK shape Fail: period 10000 returned rc=%d, expected "
+              "TA_SUCCESS\n", (int)retCode );
       return TA_TESTUTIL_TFRR_BAD_PARAM;
    }
 

@@ -64,7 +64,7 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..100000;
+   /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">Percentage position within the sorted window (default 50; range 0..100;
    /// <see cref="Core.RealDefault"/> selects the default).</param>
@@ -73,7 +73,7 @@ public partial class Core
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return -1;
       }
       if( optInPercentile == RealDefault ) {
@@ -119,7 +119,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( optInPercentile == RealDefault ) {
@@ -262,7 +262,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( optInPercentile == RealDefault ) {
@@ -382,7 +382,7 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Source series to take the percentile of.</param>
-   /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..100000;
+   /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">Percentage position within the sorted window (default 50; range 0..100;
    /// <see cref="Core.RealDefault"/> selects the default).</param>
@@ -459,7 +459,7 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Source series to take the percentile of.</param>
-   /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..100000;
+   /// <param name="optInTimePeriod">Number of bars in the trailing window (default 30; range 2..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">Percentage position within the sorted window (default 50; range 0..100;
    /// <see cref="Core.RealDefault"/> selects the default).</param>
@@ -756,7 +756,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( optInPercentile == RealDefault ) {

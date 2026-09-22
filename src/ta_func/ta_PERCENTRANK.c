@@ -60,7 +60,7 @@ TA_LIB_API int TA_PERCENTRANK_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 100;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return -1;
    return optInTimePeriod;
 }
@@ -87,7 +87,7 @@ TA_LIB_API TA_RetCode TA_PERCENTRANK( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 100;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( !inReal )
       return TA_BAD_PARAM;
@@ -155,7 +155,7 @@ TA_RetCode TA_S_PERCENTRANK( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 100;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( !inReal )
       return TA_BAD_PARAM;
@@ -260,7 +260,7 @@ static TA_RetCode TA_PERCENTRANK_OpenImpl( struct TA_PERCENTRANK_Stream **stream
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 100;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
    {

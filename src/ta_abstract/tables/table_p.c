@@ -39,6 +39,15 @@
 #include "ta_def_ui.h"
 
 /* PERCENTILE BEGIN */
+static const TA_IntegerRange TA_DEF_PERCENTILE_TimePeriod =
+{
+   2,
+   10000,
+   4,
+   200,
+   1
+};
+
 static const TA_OptInputParameterInfo TA_DEF_UI_D_PERCENTILE_TimePeriod =
 {
    TA_OptInput_IntegerRange,
@@ -46,7 +55,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_PERCENTILE_TimePeriod =
    0,
 
    "Time Period",
-   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   (const void *)&TA_DEF_PERCENTILE_TimePeriod,
    30,
    "Number of bars in the window",
 
@@ -106,7 +115,7 @@ DEF_FUNCTION( PERCENTILE,
 static const TA_IntegerRange TA_DEF_PERCENTRANK_TimePeriod =
 {
    2,
-   100000,
+   10000,
    20,
    200,
    20

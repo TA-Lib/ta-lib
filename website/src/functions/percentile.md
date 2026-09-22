@@ -28,7 +28,7 @@ $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cd
 
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
-| `optInTimePeriod` | integer | 30 | 2–100000 | Number of bars in the trailing window |
+| `optInTimePeriod` | integer | 30 | 2–10000 | Number of bars in the trailing window |
 | `optInPercentile` | real | 50 | 0–100 | Percentage position within the sorted window |
 
 ## Properties

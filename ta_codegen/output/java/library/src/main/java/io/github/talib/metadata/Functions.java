@@ -2757,7 +2757,7 @@ public final class Functions {
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
                "Time Period", "Number of bars in the window", 30.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 4, 200, 1, null),
+               2, 10000, 4, 200, 1, null),
             new OptInputInfo(
                OptInputType.REAL_RANGE, "optInPercentile", 0x00100000,
                "Percentile", "Percentile to report", 50.0,
@@ -2780,7 +2780,7 @@ public final class Functions {
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
                "Time Period", "Time period", 100.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 20, 200, 20, null)
+               2, 10000, 20, 200, 20, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

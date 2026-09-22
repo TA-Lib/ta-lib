@@ -6699,7 +6699,7 @@ public static class FunctionDescription
 				<Type>Integer</Type>
 				<Range>
 					<Minimum>2</Minimum>
-					<Maximum>100000</Maximum>
+					<Maximum>10000</Maximum>
 					<SuggestedStart>4</SuggestedStart>
 					<SuggestedEnd>200</SuggestedEnd>
 					<SuggestedIncrement>1</SuggestedIncrement>
@@ -6757,7 +6757,7 @@ public static class FunctionDescription
 				<Type>Integer</Type>
 				<Range>
 					<Minimum>2</Minimum>
-					<Maximum>100000</Maximum>
+					<Maximum>10000</Maximum>
 					<SuggestedStart>20</SuggestedStart>
 					<SuggestedEnd>200</SuggestedEnd>
 					<SuggestedIncrement>20</SuggestedIncrement>

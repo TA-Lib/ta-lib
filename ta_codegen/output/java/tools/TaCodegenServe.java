@@ -138223,7 +138223,7 @@ class Core {
         * output.
         *
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
-        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
@@ -138232,7 +138232,7 @@ class Core {
        {
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return -1;
           }
           if( optInPercentile == REAL_DEFAULT ) {
@@ -138276,7 +138276,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           if( optInPercentile == REAL_DEFAULT ) {
@@ -138414,7 +138414,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           if( optInPercentile == REAL_DEFAULT ) {
@@ -138527,7 +138527,7 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source series to take the percentile of.
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
-        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal The value at the requested rank within the trailing window.
@@ -138600,7 +138600,7 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source series to take the percentile of.
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
-        *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal The value at the requested rank within the trailing window.
@@ -138895,7 +138895,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           if( optInPercentile == REAL_DEFAULT ) {
@@ -139131,7 +139131,7 @@ class Core {
         * output.
         *
         * @param optInTimePeriod Number of preceding values the current value is
-        *        ranked against (default 100; range 2..100000; {@code Integer.MIN_VALUE}
+        *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
         *        selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -139139,7 +139139,7 @@ class Core {
        {
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 100;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return -1;
           }
           return optInTimePeriod ;
@@ -139167,7 +139167,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 100;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           outBegIdx.value = 0;
@@ -139223,7 +139223,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 100;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           outBegIdx.value = 0;
@@ -139284,7 +139284,7 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price/value series.
         * @param optInTimePeriod Number of preceding values the current value is
-        *        ranked against (default 100; range 2..100000; {@code Integer.MIN_VALUE}
+        *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
         *        selects the default).
         * @param outReal Percentage of the preceding window strictly below the
         *        current value, 0 to 100. Must hold at least {@code endIdx - startIdx + 1}
@@ -139361,7 +139361,7 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source price/value series.
         * @param optInTimePeriod Number of preceding values the current value is
-        *        ranked against (default 100; range 2..100000; {@code Integer.MIN_VALUE}
+        *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
         *        selects the default).
         * @param outReal Percentage of the preceding window strictly below the
         *        current value, 0 to 100. Must hold at least {@code endIdx - startIdx + 1}
@@ -139607,7 +139607,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 100;
-          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           if( startIdx > endIdx ) {
@@ -184294,7 +184294,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "60afeed66acaa0c0";
+    static final String SPLICED_GENCODE_DIGEST = "2ef68d6758457c80";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -185064,11 +185064,11 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PERCENTILE", new AbsFunc("PERCENTILE", "Statistic Functions", "Percentile (nearest rank)", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInPercentile",1048576,"Percentile","Percentile to report",50.0, 0.0,100.0,2,10.0,90.0,5.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",30.0, 0,0,0,0,0,0, 2,10000,4,200,1, null), new AbsOpt(0,"optInPercentile",1048576,"Percentile","Percentile to report",50.0, 0.0,100.0,2,10.0,90.0,5.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PERCENTRANK", new AbsFunc("PERCENTRANK", "Statistic Functions", "Percent Rank", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",100.0, 0,0,0,0,0,0, 2,100000,20,200,20, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",100.0, 0,0,0,0,0,0, 2,10000,20,200,20, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PLUS_DI", new AbsFunc("PLUS_DI", "Momentum Indicators", "Plus Directional Indicator", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },

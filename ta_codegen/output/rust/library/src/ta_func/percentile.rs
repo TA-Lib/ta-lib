@@ -69,7 +69,7 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=100000)
+    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=10000)
     /// * `optInPercentile` — Percentage position within the sorted window (default 50, range
     ///   0..=100)
     ///
@@ -83,7 +83,7 @@ impl Core {
     pub fn percentile_lookback(&self, mut optInTimePeriod: i32, mut optInPercentile: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if optInPercentile == Self::REAL_DEFAULT {
@@ -115,7 +115,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return RetCode::BadParam;
         }
         if optInPercentile == Self::REAL_DEFAULT {
@@ -268,7 +268,7 @@ impl Core {
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — Source series to take the percentile of.
-    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=100000)
+    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=10000)
     /// * `optInPercentile` — Percentage position within the sorted window (default 50, range
     ///   0..=100)
     /// * `outReal` — The value at the requested rank within the trailing window.
@@ -467,7 +467,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         if optInPercentile == Self::REAL_DEFAULT {

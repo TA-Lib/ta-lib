@@ -10,7 +10,7 @@ optional_inputs:
     type: integer
     display_name: Time Period
     hint: Time period
-    range: [2, 100000]
+    range: [2, 10000]
     default: 100
     suggested: [20, 200, 20]
 outputs:

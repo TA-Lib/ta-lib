@@ -65,13 +65,13 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInTimePeriod">Number of preceding values the current value is ranked against (default
-   /// 100; range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// 100; range 2..10000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int PercentrankLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return -1;
       }
       return optInTimePeriod ;
@@ -101,7 +101,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
@@ -162,7 +162,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -231,7 +231,7 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Source price/value series.</param>
    /// <param name="optInTimePeriod">Number of preceding values the current value is ranked against (default
-   /// 100; range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// 100; range 2..10000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Percentage of the preceding window strictly below the current value, 0 to
    /// 100. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -311,7 +311,7 @@ public partial class Core
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Source price/value series.</param>
    /// <param name="optInTimePeriod">Number of preceding values the current value is ranked against (default
-   /// 100; range 2..100000; <c>int.MinValue</c> selects the default).</param>
+   /// 100; range 2..10000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Percentage of the preceding window strictly below the current value, 0 to
    /// 100. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -556,7 +556,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 100;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {

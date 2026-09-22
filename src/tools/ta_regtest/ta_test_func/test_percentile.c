@@ -78,9 +78,9 @@
  *        because P/100 is inexact in binary64. This is the leg that fails if
  *        someone "simplifies" the rank expression, and it asserts the two
  *        spellings really do disagree there before trusting the comparison.
- *     6. Edges: a constant window, a tie-heavy staircase, a +-0.0 window
- *        compared BITWISE, the two smallest periods, startIdx == endIdx ==
- *        lookback, and a range too short to produce anything.
+ *     6. Edges: a constant window, a +-0.0 window compared BITWISE, the two
+ *        smallest periods, startIdx == endIdx == lookback, a range too short
+ *        to produce anything, and the top of the period range.
  *     7. In-place aliasing (outReal == inReal), bitwise, over two corpora and
  *        every period. Safe only because both scratch buffers hold copies and
  *        inReal is never re-read below the current bar; ASan cannot see the
@@ -428,13 +428,13 @@ ErrorNumber test_func_percentile( TA_History *history )
    if( nbBars == 252
        && ( g_pctlOracleCmp != NB_PCTL_ORACLE || g_pctlBookCmp != 8
             || g_pctlExtremaCmp != 140656 || g_pctlDiffCmp != 403221
-            || g_pctlRankCmp != 9110 || g_pctlEdgeCmp != 48403
+            || g_pctlRankCmp != 9110 || g_pctlEdgeCmp != 48406
             || g_pctlAliasCmp != 129328 || g_pctlFlagCmp != 1 ) )
    {
       printf( "PERCENTILE Fail: coverage counters (oracle %d, published %d, "
               "extrema %d, differential %d, rank %d, edges %d, alias %d, "
               "flag %d) are not what this file was written with "
-              "(%d, 8, 140656, 403221, 9110, 48403, 129328, 1)\n",
+              "(%d, 8, 140656, 403221, 9110, 48406, 129328, 1)\n",
               g_pctlOracleCmp, g_pctlBookCmp, g_pctlExtremaCmp, g_pctlDiffCmp,
               g_pctlRankCmp, g_pctlEdgeCmp, g_pctlAliasCmp, g_pctlFlagCmp,
               NB_PCTL_ORACLE );
@@ -1038,6 +1038,34 @@ static ErrorNumber test_percentile_edges( void )
       printf( "PERCENTILE short Fail: rc=%d (%d,%d) expected TA_SUCCESS "
               "(0,0)\n", (int)retCode, begIdx, nbElement );
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   /* The top of the period range is 10000: every bar scans and shifts its
+    * sorted window, so the cost grows with the period. */
+   g_pctlEdgeCmp++;
+   if( TA_PERCENTILE_Lookback( 10000, 50.0 ) != 9999
+       || TA_PERCENTILE_Lookback( 10001, 50.0 ) != -1 )
+   {
+      printf( "PERCENTILE edges Fail: lookback %d at 10000 and %d at 10001, "
+              "expected 9999 and -1\n", TA_PERCENTILE_Lookback( 10000, 50.0 ),
+              TA_PERCENTILE_Lookback( 10001, 50.0 ) );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+   g_pctlEdgeCmp++;
+   retCode = TA_PERCENTILE( 0, 99, in, 10001, 50.0, &begIdx, &nbElement, out );
+   if( retCode != TA_BAD_PARAM )
+   {
+      printf( "PERCENTILE edges Fail: period 10001 returned rc=%d, expected "
+              "TA_BAD_PARAM\n", (int)retCode );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+   g_pctlEdgeCmp++;
+   retCode = TA_PERCENTILE( 0, 99, in, 10000, 50.0, &begIdx, &nbElement, out );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "PERCENTILE edges Fail: period 10000 returned rc=%d, expected "
+              "TA_SUCCESS\n", (int)retCode );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
    }
 
    return TA_TEST_PASS;

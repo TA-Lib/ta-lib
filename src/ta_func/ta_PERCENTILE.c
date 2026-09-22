@@ -60,7 +60,7 @@ TA_LIB_API int TA_PERCENTILE_Lookback( int optInTimePeriod, double optInPercenti
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return -1;
    if( optInPercentile == TA_REAL_DEFAULT )
       optInPercentile = 50;
@@ -102,7 +102,7 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( optInPercentile == TA_REAL_DEFAULT )
       optInPercentile = 50;
@@ -283,7 +283,7 @@ TA_RetCode TA_S_PERCENTILE( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( optInPercentile == TA_REAL_DEFAULT )
       optInPercentile = 50;
@@ -522,7 +522,7 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( optInPercentile == TA_REAL_DEFAULT )
       optInPercentile = 50;

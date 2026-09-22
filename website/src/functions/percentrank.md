@@ -39,7 +39,7 @@ The comparison is strictly less-than, so a value tied with a predecessor does no
 
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
-| `optInTimePeriod` | integer | 100 | 2–100000 | Number of preceding values the current value is ranked against |
+| `optInTimePeriod` | integer | 100 | 2–10000 | Number of preceding values the current value is ranked against |
 
 ## Properties
 
