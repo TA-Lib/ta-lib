@@ -36,12 +36,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  091526 KL     First version (proposal-drafts issue #72).
+ *  092126 MF,CC  External-oracle goldens; rebuild and flat legs (issue #433).
  *
  */
 
@@ -49,14 +52,26 @@
  *     Test TA_KURTOSIS, sample-adjusted Fisher excess kurtosis (G2).
  *
  *     WHAT EACH LEG CAN SEE, measured by mutating the generator input and
- *     regenerating rather than assumed:
+ *     regenerating: the first leg to go red and, with it skipped, the next.
+ *     "Only" means skipping it leaves every leg green.
  *
- *       coefA denominator (n-1) -> n     leg 1 RED (144 combinations)
- *       residue correction dropped        leg 1 RED (128)
- *       rebuild period n/4 -> 32n         leg 1 RED (36)
- *       degenerate window returns 0       leg 4 RED (571 bars)
+ *       coefA denominator (n-1) -> n              leg 1, then 3
+ *       residue correction dropped                leg 1, then 3
+ *       no fourth-moment trigger, or at 1e-4      leg 1, then 7
+ *       no trigger at all, period only            leg 1, then 7
+ *       triggers against the current sums         leg 10, then 11
+ *       no second-moment trigger, or at 1e-4      leg 15 only
+ *       no re-anchor after the mean rebuild       leg 9, then 13
+ *       re-anchor on the fourth moment alone      leg 9 only
+ *       no periodic rebuild, or every 256n        leg 14 only
+ *       degenerate window returns 0               leg 4, then 9
+ *       var.c's triggers, rebuild every n/4       legs 9 to 13, each alone
  *
- *     Leg 1 carries three separate defects because the progression identity
+ *     No leg sees re-anchoring on the window's newest value instead of the
+ *     residue, a fourth-moment trigger at 1e-3, or a period of n/4: each moves
+ *     cost or the last bits, not a value by 1e-9.
+ *
+ *     Leg 1 carries several defects because the progression identity
  *     constrains the two coefficients against each other AND the shift's
  *     staleness at once. That is also why it is worth more than a golden: a
  *     golden only says "not what it was", this says "not the estimator".
@@ -74,6 +89,7 @@
 
 /**** Local declarations. ****/
 #define KURT_CAP 1100
+#define KURT_FRESH_CAP 6000
 
 /* The legs below diff their own corpora against the language servers
  * bit-for-bit (issue #427). Without it every vector in this file is checked
@@ -181,13 +197,145 @@ static const double kurtNearDegenerate_g2_8[] = {
    -0.5644996347699051,
 };
 
+/* Leg 8. Captured on the 252-bar TA_SREF close series at %.17g, by
+ * ta-lib-oracles/capture_433_kurtosis.py. `bar` is the ABSOLUTE bar index.
+ *
+ *   exact : G2 in rational arithmetic over the exact doubles, rounded to the
+ *           nearest double.
+ *   scipy : scipy 1.18.1 `scipy.stats.kurtosis(window, fisher=True,
+ *           bias=False)` (numpy 2.5.1).
+ *   pta   : pandas-ta-classic 0.6.52 `ta.kurtosis(close, length=n)` (pandas
+ *           3.0.3), with talib blocked from import.
+ *
+ * Per period: the first three output bars, bars 100, 200 and 251, both
+ * extremes, and the bars where this body, scipy, pandas-ta-classic and pandas
+ * `rolling(n).kurt()` each sit furthest from exact. The pandas rolling arm is
+ * checked but not frozen: its own online moments sit 1e-5 from exact at
+ * period 4.
+ *
+ * The distance is |got - want| / max(1, |want|): G2 crosses zero, where a
+ * relative distance is unbounded. Against the exact column this body's worst
+ * over every bar at every period from 4 to 252 is 8.1e-13.
+ */
+#define KURT_EXACT_TOL  2e-12
+#define KURT_ORACLE_TOL 1e-11
+
+typedef struct { int period; int bar; double exact; double scipy; double pta; } KurtGolden;
+
+static const KurtGolden kurtGoldens[] =
+{
+   /* period 4: outBegIdx 3, outNBElement 249 */
+   {   4,   3,        3.348875844038774,
+                      3.3488758440386235,       3.3488758440386235 },
+   {   4,   4,     -0.71843862529093439,
+                    -0.71843862529125069,     -0.71843862529125069 },
+   {   4,   5,      0.56347346247207131,
+                     0.56347346247207319,      0.56347346247207319 },
+   {   4, 100,      -3.7033543758329346,
+                     -3.7033543758329426,      -3.7033543758329426 },
+   {   4, 114,      -5.7476122115659516,
+                     -5.7476122115659498,      -5.7476122115659498 },
+   {   4, 120,      0.36565212879794012,
+                     0.36565212879794018,      0.36565212879794018 },
+   {   4, 197,     -0.56890240512588353,
+                    -0.56890240512588264,     -0.56890240512588264 },
+   {   4, 200,       3.6064721095405785,
+                      3.6064721095405794,       3.6064721095405794 },
+   {   4, 202,       3.9990100363168248,
+                      3.9990100363168217,       3.9990100363168217 },
+   {   4, 251,        1.028156465867746,
+                      1.0281564658677453,       1.0281564658677453 },
+   /* period 10: outBegIdx 9, outNBElement 243 */
+   {  10,   9,     -0.60119690269995296,
+                    -0.60119690269992843,     -0.60119690269992843 },
+   {  10,  10,      0.39803823580233955,
+                     0.39803823580238173,      0.39803823580238173 },
+   {  10,  11,     0.023758462902016296,
+                    0.023758462902017108,     0.023758462902017996 },
+   {  10,  85,      0.81119612986511525,
+                     0.81119612986517842,      0.81119612986517797 },
+   {  10, 100,    -0.055310821016923167,
+                   -0.055310821016939737,    -0.055310821016940181 },
+   {  10, 177,      0.61267978173619531,
+                     0.61267978173622284,       0.6126797817362224 },
+   {  10, 200,     -0.98238016614270829,
+                    -0.98238016614272139,     -0.98238016614272139 },
+   {  10, 206,      -2.3915251638991162,
+                     -2.3915251638991157,      -2.3915251638991162 },
+   {  10, 210,       5.1286464453190543,
+                      5.1286464453190774,       5.1286464453190783 },
+   {  10, 250,     -0.56755481247728123,
+                     -0.5675548124772849,     -0.56755481247728534 },
+   {  10, 251,      -1.2409111071262529,
+                     -1.2409111071262697,      -1.2409111071262697 },
+   /* period 30: outBegIdx 29, outNBElement 223 */
+   {  30,  29,     -0.55281054811689501,
+                    -0.55281054811689057,     -0.55281054811689101 },
+   {  30,  30,     -0.75644168783549159,
+                    -0.75644168783548871,     -0.75644168783548915 },
+   {  30,  31,     -0.70561016782388253,
+                    -0.70561016782388331,     -0.70561016782388286 },
+   {  30,  41,       2.2710484962427251,
+                      2.2710484962427273,       2.2710484962427286 },
+   {  30,  71,     -0.28224102734279205,
+                    -0.28224102734277245,     -0.28224102734277201 },
+   {  30, 100,      0.14725020229761809,
+                     0.14725020229762054,      0.14725020229762054 },
+   {  30, 151,      -1.2055508090951743,
+                     -1.2055508090951719,      -1.2055508090951728 },
+   {  30, 167,      0.15702293133497761,
+                     0.15702293133497847,      0.15702293133497847 },
+   {  30, 200,     -0.97703398286946219,
+                    -0.97703398286946008,     -0.97703398286946053 },
+   {  30, 213,      -1.5428796808595964,
+                     -1.5428796808595955,      -1.5428796808595955 },
+   {  30, 251,      0.99467634781466474,
+                     0.99467634781466696,      0.99467634781466652 },
+   /* period 100: outBegIdx 99, outNBElement 153 */
+   { 100,  99,      0.42179091594997609,
+                     0.42179091594997109,      0.42179091594997109 },
+   { 100, 100,      0.21462593355687948,
+                     0.21462593355687787,      0.21462593355687787 },
+   { 100, 101,     0.034508591159079588,
+                    0.034508591159079227,     0.034508591159079227 },
+   { 100, 107,     -0.75204168259206006,
+                    -0.75204168259207105,      -0.7520416825920706 },
+   { 100, 122,      -1.5506531070513621,
+                     -1.5506531070513641,      -1.5506531070513636 },
+   { 100, 174,     -0.17753679290639901,
+                    -0.17753679290640001,     -0.17753679290640045 },
+   { 100, 189,     -0.42721841462360305,
+                    -0.42721841462360377,     -0.42721841462360333 },
+   { 100, 200,    -0.053104354202882023,
+                   -0.053104354202880621,    -0.053104354202880177 },
+   { 100, 204,       2.2380243180325019,
+                      2.2380243180325152,       2.2380243180325148 },
+   { 100, 251,      -1.1147080989277434,
+                     -1.1147080989277425,      -1.1147080989277427 },
+};
+#define NB_KURT_GOLDEN ((int)(sizeof(kurtGoldens)/sizeof(KurtGolden)))
+
+/* Microsoft's KURT documentation: =KURT(3,4,5,2,3,4,5,6,4,7) is -0.151799637,
+ * published to nine decimals. The exact value is -0.15179963720841422. */
+static const double kurtExcel[] = { 3.0, 4.0, 5.0, 2.0, 3.0, 4.0, 5.0, 6.0, 4.0, 7.0 };
+#define KURT_EXCEL (-0.151799637)
+
+/* Legs 9 to 14 hold every window of a call to the same window computed with
+ * no history (startIdx == endIdx). This body's worst across them is 4.1e-11,
+ * at period 2000, where the full run itself sits 3.7e-11 from exact. With
+ * var.c's triggers and a rebuild every n/4, the decay onto the shift, an
+ * outlier's departure, volatility regimes and a near-flat window err by 1e-6
+ * to 3e2.
+ */
+#define KURT_FRESH_TOL 1e-9
+
 /* Tolerances, from measurement rather than habit. The worst relative deviation
- * of this implementation from the 60-digit reference is 1.14e-14 on the benign
- * corpus and 1.59e-15 on the near-degenerate one, so 1e-12 leaves roughly two
- * orders of headroom on both and still fails anything that changes the
- * estimator. For scale: scipy 1.15.3 misses the near-degenerate window by 375%
- * (1.6625 against 0.35) and warns while doing it, which is what makes that leg
- * worth having rather than a restatement of the benign one.
+ * of this implementation from the 60-digit reference is 9.96e-14 on the benign
+ * corpus and 1.59e-15 on the near-degenerate one, so 1e-12 leaves an order of
+ * headroom on both and still fails anything that changes the estimator. For
+ * scale: scipy 1.15.3 misses the near-degenerate window by 375% (1.6625
+ * against 0.35) and warns while doing it, which is what makes that leg worth
+ * having rather than a restatement of the benign one.
  */
 #define KURT_GOLDEN_TOL 1e-12
 
@@ -200,6 +348,17 @@ static int g_kurtGoldenCmp;
 static int g_kurtNearCmp;
 static int g_kurtNanCmp;
 static int g_kurtAliasCmp;
+static int g_kurtOracleCmp;
+static int g_kurtFlatCmp;
+static int g_kurtHistCmp;
+static int g_kurtHistFlatCmp;
+static int g_kurtDepartCmp;
+static int g_kurtRegimeCmp;
+static int g_kurtUlpCmp;
+static int g_kurtBadNanCmp;
+static int g_kurtCleanCmp;
+static int g_kurtCalmCmp;
+static int g_kurtStarveCmp;
 
 /**** Local functions declarations. ****/
 static ErrorNumber test_kurt_progression( void );
@@ -209,6 +368,14 @@ static ErrorNumber test_kurt_degenerate( void );
 static ErrorNumber test_kurt_aliasing( const TA_History *history );
 static ErrorNumber test_kurt_contract( const TA_History *history );
 static ErrorNumber test_kurt_range( const TA_History *history );
+static ErrorNumber test_kurt_oracle( const TA_History *history );
+static ErrorNumber test_kurt_flat( void );
+static ErrorNumber test_kurt_history( void );
+static ErrorNumber test_kurt_departure( void );
+static ErrorNumber test_kurt_regimes( void );
+static ErrorNumber test_kurt_ulp( void );
+static ErrorNumber test_kurt_nonfinite( void );
+static ErrorNumber test_kurt_starve( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_kurtosis( TA_History *history )
@@ -219,6 +386,9 @@ ErrorNumber test_func_kurtosis( TA_History *history )
 
    g_kurtProgCmp = g_kurtProgSkip = g_kurtScaleCmp = g_kurtGoldenCmp = 0;
    g_kurtNearCmp = g_kurtNanCmp = g_kurtAliasCmp = 0;
+   g_kurtOracleCmp = g_kurtFlatCmp = g_kurtHistCmp = g_kurtHistFlatCmp = 0;
+   g_kurtDepartCmp = g_kurtRegimeCmp = g_kurtUlpCmp = 0;
+   g_kurtBadNanCmp = g_kurtCleanCmp = g_kurtCalmCmp = g_kurtStarveCmp = 0;
 
    err = test_kurt_progression();
    if( err != TA_TEST_PASS )
@@ -248,19 +418,76 @@ ErrorNumber test_func_kurtosis( TA_History *history )
    if( err != TA_TEST_PASS )
       return err;
 
-   /* LITERAL counts rather than floors: every leg above is deterministic and
-    * independent of the corpus, so these hold on any history. */
-   if( g_kurtProgCmp != 81936 || g_kurtProgSkip != 36
-       || g_kurtGoldenCmp != 52 || g_kurtNearCmp != 13
-       || g_kurtNanCmp != 571 || g_kurtScaleCmp == 0 || g_kurtAliasCmp == 0 )
+   err = test_kurt_oracle( history );
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_flat();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_history();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_departure();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_regimes();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_ulp();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_nonfinite();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_kurt_starve();
+   if( err != TA_TEST_PASS )
+      return err;
+
+   /* LITERAL counts rather than floors: on the shipped 252-bar corpus every
+    * leg above is deterministic. */
+   if( history->nbBars == 252 )
    {
-      printf( "KURTOSIS Fail: coverage counters (progression %d/%d skipped, "
-              "scale %d, golden %d, near-degenerate %d, NaN %d, alias %d) are "
-              "not what this file was written with (81936/36, >0, 52, 13, 571, "
-              ">0)\n",
-              g_kurtProgCmp, g_kurtProgSkip, g_kurtScaleCmp, g_kurtGoldenCmp,
-              g_kurtNearCmp, g_kurtNanCmp, g_kurtAliasCmp );
-      return TA_KURTOSIS_VACUOUS;
+      /* One source for each count: a second copy in the message can disagree
+       * with the one the gate tests, and only a mutation would show it.  */
+      static const struct { const char *leg; int want; const int *got; } cov[] = {
+         { "progression",        102420, &g_kurtProgCmp     },
+         { "progression skipped",    36, &g_kurtProgSkip    },
+         { "scale",                5775, &g_kurtScaleCmp    },
+         { "golden",                 52, &g_kurtGoldenCmp   },
+         { "near-degenerate",        13, &g_kurtNearCmp     },
+         { "NaN",                   571, &g_kurtNanCmp      },
+         { "alias",                1155, &g_kurtAliasCmp    },
+         { "oracle",                 43, &g_kurtOracleCmp   },
+         { "flat",                62322, &g_kurtFlatCmp     },
+         { "history",              1368, &g_kurtHistCmp     },
+         { "history flat",         2604, &g_kurtHistFlatCmp },
+         { "departure",           11469, &g_kurtDepartCmp   },
+         { "regimes",             22644, &g_kurtRegimeCmp   },
+         { "one ulp",              4001, &g_kurtUlpCmp      },
+         { "non-finite window",     195, &g_kurtBadNanCmp   },
+         { "clean window",         7303, &g_kurtCleanCmp    },
+         { "periodic",             1981, &g_kurtCalmCmp     },
+         { "second moment",       10887, &g_kurtStarveCmp   },
+      };
+      unsigned int c;
+
+      for( c = 0; c < sizeof(cov)/sizeof(cov[0]); c++ )
+      {
+         if( *cov[c].got != cov[c].want )
+         {
+            printf( "KURTOSIS Fail: the %s leg compared %d times, not the %d "
+                    "this file was written with\n",
+                    cov[c].leg, *cov[c].got, cov[c].want );
+            return TA_KURTOSIS_VACUOUS;
+         }
+      }
    }
 
    return TA_TEST_PASS;
@@ -270,23 +497,28 @@ ErrorNumber test_func_kurtosis( TA_History *history )
 
 /* (1) Every arithmetic progression has excess kurtosis exactly -6/5.
  *
- * THE PREMISE IS CHECKED PER SERIES. At base 3.1e10 the ulp is 3.8e-6, so a
- * requested spacing of 1e-4 lands on two different actual differences
- * (9.918e-05 and 1.030e-04) and the series is not a progression at all;
- * asserting -1.2 on it would be testing the spacing's representability. Such a
- * combination is skipped and counted rather than silently expected to hold.
+ * THE PREMISE IS CHECKED PER SERIES. 1e-4 is not a double, so base + 1e-4*i
+ * lands on unequal differences at every base here and the series is not a
+ * progression at all; asserting -1.2 on it would be testing the spacing's
+ * representability. Such a combination is skipped and counted rather than
+ * silently expected to hold. 2^-13 is the small spacing that stays exact, and
+ * at base 3.1e10 it spans 600 bars in about 2e4 ulps.
+ *
+ * Measured worst |G2 + 1.2| is 1.1e-15. A wrong coefficient misses by O(1/n)
+ * and needs nothing this tight; the 1e-12 is for a weakened rebuild trigger.
  */
 static ErrorNumber test_kurt_progression( void )
 {
    static double in[600], out[600];
-   static const double spacings[] = { 1.0, 0.25, -3.0, 1e-4, 7.5 };
+   static const double spacings[] = { 1.0, 0.25, -3.0, 1e-4, 7.5,
+                                      0.0001220703125 };
    static const double bases[]    = { 0.0, 100.0, -50.0, 31498938283.0 };
    TA_Integer begIdx, nbElement;
    TA_RetCode retCode;
    int s, b, n, i, uneven;
    double d0, di;
 
-   for( s = 0; s < 5; s++ )
+   for( s = 0; s < 6; s++ )
    for( b = 0; b < 4; b++ )
    for( n = 4; n <= 60; n += 7 )
    {
@@ -319,7 +551,7 @@ static ErrorNumber test_kurt_progression( void )
       for( i = 0; i < nbElement; i++ )
       {
          g_kurtProgCmp++;
-         if( !(fabs(out[i] - KURT_PROGRESSION) <= 1.2e-9) )
+         if( !(fabs(out[i] - KURT_PROGRESSION) <= 1e-12) )
          {
             printf( "KURTOSIS progression Fail [base=%g spacing=%g N=%d] bar %d: "
                     "%.17g, expected %.17g. Every progression has this value at "
@@ -476,11 +708,9 @@ static ErrorNumber test_kurt_golden( void )
                           kurtNearDegenerate_g2_8, 13, &g_kurtNearCmp );
 }
 
-/* (4) A window with no spread returns NaN, not a number.
- *
- * Non-vacuous by construction: the division is unguarded, so without the
- * rebuild anchoring the shift at the window's single value this would be a
- * finite garbage quotient rather than 0/0, and a finite value fails isnan().
+/* (4) A window with no spread returns NaN, not a number. A guard that
+ * substitutes one fails it. Leg 9 covers the levels whose window mean does not
+ * round back to the level.
  */
 static ErrorNumber test_kurt_degenerate( void )
 {
@@ -663,4 +893,527 @@ static ErrorNumber test_kurt_range( const TA_History *history )
    return doRangeTestEx( kurtRangeTestFunction,
                          TA_STABLE_EPSILON, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
+}
+
+/* (8) The frozen external-oracle goldens and Excel's published example, plus
+ * the cross-language replay. */
+static ErrorNumber test_kurt_oracle( const TA_History *history )
+{
+   static TA_Real out[KURT_CAP];
+   TA_Integer begIdx = 0, nbElement = 0;
+   TA_RetCode retCode;
+   int k, lastPeriod = -1;
+   const char *which;
+   double got, want, tol;
+
+   retCode = TA_KURTOSIS( 0, 9, kurtExcel, 10, &begIdx, &nbElement, out );
+   if( retCode != TA_SUCCESS || begIdx != 9 || nbElement != 1 )
+   {
+      printf( "KURTOSIS Excel Fail: rc=%d (%d,%d)\n", (int)retCode, begIdx,
+              nbElement );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   g_kurtOracleCmp++;
+   if( !(fabs( out[0] - KURT_EXCEL ) <= 5e-10) )
+   {
+      printf( "KURTOSIS Excel Fail: KURT(3,4,5,2,3,4,5,6,4,7) is %.17g, "
+              "Microsoft publishes %.9f\n", out[0], KURT_EXCEL );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   if( history->nbBars != 252 )
+      return TA_TEST_PASS;
+
+   for( k = 0; k < NB_KURT_GOLDEN; k++ )
+   {
+      const KurtGolden *g = &kurtGoldens[k];
+
+      if( g->period != lastPeriod )
+      {
+         lastPeriod = g->period;
+         retCode = TA_KURTOSIS( 0, 251, history->close, lastPeriod,
+                                &begIdx, &nbElement, out );
+         if( retCode != TA_SUCCESS || begIdx != lastPeriod-1
+             || nbElement != 252-begIdx )
+         {
+            printf( "KURTOSIS oracle Fail [N=%d]: rc=%d (%d,%d)\n", lastPeriod,
+                    (int)retCode, begIdx, nbElement );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+         KURT_SERVER_VERIFY( 0, 251, 252, retCode, begIdx, nbElement,
+                             history->close, lastPeriod, out );
+      }
+
+      /* A golden's bar is hand-transcribed and indexes `out` unchecked. */
+      if( g->bar < begIdx || g->bar - begIdx >= nbElement )
+      {
+         printf( "KURTOSIS oracle Fail [N=%d]: golden bar %d is outside the "
+                 "output [%d..%d]\n", g->period, g->bar, begIdx,
+                 begIdx + nbElement - 1 );
+         return TA_KURTOSIS_VACUOUS;
+      }
+
+      got = out[g->bar - begIdx];
+      g_kurtOracleCmp++;
+      which = NULL;
+      if( !(fabs( got - g->exact ) <= KURT_EXACT_TOL * fmax( 1.0, fabs( g->exact ) )) )
+      {
+         which = "exact";
+         want  = g->exact;
+         tol   = KURT_EXACT_TOL;
+      }
+      else if( !(fabs( got - g->scipy ) <= KURT_ORACLE_TOL * fmax( 1.0, fabs( g->scipy ) )) )
+      {
+         which = "scipy";
+         want  = g->scipy;
+         tol   = KURT_ORACLE_TOL;
+      }
+      else if( !(fabs( got - g->pta ) <= KURT_ORACLE_TOL * fmax( 1.0, fabs( g->pta ) )) )
+      {
+         which = "pandas-ta-classic";
+         want  = g->pta;
+         tol   = KURT_ORACLE_TOL;
+      }
+      if( which )
+      {
+         printf( "KURTOSIS oracle Fail [N=%d] at bar %d: got %.17g, %s expects "
+                 "%.17g (distance %.3e over %.0e)\n", g->period, g->bar, got,
+                 which, want, fabs( got - want ) / fmax( 1.0, fabs( want ) ), tol );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* Every window of one call against the same window computed with no history,
+ * and a flat window must be NaN from both. */
+static ErrorNumber kurt_vs_fresh( const char *tag, const double *in, int nbBars,
+                                  int period, int toServers,
+                                  int *counter, int *flatCounter )
+{
+   static TA_Real out[KURT_FRESH_CAP];
+   TA_Integer begIdx, nbElement, begOne, nbOne;
+   TA_RetCode retCode;
+   TA_Real one;
+   int i, j, bar, flat;
+
+   retCode = TA_KURTOSIS( 0, nbBars-1, in, period, &begIdx, &nbElement, out );
+   if( retCode != TA_SUCCESS || begIdx != period-1
+       || nbElement != nbBars-period+1 )
+   {
+      printf( "KURTOSIS %s Fail [N=%d]: rc=%d (%d,%d)\n", tag, period,
+              (int)retCode, begIdx, nbElement );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   if( toServers )
+      KURT_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                          in, period, out );
+
+   for( i = 0; i < nbElement; i++ )
+   {
+      bar  = begIdx + i;
+      flat = 1;
+      for( j = bar-period+1; j <= bar && flat; j++ )
+         if( in[j] != in[bar] )
+            flat = 0;
+
+      if( flat )
+      {
+         if( !flatCounter )
+         {
+            printf( "KURTOSIS %s Fail [N=%d]: bar %d is a flat window this leg "
+                    "was not written to reach\n", tag, period, bar );
+            return TA_KURTOSIS_VACUOUS;
+         }
+         (*flatCounter)++;
+         if( !isnan( out[i] ) )
+         {
+            printf( "KURTOSIS %s Fail [N=%d] bar %d: %.17g on a flat window at "
+                    "%.17g, expected NaN\n", tag, period, bar, out[i], in[bar] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         continue;
+      }
+
+      retCode = TA_KURTOSIS( bar, bar, in, period, &begOne, &nbOne, &one );
+      if( retCode != TA_SUCCESS || begOne != bar || nbOne != 1 )
+      {
+         printf( "KURTOSIS %s Fail [N=%d]: one-bar call at %d rc=%d (%d,%d)\n",
+                 tag, period, bar, (int)retCode, begOne, nbOne );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      (*counter)++;
+      if( !(fabs( out[i] - one ) <= KURT_FRESH_TOL * fmax( 1.0, fabs( one ) )) )
+      {
+         printf( "KURTOSIS %s Fail [N=%d] bar %d: %.17g against %.17g with no "
+                 "history, distance %.3e over %.0e\n", tag, period, bar,
+                 out[i], one, fabs( out[i] - one ) / fmax( 1.0, fabs( one ) ),
+                 KURT_FRESH_TOL );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+static unsigned int kurt_lcg( unsigned int *seed )
+{
+   *seed = (*seed * 1103515245u + 12345u) & 0x7fffffffu;
+   return *seed >> 8;
+}
+
+/* (9) A flat stretch after a walk is NaN at every level, including levels whose
+ * window mean does not round back to the level. Anchored on that mean, every
+ * deviation is the same rounding residue and the moments are its cancellation:
+ * a finite value, not 0/0. 49, 98 and 103 are periods where n * (1/n) != 1 in
+ * double, 2000 is long enough for the sum's own rounding to reach many ulps,
+ * and 4 is the shortest period. All but 2000 run past the periodic rebuild.
+ * At 3.7e-67 the residue's fourth power underflows while its square does not,
+ * so only the second moment can tell that the anchor missed.
+ */
+#define KURT_FLAT_BARS 6000
+static ErrorNumber test_kurt_flat( void )
+{
+   static const double levels[] = { 0.1, 100.0, 100.37, 3.3, 31498938283.17,
+                                    3.7e-67 };
+   static const int periods[]   = { 4, 49, 98, 103, 2000 };
+   static TA_Real in[KURT_FLAT_BARS];
+   ErrorNumber err;
+   unsigned int seed;
+   int lv, pr, n, i, nbBars, leadIn;
+
+   for( lv = 0; lv < 6; lv++ )
+   for( pr = 0; pr < 5; pr++ )
+   {
+      n = periods[pr];
+      nbBars = 35*n;
+      if( nbBars > KURT_FLAT_BARS )
+         nbBars = KURT_FLAT_BARS;
+
+      seed = 99u;
+      for( i = 0; i < n; i++ )
+         in[i] = levels[lv] * (1.0 + 1e-3*((double)(kurt_lcg( &seed ) % 2001u) - 1000.0)*1e-3);
+      for( ; i < nbBars; i++ )
+         in[i] = levels[lv];
+
+      leadIn = 0;
+      err = kurt_vs_fresh( "flat", in, nbBars, n, 1, &leadIn, &g_kurtFlatCmp );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (10) History. After a flat lead-in, the series jumps away and decays
+ * geometrically back onto its first value, which is the shift until a rebuild,
+ * so once the spread has gone the running sums hold nothing but the rounding
+ * left by the values that departed. A trigger that compares against the
+ * current sums rather than the largest held since the last rebuild misses it.
+ */
+static ErrorNumber test_kurt_history( void )
+{
+   static const double levels[] = { 100.37, 0.1, 1.0, 3.3 };
+   static const double ratios[] = { 0.1, 0.05, 0.2 };
+   static const int periods[]   = { 4, 5, 8, 12, 20 };
+   static TA_Real in[75];
+   ErrorNumber err;
+   int lv, rt, pr, j;
+   double dev;
+
+   for( lv = 0; lv < 4; lv++ )
+   for( rt = 0; rt < 3; rt++ )
+   {
+      for( j = 0; j < 20; j++ )
+         in[j] = levels[lv];
+      dev = 0.5*levels[lv];
+      for( j = 1; j <= 15; j++ )
+      {
+         dev *= ratios[rt];
+         in[19+j] = (j*7) % 3 ? levels[lv] + dev : levels[lv] - dev;
+      }
+      for( j = 35; j < 75; j++ )
+         in[j] = levels[lv];
+
+      for( pr = 0; pr < 5; pr++ )
+      {
+         err = kurt_vs_fresh( "history", in, 75, periods[pr], 1,
+                              &g_kurtHistCmp, &g_kurtHistFlatCmp );
+         if( err != TA_TEST_PASS )
+            return err;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (11) An outlier leaving the window. Its fourth power dominated the sums, so
+ * what survives is mostly its rounding; a rebuild anchored on a mean that
+ * still includes it leaves the shift far from every remaining value.
+ */
+#define KURT_DEPART_BARS 3000
+static ErrorNumber test_kurt_departure( void )
+{
+   static const int periods[] = { 5, 30, 100, 400 };
+   static TA_Real in[KURT_DEPART_BARS];
+   ErrorNumber err;
+   unsigned int seed;
+   int pr, i;
+   double v;
+
+   seed = 12345u;
+   v    = 100.0;
+   for( i = 0; i < KURT_DEPART_BARS; i++ )
+   {
+      v += ((double)(kurt_lcg( &seed ) % 2001u) - 1000.0) * 5e-4;
+      in[i] = v;
+   }
+   for( i = 100; i < KURT_DEPART_BARS; i += 200 )
+      in[i] = 1e5;
+
+   for( pr = 0; pr < 4; pr++ )
+   {
+      err = kurt_vs_fresh( "departure", in, KURT_DEPART_BARS, periods[pr], 1,
+                           &g_kurtDepartCmp, NULL );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (12) Volatility regimes 500x apart, 500 bars each. Entering a calm regime
+ * the fourth moment falls by orders of magnitude inside one window, and the
+ * shift anchored in the volatile one is many calm sigma stale.
+ */
+#define KURT_REGIME_BARS 6000
+static ErrorNumber test_kurt_regimes( void )
+{
+   static const int periods[] = { 10, 50, 300, 1000 };
+   static TA_Real in[KURT_REGIME_BARS];
+   ErrorNumber err;
+   unsigned int seed;
+   int pr, i;
+   double v;
+
+   seed = 4242u;
+   v    = 100.0;
+   for( i = 0; i < KURT_REGIME_BARS; i++ )
+   {
+      v += ((double)(kurt_lcg( &seed ) % 2001u) - 1000.0)
+           * ((i/500) % 2 ? 5e-3 : 1e-5);
+      in[i] = v;
+   }
+
+   for( pr = 0; pr < 4; pr++ )
+   {
+      err = kurt_vs_fresh( "regimes", in, KURT_REGIME_BARS, periods[pr], 1,
+                           &g_kurtRegimeCmp, NULL );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (13) A long window of one level with a few bars a few ulps off. Its spread
+ * is under the rounding of the window's own left-to-right mean, so a rebuild
+ * anchored there is stale on arrival and fires again on every bar. The first
+ * bar sits 0.1% off the level, so its departure forces that rebuild.
+ */
+#define KURT_ULP_PERIOD 2000
+#define KURT_ULP_BARS   6000
+static ErrorNumber test_kurt_ulp( void )
+{
+   static TA_Real in[KURT_ULP_BARS];
+   unsigned int seed, r;
+   int i;
+   double ulp;
+
+   ulp  = nextafter( 100.37, 200.0 ) - 100.37;
+   seed = 777u;
+   for( i = 0; i < KURT_ULP_BARS; i++ )
+   {
+      r = kurt_lcg( &seed );
+      in[i] = r % 20u == 0 ? 100.37 + (double)((int)(r % 7u) - 3)*ulp : 100.37;
+   }
+   in[0] = 100.37 * 1.001;
+
+   return kurt_vs_fresh( "one ulp", in, KURT_ULP_BARS, KURT_ULP_PERIOD, 1,
+                         &g_kurtUlpCmp, NULL );
+}
+
+/* (14) A non-finite input poisons the running sums, and the periodic rebuild
+ * is the only way out: every trigger comparison is false on NaN. A window
+ * holding the value is NaN, the output may stay NaN for up to 32n bars after
+ * it leaves, and from then on every window must match a no-history recompute
+ * again. Not sent to the servers: a NaN's bits are no contract, and those an
+ * fma makes from an Inf differ between JVMs. The servers get a finite control
+ * instead: on stationary noise at period 20 no trigger fires, so the periodic
+ * rebuild alone moves the output bits they compare.
+ */
+#define KURT_BAD_BARS 4600
+#define KURT_CALM_BARS 2000
+static ErrorNumber test_kurt_nonfinite( void )
+{
+   static const int periods[] = { 5, 20, 40 };
+   static const int badAt[]   = { 100, 1600, 3100 };
+   static TA_Real in[KURT_BAD_BARS], out[KURT_BAD_BARS], calm[KURT_CALM_BARS];
+   TA_Integer begIdx, nbElement, begOne, nbOne;
+   TA_RetCode retCode;
+   TA_Real one;
+   ErrorNumber err;
+   unsigned int seed;
+   int pr, n, i, k, bar, held, graceEnd;
+   double v;
+
+   seed = 31337u;
+   for( i = 0; i < KURT_CALM_BARS; i++ )
+      calm[i] = 100.0 + 1e-2*(((double)(kurt_lcg( &seed ) % 2001u) - 1000.0)/1000.0);
+   err = kurt_vs_fresh( "periodic", calm, KURT_CALM_BARS, 20, 1, &g_kurtCalmCmp,
+                        NULL );
+   if( err != TA_TEST_PASS )
+      return err;
+
+   seed = 2718u;
+   v    = 100.0;
+   for( i = 0; i < KURT_BAD_BARS; i++ )
+   {
+      v += ((double)(kurt_lcg( &seed ) % 2001u) - 1000.0) * 5e-4;
+      in[i] = v;
+   }
+   in[badAt[0]] = NAN;
+   in[badAt[1]] = INFINITY;
+   in[badAt[2]] = -INFINITY;
+
+   for( pr = 0; pr < 3; pr++ )
+   {
+      n = periods[pr];
+      retCode = TA_KURTOSIS( 0, KURT_BAD_BARS-1, in, n, &begIdx, &nbElement, out );
+      if( retCode != TA_SUCCESS || begIdx != n-1
+          || nbElement != KURT_BAD_BARS-n+1 )
+      {
+         printf( "KURTOSIS non-finite Fail [N=%d]: rc=%d (%d,%d)\n", n,
+                 (int)retCode, begIdx, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nbElement; i++ )
+      {
+         bar = begIdx + i;
+         held = 0;
+         graceEnd = -1;
+         for( k = 0; k < 3; k++ )
+         {
+            if( badAt[k] > bar-n && badAt[k] <= bar )
+               held = 1;
+            else if( badAt[k] <= bar-n )
+               graceEnd = badAt[k] + n + 32*n;
+         }
+
+         if( held )
+         {
+            g_kurtBadNanCmp++;
+            if( !isnan( out[i] ) )
+            {
+               printf( "KURTOSIS non-finite Fail [N=%d] bar %d: %.17g on a "
+                       "window holding a non-finite input, expected NaN\n",
+                       n, bar, out[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            continue;
+         }
+
+         retCode = TA_KURTOSIS( bar, bar, in, n, &begOne, &nbOne, &one );
+         if( retCode != TA_SUCCESS || begOne != bar || nbOne != 1 )
+         {
+            printf( "KURTOSIS non-finite Fail [N=%d]: one-bar call at %d rc=%d "
+                    "(%d,%d)\n", n, bar, (int)retCode, begOne, nbOne );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+         /* Inside the grace window a value is checked once it is back, but
+          * not counted: when it comes back depends on the rebuild schedule. */
+         if( bar < graceEnd )
+         {
+            if( isnan( out[i] ) )
+               continue;
+         }
+         else
+            g_kurtCleanCmp++;
+         if( !(fabs( out[i] - one ) <= KURT_FRESH_TOL * fmax( 1.0, fabs( one ) )) )
+         {
+            printf( "KURTOSIS non-finite Fail [N=%d] bar %d: %.17g against %.17g "
+                    "with no history", n, bar, out[i], one );
+            if( graceEnd >= 0 )
+               printf( ", %d bars after the last non-finite input left the "
+                       "window", bar - (graceEnd - 32*n) );
+            printf( "\n" );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (15) The second moment's own trigger. A window of constant |deviation| sets
+ * peak4 = peak2^2/n; one jump among equal values then keeps the fourth moment
+ * above 1% of its peak while the second falls under 1% of its own, and a
+ * fourth-moment trigger alone lets the second moment's rounding through,
+ * squared. Every window holding the jump among n-1 zeros has G2 exactly n. At
+ * n = 10000 this body is within 4.1e-13*n of it, and 1.1e-10*n without the
+ * second-moment trigger. n = 1000 takes the servers down the same rebuild,
+ * where the two differ only in the last bits; the larger vector is far past
+ * their request buffer.
+ */
+typedef struct { int n; double jump; int jumpAt; int toServers; } KurtStarve;
+#define KURT_STARVE_BARS (4*10000 + 1)
+static ErrorNumber test_kurt_starve( void )
+{
+   static const KurtStarve cases[] = {
+      {  1000, 2.5,  2990,                          1 },
+      { 10000, 5.75, 3*10000 - 1 - (10000/100 + 2), 0 },
+   };
+   static TA_Real in[KURT_STARVE_BARS], out[KURT_STARVE_BARS];
+   TA_Integer begIdx, nbElement;
+   TA_RetCode retCode;
+   int c, n, nbBars, i, bar;
+
+   for( c = 0; c < 2; c++ )
+   {
+      n = cases[c].n;
+      nbBars = 4*n + 1;
+      in[0] = 0.0;
+      for( i = 1; i <= n; i++ )
+         in[i] = i % 2 ? 1e-3 : -1e-3;
+      for( ; i <= 2*n; i++ )
+         in[i] = i % 2 ? 1.0 : -1.0;
+      for( ; i < nbBars; i++ )
+         in[i] = 0.0;
+      in[cases[c].jumpAt] = cases[c].jump;
+
+      retCode = TA_KURTOSIS( 0, nbBars-1, in, n, &begIdx, &nbElement, out );
+      if( retCode != TA_SUCCESS || begIdx != n-1 || nbElement != nbBars-n+1 )
+      {
+         printf( "KURTOSIS second-moment Fail [N=%d]: rc=%d (%d,%d)\n", n,
+                 (int)retCode, begIdx, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      if( cases[c].toServers )
+         KURT_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begIdx, nbElement,
+                             in, n, out );
+
+      for( bar = 3*n; bar < cases[c].jumpAt + n; bar++ )
+      {
+         g_kurtStarveCmp++;
+         if( !(fabs( out[bar-begIdx] - (double)n ) <= 1e-11 * n) )
+         {
+            printf( "KURTOSIS second-moment Fail [N=%d] at bar %d: %.17g, exact "
+                    "%d\n", n, bar, out[bar-begIdx], n );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
 }
