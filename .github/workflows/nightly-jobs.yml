@@ -1662,7 +1662,16 @@ jobs:
             measure) flags=() ;;
             *) echo "unknown perf_mode '$MODE'"; exit 2 ;;
           esac
-          python3 scripts/bench_icount.py --no-build --threshold="$THRESHOLD" "${flags[@]}"
+          # `peg` holds one level for hundreds of bars at a time, which is where
+          # the rolling-variance family rebuilds (#434). The walk never gets
+          # there, so each shape gates against its own baseline and both run.
+          rc=0
+          for shape in randwalk peg; do
+            python3 scripts/bench_icount.py --no-build --shape="$shape" \
+              --out-file="temp/callgrind.icount.$shape.out" \
+              --threshold="$THRESHOLD" "${flags[@]}" || rc=1
+          done
+          exit $rc
 
       # Reached only when the step above exited 0, and in `gate` mode
       # bench_icount.py only ever LOWERS a row. A regression cannot be absorbed
@@ -1738,6 +1747,6 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: callgrind-icount
-          path: temp/callgrind.icount.out
+          path: temp/callgrind.icount.*.out
           if-no-files-found: warn
           retention-days: 14

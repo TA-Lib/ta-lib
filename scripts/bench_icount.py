@@ -9,6 +9,7 @@ retired-instruction count against `.github/perf/icount-baseline-<arch>.tsv`.
     scripts/bench_icount.py --accept=SMA        # ... and RAISE only SMA's rows
     scripts/bench_icount.py --accept=SMA/batch  # ... and only that one tier
     scripts/bench_icount.py --no-build --function=RSI,SMA
+    scripts/bench_icount.py --shape=peg         # held levels, against its own baseline
 
 The counts are EXACT, not sampled: the same binary on the same input returns the
 same number on a loaded runner and an idle one. That is the only reason a 10%
@@ -58,6 +59,15 @@ import sys
 # baseline with counts that were never comparable to it.
 BASELINE_REL = os.path.join(".github", "perf",
                             f"icount-baseline-{platform.machine()}.tsv")
+
+
+def baseline_rel(shape):
+    """Each input shape keeps its own file: a row measured on one says nothing
+    about the same row on another, and sharing a file would read every row as
+    incomparable anyway (the corpus line is part of the header)."""
+    if not shape or shape == "randwalk":
+        return BASELINE_REL
+    return BASELINE_REL[:-len(".tsv")] + f"-{shape}.tsv"
 
 # Floor on how many entry points an unfiltered run must measure before its
 # result is allowed to mean anything. 1005 today (201 functions x 5 tiers) and
@@ -438,9 +448,13 @@ def main():
     toolchain = toolchain_id(root)
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root,
                             capture_output=True, text=True).stdout.strip()
-    baseline_path = os.path.join(root, BASELINE_REL)
+    baseline_file = baseline_rel(args.shape)
+    baseline_path = os.path.join(root, baseline_file)
     head, base_rows = read_baseline(baseline_path)
     corpus = " ".join(f"{k}={meta[k]}" for k in sorted(meta))
+
+    suite = "## Instruction-count suite" + (
+        f" ({args.shape})" if baseline_file != BASELINE_REL else "")
 
     print(f"\nmeasured {len(measured)} entry points  ({toolchain})")
     print(f"corpus: {corpus}")
@@ -450,7 +464,7 @@ def main():
     # false rows. Say so and re-baseline; do not fail the run.
     incomparable = None
     if head is None:
-        incomparable = f"no baseline at {BASELINE_REL}"
+        incomparable = f"no baseline at {baseline_file}"
     elif head.get("toolchain") != toolchain:
         incomparable = f"baseline toolchain {head.get('toolchain')!r} != {toolchain!r}"
     elif head.get("corpus") != corpus:
@@ -460,13 +474,13 @@ def main():
         print(f"\nNOT COMPARED: {incomparable}.\n"
               "Instruction counts are comparable only within one toolchain and "
               "one input corpus.")
-        emit_github_summary("## Instruction-count suite\n\n"
+        emit_github_summary(f"{suite}\n\n"
                             f"**Not compared.** {incomparable}. "
                             f"Measured {len(measured)} entry points.\n")
         if (args.update_baseline or accept_tokens) and not filtered:
             write_baseline(baseline_path, measured, meta, toolchain, commit,
                            "accepted" if accept_tokens else "monotone")
-            print(f"baseline written: {BASELINE_REL}")
+            print(f"baseline written: {baseline_file}")
         return 0
 
     failures, moved, structural = report(measured, base_rows, args.threshold,
@@ -486,7 +500,7 @@ def main():
         print(fmt_table(failures, f"OVER THRESHOLD >{args.threshold:.0%} "
                                   f"({len(failures)} total)"))
 
-    summary = ["## Instruction-count suite\n",
+    summary = [f"{suite}\n",
                f"\n`{toolchain}` · {len(measured)} entry points · "
                f"fails above {args.threshold:.0%} · baseline commit "
                f"`{head.get('commit', '?')[:12]}`\n"]
@@ -515,7 +529,7 @@ def main():
         rows, _held = ratchet(measured, base_rows, accept_tokens)
         wrote = write_baseline(baseline_path, rows, meta, toolchain, commit,
                                "accepted", base_rows)
-        print(f"baseline written: {BASELINE_REL}" if wrote
+        print(f"baseline written: {baseline_file}" if wrote
               else "baseline unchanged: no count moved, nothing to commit.")
         return 0
 
@@ -546,7 +560,7 @@ def main():
             print(f"{held} row(s) came in above the baseline but under the "
                   "threshold; the baseline holds the lower count, so the drift "
                   "keeps accumulating against it rather than being absorbed.")
-        print(f"baseline written: {BASELINE_REL}" if wrote
+        print(f"baseline written: {baseline_file}" if wrote
               else "baseline unchanged: no count moved, nothing to commit.")
     return 0
 

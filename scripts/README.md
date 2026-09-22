@@ -23,7 +23,7 @@ Pass/fail only — build something, drive it, exit non-zero. Each is one nightly
 | `synth_gate.py` | `synth-gate` | Generator surface no shipped indicator uses, via synthetic functions injected into a throwaway worktree (`ta_codegen/generator/input_synth/`) |
 | `stream_sanitize.py` | `stream-sanitizers` | The C streaming API under ASan/UBSan/LSan — paths the batch sanitizer job never calls |
 | `rust_stream_debug.py` | `cross-language-rust-debug` | The Rust streaming API under debug overflow checks; reuses the request generator from `stream_sanitize.py` |
-| `bench_icount.py` | `dev-nightly` (`icount` job) | Retired instructions for all ~1000 C entry points against `.github/perf/icount-baseline-<arch>.tsv`. Counts, not time: exact on a shared runner, which is what lets a 10% threshold mean anything. The baseline only ever moves down, so a sub-threshold regression is never absorbed; raising a row takes `--accept`, which names the rows and leaves every other row's accumulated best alone. Read its header for what a count cannot see |
+| `bench_icount.py` | `dev-nightly` (`icount` job) | Retired instructions for all ~1000 C entry points against `.github/perf/icount-baseline-<arch>.tsv`, and again with `--shape=peg` against `icount-baseline-<arch>-peg.tsv`. Counts, not time: exact on a shared runner, which is what lets a 10% threshold mean anything. The baseline only ever moves down, so a sub-threshold regression is never absorbed; raising a row takes `--accept`, which names the rows and leaves every other row's accumulated best alone. Read its header for what a count cannot see |
 
 Everything else CI gates on lives in `ta_regtest` (C), `abi.py check`, or a step
 inside `build.py` / `regtest.py`.

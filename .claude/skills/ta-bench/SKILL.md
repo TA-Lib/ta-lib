@@ -110,9 +110,9 @@ own workflow so its baseline commit is a product of the run that goes green,
 which is what keeps "green dev-nightly means mergeable dev" true. It runs every
 C entry point once under callgrind (batch, `_Open`, `_OpenAndFill`, `_Update`,
 `_Peek`) and compares the retired-instruction count against
-`.github/perf/icount-baseline-<arch>.tsv`. It measures the default random walk
-only, so a cost that appears on held levels (`--shape=peg`, where the
-rolling-variance family rebuilds) is invisible to it; measure that by hand.
+`.github/perf/icount-baseline-<arch>.tsv`, then again on `--shape=peg` against
+`icount-baseline-<arch>-peg.tsv`: held levels are where the rolling-variance
+family rebuilds, and the walk never reaches them.
 
 ```bash
 scripts/bench_icount.py                       # build, measure, compare (needs valgrind)
