@@ -97,6 +97,7 @@ enum {
     BENCH_MONO_UP,          /* strictly increasing — degenerate tail case        */
     BENCH_MONO_DOWN,        /* strictly decreasing — degenerate tail case        */
     BENCH_CONSTANT,         /* flat O=H=L=C — plateau, pins BOTH extrema         */
+    BENCH_PEG,              /* excursions off a level, then long holds on it     */
     BENCH_NSHAPES
 };
 
@@ -106,7 +107,8 @@ enum {
     BENCH_GEN_GBM,          /* lognormal, param = annualized volatility          */
     BENCH_GEN_TRENDCHOP,    /* alternating regimes, param = regime/period ratio  */
     BENCH_GEN_RAMP,         /* linear, param = +1 up / -1 down                   */
-    BENCH_GEN_FLAT          /* constant                                          */
+    BENCH_GEN_FLAT,         /* constant                                          */
+    BENCH_GEN_PEG           /* returns to 3.30 and holds; see the generator      */
 };
 
 /* What a shape is FOR. The rolling-extremum rescan rate depends only on the
@@ -131,7 +133,8 @@ enum {
 enum {
     BENCH_GRP_CONTROL = 0,  /* rank-order preserving: same rescan rate as randwalk */
     BENCH_GRP_STRESS,       /* varies how often the window extremum is its oldest bar */
-    BENCH_GRP_TAIL          /* analytic degenerate cases, not the target class     */
+    BENCH_GRP_TAIL,         /* analytic degenerate cases, not the target class     */
+    BENCH_GRP_FLATRUN       /* long exact holds after moves: pegs, halted names    */
 };
 
 typedef struct {
@@ -175,7 +178,9 @@ static const BenchShape BENCH_SHAPES[BENCH_NSHAPES] = {
     { "mono-down",        BENCH_GEN_RAMP,     -1.00, BENCH_GRP_TAIL,
       "strictly decreasing ramp: pins the high only, period-1 per bar" },
     { "constant",         BENCH_GEN_FLAT,      0.00, BENCH_GRP_TAIL,
-      "flat O=H=L=C: WORST case, pins both, 2*(period-1) per bar" }
+      "flat O=H=L=C: WORST case, pins both, 2*(period-1) per bar" },
+    { "peg",              BENCH_GEN_PEG,       0.00, BENCH_GRP_FLATRUN,
+      "40 bars of cent steps off 3.30, then 360 bars back on it, repeated" }
 };
 
 /* ---- PRNGs ---------------------------------------------------------------
@@ -279,12 +284,13 @@ static void bench_shape_list(void)
         "randwalk-lo/-hi are the same path rescaled; gbm is an independent driftless path.\n"
         "Useful for magnitude/conditioning questions, not for the rescan rate.",
         "Rescan-rate stressors -- vary how often the window extremum is its oldest bar.",
-        "Degenerate tail -- analytic worst cases, not the class this corpus exists for."
+        "Degenerate tail -- analytic worst cases, not the class this corpus exists for.",
+        "Flat runs -- a price that keeps returning to one level and holding it."
     };
     int g, i;
     printf("Benchmark input corpus (--shape=NAME, default %s):\n",
            BENCH_SHAPES[BENCH_RANDWALK].name);
-    for( g = BENCH_GRP_CONTROL; g <= BENCH_GRP_TAIL; g++ )
+    for( g = BENCH_GRP_CONTROL; g <= BENCH_GRP_FLATRUN; g++ )
     {
         printf("\n%s\n", GROUP_HDR[g]);
         for( i = 0; i < BENCH_NSHAPES; i++ )
@@ -360,6 +366,31 @@ static void bench_corpus_gen(const BenchCorpusCfg *cfg, int n,
     {
         for( i = 0; i < n; i++ ) {
             o[i] = h[i] = l[i] = c[i] = 100.0;
+            v[i] = 1000000.0;
+            oi[i] = 0.0;
+            if( periods ) periods[i] = 14.0;
+        }
+        return;
+    }
+
+    if( sh->gen == BENCH_GEN_PEG )
+    {
+        /* 3.30 is a level whose window mean does not round back to it at any
+         * period ta_bench_icount runs (5, 10, 20, 30), which is what makes a
+         * mean-anchored rolling variance rebuild on every held bar (#434). */
+        long cents = 330, prev;
+        for( i = 0; i < n; i++ ) {
+            prev = cents;
+            if( i % 400 < 40 ) {
+                cents += (long)(bench_sm_next(&rng.s) % 5u) - 2;
+                if( cents < 100 ) cents = 100;
+            }
+            else
+                cents = 330;
+            o[i] = (double)prev / 100.0;
+            c[i] = (double)cents / 100.0;
+            h[i] = fmax(o[i], c[i]);
+            l[i] = fmin(o[i], c[i]);
             v[i] = 1000000.0;
             oi[i] = 0.0;
             if( periods ) periods[i] = 14.0;

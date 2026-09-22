@@ -110,7 +110,9 @@ own workflow so its baseline commit is a product of the run that goes green,
 which is what keeps "green dev-nightly means mergeable dev" true. It runs every
 C entry point once under callgrind (batch, `_Open`, `_OpenAndFill`, `_Update`,
 `_Peek`) and compares the retired-instruction count against
-`.github/perf/icount-baseline-<arch>.tsv`.
+`.github/perf/icount-baseline-<arch>.tsv`. It measures the default random walk
+only, so a cost that appears on held levels (`--shape=peg`, where the
+rolling-variance family rebuilds) is invisible to it; measure that by hand.
 
 ```bash
 scripts/bench_icount.py                       # build, measure, compare (needs valgrind)
@@ -272,7 +274,9 @@ matters. The rescan rate depends only on the *rank order* of the bars, so
 the magnitudes — measured within 1% of `randwalk` at period 14/30/200. They are
 controls, useful for numerical-conditioning questions (deadbands, cancellation,
 ratio-based indicators), not stressors. Only `trend-chop-*` varies the rescan
-rate; `mono-*` and `constant` are the analytic tail.
+rate; `mono-*` and `constant` are the analytic tail. `peg` returns to 3.30 and
+holds for 360 bars at a time, a level whose window mean does not round back at
+the icount periods.
 
 One documented exemption in `--verify-corpus`: the walk family floors `low` at
 1.0 but leaves `close` unclamped, so `low <= min(open,close)` fails on 32 bars of
