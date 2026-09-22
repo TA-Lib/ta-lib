@@ -45,12 +45,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  091526 KL     First version (proposal-drafts issue #73).
+ *  092226 MF,CC  Binary search above 128 values, one shift per bar (issue #432).
  */
 
 // Import types from parent module
@@ -127,6 +130,9 @@ impl Core {
         let mut nbSorted: usize = 0_usize;
         let mut lowerIdx: usize = 0_usize;
         let mut upperIdx: usize = 0_usize;
+        let mut lo: usize = 0_usize;
+        let mut hi: usize = 0_usize;
+        let mut mid: usize = 0_usize;
         let mut local_ring: [f64; 30] = [0.0_f64; 30];
         let mut heap_ring: Vec<f64> = Vec::new();
         let mut ring: &mut [f64] = &mut [];
@@ -137,9 +143,7 @@ impl Core {
         let mut sorted: &mut [f64] = &mut [];
         let mut sorted_Idx: usize = 0;
         let mut maxIdx_sorted: usize = 29;
-        // The window is carried twice: "ring" by age, "sorted" by value. Both are
-        // hand-written here as they are in percentile.c, which is the precedent for
-        // this shape -- a generator-derived ring does not carry the by-value copy.
+        // The window is carried twice: "ring" by age, "sorted" by value.
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -167,20 +171,38 @@ impl Core {
         }
         maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
         sorted_Idx = 0;
-        // The two central ordinals, zero-based over the full window. At odd
-        // optInTimePeriod they are the same slot and the average below is the value
-        // itself; at even optInTimePeriod they straddle the centre and the mean of
-        // the two is the median. Computed once rather than per bar.
+        // Never read: set so two handles opened over the same bars hold the same
+        // state.
+        sorted[lookbackTotal] = 0.0;
+        // The two central ordinals, zero-based; the same slot at odd n.
         lowerIdx = ((optInTimePeriod - 1) / 2) as usize;
         upperIdx = (optInTimePeriod / 2) as usize;
         nbSorted = 0;
         i = startIdx - lookbackTotal;
         while i < startIdx {
             newValue = inReal[i];
-            j = nbSorted;
-            while j > 0 && sorted[j - 1] > newValue {
-                sorted[j] = sorted[j - 1];
-                j -= 1;
+            if lookbackTotal < 128 {
+                j = nbSorted;
+                while j > 0 && sorted[j - 1] > newValue {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
+            } else {
+                lo = 0;
+                hi = nbSorted;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] <= newValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                j = nbSorted;
+                while j > lo {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
             }
             sorted[j] = newValue;
             nbSorted += 1;
@@ -192,19 +214,34 @@ impl Core {
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
         //
-        // Every buffer store sits BELOW the output store on purpose (percentile.c):
-        // deriving the whole answer read-only above it is what lets the streaming
-        // peek frame drop the state update rather than shadow a shift loop.
+        // Every buffer store sits BELOW the output store: deriving the whole answer
+        // read-only above it is what lets the streaming peek frame drop the state
+        // update.
+        //
+        // Below 128 values a linear scan beats a binary search: one mispredicted
+        // loop exit costs less than log2(n) unpredictable halvings.
         outIdx = 0;
         loop {
             newValue = inReal[i];
-            // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-            // where the incoming one belongs, so the full window is
-            // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-            // without materialising it.
-            pos = 0;
-            while pos < lookbackTotal && sorted[pos] <= newValue {
-                pos += 1;
+            // pos counts the retained values <= newValue, so the full window is
+            // sorted[0..pos-1], newValue, sorted[pos..].
+            if lookbackTotal < 128 {
+                pos = 0;
+                while pos < lookbackTotal && sorted[pos] <= newValue {
+                    pos += 1;
+                }
+            } else {
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] <= newValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                pos = lo;
             }
             if lowerIdx < pos {
                 lower = sorted[lowerIdx];
@@ -220,19 +257,8 @@ impl Core {
             } else {
                 upper = sorted[upperIdx - 1];
             }
-            // At odd optInTimePeriod the two ordinals are the same slot, and the
-            // branch returns that read untouched. Writing it as (v + v) / 2.0
-            // instead would be exact for every value this library is ever handed --
-            // doubling moves the exponent with the mantissa untouched and halving
-            // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-            // function does not declare nan_inf_output. The branch costs nothing:
-            // the condition is loop-invariant.
-            //
-            // At even optInTimePeriod the mean of the two central values is the
-            // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-            // multiplying by 0.5 give the same double, so that spelling is not a
-            // variant; the sum itself can still overflow on inputs near DBL_MAX,
-            // which is exactly what NumPy does with them too.
+            // At odd n both reads are one value; averaging it would overflow above
+            // DBL_MAX/2.
             if lowerIdx == upperIdx {
                 result = lower;
             } else {
@@ -240,33 +266,47 @@ impl Core {
             }
             outReal[outIdx] = result;
             outIdx += 1;
-            // Shifting only the strictly greater entries leaves equal values in
-            // insertion order, which is age order -- that is what lets the delete
-            // below evict the oldest of a run by value alone, with no slot array.
-            //
-            // The order within a run of equal values is NOT observable at the output,
-            // and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
-            // inserts at the front of a run instead of the back) leaves every value
-            // bit-identical over 14820 windows on both a 7-distinct-value series and
-            // a random walk. Equal members are interchangeable, which is precisely
-            // why the removal can identify one by value and needs no identity.
-            j = lookbackTotal;
-            while j > pos {
-                sorted[j] = sorted[j - 1];
-                j -= 1;
-            }
-            sorted[pos] = newValue;
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
             if ring_Idx > maxIdx_ring { ring_Idx = 0; }
             oldValue = ring[ring_Idx];
-            j = 0;
-            while j < lookbackTotal && sorted[j] < oldValue {
-                j += 1;
+            // j is the first retained value >= oldValue. Keep every run of equal
+            // values in age order (newValue goes after its equals, as above): the
+            // oldest of a run is then the departing value bit for bit, which is what
+            // keeps -0.0 and 0.0 apart. Inserting before the equals instead changes
+            // no value but flips the sign of some zero outputs.
+            if lookbackTotal < 128 {
+                j = 0;
+                while j < lookbackTotal && sorted[j] < oldValue {
+                    j += 1;
+                }
+            } else {
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] < oldValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                j = lo;
             }
-            while j < lookbackTotal {
-                sorted[j] = sorted[j + 1];
-                j += 1;
+            // Evict oldValue and place newValue with one shift of the slots between
+            // them.
+            if j < pos {
+                while j < pos - 1 {
+                    sorted[j] = sorted[j + 1];
+                    j += 1;
+                }
+                sorted[pos - 1] = newValue;
+            } else {
+                while j > pos {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
+                sorted[pos] = newValue;
             }
             i += 1;
             if !(i <= endIdx) { break; }
@@ -277,10 +317,11 @@ impl Core {
     }
     /// The middle order statistic of the trailing window: the central value when `optInTimePeriod`
     /// is odd, the mean of the two central values when it is even. A robust measure of central
-    /// tendency — unlike [`SMA`](https://ta-lib.org/functions/sma) it is unmoved by a single
-    /// spike, which is what makes it useful as a filter rather than as a level. Not to be confused
-    /// with [`MEDPRICE`](https://ta-lib.org/functions/medprice), which is `(High + Low) / 2` of one
-    /// bar and is not an order statistic.
+    /// tendency — unlike [`SMA`](https://ta-lib.org/functions/sma), a single spike moves it by at
+    /// most one rank however large the spike is, which is what makes it useful as a filter rather
+    /// than as a level. Not to be confused with
+    /// [`MEDPRICE`](https://ta-lib.org/functions/medprice), which is `(High + Low) / 2` of one bar
+    /// and is not an order statistic.
     ///
     /// Formula and more info at [ta-lib.org/functions/median](https://ta-lib.org/functions/median).
     ///
@@ -338,6 +379,9 @@ impl Core {
     /// * NumPy `numpy.median`, R `stats::median`, scipy, Excel `MEDIAN` — four independent
     ///   implementations of one unambiguous definition.
     #[doc(alias = "TA_MEDIAN")]
+    #[doc(alias = "RollingMedian")]
+    #[doc(alias = "MovingMedian")]
+    #[doc(alias = "RunningMedian")]
     pub fn median(
         &self,
         startIdx: usize,
@@ -427,14 +471,29 @@ impl Core {
         let mut upper: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
         let mut pos: usize = 0_usize;
+        let mut lo: usize = 0_usize;
+        let mut hi: usize = 0_usize;
+        let mut mid: usize = 0_usize;
         newValue = inReal;
-        // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-        // where the incoming one belongs, so the full window is
-        // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-        // without materialising it.
-        pos = 0;
-        while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
-            pos += 1;
+        // pos counts the retained values <= newValue, so the full window is
+        // sorted[0..pos-1], newValue, sorted[pos..].
+        if sp.lookbackTotal < 128 {
+            pos = 0;
+            while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
+                pos += 1;
+            }
+        } else {
+            lo = 0;
+            hi = sp.lookbackTotal;
+            while lo < hi {
+                mid = (lo + hi) / 2;
+                if sp.cb_sorted[mid] <= newValue {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
+            }
+            pos = lo;
         }
         if sp.lowerIdx < pos {
             lower = sp.cb_sorted[sp.lowerIdx];
@@ -450,54 +509,57 @@ impl Core {
         } else {
             upper = sp.cb_sorted[sp.upperIdx - 1];
         }
-        // At odd optInTimePeriod the two ordinals are the same slot, and the
-        // branch returns that read untouched. Writing it as (v + v) / 2.0
-        // instead would be exact for every value this library is ever handed --
-        // doubling moves the exponent with the mantissa untouched and halving
-        // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-        // function does not declare nan_inf_output. The branch costs nothing:
-        // the condition is loop-invariant.
-        //
-        // At even optInTimePeriod the mean of the two central values is the
-        // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-        // multiplying by 0.5 give the same double, so that spelling is not a
-        // variant; the sum itself can still overflow on inputs near DBL_MAX,
-        // which is exactly what NumPy does with them too.
+        // At odd n both reads are one value; averaging it would overflow above
+        // DBL_MAX/2.
         if sp.lowerIdx == sp.upperIdx {
             result = lower;
         } else {
             result = (lower + upper) / 2.0;
         }
         (*outReal) = result;
-        // Shifting only the strictly greater entries leaves equal values in
-        // insertion order, which is age order -- that is what lets the delete
-        // below evict the oldest of a run by value alone, with no slot array.
-        //
-        // The order within a run of equal values is NOT observable at the output,
-        // and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
-        // inserts at the front of a run instead of the back) leaves every value
-        // bit-identical over 14820 windows on both a 7-distinct-value series and
-        // a random walk. Equal members are interchangeable, which is precisely
-        // why the removal can identify one by value and needs no identity.
-        j = sp.lookbackTotal;
-        while j > pos {
-            sp.cb_sorted[j] = sp.cb_sorted[j - 1];
-            j -= 1;
-        }
-        sp.cb_sorted[pos] = newValue;
         sp.cb_ring[sp.ring_Idx] = newValue;
         sp.ring_Idx = sp.ring_Idx + 1;
         if sp.ring_Idx > sp.maxIdx_ring {
             sp.ring_Idx = 0;
         }
         oldValue = sp.cb_ring[sp.ring_Idx];
-        j = 0;
-        while j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue {
-            j += 1;
+        // j is the first retained value >= oldValue. Keep every run of equal
+        // values in age order (newValue goes after its equals, as above): the
+        // oldest of a run is then the departing value bit for bit, which is what
+        // keeps -0.0 and 0.0 apart. Inserting before the equals instead changes
+        // no value but flips the sign of some zero outputs.
+        if sp.lookbackTotal < 128 {
+            j = 0;
+            while j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue {
+                j += 1;
+            }
+        } else {
+            lo = 0;
+            hi = sp.lookbackTotal;
+            while lo < hi {
+                mid = (lo + hi) / 2;
+                if sp.cb_sorted[mid] < oldValue {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
+            }
+            j = lo;
         }
-        while j < sp.lookbackTotal {
-            sp.cb_sorted[j] = sp.cb_sorted[j + 1];
-            j += 1;
+        // Evict oldValue and place newValue with one shift of the slots between
+        // them.
+        if j < pos {
+            while j < pos - 1 {
+                sp.cb_sorted[j] = sp.cb_sorted[j + 1];
+                j += 1;
+            }
+            sp.cb_sorted[pos - 1] = newValue;
+        } else {
+            while j > pos {
+                sp.cb_sorted[j] = sp.cb_sorted[j - 1];
+                j -= 1;
+            }
+            sp.cb_sorted[pos] = newValue;
         }
         sp.cur_outReal = (*outReal);
     }
@@ -541,15 +603,16 @@ impl Core {
         let mut nbSorted: usize = 0_usize;
         let mut lowerIdx: usize = 0_usize;
         let mut upperIdx: usize = 0_usize;
+        let mut lo: usize = 0_usize;
+        let mut hi: usize = 0_usize;
+        let mut mid: usize = 0_usize;
         let mut ring: Vec<f64> = Vec::new();
         let mut ring_Idx: usize = 0;
         let mut maxIdx_ring: usize = 29;
         let mut sorted: Vec<f64> = Vec::new();
         let mut sorted_Idx: usize = 0;
         let mut maxIdx_sorted: usize = 29;
-        // The window is carried twice: "ring" by age, "sorted" by value. Both are
-        // hand-written here as they are in percentile.c, which is the precedent for
-        // this shape -- a generator-derived ring does not carry the by-value copy.
+        // The window is carried twice: "ring" by age, "sorted" by value.
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -567,20 +630,38 @@ impl Core {
         sorted = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
         sorted_Idx = 0;
-        // The two central ordinals, zero-based over the full window. At odd
-        // optInTimePeriod they are the same slot and the average below is the value
-        // itself; at even optInTimePeriod they straddle the centre and the mean of
-        // the two is the median. Computed once rather than per bar.
+        // Never read: set so two handles opened over the same bars hold the same
+        // state.
+        sorted[lookbackTotal] = 0.0;
+        // The two central ordinals, zero-based; the same slot at odd n.
         lowerIdx = ((optInTimePeriod - 1) / 2) as usize;
         upperIdx = (optInTimePeriod / 2) as usize;
         nbSorted = 0;
         i = startIdx - lookbackTotal;
         while i < startIdx {
             newValue = inReal[i];
-            j = nbSorted;
-            while j > 0 && sorted[j - 1] > newValue {
-                sorted[j] = sorted[j - 1];
-                j -= 1;
+            if lookbackTotal < 128 {
+                j = nbSorted;
+                while j > 0 && sorted[j - 1] > newValue {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
+            } else {
+                lo = 0;
+                hi = nbSorted;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] <= newValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                j = nbSorted;
+                while j > lo {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
             }
             sorted[j] = newValue;
             nbSorted += 1;
@@ -592,19 +673,34 @@ impl Core {
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
         //
-        // Every buffer store sits BELOW the output store on purpose (percentile.c):
-        // deriving the whole answer read-only above it is what lets the streaming
-        // peek frame drop the state update rather than shadow a shift loop.
+        // Every buffer store sits BELOW the output store: deriving the whole answer
+        // read-only above it is what lets the streaming peek frame drop the state
+        // update.
+        //
+        // Below 128 values a linear scan beats a binary search: one mispredicted
+        // loop exit costs less than log2(n) unpredictable halvings.
         outIdx = 0;
         loop {
             newValue = inReal[i];
-            // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-            // where the incoming one belongs, so the full window is
-            // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-            // without materialising it.
-            pos = 0;
-            while pos < lookbackTotal && sorted[pos] <= newValue {
-                pos += 1;
+            // pos counts the retained values <= newValue, so the full window is
+            // sorted[0..pos-1], newValue, sorted[pos..].
+            if lookbackTotal < 128 {
+                pos = 0;
+                while pos < lookbackTotal && sorted[pos] <= newValue {
+                    pos += 1;
+                }
+            } else {
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] <= newValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                pos = lo;
             }
             if lowerIdx < pos {
                 lower = sorted[lowerIdx];
@@ -620,19 +716,8 @@ impl Core {
             } else {
                 upper = sorted[upperIdx - 1];
             }
-            // At odd optInTimePeriod the two ordinals are the same slot, and the
-            // branch returns that read untouched. Writing it as (v + v) / 2.0
-            // instead would be exact for every value this library is ever handed --
-            // doubling moves the exponent with the mantissa untouched and halving
-            // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-            // function does not declare nan_inf_output. The branch costs nothing:
-            // the condition is loop-invariant.
-            //
-            // At even optInTimePeriod the mean of the two central values is the
-            // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-            // multiplying by 0.5 give the same double, so that spelling is not a
-            // variant; the sum itself can still overflow on inputs near DBL_MAX,
-            // which is exactly what NumPy does with them too.
+            // At odd n both reads are one value; averaging it would overflow above
+            // DBL_MAX/2.
             if lowerIdx == upperIdx {
                 result = lower;
             } else {
@@ -640,33 +725,47 @@ impl Core {
             }
             outReal[(outIdx * outStride) as usize] = result;
             outIdx += 1;
-            // Shifting only the strictly greater entries leaves equal values in
-            // insertion order, which is age order -- that is what lets the delete
-            // below evict the oldest of a run by value alone, with no slot array.
-            //
-            // The order within a run of equal values is NOT observable at the output,
-            // and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
-            // inserts at the front of a run instead of the back) leaves every value
-            // bit-identical over 14820 windows on both a 7-distinct-value series and
-            // a random walk. Equal members are interchangeable, which is precisely
-            // why the removal can identify one by value and needs no identity.
-            j = lookbackTotal;
-            while j > pos {
-                sorted[j] = sorted[j - 1];
-                j -= 1;
-            }
-            sorted[pos] = newValue;
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
             if ring_Idx > maxIdx_ring { ring_Idx = 0; }
             oldValue = ring[ring_Idx];
-            j = 0;
-            while j < lookbackTotal && sorted[j] < oldValue {
-                j += 1;
+            // j is the first retained value >= oldValue. Keep every run of equal
+            // values in age order (newValue goes after its equals, as above): the
+            // oldest of a run is then the departing value bit for bit, which is what
+            // keeps -0.0 and 0.0 apart. Inserting before the equals instead changes
+            // no value but flips the sign of some zero outputs.
+            if lookbackTotal < 128 {
+                j = 0;
+                while j < lookbackTotal && sorted[j] < oldValue {
+                    j += 1;
+                }
+            } else {
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] < oldValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                j = lo;
             }
-            while j < lookbackTotal {
-                sorted[j] = sorted[j + 1];
-                j += 1;
+            // Evict oldValue and place newValue with one shift of the slots between
+            // them.
+            if j < pos {
+                while j < pos - 1 {
+                    sorted[j] = sorted[j + 1];
+                    j += 1;
+                }
+                sorted[pos - 1] = newValue;
+            } else {
+                while j > pos {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
+                sorted[pos] = newValue;
             }
             i += 1;
             if !(i <= endIdx) { break; }
@@ -869,14 +968,29 @@ impl MedianStream {
             let mut lower: f64 = 0.0_f64;
             let mut upper: f64 = 0.0_f64;
             let mut pos: usize = 0_usize;
+            let mut lo: usize = 0_usize;
+            let mut hi: usize = 0_usize;
+            let mut mid: usize = 0_usize;
             newValue = inReal;
-            // `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-            // where the incoming one belongs, so the full window is
-            // sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-            // without materialising it.
-            pos = 0;
-            while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
-                pos += 1;
+            // pos counts the retained values <= newValue, so the full window is
+            // sorted[0..pos-1], newValue, sorted[pos..].
+            if sp.lookbackTotal < 128 {
+                pos = 0;
+                while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
+                    pos += 1;
+                }
+            } else {
+                lo = 0;
+                hi = sp.lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sp.cb_sorted[mid] <= newValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                pos = lo;
             }
             if sp.lowerIdx < pos {
                 lower = sp.cb_sorted[sp.lowerIdx];
@@ -892,19 +1006,8 @@ impl MedianStream {
             } else {
                 upper = sp.cb_sorted[sp.upperIdx - 1];
             }
-            // At odd optInTimePeriod the two ordinals are the same slot, and the
-            // branch returns that read untouched. Writing it as (v + v) / 2.0
-            // instead would be exact for every value this library is ever handed --
-            // doubling moves the exponent with the mantissa untouched and halving
-            // moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-            // function does not declare nan_inf_output. The branch costs nothing:
-            // the condition is loop-invariant.
-            //
-            // At even optInTimePeriod the mean of the two central values is the
-            // universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-            // multiplying by 0.5 give the same double, so that spelling is not a
-            // variant; the sum itself can still overflow on inputs near DBL_MAX,
-            // which is exactly what NumPy does with them too.
+            // At odd n both reads are one value; averaging it would overflow above
+            // DBL_MAX/2.
             if sp.lowerIdx == sp.upperIdx {
                 result = lower;
             } else {

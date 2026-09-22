@@ -47,12 +47,15 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  091526 KL     First version (proposal-drafts issue #73).
+ *  092226 MF,CC  Binary search above 128 values, one shift per bar (issue #432).
  */
 
 TA_LIB_API int TA_MEDIAN_Lookback( int optInTimePeriod )
@@ -85,6 +88,9 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
    int nbSorted;
    int lowerIdx;
    int upperIdx;
+   int lo;
+   int hi;
+   int mid;
    double local_ring[30];
    double *ring = &local_ring[0];
    int ring_Idx;
@@ -108,10 +114,7 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* The window is carried twice: "ring" by age, "sorted" by value. Both are
-    * hand-written here as they are in percentile.c, which is the precedent for
-    * this shape -- a generator-derived ring does not carry the by-value copy.
-    */
+   /* The window is carried twice: "ring" by age, "sorted" by value. */
    lookbackTotal = optInTimePeriod - 1;
    if( startIdx < lookbackTotal )
    {
@@ -152,11 +155,11 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
    {
       sorted = &local_sorted[0];
    }
-   /* The two central ordinals, zero-based over the full window. At odd
-    * optInTimePeriod they are the same slot and the average below is the value
-    * itself; at even optInTimePeriod they straddle the centre and the mean of
-    * the two is the median. Computed once rather than per bar.
+   /* Never read: set so two handles opened over the same bars hold the same
+    * state.
     */
+   sorted[lookbackTotal] = 0.0;
+   /* The two central ordinals, zero-based; the same slot at odd n. */
    lowerIdx = (optInTimePeriod - 1) / 2;
    upperIdx = optInTimePeriod / 2;
    nbSorted = 0;
@@ -164,11 +167,35 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
    while( i < startIdx )
    {
       newValue = inReal[i];
-      j = nbSorted;
-      while( j > 0 && sorted[j - 1] > newValue )
+      if( lookbackTotal < 128 )
       {
-         sorted[j] = sorted[j - 1];
-         j -= 1;
+         j = nbSorted;
+         while( j > 0 && sorted[j - 1] > newValue )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = nbSorted;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] <= newValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         j = nbSorted;
+         while( j > lo )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
       }
       sorted[j] = newValue;
       nbSorted += 1;
@@ -180,23 +207,43 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
    /* Both scratch buffers hold copies and inReal is never read below i, so
     * inReal and outReal may be the same buffer.
     *
-    * Every buffer store sits BELOW the output store on purpose (percentile.c):
-    * deriving the whole answer read-only above it is what lets the streaming
-    * peek frame drop the state update rather than shadow a shift loop.
+    * Every buffer store sits BELOW the output store: deriving the whole answer
+    * read-only above it is what lets the streaming peek frame drop the state
+    * update.
+    *
+    * Below 128 values a linear scan beats a binary search: one mispredicted
+    * loop exit costs less than log2(n) unpredictable halvings.
     */
    outIdx = 0;
    do
    {
       newValue = inReal[i];
-      /* `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-       * where the incoming one belongs, so the full window is
-       * sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-       * without materialising it.
+      /* pos counts the retained values <= newValue, so the full window is
+       * sorted[0..pos-1], newValue, sorted[pos..].
        */
-      pos = 0;
-      while( pos < lookbackTotal && sorted[pos] <= newValue )
+      if( lookbackTotal < 128 )
       {
-         pos += 1;
+         pos = 0;
+         while( pos < lookbackTotal && sorted[pos] <= newValue )
+         {
+            pos += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] <= newValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         pos = lo;
       }
       if( lowerIdx < pos )
       {
@@ -218,19 +265,8 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
       {
          upper = sorted[upperIdx - 1];
       }
-      /* At odd optInTimePeriod the two ordinals are the same slot, and the
-       * branch returns that read untouched. Writing it as (v + v) / 2.0
-       * instead would be exact for every value this library is ever handed --
-       * doubling moves the exponent with the mantissa untouched and halving
-       * moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-       * function does not declare nan_inf_output. The branch costs nothing:
-       * the condition is loop-invariant.
-       *
-       * At even optInTimePeriod the mean of the two central values is the
-       * universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-       * multiplying by 0.5 give the same double, so that spelling is not a
-       * variant; the sum itself can still overflow on inputs near DBL_MAX,
-       * which is exactly what NumPy does with them too.
+      /* At odd n both reads are one value; averaging it would overflow above
+       * DBL_MAX/2.
        */
       if( lowerIdx == upperIdx )
       {
@@ -241,37 +277,59 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
       }
       outReal[outIdx] = result;
       outIdx += 1;
-      /* Shifting only the strictly greater entries leaves equal values in
-       * insertion order, which is age order -- that is what lets the delete
-       * below evict the oldest of a run by value alone, with no slot array.
-       *
-       * The order within a run of equal values is NOT observable at the output,
-       * and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
-       * inserts at the front of a run instead of the back) leaves every value
-       * bit-identical over 14820 windows on both a 7-distinct-value series and
-       * a random walk. Equal members are interchangeable, which is precisely
-       * why the removal can identify one by value and needs no identity.
-       */
-      j = lookbackTotal;
-      while( j > pos )
-      {
-         sorted[j] = sorted[j - 1];
-         j -= 1;
-      }
-      sorted[pos] = newValue;
       ring[ring_Idx] = newValue;
       ring_Idx++;
       if( ring_Idx > maxIdx_ring ) ring_Idx = 0;
       oldValue = ring[ring_Idx];
-      j = 0;
-      while( j < lookbackTotal && sorted[j] < oldValue )
+      /* j is the first retained value >= oldValue. Keep every run of equal
+       * values in age order (newValue goes after its equals, as above): the
+       * oldest of a run is then the departing value bit for bit, which is what
+       * keeps -0.0 and 0.0 apart. Inserting before the equals instead changes
+       * no value but flips the sign of some zero outputs.
+       */
+      if( lookbackTotal < 128 )
       {
-         j += 1;
+         j = 0;
+         while( j < lookbackTotal && sorted[j] < oldValue )
+         {
+            j += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] < oldValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         j = lo;
       }
-      while( j < lookbackTotal )
+      /* Evict oldValue and place newValue with one shift of the slots between
+       * them.
+       */
+      if( j < pos )
       {
-         sorted[j] = sorted[j + 1];
-         j += 1;
+         while( j < pos - 1 )
+         {
+            sorted[j] = sorted[j + 1];
+            j += 1;
+         }
+         sorted[pos - 1] = newValue;
+      } else 
+      {
+         while( j > pos )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
+         sorted[pos] = newValue;
       }
       i += 1;
    } while( i <= endIdx );
@@ -303,6 +361,9 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
    int nbSorted;
    int lowerIdx;
    int upperIdx;
+   int lo;
+   int hi;
+   int mid;
    double local_ring[30];
    double *ring = &local_ring[0];
    int ring_Idx;
@@ -366,6 +427,7 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
    {
       sorted = &local_sorted[0];
    }
+   sorted[lookbackTotal] = 0.0;
    lowerIdx = (optInTimePeriod - 1) / 2;
    upperIdx = optInTimePeriod / 2;
    nbSorted = 0;
@@ -373,11 +435,35 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
    while( i < startIdx )
    {
       newValue = (double)inReal[i];
-      j = nbSorted;
-      while( j > 0 && sorted[j - 1] > newValue )
+      if( lookbackTotal < 128 )
       {
-         sorted[j] = sorted[j - 1];
-         j -= 1;
+         j = nbSorted;
+         while( j > 0 && sorted[j - 1] > newValue )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = nbSorted;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] <= newValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         j = nbSorted;
+         while( j > lo )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
       }
       sorted[j] = newValue;
       nbSorted += 1;
@@ -390,10 +476,29 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
    do
    {
       newValue = (double)inReal[i];
-      pos = 0;
-      while( pos < lookbackTotal && sorted[pos] <= newValue )
+      if( lookbackTotal < 128 )
       {
-         pos += 1;
+         pos = 0;
+         while( pos < lookbackTotal && sorted[pos] <= newValue )
+         {
+            pos += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] <= newValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         pos = lo;
       }
       if( lowerIdx < pos )
       {
@@ -424,26 +529,50 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
       }
       outReal[outIdx] = result;
       outIdx += 1;
-      j = lookbackTotal;
-      while( j > pos )
-      {
-         sorted[j] = sorted[j - 1];
-         j -= 1;
-      }
-      sorted[pos] = newValue;
       ring[ring_Idx] = newValue;
       ring_Idx++;
       if( ring_Idx > maxIdx_ring ) ring_Idx = 0;
       oldValue = ring[ring_Idx];
-      j = 0;
-      while( j < lookbackTotal && sorted[j] < oldValue )
+      if( lookbackTotal < 128 )
       {
-         j += 1;
+         j = 0;
+         while( j < lookbackTotal && sorted[j] < oldValue )
+         {
+            j += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] < oldValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         j = lo;
       }
-      while( j < lookbackTotal )
+      if( j < pos )
       {
-         sorted[j] = sorted[j + 1];
-         j += 1;
+         while( j < pos - 1 )
+         {
+            sorted[j] = sorted[j + 1];
+            j += 1;
+         }
+         sorted[pos - 1] = newValue;
+      } else 
+      {
+         while( j > pos )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
+         sorted[pos] = newValue;
       }
       i += 1;
    } while( i <= endIdx );
@@ -495,17 +624,37 @@ static void TA_MEDIAN_StepImpl( struct TA_MEDIAN_Stream *sp, double inReal, doub
    double upper;
    int j;
    int pos;
+   int lo;
+   int hi;
+   int mid;
 
    newValue = inReal;
-   /* `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-    * where the incoming one belongs, so the full window is
-    * sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-    * without materialising it.
+   /* pos counts the retained values <= newValue, so the full window is
+    * sorted[0..pos-1], newValue, sorted[pos..].
     */
-   pos = 0;
-   while( pos < sp->lookbackTotal && sp->cb_sorted[pos] <= newValue )
+   if( sp->lookbackTotal < 128 )
    {
-      pos += 1;
+      pos = 0;
+      while( pos < sp->lookbackTotal && sp->cb_sorted[pos] <= newValue )
+      {
+         pos += 1;
+      }
+   } else 
+   {
+      lo = 0;
+      hi = sp->lookbackTotal;
+      while( lo < hi )
+      {
+         mid = (lo + hi) / 2;
+         if( sp->cb_sorted[mid] <= newValue )
+         {
+            lo = mid + 1;
+         } else 
+         {
+            hi = mid;
+         }
+      }
+      pos = lo;
    }
    if( sp->lowerIdx < pos )
    {
@@ -527,19 +676,8 @@ static void TA_MEDIAN_StepImpl( struct TA_MEDIAN_Stream *sp, double inReal, doub
    {
       upper = sp->cb_sorted[sp->upperIdx - 1];
    }
-   /* At odd optInTimePeriod the two ordinals are the same slot, and the
-    * branch returns that read untouched. Writing it as (v + v) / 2.0
-    * instead would be exact for every value this library is ever handed --
-    * doubling moves the exponent with the mantissa untouched and halving
-    * moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-    * function does not declare nan_inf_output. The branch costs nothing:
-    * the condition is loop-invariant.
-    *
-    * At even optInTimePeriod the mean of the two central values is the
-    * universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-    * multiplying by 0.5 give the same double, so that spelling is not a
-    * variant; the sum itself can still overflow on inputs near DBL_MAX,
-    * which is exactly what NumPy does with them too.
+   /* At odd n both reads are one value; averaging it would overflow above
+    * DBL_MAX/2.
     */
    if( sp->lowerIdx == sp->upperIdx )
    {
@@ -549,24 +687,6 @@ static void TA_MEDIAN_StepImpl( struct TA_MEDIAN_Stream *sp, double inReal, doub
       result = (lower + upper) / 2.0;
    }
    *outReal= result;
-   /* Shifting only the strictly greater entries leaves equal values in
-    * insertion order, which is age order -- that is what lets the delete
-    * below evict the oldest of a run by value alone, with no slot array.
-    *
-    * The order within a run of equal values is NOT observable at the output,
-    * and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
-    * inserts at the front of a run instead of the back) leaves every value
-    * bit-identical over 14820 windows on both a 7-distinct-value series and
-    * a random walk. Equal members are interchangeable, which is precisely
-    * why the removal can identify one by value and needs no identity.
-    */
-   j = sp->lookbackTotal;
-   while( j > pos )
-   {
-      sp->cb_sorted[j] = sp->cb_sorted[j - 1];
-      j -= 1;
-   }
-   sp->cb_sorted[pos] = newValue;
    sp->cb_ring[sp->ring_Idx] = newValue;
    sp->ring_Idx = sp->ring_Idx + 1;
    if( sp->ring_Idx > sp->maxIdx_ring )
@@ -574,15 +694,55 @@ static void TA_MEDIAN_StepImpl( struct TA_MEDIAN_Stream *sp, double inReal, doub
       sp->ring_Idx = 0;
    }
    oldValue = sp->cb_ring[sp->ring_Idx];
-   j = 0;
-   while( j < sp->lookbackTotal && sp->cb_sorted[j] < oldValue )
+   /* j is the first retained value >= oldValue. Keep every run of equal
+    * values in age order (newValue goes after its equals, as above): the
+    * oldest of a run is then the departing value bit for bit, which is what
+    * keeps -0.0 and 0.0 apart. Inserting before the equals instead changes
+    * no value but flips the sign of some zero outputs.
+    */
+   if( sp->lookbackTotal < 128 )
    {
-      j += 1;
+      j = 0;
+      while( j < sp->lookbackTotal && sp->cb_sorted[j] < oldValue )
+      {
+         j += 1;
+      }
+   } else 
+   {
+      lo = 0;
+      hi = sp->lookbackTotal;
+      while( lo < hi )
+      {
+         mid = (lo + hi) / 2;
+         if( sp->cb_sorted[mid] < oldValue )
+         {
+            lo = mid + 1;
+         } else 
+         {
+            hi = mid;
+         }
+      }
+      j = lo;
    }
-   while( j < sp->lookbackTotal )
+   /* Evict oldValue and place newValue with one shift of the slots between
+    * them.
+    */
+   if( j < pos )
    {
-      sp->cb_sorted[j] = sp->cb_sorted[j + 1];
-      j += 1;
+      while( j < pos - 1 )
+      {
+         sp->cb_sorted[j] = sp->cb_sorted[j + 1];
+         j += 1;
+      }
+      sp->cb_sorted[pos - 1] = newValue;
+   } else 
+   {
+      while( j > pos )
+      {
+         sp->cb_sorted[j] = sp->cb_sorted[j - 1];
+         j -= 1;
+      }
+      sp->cb_sorted[pos] = newValue;
    }
    sp->cur_outReal = *outReal;
 }
@@ -632,10 +792,10 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
       int nbSorted;
       int lowerIdx = 0;
       int upperIdx = 0;
-      /* The window is carried twice: "ring" by age, "sorted" by value. Both are
-       * hand-written here as they are in percentile.c, which is the precedent for
-       * this shape -- a generator-derived ring does not carry the by-value copy.
-       */
+      int lo;
+      int hi;
+      int mid;
+      /* The window is carried twice: "ring" by age, "sorted" by value. */
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal )
       {
@@ -678,11 +838,11 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
       }
       maxIdx_sorted = (optInTimePeriod-1);
       sorted_Idx = 0;
-      /* The two central ordinals, zero-based over the full window. At odd
-       * optInTimePeriod they are the same slot and the average below is the value
-       * itself; at even optInTimePeriod they straddle the centre and the mean of
-       * the two is the median. Computed once rather than per bar.
+      /* Never read: set so two handles opened over the same bars hold the same
+       * state.
        */
+      sorted[lookbackTotal] = 0.0;
+      /* The two central ordinals, zero-based; the same slot at odd n. */
       lowerIdx = (optInTimePeriod - 1) / 2;
       upperIdx = optInTimePeriod / 2;
       nbSorted = 0;
@@ -690,11 +850,35 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
       while( i < startIdx )
       {
          newValue = inReal[i];
-         j = nbSorted;
-         while( j > 0 && sorted[j - 1] > newValue )
+         if( lookbackTotal < 128 )
          {
-            sorted[j] = sorted[j - 1];
-            j -= 1;
+            j = nbSorted;
+            while( j > 0 && sorted[j - 1] > newValue )
+            {
+               sorted[j] = sorted[j - 1];
+               j -= 1;
+            }
+         } else 
+         {
+            lo = 0;
+            hi = nbSorted;
+            while( lo < hi )
+            {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] <= newValue )
+               {
+                  lo = mid + 1;
+               } else 
+               {
+                  hi = mid;
+               }
+            }
+            j = nbSorted;
+            while( j > lo )
+            {
+               sorted[j] = sorted[j - 1];
+               j -= 1;
+            }
          }
          sorted[j] = newValue;
          nbSorted += 1;
@@ -706,23 +890,43 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
       /* Both scratch buffers hold copies and inReal is never read below i, so
        * inReal and outReal may be the same buffer.
        *
-       * Every buffer store sits BELOW the output store on purpose (percentile.c):
-       * deriving the whole answer read-only above it is what lets the streaming
-       * peek frame drop the state update rather than shadow a shift loop.
+       * Every buffer store sits BELOW the output store: deriving the whole answer
+       * read-only above it is what lets the streaming peek frame drop the state
+       * update.
+       *
+       * Below 128 values a linear scan beats a binary search: one mispredicted
+       * loop exit costs less than log2(n) unpredictable halvings.
        */
       outIdx = 0;
       do
       {
          newValue = inReal[i];
-         /* `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-          * where the incoming one belongs, so the full window is
-          * sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-          * without materialising it.
+         /* pos counts the retained values <= newValue, so the full window is
+          * sorted[0..pos-1], newValue, sorted[pos..].
           */
-         pos = 0;
-         while( pos < lookbackTotal && sorted[pos] <= newValue )
+         if( lookbackTotal < 128 )
          {
-            pos += 1;
+            pos = 0;
+            while( pos < lookbackTotal && sorted[pos] <= newValue )
+            {
+               pos += 1;
+            }
+         } else 
+         {
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi )
+            {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] <= newValue )
+               {
+                  lo = mid + 1;
+               } else 
+               {
+                  hi = mid;
+               }
+            }
+            pos = lo;
          }
          if( lowerIdx < pos )
          {
@@ -744,19 +948,8 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
          {
             upper = sorted[upperIdx - 1];
          }
-         /* At odd optInTimePeriod the two ordinals are the same slot, and the
-          * branch returns that read untouched. Writing it as (v + v) / 2.0
-          * instead would be exact for every value this library is ever handed --
-          * doubling moves the exponent with the mantissa untouched and halving
-          * moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-          * function does not declare nan_inf_output. The branch costs nothing:
-          * the condition is loop-invariant.
-          *
-          * At even optInTimePeriod the mean of the two central values is the
-          * universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-          * multiplying by 0.5 give the same double, so that spelling is not a
-          * variant; the sum itself can still overflow on inputs near DBL_MAX,
-          * which is exactly what NumPy does with them too.
+         /* At odd n both reads are one value; averaging it would overflow above
+          * DBL_MAX/2.
           */
          if( lowerIdx == upperIdx )
          {
@@ -767,37 +960,59 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
          }
          outReal[outIdx * outStride] = result;
          outIdx += 1;
-         /* Shifting only the strictly greater entries leaves equal values in
-          * insertion order, which is age order -- that is what lets the delete
-          * below evict the oldest of a run by value alone, with no slot array.
-          *
-          * The order within a run of equal values is NOT observable at the output,
-          * and deliberately so: MEASURED, flipping this scan's `<=` to `<` (which
-          * inserts at the front of a run instead of the back) leaves every value
-          * bit-identical over 14820 windows on both a 7-distinct-value series and
-          * a random walk. Equal members are interchangeable, which is precisely
-          * why the removal can identify one by value and needs no identity.
-          */
-         j = lookbackTotal;
-         while( j > pos )
-         {
-            sorted[j] = sorted[j - 1];
-            j -= 1;
-         }
-         sorted[pos] = newValue;
          ring[ring_Idx] = newValue;
          ring_Idx++;
          if( ring_Idx > maxIdx_ring ) ring_Idx = 0;
          oldValue = ring[ring_Idx];
-         j = 0;
-         while( j < lookbackTotal && sorted[j] < oldValue )
+         /* j is the first retained value >= oldValue. Keep every run of equal
+          * values in age order (newValue goes after its equals, as above): the
+          * oldest of a run is then the departing value bit for bit, which is what
+          * keeps -0.0 and 0.0 apart. Inserting before the equals instead changes
+          * no value but flips the sign of some zero outputs.
+          */
+         if( lookbackTotal < 128 )
          {
-            j += 1;
+            j = 0;
+            while( j < lookbackTotal && sorted[j] < oldValue )
+            {
+               j += 1;
+            }
+         } else 
+         {
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi )
+            {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] < oldValue )
+               {
+                  lo = mid + 1;
+               } else 
+               {
+                  hi = mid;
+               }
+            }
+            j = lo;
          }
-         while( j < lookbackTotal )
+         /* Evict oldValue and place newValue with one shift of the slots between
+          * them.
+          */
+         if( j < pos )
          {
-            sorted[j] = sorted[j + 1];
-            j += 1;
+            while( j < pos - 1 )
+            {
+               sorted[j] = sorted[j + 1];
+               j += 1;
+            }
+            sorted[pos - 1] = newValue;
+         } else 
+         {
+            while( j > pos )
+            {
+               sorted[j] = sorted[j - 1];
+               j -= 1;
+            }
+            sorted[pos] = newValue;
          }
          i += 1;
       } while( i <= endIdx );
@@ -897,21 +1112,41 @@ TA_LIB_API TA_RetCode TA_MEDIAN_Peek( const TA_MEDIAN_Stream *stream, double inR
    double lower;
    double upper;
    int pos;
+   int lo;
+   int hi;
+   int mid;
    double *cb_sorted;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    cb_sorted = sp->cb_sorted;
    newValue = inReal;
-   /* `sorted` holds the window's other optInTimePeriod-1 values and `pos` is
-    * where the incoming one belongs, so the full window is
-    * sorted[0..pos-1], newValue, sorted[pos..]. The k-th of it is read
-    * without materialising it.
+   /* pos counts the retained values <= newValue, so the full window is
+    * sorted[0..pos-1], newValue, sorted[pos..].
     */
-   pos = 0;
-   while( pos < sp->lookbackTotal && cb_sorted[pos] <= newValue )
+   if( sp->lookbackTotal < 128 )
    {
-      pos += 1;
+      pos = 0;
+      while( pos < sp->lookbackTotal && cb_sorted[pos] <= newValue )
+      {
+         pos += 1;
+      }
+   } else 
+   {
+      lo = 0;
+      hi = sp->lookbackTotal;
+      while( lo < hi )
+      {
+         mid = (lo + hi) / 2;
+         if( cb_sorted[mid] <= newValue )
+         {
+            lo = mid + 1;
+         } else 
+         {
+            hi = mid;
+         }
+      }
+      pos = lo;
    }
    if( sp->lowerIdx < pos )
    {
@@ -933,19 +1168,8 @@ TA_LIB_API TA_RetCode TA_MEDIAN_Peek( const TA_MEDIAN_Stream *stream, double inR
    {
       upper = cb_sorted[sp->upperIdx - 1];
    }
-   /* At odd optInTimePeriod the two ordinals are the same slot, and the
-    * branch returns that read untouched. Writing it as (v + v) / 2.0
-    * instead would be exact for every value this library is ever handed --
-    * doubling moves the exponent with the mantissa untouched and halving
-    * moves it back -- but it overflows to +/-inf above DBL_MAX/2, and this
-    * function does not declare nan_inf_output. The branch costs nothing:
-    * the condition is loop-invariant.
-    *
-    * At even optInTimePeriod the mean of the two central values is the
-    * universal convention (NumPy, R, scipy, Excel). Dividing by 2.0 and
-    * multiplying by 0.5 give the same double, so that spelling is not a
-    * variant; the sum itself can still overflow on inputs near DBL_MAX,
-    * which is exactly what NumPy does with them too.
+   /* At odd n both reads are one value; averaging it would overflow above
+    * DBL_MAX/2.
     */
    if( sp->lowerIdx == sp->upperIdx )
    {
