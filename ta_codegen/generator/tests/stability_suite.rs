@@ -43,13 +43,16 @@ fn load() -> Vec<FuncDef> {
 }
 
 /// Functions that inherit an unstable period through a hard-coded inner call, and the
-/// function each one inherits from. Measured: every one of these moves at default params.
+/// function each one inherits from. Measured: every one of these moves at default params
+/// except CRSI, whose default 101-bar rank lookback outlasts both RSI legs at an unstable
+/// period of 10; it moves at (14,14,20), 21 -> 25.
 /// KC is the only one with TWO sources (EMA for its centre line, ATR for its band), and it
 /// shares the ATR one with SUPERTREND -- which inherits it through `atr_lookback()` alone,
 /// with no call to `atr()` in the body at all.
 const INHERITED: &[(&str, &str)] = &[
     ("ADOSC", "EMA"),
     ("ADXR", "ADX"),
+    ("CRSI", "RSI"),
     ("CVI", "EMA"),
     ("DEMA", "EMA"),
     ("ERI", "EMA"),

@@ -76,6 +76,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_fosc.c \
 	ta_test_func/test_dpo.c \
 	ta_test_func/test_percentrank.c \
+	ta_test_func/test_crsi.c \
 	ta_test_func/test_percentile.c \
 	ta_test_func/test_cvi.c \
 	ta_test_func/test_massi.c \

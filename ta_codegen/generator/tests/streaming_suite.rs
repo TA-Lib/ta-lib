@@ -1593,6 +1593,261 @@ TA_RetCode apo( int startIdx, int endIdx,
     );
 }
 
+/// APO's metadata over two scratch series and a hand-written sub-call tail.
+fn apo_with_tail(tail: &str) -> FuncDef {
+    let src = format!(
+        r#"
+TA_RetCode apo( int startIdx, int endIdx, const double inReal[],
+   int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{{
+   double *tempBuffer;
+   double *tempBuffer2;
+   TA_RetCode retCode;
+   int fastBeg, fastNb;
+   int offset;
+   int i;
+
+   tempBuffer = malloc((endIdx-startIdx+1) * sizeof(double));
+   tempBuffer2 = malloc((endIdx-startIdx+1) * sizeof(double));
+{tail}
+   free(tempBuffer);
+   free(tempBuffer2);
+   return TA_SUCCESS;
+}}
+"#
+    );
+    load_with_source("apo", &src)
+}
+
+#[test]
+fn count_receiver_rewritten_after_its_series_rejected() {
+    // `fastNb` counts tempBuffer2 (one bar short) by the time `offset` reads it,
+    // yet tempBuffer and outReal still share the endIdx argument.
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( startIdx, endIdx, inReal, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   retCode = ma( startIdx, endIdx-1, inReal, optInSlowPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer2 );
+   offset = fastNb - *outNBElement;
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = tempBuffer[i+offset] - outReal[i];",
+    );
+    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
+        "a count receiver rewritten by a later sub-call must not vouch for the first, got: {err}"
+    );
+}
+
+#[test]
+fn endidx_argument_its_own_call_rewrites_rejected() {
+    // Both later calls spell `fastNb-1`, but the first reads tempBuffer's count
+    // and the second tempBuffer2's, so outReal stops short of tempBuffer2.
+    let f = apo_with_tail(
+        r"
+   retCode = ma( startIdx, endIdx, inReal, optInFastPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer );
+   retCode = ma( 0, fastNb-1, tempBuffer, optInSlowPeriod, optInMAType,
+      &fastBeg, &fastNb, tempBuffer2 );
+   retCode = ma( 0, fastNb-1, tempBuffer, optInSlowPeriod, optInMAType,
+      outBegIdx, outNBElement, outReal );
+   offset = fastNb - *outNBElement;
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = tempBuffer2[i+offset] - outReal[i];",
+    );
+    let err = streaming::analyze_composed(&f, &lookup()).unwrap_err();
+    assert!(
+        matches!(err, StreamError::Unsupported(ref m) if m.contains("same-bar")),
+        "an endIdx argument its own call rewrites must not match a later spelling, got: {err}"
+    );
+}
+
+/* ---- #431: sub-outputs over different index spaces, both ending on endIdx ----
+ * CRSI's shape without its error paths. No two of its sub-calls share an endIdx
+ * argument, so only the end-on-the-endIdx-bar proof can accept its offset reads. */
+const END_ALIGNED: &str = r#"
+TA_RetCode crsi( int startIdx, int endIdx, const double inReal[],
+   int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod,
+   int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double *tempRSI;
+   double *tempStreak;
+   double *tempRank;
+   TA_RetCode retCode;
+   int lookbackTotal, anchorIdx, today, outIdx, i;
+   int offsetRSI, offsetStreak;
+   int tempBegIdx, rsiNb, streakNb, rocNb;
+   double prevClose, close, streak;
+
+   *outBegIdx = 0;
+   *outNBElement = 0;
+   lookbackTotal = crsi_lookback( optInTimePeriod, optInStreakPeriod, optInRankPeriod );
+   if( lookbackTotal > endIdx )
+      return TA_SUCCESS;
+   if( startIdx < lookbackTotal )
+      startIdx = lookbackTotal;
+   if( startIdx > endIdx )
+      return TA_SUCCESS;
+   anchorIdx = startIdx - lookbackTotal;
+   tempStreak = malloc((endIdx-anchorIdx) * sizeof(double));
+   tempRSI = malloc((endIdx-anchorIdx-rsi_lookback(optInTimePeriod)+1) * sizeof(double));
+   tempRank = malloc((endIdx-startIdx+1+optInRankPeriod) * sizeof(double));
+
+   streak = 0.0;
+   prevClose = inReal[anchorIdx];
+   outIdx = 0;
+   today = anchorIdx+1;
+   while( today <= endIdx )
+   {
+      close = inReal[today];
+      if( close > prevClose )
+         streak = (streak > 0.0) ? streak + 1.0 : 1.0;
+      else if( close < prevClose )
+         streak = (streak < 0.0) ? streak - 1.0 : -1.0;
+      else
+         streak = 0.0;
+      tempStreak[outIdx++] = streak;
+      prevClose = close;
+      today++;
+   }
+
+   retCode = rsi( 0, outIdx-1, tempStreak, optInStreakPeriod,
+      &tempBegIdx, &streakNb, tempStreak );
+   retCode = rsi( anchorIdx+rsi_lookback(optInTimePeriod), endIdx, inReal, optInTimePeriod,
+      &tempBegIdx, &rsiNb, tempRSI );
+   retCode = rocp( startIdx-optInRankPeriod, endIdx, inReal, 1,
+      &tempBegIdx, &rocNb, tempRank );
+   retCode = percentrank( 0, rocNb-1, tempRank, optInRankPeriod,
+      outBegIdx, outNBElement, outReal );
+
+   offsetRSI = rsiNb - *outNBElement;
+   offsetStreak = streakNb - *outNBElement;
+   for( i=0; i < (int)*outNBElement; i++ )
+      outReal[i] = ( tempRSI[i+offsetRSI] + tempStreak[i+offsetStreak] + outReal[i] ) / 3.0;
+
+   free( tempStreak );
+   free( tempRSI );
+   free( tempRank );
+   *outBegIdx = startIdx;
+   return TA_SUCCESS;
+}
+"#;
+
+/// [`END_ALIGNED`] with each `(from, to)` edit applied once; an edit that does
+/// not apply fails the test instead of leaving it vacuous.
+fn end_aligned_with(edits: &[(&str, &str)]) -> FuncDef {
+    let mut src = END_ALIGNED.to_string();
+    for (from, to) in edits {
+        assert!(src.contains(from), "fixture edit `{from}` does not apply");
+        src = src.replacen(from, to, 1);
+    }
+    load_with_source("crsi", &src)
+}
+
+fn assert_not_same_bar(f: &FuncDef, why: &str) {
+    match streaming::analyze_composed(f, &lookup()) {
+        Err(StreamError::Unsupported(m)) if m.contains("same-bar") => {}
+        Err(e) => panic!("{why}: refused for another reason: {e}"),
+        Ok(_) => panic!("{why}: accepted"),
+    }
+}
+
+#[test]
+fn end_aligned_sub_outputs_prove_offset_reads_same_bar() {
+    let f = end_aligned_with(&[]);
+    let plan = streaming::validate_streamable(&f, &lookup()).expect("the fixture derives a plan");
+    let streaming::StreamPlan::Composed(cp) = plan else {
+        panic!("the fixture must derive a composed plan");
+    };
+    assert_eq!(cp.series.as_deref(), Some("tempStreak"));
+    let callees: Vec<&str> = cp.subs.iter().map(|s| s.callee.as_str()).collect();
+    assert_eq!(callees, ["rsi", "rsi", "rocp", "percentrank"]);
+    assert!(matches!(cp.steps.last(), Some(streaming::UpdateStep::Map { .. })));
+}
+
+#[test]
+fn end_aligned_rejects_a_producer_sub_call_ending_early() {
+    let f = end_aligned_with(&[("rsi( 0, outIdx-1,", "rsi( 0, outIdx-2,")]);
+    assert_not_same_bar(&f, "the streak RSI stops a bar short of the producer series");
+}
+
+#[test]
+fn end_aligned_rejects_a_chained_sub_call_ending_early() {
+    let f = end_aligned_with(&[("percentrank( 0, rocNb-1,", "percentrank( 0, rocNb-2,")]);
+    assert_not_same_bar(&f, "the rank stops a bar short of the rocp series");
+}
+
+#[test]
+fn end_aligned_rejects_an_offset_that_is_not_a_count_difference() {
+    let f = end_aligned_with(&[(
+        "offsetRSI = rsiNb - *outNBElement;",
+        "offsetRSI = rsiNb - *outNBElement + 1;",
+    )]);
+    assert_not_same_bar(&f, "a count difference plus one is a lag");
+}
+
+#[test]
+fn end_aligned_rejects_a_count_receiver_reused_by_a_later_sub_call() {
+    // `streakNb` holds the input RSI's count by the time either offset reads it.
+    let f = end_aligned_with(&[
+        ("&tempBegIdx, &rsiNb, tempRSI", "&tempBegIdx, &streakNb, tempRSI"),
+        ("offsetRSI = rsiNb", "offsetRSI = streakNb"),
+    ]);
+    assert_not_same_bar(&f, "a receiver rewritten by another sub-call no longer counts the first");
+}
+
+#[test]
+fn end_aligned_rejects_a_paced_var_rewritten_before_its_sub_call() {
+    let f = end_aligned_with(&[(
+        "   retCode = rsi( 0, outIdx-1,",
+        "   outIdx = outIdx - 1;\n   retCode = rsi( 0, outIdx-1,",
+    )]);
+    assert_not_same_bar(&f, "`outIdx-1` no longer names the producer series' last element");
+}
+
+#[test]
+fn end_aligned_rejects_an_endidx_rewritten_between_sub_calls() {
+    let f = end_aligned_with(&[(
+        "   retCode = rocp(",
+        "   endIdx = endIdx - 1;\n   retCode = rocp(",
+    )]);
+    assert_not_same_bar(&f, "the rank ends a bar before both RSI legs");
+}
+
+#[test]
+fn end_aligned_rejects_a_producer_that_is_not_one_element_per_bar() {
+    let write = "      tempStreak[outIdx++] = streak;";
+    let rows: [(&str, &str, &str); 8] = [
+        ("stops before endIdx", "while( today <= endIdx )", "while( today < endIdx )"),
+        ("skips a write", write, "      if( streak != 0.0 )\n         tempStreak[outIdx++] = streak;"),
+        ("rewrites a bar", write, "      tempStreak[outIdx++] = streak;\n      if( close == prevClose )\n         outIdx--;"),
+        ("advances conditionally", "      today++;", "      if( close == close )\n         today++;"),
+        ("skips a bar", "      today++;", "      today++;\n      if( close != close )\n         today++;"),
+        ("exits early", "      close = inReal[today];", "      close = inReal[today];\n      if( close != close )\n         break;"),
+        ("starts past 0", "   outIdx = 0;", "   outIdx = 1;"),
+        ("hands the series to a call", write, "      tempStreak[outIdx++] = streak;\n      memset( tempStreak, 0, 8 );"),
+    ];
+    for (why, from, to) in rows {
+        assert_not_same_bar(&end_aligned_with(&[(from, to)]), &format!("a producer that {why}"));
+    }
+}
+
+#[test]
+fn end_aligned_rejects_a_pointer_copied_series() {
+    let f = end_aligned_with(&[
+        ("   double *tempRank;", "   double *tempRank;\n   double *streakBuf;"),
+        (
+            "   tempStreak = malloc((endIdx-anchorIdx) * sizeof(double));",
+            "   streakBuf = malloc((endIdx-anchorIdx) * sizeof(double));\n   tempStreak = streakBuf;",
+        ),
+    ]);
+    assert_not_same_bar(&f, "a write through either name moves a pointer-copied series");
+}
+
 /* ---- #205: the fill-mode scratch-aliasing precondition ---- */
 
 /// Inventory of composed functions that hand one of their OWN outputs to a
@@ -1643,9 +1898,13 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 11] = [
+    let expected: [(&str, &str); 12] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
+        ("CRSI", "as KDJ -- percentrank is handed outBegIdx/outNBElement themselves and CRSI \
+                 returns the count unmodified, so the final count IS that callee's count. The \
+                 rocp buffer it ranks is entered optInRankPeriod bars before startIdx, so that \
+                 count is endIdx-startIdx+1"),
         ("KC", "the moving average is entered at exactly ema_lookback over a typical-price buffer \
                  that begins ema_lookback bars before startIdx, so it clamps nothing: its first \
                  output lands on startIdx and its count is endIdx-startIdx+1, the same expression \

@@ -649,6 +649,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CRSI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CrsiImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["CTI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CtiImpl(

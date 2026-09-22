@@ -795,6 +795,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * via their internal ADX/RSI, like the EMA-derived set above. */
     {"ADXR",         TA_FUNC_UNST_ADX},
     {"STOCHRSI",     TA_FUNC_UNST_RSI},
+    /* CRSI has no id of its own; both Wilder legs follow UNST_RSI. Without
+     * this row it classifies EPSILON and still passes at the defaults, where
+     * 1+P sets the lookback; at (2,2,2) it moves 16.6 points across startIdx. */
+    {"CRSI",         TA_FUNC_UNST_RSI},
     /* RVIR averages two RVI legs, one over the highs and one over the lows, and
      * each leg is the same converging RVI recurrence, so both anchors move with
      * UNST_RVI. Unlike KC above, ONE row covers both legs: the two legs carry

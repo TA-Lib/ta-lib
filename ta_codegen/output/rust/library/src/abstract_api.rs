@@ -224,6 +224,8 @@ pub enum FuncId {
     COS,
     /// Vector Trigonometric Cosh — [`Core::cosh`](crate::Core::cosh).
     COSH,
+    /// Connors Relative Strength Index — [`Core::crsi`](crate::Core::crsi).
+    CRSI,
     /// Correlation Trend Indicator — [`Core::cti`](crate::Core::cti).
     CTI,
     /// Cumulative Sum — [`Core::cumsum`](crate::Core::cumsum).
@@ -456,7 +458,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 205;
+    pub const COUNT: usize = 206;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -781,7 +783,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 205] = [
+static FUNC_TABLE: [FuncInfo; 206] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1780,6 +1782,17 @@ static FUNC_TABLE: [FuncInfo; 205] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::CRSI,
+        name: "CRSI",
+        group: Group::MomentumIndicators,
+        hint: "Connors Relative Strength Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 3, suggested: (2, 20, 1) } }, OptInputInfo { param_name: "optInStreakPeriod", display_name: "Streak Period", hint: "Time period of the RSI of the up/down streak", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 2, suggested: (2, 20, 1) } }, OptInputInfo { param_name: "optInRankPeriod", display_name: "Rank Period", hint: "Number of previous one-bar returns the current one is ranked against", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 100, suggested: (20, 200, 20) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -3146,6 +3159,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CORREL" => FuncId::CORREL,
         "COS" => FuncId::COS,
         "COSH" => FuncId::COSH,
+        "CRSI" => FuncId::CRSI,
         "CTI" => FuncId::CTI,
         "CUMSUM" => FuncId::CUMSUM,
         "CVI" => FuncId::CVI,
@@ -3608,6 +3622,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CORREL => self.core.correl_lookback(self.int_opt[0]),
             FuncId::COS => self.core.cos_lookback(),
             FuncId::COSH => self.core.cosh_lookback(),
+            FuncId::CRSI => self.core.crsi_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::CTI => self.core.cti_lookback(self.int_opt[0]),
             FuncId::CUMSUM => self.core.cumsum_lookback(),
             FuncId::CVI => self.core.cvi_lookback(self.int_opt[0], self.int_opt[1]),
@@ -4892,6 +4907,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.cosh(start_idx, end_idx, i0, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CRSI => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.crsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

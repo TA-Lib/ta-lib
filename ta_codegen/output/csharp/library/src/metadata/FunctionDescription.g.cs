@@ -3935,6 +3935,73 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- CRSI -->
+	<FinancialFunction>
+		<Abbreviation>CRSI</Abbreviation>
+		<ShortDescription>Connors Relative Strength Index</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>2</SuggestedStart>
+					<SuggestedEnd>20</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>3</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Streak Period</Name>
+				<ShortDescription>Time period of the RSI of the up/down streak</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>2</SuggestedStart>
+					<SuggestedEnd>20</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Rank Period</Name>
+				<ShortDescription>Number of previous one-bar returns the current one is ranked against</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>10000</Maximum>
+					<SuggestedStart>20</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>20</SuggestedIncrement>
+				</Range>
+				<DefaultValue>100</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- CTI -->
 	<FinancialFunction>
 		<Abbreviation>CTI</Abbreviation>

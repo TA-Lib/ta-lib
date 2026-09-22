@@ -2328,13 +2328,18 @@ pub fn analyze_composed<'a>(
     let mut map_temp_names: BTreeSet<String> = BTreeSet::new();
     let mut sub_lag_rings: Vec<SubLagRing> = Vec::new();
     let mut defined: BTreeSet<String> = intermediates.iter().cloned().collect();
-    // Out-meta provenance for the same-bar proof a combine map's `series[cursor
-    // + off]` read needs: each series' element-count receiver and producing
-    // endIdx, and each scalar local that is an element-count difference of two
-    // of them.
-    let mut series_nbelem: BTreeMap<String, RecvVar> = BTreeMap::new();
-    let mut series_endidx: BTreeMap<String, Expr> = BTreeMap::new();
-    let mut diff_locals: BTreeMap<String, (RecvVar, RecvVar)> = BTreeMap::new();
+    let mut facts = SameBarFacts::default();
+    let aliased = pointer_copied(body);
+    let trusted = |s: &str| !aliased.contains(s);
+    if let (Some(ser), Some(model)) = (&series, &producer) {
+        if let [paced] = model.out_index_vars.iter().collect::<Vec<_>>()[..] {
+            if trusted(ser) {
+                if let Some(last) = producer_last_index(region, ser, paced) {
+                    facts.end_last.insert(ser.clone(), last);
+                }
+            }
+        }
+    }
     for (i, st) in tail.iter().enumerate() {
         match st {
             Statement::Comment(_) => {}
@@ -2402,12 +2407,45 @@ pub fn analyze_composed<'a>(
                 // Record each destination's element-count receiver and its
                 // producing endIdx (all of a callee's outputs share the one
                 // `outNBElement`, the second of the two out-meta pointers).
-                let nb_recv = recv_var(&args[2 + sig.n_inputs + sig.n_opts + 1]);
-                for d in &dsts {
-                    if let Some(nb) = &nb_recv {
-                        series_nbelem.insert(d.clone(), nb.clone());
+                let meta = &args[2 + sig.n_inputs + sig.n_opts..][..2];
+                let (beg_recv, nb_recv) = (recv_var(&meta[0]), recv_var(&meta[1]));
+                // Judged on the arguments as passed, before the call writes its receivers.
+                let ends_on_endidx = !srcs.is_empty()
+                    && srcs.iter().all(|src| {
+                        if direct_inputs.contains(src) {
+                            matches!(&args[1], Expr::Var(v) if v == "endIdx")
+                        } else {
+                            facts.end_last.get(src).is_some_and(|last| exprs_equal(last, &args[1]))
+                        }
+                    });
+                let (mut written, _) = fallthrough_writes(std::slice::from_ref(st));
+                let nb = match (beg_recv, nb_recv) {
+                    (Some(b), Some(n)) if b != n => {
+                        written.extend([b, n.clone()]);
+                        Some(n)
                     }
-                    series_endidx.insert(d.clone(), args[1].clone());
+                    // A receiver we cannot name may have written anything.
+                    _ => {
+                        facts = SameBarFacts::default();
+                        None
+                    }
+                };
+                let e_arg_stale = written.iter().any(|w| reads_scalar(&args[1], w));
+                for w in &written {
+                    facts.forget_scalar(w);
+                }
+                for d in &dsts {
+                    facts.forget_series(d);
+                    let Some(nb) = nb.as_ref().filter(|_| trusted(d)) else {
+                        continue;
+                    };
+                    facts.nbelem.insert(d.clone(), nb.clone());
+                    if !e_arg_stale {
+                        facts.endidx.insert(d.clone(), args[1].clone());
+                    }
+                    if ends_on_endidx {
+                        facts.end_last.insert(d.clone(), last_index_of(recv_read_expr(nb)));
+                    }
                 }
                 steps.push(UpdateStep::Sub {
                     sub_idx: subs.len(),
@@ -2454,6 +2492,7 @@ pub fn analyze_composed<'a>(
                         "composed memmove does not align a series into an output".into(),
                     ));
                 }
+                facts.forget_series(&dst);
                 defined.insert(dst.clone());
                 steps.push(UpdateStep::Align { dst, src });
             }
@@ -2467,11 +2506,10 @@ pub fn analyze_composed<'a>(
                     &params,
                     lookup,
                     &mut map_temp_names,
-                    &series_nbelem,
-                    &series_endidx,
-                    &diff_locals,
+                    &facts,
                     &mut sub_lag_rings,
                 )?;
+                facts.forget_writes(st);
                 for o in map_output_writes(st, &outputs) {
                     defined.insert(o);
                 }
@@ -2499,13 +2537,12 @@ pub fn analyze_composed<'a>(
                             &params,
                             lookup,
                             &mut map_temp_names,
-                            &series_nbelem,
-                            &series_endidx,
-                            &diff_locals,
+                            &facts,
                             &mut sub_lag_rings,
                         )?;
                     }
                 }
+                facts.forget_writes(st);
                 for o in map_output_writes(st, &outputs) {
                     defined.insert(o);
                 }
@@ -2516,6 +2553,7 @@ pub fn analyze_composed<'a>(
             // from the per-bar pipeline. Strictly bounded shape.
             Statement::If { .. } => {
                 check_composed_guard(st, &defined, lookup)?;
+                facts.forget_writes(st);
                 for ser in intermediates.clone() {
                     if !freed.contains(&ser) && guard_frees_series(st, &ser) {
                         freed.insert(ser);
@@ -2530,24 +2568,20 @@ pub fn analyze_composed<'a>(
             Statement::Assign {
                 target: Expr::PointerDeref(p),
                 ..
-            } if p == "outBegIdx" || p == "outNBElement" => {}
+            } if p == "outBegIdx" || p == "outNBElement" => facts.forget_writes(st),
             // Scalar tail locals (APO/PPO's alignment offset): Open-only. When
             // one is an element-count difference (`off = fastNb - *outNBElement`),
             // record its provenance so a later combine map can prove `series[
-            // cursor + off]` is same-bar; any other write to it clears the record.
+            // cursor + off]` is same-bar.
             Statement::Assign {
                 target: Expr::Var(v),
                 value,
                 ..
             } if !defined.contains(v) && !outputs.contains(v) => {
-                let known: Vec<RecvVar> = series_nbelem.values().cloned().collect();
-                match nb_difference(value, &known) {
-                    Some(prov) => {
-                        diff_locals.insert(v.clone(), prov);
-                    }
-                    None => {
-                        diff_locals.remove(v);
-                    }
+                facts.forget_writes(st);
+                let known: Vec<RecvVar> = facts.nbelem.values().cloned().collect();
+                if let Some(prov) = nb_difference(value, &known) {
+                    facts.diffs.insert(v.clone(), prov);
                 }
             }
             Statement::Expr(Expr::FuncCall(name, args)) if name == "free" => {
@@ -2728,13 +2762,327 @@ fn recv_read(e: &Expr) -> Option<RecvVar> {
     }
 }
 
+/// The expression that reads receiver `r` back: `x` for `&x`, `*p` for `p`.
+fn recv_read_expr(r: &RecvVar) -> Expr {
+    match r {
+        RecvVar::Local(v) => Expr::Var(v.clone()),
+        RecvVar::Pointer(p) => Expr::PointerDeref(p.clone()),
+    }
+}
+
+/// `count - 1`, spelled as a sub-call's endIdx argument spells it.
+fn last_index_of(count: Expr) -> Expr {
+    Expr::BinOp(Box::new(count), BinOp::Sub, Box::new(Expr::IntLiteral(1)))
+}
+
+/// Out-meta provenance behind the same-bar proof for a combine map's
+/// `series[cursor + off]` read. The proof compares expressions by spelling, so
+/// a tail write to anything a record reads must drop that record.
+#[derive(Default)]
+struct SameBarFacts {
+    /// Each series' element-count receiver.
+    nbelem: BTreeMap<String, RecvVar>,
+    /// Each series' producing endIdx argument.
+    endidx: BTreeMap<String, Expr>,
+    /// Series whose last element is the `endIdx` bar, keyed to the expression
+    /// naming that last index.
+    end_last: BTreeMap<String, Expr>,
+    /// Scalar locals holding an element-count difference of two receivers.
+    diffs: BTreeMap<String, (RecvVar, RecvVar)>,
+}
+
+impl SameBarFacts {
+    fn forget_series(&mut self, s: &str) {
+        self.nbelem.remove(s);
+        self.endidx.remove(s);
+        self.end_last.remove(s);
+    }
+
+    fn forget_scalar(&mut self, w: &RecvVar) {
+        self.nbelem.retain(|_, r| !clobbers(w, r));
+        self.diffs.retain(|k, (a, b)| {
+            !clobbers(w, a) && !clobbers(w, b) && !matches!(w, RecvVar::Local(v) if v == k)
+        });
+        self.endidx.retain(|_, e| !reads_scalar(e, w));
+        if matches!(w, RecvVar::Local(v) if v == "endIdx") {
+            // Every end_last record is relative to the bar `endIdx` names.
+            self.end_last.clear();
+        } else {
+            self.end_last.retain(|_, e| !reads_scalar(e, w));
+        }
+    }
+
+    fn forget_writes(&mut self, st: &Statement) {
+        let (scalars, series) = fallthrough_writes(std::slice::from_ref(st));
+        for w in &scalars {
+            self.forget_scalar(w);
+        }
+        for s in &series {
+            self.forget_series(s);
+        }
+    }
+}
+
+/// Writing `w` changes what `r` reads: the same receiver, or the pointer `*r`
+/// dereferences.
+fn clobbers(w: &RecvVar, r: &RecvVar) -> bool {
+    match (w, r) {
+        (RecvVar::Local(a), RecvVar::Local(b) | RecvVar::Pointer(b))
+        | (RecvVar::Pointer(a), RecvVar::Pointer(b)) => a == b,
+        (RecvVar::Pointer(_), RecvVar::Local(_)) => false,
+    }
+}
+
+fn reads_scalar(e: &Expr, w: &RecvVar) -> bool {
+    let mut hit = false;
+    walk_expr(e, &mut |x| {
+        hit |= match (x, w) {
+            (Expr::Var(v), RecvVar::Local(l)) => v == l,
+            (Expr::PointerDeref(p), RecvVar::Local(l) | RecvVar::Pointer(l)) => p == l,
+            _ => false,
+        };
+    });
+    hit
+}
+
+/// The lvalues statement `s` itself writes, nested bodies excluded: its
+/// assignment target or initialized declaration, every `++`/`--` operand, and
+/// every `&x` a call may write through.
+fn own_writes(s: &Statement, f: &mut dyn FnMut(&Expr)) {
+    match s {
+        Statement::Assign { target, .. } => f(target),
+        Statement::VarDecl {
+            name, init: Some(_), ..
+        } => f(&Expr::Var(name.clone())),
+        _ => {}
+    }
+    walk_stmt_own_exprs(s, &mut |e| {
+        walk_expr(e, &mut |x| match x {
+            Expr::PostIncrement(t)
+            | Expr::PostDecrement(t)
+            | Expr::PreIncrement(t)
+            | Expr::PreDecrement(t) => f(t),
+            Expr::AddressOf(t) if matches!(t.as_ref(), Expr::Var(_)) => f(t),
+            _ => {}
+        });
+    });
+}
+
+fn for_each_stmt(stmts: &[Statement], f: &mut dyn FnMut(&Statement)) {
+    for s in stmts {
+        f(s);
+        for body in nested_bodies(s).0 {
+            for_each_stmt(body, f);
+        }
+    }
+}
+
+fn count_writes(stmts: &[Statement], pred: &dyn Fn(&Expr) -> bool) -> usize {
+    let mut n = 0;
+    for_each_stmt(stmts, &mut |s| {
+        own_writes(s, &mut |t| {
+            if pred(t) {
+                n += 1;
+            }
+        });
+    });
+    n
+}
+
+/// Scalars and series `stmts` may write on a path that reaches the statement
+/// after them. A body ending in `return` contributes nothing.
+fn fallthrough_writes(stmts: &[Statement]) -> (Vec<RecvVar>, Vec<String>) {
+    fn walk(stmts: &[Statement], scalars: &mut Vec<RecvVar>, series: &mut Vec<String>) {
+        let last = stmts.iter().rev().find(|s| !matches!(s, Statement::Comment(_)));
+        if matches!(last, Some(Statement::Return { .. })) {
+            return;
+        }
+        for s in stmts {
+            own_writes(s, &mut |t| match t {
+                Expr::Var(v) => scalars.push(RecvVar::Local(v.clone())),
+                Expr::PointerDeref(p) => scalars.push(RecvVar::Pointer(p.clone())),
+                Expr::ArrayAccess(n, _) => series.push(n.clone()),
+                _ => {}
+            });
+            for body in nested_bodies(s).0 {
+                walk(body, scalars, series);
+            }
+        }
+    }
+    let (mut scalars, mut series) = (Vec::new(), Vec::new());
+    walk(stmts, &mut scalars, &mut series);
+    (scalars, series)
+}
+
+/// Names a pointer copy (`a = b`, `a = c ? b : d`, cast or not) may leave
+/// sharing storage. A write through one moves the other, which no by-name
+/// record sees.
+fn pointer_copied(body: &[Statement]) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for_each_stmt(body, &mut |s| {
+        let (Statement::Assign {
+            target: Expr::Var(a),
+            value,
+            ..
+        }
+        | Statement::VarDecl {
+            name: a,
+            init: Some(value),
+            ..
+        }) = s
+        else {
+            return;
+        };
+        let mut v = value;
+        while let Expr::Cast(_, inner) = v {
+            v = inner;
+        }
+        if matches!(v, Expr::FuncCall(..)) {
+            return;
+        }
+        let mut srcs = BTreeSet::new();
+        walk_expr(v, &mut |x| match x {
+            Expr::Var(n) if n != "NULL" => {
+                srcs.insert(n.clone());
+            }
+            Expr::AddressOf(t) => {
+                if let Expr::ArrayAccess(n, _) = t.as_ref() {
+                    srcs.insert(n.clone());
+                }
+            }
+            _ => {}
+        });
+        if !srcs.is_empty() {
+            out.insert(a.clone());
+            out.extend(srcs);
+        }
+    });
+    out
+}
+
+/// `paced - 1` when `series` holds one element per bar ending on the `endIdx`
+/// bar. The stream analysis of the producer loop enforces none of what is
+/// checked below, so the same-bar proof cannot lean on it.
+fn producer_last_index(region: &[Statement], series: &str, paced: &str) -> Option<Expr> {
+    let (lp, before) = region.split_last()?;
+    let mut prologue = before.to_vec();
+    let (condition, iter) = match lp {
+        Statement::While { condition, body } => (condition, body.clone()),
+        Statement::ForC {
+            init,
+            condition,
+            update,
+            body,
+        } => {
+            match init.as_ref() {
+                Statement::Block { body } => prologue.extend(body.iter().cloned()),
+                one => prologue.push(one.clone()),
+            }
+            let mut iter = body.clone();
+            iter.push(update.as_ref().clone());
+            (condition, iter)
+        }
+        _ => return None,
+    };
+    let Expr::BinOp(l, BinOp::LessEq, r) = condition else {
+        return None;
+    };
+    let (Expr::Var(cursor), Expr::Var(end)) = (l.as_ref(), r.as_ref()) else {
+        return None;
+    };
+    let names = |n: &str| {
+        let n = n.to_string();
+        move |t: &Expr| matches!(t, Expr::Var(v) if *v == n)
+    };
+    let advances = iter
+        .iter()
+        .filter(|s| {
+            matches!(s, Statement::Assign { target: Expr::Var(c), value: Expr::BinOp(a, BinOp::Add, one), .. }
+                if c == cursor
+                    && matches!(a.as_ref(), Expr::Var(x) if x == cursor)
+                    && matches!(one.as_ref(), Expr::IntLiteral(1)))
+        })
+        .count();
+    let mut jumps = false;
+    for_each_stmt(&iter, &mut |s| {
+        jumps |= matches!(s, Statement::Break | Statement::Continue | Statement::Return { .. });
+    });
+    let mut escapes = false;
+    for s in &iter {
+        walk_stmt_exprs(s, &mut |e| {
+            walk_expr(e, &mut |x| {
+                escapes |= matches!(x, Expr::Var(n) if n == series)
+                    || matches!(x, Expr::AddressOf(t)
+                        if matches!(t.as_ref(), Expr::ArrayAccess(n, _) if n == series));
+            });
+        });
+    }
+    let series_writes = count_writes(&iter, &|t| matches!(t, Expr::ArrayAccess(n, _) if n == series));
+    let zeroed = prologue.iter().any(|s| {
+        matches!(s, Statement::Assign { target: Expr::Var(v), value: Expr::IntLiteral(0), compound: false }
+            if v == paced)
+            || matches!(s, Statement::VarDecl { name, init: Some(Expr::IntLiteral(0)), .. }
+                if name == paced)
+    });
+    let ok = end == "endIdx"
+        && cursor != paced
+        && advances == 1
+        && count_writes(&iter, &names(cursor)) == 1
+        && !jumps
+        && !escapes
+        && writes_per_path(&iter, series, paced) == Some(1)
+        && count_writes(&iter, &names(paced)) == series_writes
+        && zeroed
+        && count_writes(&prologue, &names(paced)) == 1;
+    ok.then(|| last_index_of(Expr::Var(paced.to_string())))
+}
+
+/// How many times every path through `stmts` writes `series`, each write being
+/// `series[paced++]`. `None` when paths disagree, a write sits in a nested loop
+/// or switch, or a write uses any other index.
+fn writes_per_path(stmts: &[Statement], series: &str, paced: &str) -> Option<usize> {
+    let is_series = |t: &Expr| matches!(t, Expr::ArrayAccess(n, _) if n == series);
+    let mut n = 0;
+    for s in stmts {
+        let mut bad = false;
+        own_writes(s, &mut |t| {
+            if let Expr::ArrayAccess(name, idx) = t {
+                if name == series {
+                    n += 1;
+                    bad |= !matches!(idx.as_ref(), Expr::PostIncrement(p)
+                        if matches!(p.as_ref(), Expr::Var(v) if v == paced));
+                }
+            }
+        });
+        if bad {
+            return None;
+        }
+        n += match s {
+            Statement::If {
+                then_body,
+                else_body,
+                ..
+            } => {
+                let t = writes_per_path(then_body, series, paced)?;
+                (t == writes_per_path(else_body, series, paced)?).then_some(t)?
+            }
+            Statement::Block { body } => writes_per_path(body, series, paced)?,
+            _ if nested_bodies(s).0.iter().any(|b| count_writes(b, &is_series) > 0) => {
+                return None;
+            }
+            _ => 0,
+        };
+    }
+    Some(n)
+}
+
 /// If `value` is `a - b` where both operands read *known* out-element-count
 /// receivers, return their provenance `(a, b)`. This is what proves an APO/PPO
 /// alignment offset (`fastNb - *outNBElement`) is an element-count difference.
 ///
 /// The element-count form is used rather than the begIdx difference
-/// (`*outBegIdx - fastBeg`) because it is identical in value — for two sub-calls
-/// sharing an endIdx, `nb(a) - nb(b) == begIdx(b) - begIdx(a)` — yet cannot
+/// (`*outBegIdx - fastBeg`) because it is identical in value (for two sub-outputs
+/// ending on the same bar, `nb(a) - nb(b) == begIdx(b) - begIdx(a)`) yet cannot
 /// underflow: the wider window (the fast MA here) always has at least as many
 /// outputs, so the subtraction is non-negative. The begIdx form underflows as a
 /// Rust `usize` when the narrower output is empty (issue: Rust-debug-only
@@ -2753,8 +3101,8 @@ fn nb_difference(value: &Expr, known: &[RecvVar]) -> Option<(RecvVar, RecvVar)> 
     }
 }
 
-/// Structural expression equality — used to confirm two sub-calls share an
-/// endIdx argument (so an element-count difference really is a same-bar shift).
+/// Structural expression equality: used to confirm two sub-calls share an endIdx
+/// argument, or that a sub-call's endIdx argument is its source's last index.
 /// BinOp has no `PartialEq`, so operators compare by discriminant.
 fn exprs_equal(a: &Expr, b: &Expr) -> bool {
     match (a, b) {
@@ -2891,9 +3239,7 @@ fn check_map_step(
     params: &BTreeSet<String>,
     lookup: &dyn CalleeLookup,
     temps: &mut BTreeSet<String>,
-    series_nbelem: &BTreeMap<String, RecvVar>,
-    series_endidx: &BTreeMap<String, Expr>,
-    diff_locals: &BTreeMap<String, (RecvVar, RecvVar)>,
+    facts: &SameBarFacts,
     sub_lag_rings: &mut Vec<SubLagRing>,
 ) -> Result<(), StreamError> {
     let Statement::ForC {
@@ -2951,9 +3297,9 @@ fn check_map_step(
     // The map's primary output = the one series it writes at the plain cursor
     // (APO/PPO write `outReal[i]`). It anchors the same-bar proof for any offset
     // read: `series[cursor + off]` is same-bar iff `off` is the element-count
-    // difference `nb(series) - nb(primary_out)` AND the two producers share an
-    // endIdx (then that difference equals `begIdx(primary_out) - begIdx(series)`
-    // exactly — the shift that aligns the two windows).
+    // difference `nb(series) - nb(primary_out)` AND the two series end on the
+    // same bar (then that difference equals `begIdx(primary_out) - begIdx(series)`
+    // in bars: the shift that aligns the two windows).
     let mut written_series: BTreeSet<String> = BTreeSet::new();
     for bst in body {
         walk_assign_targets(bst, &mut |t| {
@@ -3032,22 +3378,23 @@ fn check_map_step(
                             }
                             IndexForm::CursorPlus(off) => {
                                 // Same-bar iff `off == nb(name) - nb(primary_out)`
-                                // and the two producers share an endIdx.
+                                // and the two series end on the same bar.
                                 let same_bar = defined.contains(name)
                                     && primary_out.is_some_and(|po| {
                                         let prov_ok = matches!(
                                             (
-                                                diff_locals.get(&off),
-                                                series_nbelem.get(name),
-                                                series_nbelem.get(po),
+                                                facts.diffs.get(&off),
+                                                facts.nbelem.get(name),
+                                                facts.nbelem.get(po),
                                             ),
                                             (Some((a, b)), Some(this), Some(prim))
                                                 if a == this && b == prim
                                         );
                                         let end_ok = matches!(
-                                            (series_endidx.get(name), series_endidx.get(po)),
+                                            (facts.endidx.get(name), facts.endidx.get(po)),
                                             (Some(e1), Some(e2)) if exprs_equal(e1, e2)
-                                        );
+                                        ) || (facts.end_last.contains_key(name)
+                                            && facts.end_last.contains_key(po));
                                         prov_ok && end_ok
                                     });
                                 if same_bar {
@@ -3055,10 +3402,10 @@ fn check_map_step(
                                 } else {
                                     err = Some(StreamError::Unsupported(format!(
                                         "composed map reads `{name}[cursor+{off}]` but `{off}` is not a \
-                                         proven same-bar shift — it must be the element-count difference \
-                                         of the two sub-outputs sharing an endIdx (as in APO's \
-                                         `fastNb - *outNBElement`); a genuine lag needs a ring, not a \
-                                         combine map"
+                                         proven same-bar shift: it must be the element-count difference \
+                                         of the two sub-outputs (as in APO's `fastNb - *outNBElement`), \
+                                         produced with a shared endIdx argument or both ending on the \
+                                         endIdx bar; a genuine lag needs a ring, not a combine map"
                                     )));
                                 }
                             }

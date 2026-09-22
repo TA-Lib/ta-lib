@@ -3823,6 +3823,46 @@ static TA_RetCode TA_COSH_SFrameClose( void *stream )
    return TA_COSH_Close( (TA_COSH_Stream *)stream );
 }
 
+static TA_RetCode TA_CRSI_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CRSI_Open(
+               (TA_CRSI_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               (int)optIn[1] /* optInStreakPeriod */,
+               (int)optIn[2] /* optInRankPeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CRSI_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CRSI_OpenAndFill(
+               (TA_CRSI_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               (int)optIn[1] /* optInStreakPeriod */,
+               (int)optIn[2] /* optInRankPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CRSI_SFrameClose( void *stream )
+{
+   return TA_CRSI_Close( (TA_CRSI_Stream *)stream );
+}
+
 static TA_RetCode TA_CTI_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8412,6 +8452,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_COS, 0, NULL, 1, TA_VOutIsInt_COS },
    { "COSH", TA_COSH_SFrameOpen, TA_COSH_SFrameFill, TA_COSH_SFrameClose,
      1, TA_VIn_COSH, 0, NULL, 1, TA_VOutIsInt_COSH },
+   { "CRSI", TA_CRSI_SFrameOpen, TA_CRSI_SFrameFill, TA_CRSI_SFrameClose,
+     1, TA_VIn_CRSI, 3, TA_VOpt_CRSI, 1, TA_VOutIsInt_CRSI },
    { "CTI", TA_CTI_SFrameOpen, TA_CTI_SFrameFill, TA_CTI_SFrameClose,
      1, TA_VIn_CTI, 1, TA_VOpt_CTI, 1, TA_VOutIsInt_CTI },
    { "CUMSUM", TA_CUMSUM_SFrameOpen, TA_CUMSUM_SFrameFill, TA_CUMSUM_SFrameClose,
@@ -8642,6 +8684,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 205
+#define TA_STREAM_TABLE_SIZE 206
 
 #endif /* TA_STREAM_FRAME_H */

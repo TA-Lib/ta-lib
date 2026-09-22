@@ -7900,6 +7900,104 @@ TA_LIB_API TA_RetCode TA_COSH_Advance( TA_COSH_Stream *stream );
 TA_LIB_API TA_RetCode TA_COSH_Clone( const TA_COSH_Stream *stream, TA_COSH_Stream **clone );
 
 /*
+ * TA_CRSI - Connors Relative Strength Index
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * optInStreakPeriod:(From 2 to 100000)
+ *    Time period of the RSI of the up/down streak
+ * 
+ * optInRankPeriod:(From 2 to 10000)
+ *    Number of previous one-bar returns the current one is ranked against
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CRSI( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int           optInStreakPeriod, /* From 2 to 100000 */
+                                          int           optInRankPeriod, /* From 2 to 10000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_CRSI( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int           optInStreakPeriod, /* From 2 to 100000 */
+                                            int           optInRankPeriod, /* From 2 to 10000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_CRSI_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                          int           optInStreakPeriod, /* From 2 to 100000 */
+                                          int           optInRankPeriod );  /* From 2 to 10000 */
+
+
+
+/*
+ * Streaming API for TA_CRSI: incremental per-bar evaluation.
+ */
+typedef struct TA_CRSI_Stream TA_CRSI_Stream;
+
+TA_LIB_API TA_RetCode TA_CRSI_Open( TA_CRSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CRSI_Update( TA_CRSI_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CRSI_Peek( const TA_CRSI_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CRSI_Close( TA_CRSI_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_CRSI( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_CRSI_OpenAndFill( TA_CRSI_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_CRSI_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_CRSI_Value( const TA_CRSI_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_CRSI reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_CRSI_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_CRSI_OutRange( const TA_CRSI_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_CRSI_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
+ */
+TA_LIB_API TA_RetCode TA_CRSI_Advance( TA_CRSI_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_CRSI_Clone( const TA_CRSI_Stream *stream, TA_CRSI_Stream **clone );
+
+/*
  * TA_CTI - Correlation Trend Indicator
  * 
  * Input  = double

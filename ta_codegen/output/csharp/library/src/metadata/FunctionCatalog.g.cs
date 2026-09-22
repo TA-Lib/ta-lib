@@ -204,6 +204,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeCorrel(),
             MakeCos(),
             MakeCosh(),
+            MakeCrsi(),
             MakeCti(),
             MakeCumsum(),
             MakeCvi(),
@@ -2279,6 +2280,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Cosh(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FuncInfo MakeCrsi() => new(
+        name: "CRSI",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Connors Relative Strength Index",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 3, 2, 20, 1)),
+            new OptInputInfo("optInStreakPeriod", "Streak Period", "Time period of the RSI of the up/down streak", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 2, 2, 20, 1)),
+            new OptInputInfo("optInRankPeriod", "Rank Period", "Number of previous one-bar returns the current one is ranked against", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 10000, 100, 20, 200, 20)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.CrsiLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Crsi(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0)));
 
     private static FuncInfo MakeCti() => new(
         name: "CTI",

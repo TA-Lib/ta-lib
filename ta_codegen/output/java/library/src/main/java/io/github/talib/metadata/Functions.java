@@ -211,6 +211,7 @@ public final class Functions {
       put(m, f_CORREL());
       put(m, f_COS());
       put(m, f_COSH());
+      put(m, f_CRSI());
       put(m, f_CTI());
       put(m, f_CUMSUM());
       put(m, f_CVI());
@@ -1644,6 +1645,34 @@ public final class Functions {
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_CRSI() {
+      return new FuncInfo(
+         "CRSI", "Momentum Indicators", "Connors Relative Strength Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 3.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 20, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInStreakPeriod", 0x00000000,
+               "Streak Period", "Time period of the RSI of the up/down streak", 2.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 20, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInRankPeriod", 0x00000000,
+               "Rank Period", "Number of previous one-bar returns the current one is ranked against", 100.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 10000, 20, 200, 20, null)
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

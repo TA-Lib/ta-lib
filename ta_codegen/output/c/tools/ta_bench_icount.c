@@ -4782,6 +4782,57 @@ static void icount_COSH(int iters) {
     g_sink += (int)acc + outNBElement;
 }
 
+static void icount_CRSI(int iters) {
+    const char *nm = "CRSI";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_CRSI_Stream *st = NULL;
+    TA_CRSI_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_CRSI(0, g_nPoints - 1, g_close, 3, 2, 100, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("CRSI/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_CRSI_OpenAndFill(&stf, g_close, g_nPoints, 3, 2, 100, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("CRSI/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_CRSI_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_CRSI_Open(&st, g_close, g_nPoints, 3, 2, 100, &v0);
+    ICOUNT_DUMP("CRSI/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CRSI_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("CRSI/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CRSI_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("CRSI/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_CRSI_Close(st);
+    g_sink += (int)acc + outNBElement;
+}
+
 static void icount_CTI(int iters) {
     const char *nm = "CTI";
     int outBegIdx = 0, outNBElement = 0;
@@ -10828,6 +10879,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "CORREL") ) { icount_CORREL(iters); fflush(stdout); }
     if( func_matches(filter, "COS") ) { icount_COS(iters); fflush(stdout); }
     if( func_matches(filter, "COSH") ) { icount_COSH(iters); fflush(stdout); }
+    if( func_matches(filter, "CRSI") ) { icount_CRSI(iters); fflush(stdout); }
     if( func_matches(filter, "CTI") ) { icount_CTI(iters); fflush(stdout); }
     if( func_matches(filter, "CUMSUM") ) { icount_CUMSUM(iters); fflush(stdout); }
     if( func_matches(filter, "CVI") ) { icount_CVI(iters); fflush(stdout); }

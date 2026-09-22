@@ -2112,6 +2112,30 @@ unsigned int TA_COSH_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_COSH_Lookback( );
 }
+TA_RetCode TA_CRSI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_CRSI(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInInteger, /* optInStreakPeriod*/
+               params->optIn[2].data.optInInteger, /* optInRankPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_CRSI_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_CRSI_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInInteger, /* optInStreakPeriod*/
+                    params->optIn[2].data.optInInteger /* optInRankPeriod*/ );
+}
 TA_RetCode TA_CTI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

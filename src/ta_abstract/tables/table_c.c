@@ -1719,6 +1719,102 @@ DEF_FUNCTION( COSH,
              );
 /* COSH END */
 
+/* CRSI BEGIN */
+static const TA_IntegerRange TA_DEF_CRSI_TimePeriod =
+{
+   2,
+   100000,
+   2,
+   20,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CRSI_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_CRSI_TimePeriod,
+   3,
+   "Time period",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_CRSI_StreakPeriod =
+{
+   2,
+   100000,
+   2,
+   20,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CRSI_StreakPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInStreakPeriod",
+   0,
+
+   "Streak Period",
+   (const void *)&TA_DEF_CRSI_StreakPeriod,
+   2,
+   "Time period of the RSI of the up/down streak",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_CRSI_RankPeriod =
+{
+   2,
+   10000,
+   20,
+   200,
+   20
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CRSI_RankPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInRankPeriod",
+   0,
+
+   "Rank Period",
+   (const void *)&TA_DEF_CRSI_RankPeriod,
+   100,
+   "Number of previous one-bar returns the current one is ranked against",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_CRSI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CRSI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CRSI_OptInputs[] =
+{ &TA_DEF_UI_D_CRSI_TimePeriod,
+  &TA_DEF_UI_D_CRSI_StreakPeriod,
+  &TA_DEF_UI_D_CRSI_RankPeriod,
+  NULL
+};
+
+DEF_FUNCTION( CRSI,
+              TA_GroupId_MomentumIndicators,
+              "Connors Relative Strength Index",
+              TA_FUNC_FLG_STREAM
+             );
+/* CRSI END */
+
 /* CTI BEGIN */
 static const TA_IntegerRange TA_DEF_CTI_TimePeriod =
 {
@@ -1929,6 +2025,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CORREL),
    ADD_TO_TABLE(COS),
    ADD_TO_TABLE(COSH),
+   ADD_TO_TABLE(CRSI),
    ADD_TO_TABLE(CTI),
    ADD_TO_TABLE(CUMSUM),
    ADD_TO_TABLE(CVI),
