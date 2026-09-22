@@ -34,7 +34,7 @@ With `W` the window sorted ascending and `W[1]` its smallest value:
 
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
-| `optInTimePeriod` | integer | 30 | 2–100000 | Number of trailing values in the window |
+| `optInTimePeriod` | integer | 30 | 2–10000 | Number of trailing values in the window |
 
 ## See Also
 

@@ -2508,7 +2508,7 @@ public final class Functions {
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
                "Time Period", "Number of bars in the window", 30.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 4, 200, 1, null)
+               2, 10000, 4, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

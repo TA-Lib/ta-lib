@@ -63,14 +63,14 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 2..100000;
+   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 2..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MedianLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -113,7 +113,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
@@ -289,7 +289,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -413,7 +413,7 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">The series to take the median of.</param>
-   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 2..100000;
+   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 2..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Median of the trailing window. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
@@ -489,7 +489,7 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">The series to take the median of.</param>
-   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 2..100000;
+   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 2..10000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Median of the trailing window. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
@@ -859,7 +859,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {

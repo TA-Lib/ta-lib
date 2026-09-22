@@ -5840,7 +5840,7 @@ static TA_RetCode TA_MEDIAN_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_MEDIAN[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_MEDIAN[] = { 0 };
 static const TA_VOptSpec TA_VOpt_MEDIAN[] = {
-   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 10000.0, 30.0 },
 };
 
 static TA_RetCode TA_MEDPRICE_VFrameD( int startIdx, int endIdx,

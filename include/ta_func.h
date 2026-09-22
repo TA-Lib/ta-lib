@@ -11866,7 +11866,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Clone( const TA_MAXINDEX_Stream *stream, TA_MA
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 2 to 100000)
+ * optInTimePeriod:(From 2 to 10000)
  *    Number of bars in the window
  * 
  * 
@@ -11874,7 +11874,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Clone( const TA_MAXINDEX_Stream *stream, TA_MA
 TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
                                  int    endIdx,
                                             const double inReal[],
-                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int           optInTimePeriod, /* From 2 to 10000 */
                                             int          *outBegIdx,
                                             int          *outNBElement,
                                             double        outReal[] );
@@ -11882,12 +11882,12 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
 TA_LIB_API TA_RetCode TA_S_MEDIAN( int    startIdx,
                                    int    endIdx,
                                               const float  inReal[],
-                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int           optInTimePeriod, /* From 2 to 10000 */
                                               int          *outBegIdx,
                                               int          *outNBElement,
                                               double        outReal[] );
 
-TA_LIB_API int TA_MEDIAN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+TA_LIB_API int TA_MEDIAN_Lookback( int           optInTimePeriod );  /* From 2 to 10000 */
 
 
 

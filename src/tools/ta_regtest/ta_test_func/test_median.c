@@ -187,6 +187,7 @@ static int g_medGoldenCmp;
 static int g_medInventedCmp;
 static int g_medExactCmp;
 static int g_medAliasCmp;
+static int g_medTopCmp;
 
 /**** Local functions declarations. ****/
 static ErrorNumber test_median_odd_identity( const TA_History *history );
@@ -196,6 +197,7 @@ static ErrorNumber test_median_invents_a_level( void );
 static ErrorNumber test_median_exact_shapes( void );
 static ErrorNumber test_median_aliasing( const TA_History *history );
 static ErrorNumber test_median_range( const TA_History *history );
+static ErrorNumber test_median_period_top( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_median( TA_History *history )
@@ -205,7 +207,7 @@ ErrorNumber test_func_median( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    g_medOddCmp = g_medEvenCmp = g_medEvenDiff = g_medGoldenCmp = 0;
-   g_medInventedCmp = g_medExactCmp = g_medAliasCmp = 0;
+   g_medInventedCmp = g_medExactCmp = g_medAliasCmp = g_medTopCmp = 0;
 
    err = test_median_odd_identity( history );
    if( err != TA_TEST_PASS )
@@ -235,18 +237,23 @@ ErrorNumber test_func_median( TA_History *history )
    if( err != TA_TEST_PASS )
       return err;
 
+   err = test_median_period_top();
+   if( err != TA_TEST_PASS )
+      return err;
+
    /* The golden and shape legs are corpus-independent, so those counts are
     * literal. The identity legs walk the caller's history, so they are floors.
     */
    if( g_medGoldenCmp != 88 || g_medInventedCmp == 0 || g_medExactCmp == 0
        || g_medOddCmp == 0 || g_medEvenCmp == 0 || g_medEvenDiff == 0
-       || g_medAliasCmp == 0 )
+       || g_medAliasCmp == 0 || g_medTopCmp != 3 )
    {
       printf( "MEDIAN Fail: coverage counters (odd %d, even %d with %d "
-              "differing, golden %d, invented %d, exact %d, alias %d) are not "
-              "what this file was written with (>0, >0, >0, 88, >0, >0, >0)\n",
+              "differing, golden %d, invented %d, exact %d, alias %d, top %d) "
+              "are not what this file was written with (>0, >0, >0, 88, >0, "
+              ">0, >0, 3)\n",
               g_medOddCmp, g_medEvenCmp, g_medEvenDiff, g_medGoldenCmp,
-              g_medInventedCmp, g_medExactCmp, g_medAliasCmp );
+              g_medInventedCmp, g_medExactCmp, g_medAliasCmp, g_medTopCmp );
       return TA_MEDIAN_VACUOUS;
    }
 
@@ -619,4 +626,48 @@ static ErrorNumber test_median_range( const TA_History *history )
    return doRangeTestEx( medianRangeTestFunction,
                          TA_STABLE_EXACT, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
+}
+
+/* The top of the period range is 10000. MEDIAN shifts a sorted copy of its
+ * window on every bar, so the cost grows with the period exactly as
+ * PERCENTILE's does: measured here, 6.9us per bar at 10000 against 93.5us at
+ * 100000. The generic boundary sweep probes max+1 from the metadata, so these
+ * literals are what pin the number itself.
+ */
+static ErrorNumber test_median_period_top( void )
+{
+   static TA_Real in[100], out[100];
+   TA_Integer begIdx, nbElement;
+   TA_RetCode retCode;
+   int i;
+
+   for( i = 0; i < 100; i++ )
+      in[i] = (double)i;
+
+   g_medTopCmp++;
+   if( TA_MEDIAN_Lookback( 10000 ) != 9999 )
+   {
+      printf( "MEDIAN top Fail: lookback %d at period 10000, expected 9999\n",
+              TA_MEDIAN_Lookback( 10000 ) );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   g_medTopCmp++;
+   if( TA_MEDIAN_Lookback( 10001 ) != -1 )
+   {
+      printf( "MEDIAN top Fail: lookback %d at period 10001, expected -1\n",
+              TA_MEDIAN_Lookback( 10001 ) );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   g_medTopCmp++;
+   retCode = TA_MEDIAN( 0, 99, in, 10001, &begIdx, &nbElement, out );
+   if( retCode != TA_BAD_PARAM )
+   {
+      printf( "MEDIAN top Fail: period 10001 returned rc=%d, expected "
+              "TA_BAD_PARAM\n", (int)retCode );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   return TA_TEST_PASS;
 }

@@ -69,7 +69,7 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInTimePeriod` — Number of trailing values in the window (default 30, range
-    ///   2..=100000)
+    ///   2..=10000)
     ///
     /// # Errors
     ///
@@ -80,7 +80,7 @@ impl Core {
     pub fn median_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -106,7 +106,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return RetCode::BadParam;
         }
         let _assertLb = self.median_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -290,7 +290,7 @@ impl Core {
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — The series to take the median of.
     /// * `optInTimePeriod` — Number of trailing values in the window (default 30, range
-    ///   2..=100000)
+    ///   2..=10000)
     /// * `outReal` — Median of the trailing window.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
@@ -515,7 +515,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();

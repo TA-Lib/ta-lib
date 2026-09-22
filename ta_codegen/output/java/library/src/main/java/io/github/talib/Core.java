@@ -125721,14 +125721,14 @@ public final class Core {
     * output.
     *
     * @param optInTimePeriod Number of trailing values in the window (default
-    *        30; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        30; range 2..10000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int medianLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -125769,7 +125769,7 @@ public final class Core {
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       /* The window is carried twice: "ring" by age, "sorted" by value. Both are
@@ -125940,7 +125940,7 @@ public final class Core {
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       lookbackTotal = optInTimePeriod - 1;
@@ -126057,7 +126057,7 @@ public final class Core {
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal The series to take the median of.
     * @param optInTimePeriod Number of trailing values in the window (default
-    *        30; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        30; range 2..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Median of the trailing window. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -126128,7 +126128,7 @@ public final class Core {
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal The series to take the median of.
     * @param optInTimePeriod Number of trailing values in the window (default
-    *        30; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    *        30; range 2..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Median of the trailing window. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -126495,7 +126495,7 @@ public final class Core {
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {

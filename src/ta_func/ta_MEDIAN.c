@@ -59,7 +59,7 @@ TA_LIB_API int TA_MEDIAN_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return -1;
    return optInTimePeriod - 1;
 }
@@ -99,7 +99,7 @@ TA_LIB_API TA_RetCode TA_MEDIAN( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( !inReal )
       return TA_BAD_PARAM;
@@ -317,7 +317,7 @@ TA_RetCode TA_S_MEDIAN( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( !inReal )
       return TA_BAD_PARAM;
@@ -607,7 +607,7 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
    {

@@ -546,6 +546,15 @@ DEF_FUNCTION( MAXINDEX,
 /* MAXINDEX END */
 
 /* MEDIAN BEGIN */
+static const TA_IntegerRange TA_DEF_MEDIAN_TimePeriod =
+{
+   2,
+   10000,
+   4,
+   200,
+   1
+};
+
 static const TA_OptInputParameterInfo TA_DEF_UI_D_MEDIAN_TimePeriod =
 {
    TA_OptInput_IntegerRange,
@@ -553,7 +562,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_MEDIAN_TimePeriod =
    0,
 
    "Time Period",
-   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   (const void *)&TA_DEF_MEDIAN_TimePeriod,
    30,
    "Number of bars in the window",
 
