@@ -10334,7 +10334,7 @@ TA_LIB_API TA_RetCode TA_KDJ_Clone( const TA_KDJ_Stream *stream, TA_KDJ_Stream *
  * 
  * Optional Parameters
  * -------------------
- * optInTimePeriod:(From 4 to 100000)
+ * optInTimePeriod:(From 4 to 10000)
  *    Time period
  * 
  * 
@@ -10342,7 +10342,7 @@ TA_LIB_API TA_RetCode TA_KDJ_Clone( const TA_KDJ_Stream *stream, TA_KDJ_Stream *
 TA_LIB_API TA_RetCode TA_KURTOSIS( int    startIdx,
                                    int    endIdx,
                                               const double inReal[],
-                                              int           optInTimePeriod, /* From 4 to 100000 */
+                                              int           optInTimePeriod, /* From 4 to 10000 */
                                               int          *outBegIdx,
                                               int          *outNBElement,
                                               double        outReal[] );
@@ -10350,12 +10350,12 @@ TA_LIB_API TA_RetCode TA_KURTOSIS( int    startIdx,
 TA_LIB_API TA_RetCode TA_S_KURTOSIS( int    startIdx,
                                      int    endIdx,
                                                 const float  inReal[],
-                                                int           optInTimePeriod, /* From 4 to 100000 */
+                                                int           optInTimePeriod, /* From 4 to 10000 */
                                                 int          *outBegIdx,
                                                 int          *outNBElement,
                                                 double        outReal[] );
 
-TA_LIB_API int TA_KURTOSIS_Lookback( int           optInTimePeriod );  /* From 4 to 100000 */
+TA_LIB_API int TA_KURTOSIS_Lookback( int           optInTimePeriod );  /* From 4 to 10000 */
 
 
 

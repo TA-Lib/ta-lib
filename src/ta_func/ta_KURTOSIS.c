@@ -62,7 +62,7 @@ TA_LIB_API int TA_KURTOSIS_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 10000 )
       return -1;
    return optInTimePeriod - 1;
 }
@@ -113,7 +113,7 @@ TA_LIB_API TA_RetCode TA_KURTOSIS( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( !inReal )
       return TA_BAD_PARAM;
@@ -133,9 +133,9 @@ TA_LIB_API TA_RetCode TA_KURTOSIS( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-    * computed in double because their integer forms overflow: at the top of the
-    * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+   /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+    * computed in double: at the top of the parameter range coefA's denominator
+    * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
     *
     * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
     * The argument contract rejects anything below it, and the n-1 lookback
@@ -331,7 +331,7 @@ TA_RetCode TA_S_KURTOSIS( int    startIdx,
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( !inReal )
       return TA_BAD_PARAM;
@@ -640,7 +640,7 @@ static TA_RetCode TA_KURTOSIS_OpenImpl( struct TA_KURTOSIS_Stream **stream, cons
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 100000 )
+   else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
    {
@@ -692,9 +692,9 @@ static TA_RetCode TA_KURTOSIS_OpenImpl( struct TA_KURTOSIS_Stream **stream, cons
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-       * computed in double because their integer forms overflow: at the top of the
-       * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+      /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+       * computed in double: at the top of the parameter range coefA's denominator
+       * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
        *
        * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
        * The argument contract rejects anything below it, and the n-1 lookback

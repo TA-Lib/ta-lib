@@ -1398,10 +1398,9 @@ static double d2_non_default( const TA_OptInputParameterInfo *oi, unsigned int s
     }
 }
 
-/* Values outside the declared range. BOTH bounds, not the first that fits: every
- * shipped integer range is [1,100000] or [2,100000], so returning on the first
- * branch probed only `min-1` and a backend that dropped `|| value > max` passed
- * for all 79 functions. Reals are included too -- #148 was the Rust backend
+/* Values outside the declared range. BOTH bounds, not the first that fits:
+ * returning on the first branch probed only `min-1`, and a backend that dropped
+ * `|| value > max` passed. Reals are included too -- #148 was the Rust backend
  * emitting NO validation for real params, so skipping them omits exactly the
  * class the historical defect lived in. Returns how many probes were written. */
 static int d2_out_of_range( const TA_OptInputParameterInfo *oi, double out[2] )

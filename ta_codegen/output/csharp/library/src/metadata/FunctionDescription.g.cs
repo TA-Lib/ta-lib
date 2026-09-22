@@ -5216,7 +5216,7 @@ public static class FunctionDescription
 				<Type>Integer</Type>
 				<Range>
 					<Minimum>4</Minimum>
-					<Maximum>100000</Maximum>
+					<Maximum>10000</Maximum>
 					<SuggestedStart>10</SuggestedStart>
 					<SuggestedEnd>200</SuggestedEnd>
 					<SuggestedIncrement>5</SuggestedIncrement>

@@ -108183,16 +108183,15 @@ class Core {
         * series is requested. Feed at least {@code lookback + 1} bars to get any
         * output.
         *
-        * @param optInTimePeriod Number of trailing values in the window, at least 4
-        *        (default 30; range 4..100000; {@code Integer.MIN_VALUE} selects the
-        *        default).
+        * @param optInTimePeriod Number of trailing values in the window (default
+        *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int kurtosisLookback( int optInTimePeriod )
        {
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
              return -1;
           }
           return optInTimePeriod - 1 ;
@@ -108243,7 +108242,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           nbInitialElementNeeded = optInTimePeriod - 1;
@@ -108255,9 +108254,9 @@ class Core {
              outNBElement.value = 0;
              return RetCode.SUCCESS ;
           }
-          /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-           * computed in double because their integer forms overflow: at the top of the
-           * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+          /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+           * computed in double: at the top of the parameter range coefA's denominator
+           * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
            *
            * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
            * The argument contract rejects anything below it, and the n-1 lookback
@@ -108442,7 +108441,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           nbInitialElementNeeded = optInTimePeriod - 1;
@@ -108585,9 +108584,8 @@ class Core {
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal The series to measure.
-        * @param optInTimePeriod Number of trailing values in the window, at least 4
-        *        (default 30; range 4..100000; {@code Integer.MIN_VALUE} selects the
-        *        default).
+        * @param optInTimePeriod Number of trailing values in the window (default
+        *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Excess kurtosis of the trailing window, or NaN where the
         *        window has no spread. Must hold at least {@code endIdx - startIdx + 1}
         *        values.
@@ -108658,9 +108656,8 @@ class Core {
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal The series to measure.
-        * @param optInTimePeriod Number of trailing values in the window, at least 4
-        *        (default 30; range 4..100000; {@code Integer.MIN_VALUE} selects the
-        *        default).
+        * @param optInTimePeriod Number of trailing values in the window (default
+        *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param outReal Excess kurtosis of the trailing window, or NaN where the
         *        window has no spread. Must hold at least {@code endIdx - startIdx + 1}
         *        values.
@@ -109151,7 +109148,7 @@ class Core {
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 30;
-          } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+          } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
           if( startIdx > endIdx ) {
@@ -109168,9 +109165,9 @@ class Core {
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY ;
           }
-          /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-           * computed in double because their integer forms overflow: at the top of the
-           * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+          /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+           * computed in double: at the top of the parameter range coefA's denominator
+           * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
            *
            * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
            * The argument contract rejects anything below it, and the n-1 lookback
@@ -184297,7 +184294,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "71f5d6824a91b690";
+    static final String SPLICED_GENCODE_DIGEST = "60afeed66acaa0c0";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -184939,7 +184936,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outK",1), new AbsOut(0,"outD",1), new AbsOut(0,"outJ",1) }));
         ABSTRACT.put("KURTOSIS", new AbsFunc("KURTOSIS", "Statistic Functions", "Rolling Excess Kurtosis", 1107296256,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 4,100000,10,200,5, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 4,10000,10,200,5, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("LINEARREG", new AbsFunc("LINEARREG", "Statistic Functions", "Linear Regression", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },

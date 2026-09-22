@@ -2924,7 +2924,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         ],
         optInputs:
         [
-            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(4, 100000, 30, 10, 200, 5)),
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(4, 10000, 30, 10, 200, 5)),
         ],
         outputs:
         [

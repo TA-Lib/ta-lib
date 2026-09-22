@@ -21,16 +21,15 @@
     * series is requested. Feed at least {@code lookback + 1} bars to get any
     * output.
     *
-    * @param optInTimePeriod Number of trailing values in the window, at least 4
-    *        (default 30; range 4..100000; {@code Integer.MIN_VALUE} selects the
-    *        default).
+    * @param optInTimePeriod Number of trailing values in the window (default
+    *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int kurtosisLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -81,7 +80,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
@@ -93,9 +92,9 @@
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-       * computed in double because their integer forms overflow: at the top of the
-       * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+      /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+       * computed in double: at the top of the parameter range coefA's denominator
+       * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
        *
        * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
        * The argument contract rejects anything below it, and the n-1 lookback
@@ -280,7 +279,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;
@@ -423,9 +422,8 @@
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal The series to measure.
-    * @param optInTimePeriod Number of trailing values in the window, at least 4
-    *        (default 30; range 4..100000; {@code Integer.MIN_VALUE} selects the
-    *        default).
+    * @param optInTimePeriod Number of trailing values in the window (default
+    *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Excess kurtosis of the trailing window, or NaN where the
     *        window has no spread. Must hold at least {@code endIdx - startIdx + 1}
     *        values.
@@ -496,9 +494,8 @@
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal The series to measure.
-    * @param optInTimePeriod Number of trailing values in the window, at least 4
-    *        (default 30; range 4..100000; {@code Integer.MIN_VALUE} selects the
-    *        default).
+    * @param optInTimePeriod Number of trailing values in the window (default
+    *        30; range 4..10000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Excess kurtosis of the trailing window, or NaN where the
     *        window has no spread. Must hold at least {@code endIdx - startIdx + 1}
     *        values.
@@ -989,7 +986,7 @@
       }
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return RetCode.BAD_PARAM;
       }
       if( startIdx > endIdx ) {
@@ -1006,9 +1003,9 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-       * computed in double because their integer forms overflow: at the top of the
-       * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+      /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+       * computed in double: at the top of the parameter range coefA's denominator
+       * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
        *
        * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
        * The argument contract rejects anything below it, and the n-1 lookback

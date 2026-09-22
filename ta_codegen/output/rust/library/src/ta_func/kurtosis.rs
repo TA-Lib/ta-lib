@@ -71,8 +71,8 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Number of trailing values in the window, at least 4 (default 30,
-    ///   range 4..=100000)
+    /// * `optInTimePeriod` — Number of trailing values in the window (default 30, range
+    ///   4..=10000)
     ///
     /// # Errors
     ///
@@ -83,7 +83,7 @@ impl Core {
     pub fn kurtosis_lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         return Ok((optInTimePeriod - 1) as usize);
@@ -139,7 +139,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 10000) {
             return RetCode::BadParam;
         }
         let _assertLb = self.kurtosis_lookback(optInTimePeriod).unwrap_or(usize::MAX);
@@ -185,9 +185,9 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        // G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-        // computed in double because their integer forms overflow: at the top of the
-        // parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+        // G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+        // computed in double: at the top of the parameter range coefA's denominator
+        // (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
         //
         // The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
         // The argument contract rejects anything below it, and the n-1 lookback
@@ -344,8 +344,8 @@ impl Core {
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — The series to measure.
-    /// * `optInTimePeriod` — Number of trailing values in the window, at least 4 (default 30,
-    ///   range 4..=100000)
+    /// * `optInTimePeriod` — Number of trailing values in the window (default 30, range
+    ///   4..=10000)
     /// * `outReal` — Excess kurtosis of the trailing window, or NaN where the window has no
     ///   spread.
     ///
@@ -621,7 +621,7 @@ impl Core {
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 100000) {
+        } else if (((optInTimePeriod) as i32) < 4) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -672,9 +672,9 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        // G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-        // computed in double because their integer forms overflow: at the top of the
-        // parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+        // G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+        // computed in double: at the top of the parameter range coefA's denominator
+        // (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
         //
         // The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
         // The argument contract rejects anything below it, and the n-1 lookback

@@ -44,9 +44,9 @@ TA_RetCode kurtosis(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
-   /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-    * computed in double because their integer forms overflow: at the top of the
-    * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+   /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+    * computed in double: at the top of the parameter range coefA's denominator
+    * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
     *
     * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
     * The argument contract rejects anything below it, and the n-1 lookback

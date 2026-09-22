@@ -95,9 +95,9 @@
  * bit-for-bit (issue #427). Without it every vector in this file is checked
  * against in-process C alone -- the arithmetic-progression identity, the
  * 60-digit goldens and the near-degenerate set are written specifically to
- * break this function, and a port that used the integer coefficient forms
- * (which overflow) or a different reseed period would satisfy every assertion
- * here while disagreeing with C.
+ * break this function, and a port that used an integer form for coefA's
+ * denominator (which overflows) or a different reseed period would satisfy
+ * every assertion here while disagreeing with C.
  *
  * MEASURED that this compares rather than merely runs -- see the commit that
  * added it: handing the servers a different period than C used fails with
@@ -805,7 +805,8 @@ static ErrorNumber test_kurt_aliasing( const TA_History *history )
 /* (6) The (n-2)(n-3) denominators are why the range starts at 4, and the
  * contract is what enforces it -- there is no runtime branch for a short
  * window, so this leg is the only thing standing between a caller and a
- * division by zero.
+ * division by zero. The top is 10000: on piecewise-constant data the running
+ * sums drift past 1e-9 from exact above ~3e4 bars.
  */
 static ErrorNumber test_kurt_contract( const TA_History *history )
 {
@@ -827,6 +828,35 @@ static ErrorNumber test_kurt_contract( const TA_History *history )
          printf( "KURTOSIS contract Fail: period %d gave rc=%d, expected "
                  "TA_BAD_PARAM -- (n-2)(n-3) is zero or negative below 4\n",
                  n, (int)retCode );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+   }
+
+   {
+      static const int past[] = { 10001, 100000 };
+      int k;
+
+      for( k = 0; k < 2; k++ )
+      {
+         retCode = TA_KURTOSIS( 0, nbBars-1, history->close, past[k],
+                                &begIdx, &nbElement, out );
+         lookback = TA_KURTOSIS_Lookback( past[k] );
+         if( retCode != TA_BAD_PARAM || lookback != -1 )
+         {
+            printf( "KURTOSIS contract Fail: period %d gave rc=%d, lookback "
+                    "%d, expected TA_BAD_PARAM and -1 above 10000\n",
+                    past[k], (int)retCode, lookback );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+      }
+
+      retCode = TA_KURTOSIS( 0, nbBars-1, history->close, 10000,
+                             &begIdx, &nbElement, out );
+      lookback = TA_KURTOSIS_Lookback( 10000 );
+      if( retCode != TA_SUCCESS || lookback != 9999 )
+      {
+         printf( "KURTOSIS contract Fail: period 10000 gave rc=%d, lookback "
+                 "%d, expected TA_SUCCESS and 9999\n", (int)retCode, lookback );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
    }

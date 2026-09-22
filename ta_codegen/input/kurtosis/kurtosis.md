@@ -30,7 +30,7 @@ The result is NaN when `s² = 0`, that is when every value in the window is equa
 
 ## Parameters
 
-- `optInTimePeriod` — Number of trailing values in the window, at least 4
+- `optInTimePeriod` — Number of trailing values in the window
 
 ## Implementation
 

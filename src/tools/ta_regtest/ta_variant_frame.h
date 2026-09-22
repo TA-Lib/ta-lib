@@ -5128,7 +5128,7 @@ static TA_RetCode TA_KURTOSIS_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_KURTOSIS[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_KURTOSIS[] = { 0 };
 static const TA_VOptSpec TA_VOpt_KURTOSIS[] = {
-   { "optInTimePeriod", TA_VOPT_INT, 4.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 4.0, 10000.0, 30.0 },
 };
 
 static TA_RetCode TA_LINEARREG_VFrameD( int startIdx, int endIdx,

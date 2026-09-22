@@ -267,7 +267,7 @@ DEF_FUNCTION( KDJ,
 static const TA_IntegerRange TA_DEF_KURTOSIS_TimePeriod =
 {
    4,
-   100000,
+   10000,
    10,
    200,
    5

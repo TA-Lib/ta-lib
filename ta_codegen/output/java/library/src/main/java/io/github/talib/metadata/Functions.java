@@ -2151,7 +2151,7 @@ public final class Functions {
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
                "Time Period", "Time period", 30.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               4, 100000, 10, 200, 5, null)
+               4, 10000, 10, 200, 5, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

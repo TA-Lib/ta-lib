@@ -35,7 +35,7 @@ The result is NaN when `s² = 0`, that is when every value in the window is equa
 
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
-| `optInTimePeriod` | integer | 30 | 4–100000 | Number of trailing values in the window, at least 4 |
+| `optInTimePeriod` | integer | 30 | 4–10000 | Number of trailing values in the window |
 
 ## Properties
 

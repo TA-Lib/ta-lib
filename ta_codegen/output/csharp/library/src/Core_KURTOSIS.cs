@@ -66,14 +66,14 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInTimePeriod">Number of trailing values in the window, at least 4 (default 30; range
-   /// 4..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 4..10000;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int KurtosisLookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -126,7 +126,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
@@ -141,9 +141,9 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-       * computed in double because their integer forms overflow: at the top of the
-       * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+      /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+       * computed in double: at the top of the parameter range coefA's denominator
+       * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
        *
        * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
        * The argument contract rejects anything below it, and the n-1 lookback
@@ -330,7 +330,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -481,8 +481,8 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">The series to measure.</param>
-   /// <param name="optInTimePeriod">Number of trailing values in the window, at least 4 (default 30; range
-   /// 4..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 4..10000;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Excess kurtosis of the trailing window, or NaN where the window has no
    /// spread. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -557,8 +557,8 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">The series to measure.</param>
-   /// <param name="optInTimePeriod">Number of trailing values in the window, at least 4 (default 30; range
-   /// 4..100000; <c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod">Number of trailing values in the window (default 30; range 4..10000;
+   /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Excess kurtosis of the trailing window, or NaN where the window has no
    /// spread. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -1049,7 +1049,7 @@ public partial class Core
       }
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
-      } else if( optInTimePeriod < 4 || optInTimePeriod > 100000 ) {
+      } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -1066,9 +1066,9 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* G2, the sample-adjusted Fisher excess kurtosis. The two coefficients are
-       * computed in double because their integer forms overflow: at the top of the
-       * parameter range (n-1)(n-2)(n-3) is ~1e15, far past what an int holds.
+      /* G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
+       * computed in double: at the top of the parameter range coefA's denominator
+       * (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
        *
        * The (n-2)(n-3) denominators are why the range starts at 4 rather than 1.
        * The argument contract rejects anything below it, and the n-1 lookback
