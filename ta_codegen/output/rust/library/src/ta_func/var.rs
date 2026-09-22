@@ -57,6 +57,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  071726 MF,CC  #118 cancellation-free variance (shifted sums + reseed); fixes bug 90.
  *  082326 MF,CC  #243 reseed floor is scale-relative, not `variance < 0`.
+ *  092226 MF,CC  #434 rebuild against the peak sum of squares; re-anchor a flat window.
  */
 
 // Import types from parent module
@@ -140,6 +141,7 @@ impl Core {
         let mut meanValue1: f64 = 0.0_f64;
         let mut variance: f64 = 0.0_f64;
         let mut invPeriod: f64 = 0.0_f64;
+        let mut peakTotal2: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -184,12 +186,14 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         barsSinceReseed = (32 * optInTimePeriod) as usize;
+        peakTotal2 = periodTotal2;
         loop {
             // Add the incoming value, measured against the shift.
             tempReal = inReal[i] - shift;
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
+            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             // Remove the trailing value (prepares the next window).
@@ -198,20 +202,16 @@ impl Core {
             tempReal *= tempReal;
             periodTotal2 -= tempReal;
             trailingIdx += 1;
-            // Re-anchor the shift and rebuild the running sums with a fresh two-pass
-            // when the shift is stale enough that the subtraction loses digits - i.e.
-            // the variance has shrunk below 1e-6 of the mean squared deviation it is
-            // extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-            // 2e-10, so partial cancellation, not just total collapse, is caught); OR
-            // when the value just removed sat so far from the shift that its squared term
-            // (tempReal) dwarfs the surviving sum (a large outlier passing through the
-            // window buries the small terms below its ulp, and the residual left when it
-            // leaves is cancellation garbage); OR at least every 32 windows so a slow
-            // drift stays bounded regardless of the series length. The strict `<` also
-            // leaves an exactly-constant window (variance 0, scale 0) alone instead of
-            // reseeding it every bar. Guarantees a non-negative output.
+            // Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+            // of the LARGEST mean squared deviation held since the last rebuild, or at
+            // least every 32 windows. Measure against that peak, not the current sum:
+            // the rounding the running sums carry scales with the peak, so once a
+            // series settles back near the shift, or an outlier leaves the window,
+            // the current sum holds nothing but that rounding. The collapse is seen
+            // on the first bar whose sums carry it, and the rebuild recomputes that
+            // bar.
             barsSinceReseed -= 1;
-            if variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
+            if variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -231,54 +231,31 @@ impl Core {
                 j = (i as usize) + 1;
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-                // Floor the fresh figure at the same ratio the trigger above uses, now
-                // measured against the RE-ANCHORED sums. With the shift AT the window
-                // mean the deviations sum to ~0, so a real window has variance ~
-                // periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-                // only when every deviation is the same value, i.e. when the spread is
-                // at or under the rounding error of the mean itself. There is then no
-                // spread the anchor could resolve, the surviving digits are noise, and
-                // the honest answer is 0.
-                //
-                // The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-                // difference is load-bearing. periodTotal2*invPeriod is not the
-                // variance here: it is variance + e^2, where e is the rounding error of
-                // the reseed's own left-to-right sum for the mean -- exactly the term
-                // the two-pass subtraction then cancels out. So the ratio measures how
-                // badly that sum rounded, not how much signal survives, and matching
-                // the trigger's 1e-6 fired ten orders before cancellation eats any
-                // digits. It zeroed a variance the line above had just computed to nine
-                // correct significant figures: 100011 bars at 31498938283.624615 with
-                // two small outliers at period 99991 gives 1.0219900060103338e-09
-                // (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-                // survives and every intended bit-zero still zeroes -- the live ratios
-                // on flat data are 0 or ~1e-16, six orders the other side.
-                //
-                // This is the ONE dead-zone in the var/stddev/bbands family, and it is
-                // relative rather than the `variance < 0.0` it replaced because two
-                // things ride on it:
-                //
-                //  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-                //    side is >= 0 and any negative variance is clamped unconditionally -
-                //    where `< 0.0` needed the three-case argument below to know that a
-                //    negative one ever reaches this line.
-                //  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-                //    anything under a fixed TA_EPSILON first. That compares a SQUARED
-                //    quantity to 1e-14, which is a cliff at a price level and not a
-                //    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-                //    variance around 1e-16 and came back exactly 0 on every bar (#243).
-                //    Expressed here in the window's own units, the floor lets both of
-                //    them square-root what they are handed unconditionally.
-                //
-                // Clamping HERE and not at the output write is what keeps this off the
-                // per-bar path, and it is sufficient because a negative variance always
-                // reseeds on the same bar - the guard above covers all three cases:
-                // periodTotal2 > 0 makes its first disjunct `negative < positive`;
-                // periodTotal2 < 0 makes the second disjunct's right side negative,
-                // which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-                // the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-                // THIS - the alternative is an unconditional clamp at the output write,
-                // which needs no such argument but does cost ~3%.
+                // A window flat to within the rounding of its own mean leaves the
+                // variance at that rounding, which would fire the trigger again on
+                // every bar. Anchored on one of its own values it cannot: the variance
+                // is then at least 1/(2n) of the mean square it is extracted from.
+                if variance < 0.000001 * (periodTotal2 * invPeriod) {
+                    shift = inReal[i];
+                    periodTotal1 = 0.0;
+                    periodTotal2 = 0.0;
+                    for j in (windowStart as usize)..(i as usize) + 1 {
+                        tempReal = inReal[j] - shift;
+                        periodTotal1 += tempReal;
+                        tempReal *= tempReal;
+                        periodTotal2 += tempReal;
+                    }
+                    j = (i as usize) + 1;
+                    meanValue1 = periodTotal1 * invPeriod;
+                    variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                // Before the re-remove below: the peak must hold the whole window.
+                peakTotal2 = periodTotal2;
+                // After the re-anchor a window with any spread sits orders above this
+                // floor, so it catches only a variance that rounding left at or below
+                // 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+                // square-root it unconditionally (#243). A negative variance always
+                // gets here: the peak is never negative, so the trigger fires on it.
                 if variance < 0.000000000001 * (periodTotal2 * invPeriod) {
                     variance = 0.0;
                 }
@@ -424,6 +401,7 @@ struct VarStreamState {
     periodTotal1: f64,
     periodTotal2: f64,
     invPeriod: f64,
+    peakTotal2: f64,
     trailingIdx: i32,
     nbInitialElementNeeded: usize,
     barsSinceReseed: usize,
@@ -451,6 +429,7 @@ impl Core {
         sp.periodTotal1 += tempReal;
         tempReal *= tempReal;
         sp.periodTotal2 += tempReal;
+        sp.peakTotal2 = (if sp.periodTotal2 > sp.peakTotal2 { sp.periodTotal2 } else { sp.peakTotal2 });
         meanValue1 = sp.periodTotal1 * sp.invPeriod;
         variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
         // Remove the trailing value (prepares the next window).
@@ -459,20 +438,16 @@ impl Core {
         tempReal *= tempReal;
         sp.periodTotal2 -= tempReal;
         sp.trailingIdx += 1;
-        // Re-anchor the shift and rebuild the running sums with a fresh two-pass
-        // when the shift is stale enough that the subtraction loses digits - i.e.
-        // the variance has shrunk below 1e-6 of the mean squared deviation it is
-        // extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-        // 2e-10, so partial cancellation, not just total collapse, is caught); OR
-        // when the value just removed sat so far from the shift that its squared term
-        // (tempReal) dwarfs the surviving sum (a large outlier passing through the
-        // window buries the small terms below its ulp, and the residual left when it
-        // leaves is cancellation garbage); OR at least every 32 windows so a slow
-        // drift stays bounded regardless of the series length. The strict `<` also
-        // leaves an exactly-constant window (variance 0, scale 0) alone instead of
-        // reseeding it every bar. Guarantees a non-negative output.
+        // Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+        // of the LARGEST mean squared deviation held since the last rebuild, or at
+        // least every 32 windows. Measure against that peak, not the current sum:
+        // the rounding the running sums carry scales with the peak, so once a
+        // series settles back near the shift, or an outlier leaves the window,
+        // the current sum holds nothing but that rounding. The collapse is seen
+        // on the first bar whose sums carry it, and the rebuild recomputes that
+        // bar.
         sp.barsSinceReseed -= 1;
-        if variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 {
+        if variance < 0.000001 * (sp.peakTotal2 * sp.invPeriod) || sp.barsSinceReseed <= 0 {
             sp.barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
             sp.windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
             tempReal = 0.0;
@@ -496,54 +471,33 @@ impl Core {
             }
             meanValue1 = sp.periodTotal1 * sp.invPeriod;
             variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
-            // Floor the fresh figure at the same ratio the trigger above uses, now
-            // measured against the RE-ANCHORED sums. With the shift AT the window
-            // mean the deviations sum to ~0, so a real window has variance ~
-            // periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-            // only when every deviation is the same value, i.e. when the spread is
-            // at or under the rounding error of the mean itself. There is then no
-            // spread the anchor could resolve, the surviving digits are noise, and
-            // the honest answer is 0.
-            //
-            // The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-            // difference is load-bearing. periodTotal2*invPeriod is not the
-            // variance here: it is variance + e^2, where e is the rounding error of
-            // the reseed's own left-to-right sum for the mean -- exactly the term
-            // the two-pass subtraction then cancels out. So the ratio measures how
-            // badly that sum rounded, not how much signal survives, and matching
-            // the trigger's 1e-6 fired ten orders before cancellation eats any
-            // digits. It zeroed a variance the line above had just computed to nine
-            // correct significant figures: 100011 bars at 31498938283.624615 with
-            // two small outliers at period 99991 gives 1.0219900060103338e-09
-            // (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-            // survives and every intended bit-zero still zeroes -- the live ratios
-            // on flat data are 0 or ~1e-16, six orders the other side.
-            //
-            // This is the ONE dead-zone in the var/stddev/bbands family, and it is
-            // relative rather than the `variance < 0.0` it replaced because two
-            // things ride on it:
-            //
-            //  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-            //    side is >= 0 and any negative variance is clamped unconditionally -
-            //    where `< 0.0` needed the three-case argument below to know that a
-            //    negative one ever reaches this line.
-            //  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-            //    anything under a fixed TA_EPSILON first. That compares a SQUARED
-            //    quantity to 1e-14, which is a cliff at a price level and not a
-            //    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-            //    variance around 1e-16 and came back exactly 0 on every bar (#243).
-            //    Expressed here in the window's own units, the floor lets both of
-            //    them square-root what they are handed unconditionally.
-            //
-            // Clamping HERE and not at the output write is what keeps this off the
-            // per-bar path, and it is sufficient because a negative variance always
-            // reseeds on the same bar - the guard above covers all three cases:
-            // periodTotal2 > 0 makes its first disjunct `negative < positive`;
-            // periodTotal2 < 0 makes the second disjunct's right side negative,
-            // which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-            // the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-            // THIS - the alternative is an unconditional clamp at the output write,
-            // which needs no such argument but does cost ~3%.
+            // A window flat to within the rounding of its own mean leaves the
+            // variance at that rounding, which would fire the trigger again on
+            // every bar. Anchored on one of its own values it cannot: the variance
+            // is then at least 1/(2n) of the mean square it is extracted from.
+            if variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) {
+                sp.shift = sp.x_inReal[(sp.i & sp.xMask) as usize];
+                sp.periodTotal1 = 0.0;
+                sp.periodTotal2 = 0.0;
+                // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
+                sp.j = sp.windowStart;
+                while sp.j <= sp.i {
+                    tempReal = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
+                    sp.periodTotal1 += tempReal;
+                    tempReal *= tempReal;
+                    sp.periodTotal2 += tempReal;
+                    sp.j += 1;
+                }
+                meanValue1 = sp.periodTotal1 * sp.invPeriod;
+                variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+            }
+            // Before the re-remove below: the peak must hold the whole window.
+            sp.peakTotal2 = sp.periodTotal2;
+            // After the re-anchor a window with any spread sits orders above this
+            // floor, so it catches only a variance that rounding left at or below
+            // 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+            // square-root it unconditionally (#243). A negative variance always
+            // gets here: the peak is never negative, so the trigger fires on it.
             if variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) {
                 variance = 0.0;
             }
@@ -597,6 +551,7 @@ impl Core {
         let mut meanValue1: f64 = 0.0_f64;
         let mut variance: f64 = 0.0_f64;
         let mut invPeriod: f64 = 0.0_f64;
+        let mut peakTotal2: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -641,12 +596,14 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         barsSinceReseed = (32 * optInTimePeriod) as usize;
+        peakTotal2 = periodTotal2;
         loop {
             // Add the incoming value, measured against the shift.
             tempReal = inReal[i] - shift;
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
+            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             // Remove the trailing value (prepares the next window).
@@ -655,20 +612,16 @@ impl Core {
             tempReal *= tempReal;
             periodTotal2 -= tempReal;
             trailingIdx += 1;
-            // Re-anchor the shift and rebuild the running sums with a fresh two-pass
-            // when the shift is stale enough that the subtraction loses digits - i.e.
-            // the variance has shrunk below 1e-6 of the mean squared deviation it is
-            // extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-            // 2e-10, so partial cancellation, not just total collapse, is caught); OR
-            // when the value just removed sat so far from the shift that its squared term
-            // (tempReal) dwarfs the surviving sum (a large outlier passing through the
-            // window buries the small terms below its ulp, and the residual left when it
-            // leaves is cancellation garbage); OR at least every 32 windows so a slow
-            // drift stays bounded regardless of the series length. The strict `<` also
-            // leaves an exactly-constant window (variance 0, scale 0) alone instead of
-            // reseeding it every bar. Guarantees a non-negative output.
+            // Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+            // of the LARGEST mean squared deviation held since the last rebuild, or at
+            // least every 32 windows. Measure against that peak, not the current sum:
+            // the rounding the running sums carry scales with the peak, so once a
+            // series settles back near the shift, or an outlier leaves the window,
+            // the current sum holds nothing but that rounding. The collapse is seen
+            // on the first bar whose sums carry it, and the rebuild recomputes that
+            // bar.
             barsSinceReseed -= 1;
-            if variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
+            if variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * optInTimePeriod) as usize;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -688,54 +641,31 @@ impl Core {
                 j = (i as usize) + 1;
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-                // Floor the fresh figure at the same ratio the trigger above uses, now
-                // measured against the RE-ANCHORED sums. With the shift AT the window
-                // mean the deviations sum to ~0, so a real window has variance ~
-                // periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-                // only when every deviation is the same value, i.e. when the spread is
-                // at or under the rounding error of the mean itself. There is then no
-                // spread the anchor could resolve, the surviving digits are noise, and
-                // the honest answer is 0.
-                //
-                // The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-                // difference is load-bearing. periodTotal2*invPeriod is not the
-                // variance here: it is variance + e^2, where e is the rounding error of
-                // the reseed's own left-to-right sum for the mean -- exactly the term
-                // the two-pass subtraction then cancels out. So the ratio measures how
-                // badly that sum rounded, not how much signal survives, and matching
-                // the trigger's 1e-6 fired ten orders before cancellation eats any
-                // digits. It zeroed a variance the line above had just computed to nine
-                // correct significant figures: 100011 bars at 31498938283.624615 with
-                // two small outliers at period 99991 gives 1.0219900060103338e-09
-                // (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-                // survives and every intended bit-zero still zeroes -- the live ratios
-                // on flat data are 0 or ~1e-16, six orders the other side.
-                //
-                // This is the ONE dead-zone in the var/stddev/bbands family, and it is
-                // relative rather than the `variance < 0.0` it replaced because two
-                // things ride on it:
-                //
-                //  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-                //    side is >= 0 and any negative variance is clamped unconditionally -
-                //    where `< 0.0` needed the three-case argument below to know that a
-                //    negative one ever reaches this line.
-                //  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-                //    anything under a fixed TA_EPSILON first. That compares a SQUARED
-                //    quantity to 1e-14, which is a cliff at a price level and not a
-                //    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-                //    variance around 1e-16 and came back exactly 0 on every bar (#243).
-                //    Expressed here in the window's own units, the floor lets both of
-                //    them square-root what they are handed unconditionally.
-                //
-                // Clamping HERE and not at the output write is what keeps this off the
-                // per-bar path, and it is sufficient because a negative variance always
-                // reseeds on the same bar - the guard above covers all three cases:
-                // periodTotal2 > 0 makes its first disjunct `negative < positive`;
-                // periodTotal2 < 0 makes the second disjunct's right side negative,
-                // which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-                // the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-                // THIS - the alternative is an unconditional clamp at the output write,
-                // which needs no such argument but does cost ~3%.
+                // A window flat to within the rounding of its own mean leaves the
+                // variance at that rounding, which would fire the trigger again on
+                // every bar. Anchored on one of its own values it cannot: the variance
+                // is then at least 1/(2n) of the mean square it is extracted from.
+                if variance < 0.000001 * (periodTotal2 * invPeriod) {
+                    shift = inReal[i];
+                    periodTotal1 = 0.0;
+                    periodTotal2 = 0.0;
+                    for j in (windowStart as usize)..(i as usize) + 1 {
+                        tempReal = inReal[j] - shift;
+                        periodTotal1 += tempReal;
+                        tempReal *= tempReal;
+                        periodTotal2 += tempReal;
+                    }
+                    j = (i as usize) + 1;
+                    meanValue1 = periodTotal1 * invPeriod;
+                    variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                // Before the re-remove below: the peak must hold the whole window.
+                peakTotal2 = periodTotal2;
+                // After the re-anchor a window with any spread sits orders above this
+                // floor, so it catches only a variance that rounding left at or below
+                // 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+                // square-root it unconditionally (#243). A negative variance always
+                // gets here: the peak is never negative, so the trigger fires on it.
                 if variance < 0.000000000001 * (periodTotal2 * invPeriod) {
                     variance = 0.0;
                 }
@@ -778,6 +708,7 @@ impl Core {
             periodTotal1,
             periodTotal2,
             invPeriod,
+            peakTotal2,
             trailingIdx: (trailingIdx) as i32,
             nbInitialElementNeeded,
             barsSinceReseed,
@@ -959,6 +890,7 @@ impl VarStream {
             let mut variance: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
             let mut j = sp.j;
+            let mut peakTotal2 = sp.peakTotal2;
             let mut periodTotal1 = sp.periodTotal1;
             let mut periodTotal2 = sp.periodTotal2;
             let mut shift = sp.shift;
@@ -973,6 +905,7 @@ impl VarStream {
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
+            peakTotal2 = (if periodTotal2 > peakTotal2 { periodTotal2 } else { peakTotal2 });
             meanValue1 = periodTotal1 * sp.invPeriod;
             variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
             // Remove the trailing value (prepares the next window).
@@ -981,20 +914,16 @@ impl VarStream {
             tempReal *= tempReal;
             periodTotal2 -= tempReal;
             trailingIdx += 1;
-            // Re-anchor the shift and rebuild the running sums with a fresh two-pass
-            // when the shift is stale enough that the subtraction loses digits - i.e.
-            // the variance has shrunk below 1e-6 of the mean squared deviation it is
-            // extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-            // 2e-10, so partial cancellation, not just total collapse, is caught); OR
-            // when the value just removed sat so far from the shift that its squared term
-            // (tempReal) dwarfs the surviving sum (a large outlier passing through the
-            // window buries the small terms below its ulp, and the residual left when it
-            // leaves is cancellation garbage); OR at least every 32 windows so a slow
-            // drift stays bounded regardless of the series length. The strict `<` also
-            // leaves an exactly-constant window (variance 0, scale 0) alone instead of
-            // reseeding it every bar. Guarantees a non-negative output.
+            // Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+            // of the LARGEST mean squared deviation held since the last rebuild, or at
+            // least every 32 windows. Measure against that peak, not the current sum:
+            // the rounding the running sums carry scales with the peak, so once a
+            // series settles back near the shift, or an outlier leaves the window,
+            // the current sum holds nothing but that rounding. The collapse is seen
+            // on the first bar whose sums carry it, and the rebuild recomputes that
+            // bar.
             barsSinceReseed -= 1;
-            if variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
+            if variance < 0.000001 * (peakTotal2 * sp.invPeriod) || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
                 windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
                 tempReal = 0.0;
@@ -1018,54 +947,33 @@ impl VarStream {
                 }
                 meanValue1 = periodTotal1 * sp.invPeriod;
                 variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
-                // Floor the fresh figure at the same ratio the trigger above uses, now
-                // measured against the RE-ANCHORED sums. With the shift AT the window
-                // mean the deviations sum to ~0, so a real window has variance ~
-                // periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-                // only when every deviation is the same value, i.e. when the spread is
-                // at or under the rounding error of the mean itself. There is then no
-                // spread the anchor could resolve, the surviving digits are noise, and
-                // the honest answer is 0.
-                //
-                // The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-                // difference is load-bearing. periodTotal2*invPeriod is not the
-                // variance here: it is variance + e^2, where e is the rounding error of
-                // the reseed's own left-to-right sum for the mean -- exactly the term
-                // the two-pass subtraction then cancels out. So the ratio measures how
-                // badly that sum rounded, not how much signal survives, and matching
-                // the trigger's 1e-6 fired ten orders before cancellation eats any
-                // digits. It zeroed a variance the line above had just computed to nine
-                // correct significant figures: 100011 bars at 31498938283.624615 with
-                // two small outliers at period 99991 gives 1.0219900060103338e-09
-                // (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-                // survives and every intended bit-zero still zeroes -- the live ratios
-                // on flat data are 0 or ~1e-16, six orders the other side.
-                //
-                // This is the ONE dead-zone in the var/stddev/bbands family, and it is
-                // relative rather than the `variance < 0.0` it replaced because two
-                // things ride on it:
-                //
-                //  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-                //    side is >= 0 and any negative variance is clamped unconditionally -
-                //    where `< 0.0` needed the three-case argument below to know that a
-                //    negative one ever reaches this line.
-                //  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-                //    anything under a fixed TA_EPSILON first. That compares a SQUARED
-                //    quantity to 1e-14, which is a cliff at a price level and not a
-                //    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-                //    variance around 1e-16 and came back exactly 0 on every bar (#243).
-                //    Expressed here in the window's own units, the floor lets both of
-                //    them square-root what they are handed unconditionally.
-                //
-                // Clamping HERE and not at the output write is what keeps this off the
-                // per-bar path, and it is sufficient because a negative variance always
-                // reseeds on the same bar - the guard above covers all three cases:
-                // periodTotal2 > 0 makes its first disjunct `negative < positive`;
-                // periodTotal2 < 0 makes the second disjunct's right side negative,
-                // which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-                // the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-                // THIS - the alternative is an unconditional clamp at the output write,
-                // which needs no such argument but does cost ~3%.
+                // A window flat to within the rounding of its own mean leaves the
+                // variance at that rounding, which would fire the trigger again on
+                // every bar. Anchored on one of its own values it cannot: the variance
+                // is then at least 1/(2n) of the mean square it is extracted from.
+                if variance < 0.000001 * (periodTotal2 * sp.invPeriod) {
+                    shift = (if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 });
+                    periodTotal1 = 0.0;
+                    periodTotal2 = 0.0;
+                    // for( j = windowStart; j <= sp.i; j += 1 )
+                    j = windowStart;
+                    while j <= sp.i {
+                        tempReal = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
+                        periodTotal1 += tempReal;
+                        tempReal *= tempReal;
+                        periodTotal2 += tempReal;
+                        j += 1;
+                    }
+                    meanValue1 = periodTotal1 * sp.invPeriod;
+                    variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+                }
+                // Before the re-remove below: the peak must hold the whole window.
+                peakTotal2 = periodTotal2;
+                // After the re-anchor a window with any spread sits orders above this
+                // floor, so it catches only a variance that rounding left at or below
+                // 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+                // square-root it unconditionally (#243). A negative variance always
+                // gets here: the peak is never negative, so the trigger fires on it.
                 if variance < 0.000000000001 * (periodTotal2 * sp.invPeriod) {
                     variance = 0.0;
                 }

@@ -206,9 +206,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE( int    startIdx,
        *     after it is gone (measured 31x at period 5), and this rebuilds on
        *     the bar it leaves instead.
        *
-       * The threshold compares two DEGREE-1 quantities, which is why it is 100
-       * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-       * against a sum of squares. On ordinary prices the ratio is ~1 and this
+       * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+       * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
        * never fires; it is a compare, not work. The constant is 100 rather than
        * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
        * measured accuracy gain.
@@ -454,9 +453,8 @@ static void TA_LINEARREG_ANGLE_StepImpl( struct TA_LINEARREG_ANGLE_Stream *sp, d
     *     after it is gone (measured 31x at period 5), and this rebuilds on
     *     the bar it leaves instead.
     *
-    * The threshold compares two DEGREE-1 quantities, which is why it is 100
-    * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-    * against a sum of squares. On ordinary prices the ratio is ~1 and this
+    * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+    * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
     * never fires; it is a compare, not work. The constant is 100 rather than
     * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
     * measured accuracy gain.
@@ -654,9 +652,8 @@ static TA_RetCode TA_LINEARREG_ANGLE_OpenImpl( struct TA_LINEARREG_ANGLE_Stream 
           *     after it is gone (measured 31x at period 5), and this rebuilds on
           *     the bar it leaves instead.
           *
-          * The threshold compares two DEGREE-1 quantities, which is why it is 100
-          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+          * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
           * never fires; it is a compare, not work. The constant is 100 rather than
           * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
           * measured accuracy gain.
@@ -866,9 +863,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Peek( const TA_LINEARREG_ANGLE_Stream *
     *     after it is gone (measured 31x at period 5), and this rebuilds on
     *     the bar it leaves instead.
     *
-    * The threshold compares two DEGREE-1 quantities, which is why it is 100
-    * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-    * against a sum of squares. On ordinary prices the ratio is ~1 and this
+    * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+    * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
     * never fires; it is a compare, not work. The constant is 100 rather than
     * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
     * measured accuracy gain.

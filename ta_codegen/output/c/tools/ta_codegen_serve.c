@@ -3394,8 +3394,8 @@ static int sv_steq_TA_CORREL( const struct TA_CORREL_Stream *a, const struct TA_
    if( sv_xtier_ne(a->sumY2, b->sumY2, z) ) { *w = "sumY2"; return 1; }
    if( sv_xtier_ne(a->shiftX, b->shiftX, z) ) { *w = "shiftX"; return 1; }
    if( sv_xtier_ne(a->shiftY, b->shiftY, z) ) { *w = "shiftY"; return 1; }
-   if( sv_xtier_ne(a->leavingX, b->leavingX, z) ) { *w = "leavingX"; return 1; }
-   if( sv_xtier_ne(a->leavingY, b->leavingY, z) ) { *w = "leavingY"; return 1; }
+   if( sv_xtier_ne(a->peakX2, b->peakX2, z) ) { *w = "peakX2"; return 1; }
+   if( sv_xtier_ne(a->peakY2, b->peakY2, z) ) { *w = "peakY2"; return 1; }
    if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -5423,6 +5423,7 @@ static int sv_steq_TA_RVI( const struct TA_RVI_Stream *a, const struct TA_RVI_St
    if( sv_xtier_ne(a->shift, b->shift, z) ) { *w = "shift"; return 1; }
    if( sv_xtier_ne(a->periodTotal1, b->periodTotal1, z) ) { *w = "periodTotal1"; return 1; }
    if( sv_xtier_ne(a->periodTotal2, b->periodTotal2, z) ) { *w = "periodTotal2"; return 1; }
+   if( sv_xtier_ne(a->peakTotal2, b->peakTotal2, z) ) { *w = "peakTotal2"; return 1; }
    if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
    if( sv_xtier_ne(a->prevUp, b->prevUp, z) ) { *w = "prevUp"; return 1; }
    if( sv_xtier_ne(a->prevDn, b->prevDn, z) ) { *w = "prevDn"; return 1; }
@@ -6023,6 +6024,7 @@ static int sv_steq_TA_VAR( const struct TA_VAR_Stream *a, const struct TA_VAR_St
    if( sv_xtier_ne(a->periodTotal1, b->periodTotal1, z) ) { *w = "periodTotal1"; return 1; }
    if( sv_xtier_ne(a->periodTotal2, b->periodTotal2, z) ) { *w = "periodTotal2"; return 1; }
    if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
+   if( sv_xtier_ne(a->peakTotal2, b->peakTotal2, z) ) { *w = "peakTotal2"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( a->nbInitialElementNeeded != b->nbInitialElementNeeded ) { *w = "nbInitialElementNeeded"; return 1; }
    if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }

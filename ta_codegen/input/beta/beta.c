@@ -176,8 +176,8 @@ TA_RetCode beta(int startIdx, int endIdx,
       denom_scale = n * S_xx;
       denom = denom_scale - (S_x * S_x);
 
-      /* Re-anchor and rebuild when the shift has gone stale. The same three
-       * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+      /* Re-anchor and rebuild when the shift has gone stale. Three triggers:
+       * the denominator has shrunk below 1e-6 of the scale
        * it is extracted from; OR the return that just left sat so far from the
        * shift that its squared term dwarfs what remains; OR at least every 32
        * windows.
@@ -210,10 +210,10 @@ TA_RetCode beta(int startIdx, int endIdx,
        * both from the start; this brings BETA level. S_yy exists only to scale
        * this test -- nothing else reads it.
        *
-       * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
-       * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
-       * into S_xx, so the ratio when that term leaves lands an order or two
-       * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+       * The threshold is 1e3, not the 1e6 a price-scale series takes, because a
+       * return amplifies: a tick multiplying the price by k puts k-1 into the
+       * return and (k-1)^2 into S_xx, so the ratio when that term leaves lands
+       * an order or two below the value-scale case. At 1e6 a 1e5 tick slips
        * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
        * Pinned by test_beta_outlier_transit.
        *

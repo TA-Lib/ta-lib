@@ -75,6 +75,7 @@
  *  082326 MF,CC  #243 the SMA path's TA_EPSILON test on the variance is replaced
  *                by var.c's scale-relative reseed floor; the square root is
  *                unconditional. Bands no longer collapse on a fine tick.
+ *  092226 MF,CC  #434 the SMA path's variance step follows var.c.
  */
 
 TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType )
@@ -219,6 +220,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       double variance;
       double _invPeriod;
       double _tempReal;
+      double _peakTotal2;
       int _i;
       int _j;
       int _outIdx;
@@ -254,6 +256,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       _i = startIdx;
       _outIdx = 0;
       _barsSinceReseed = 32 * optInTimePeriod;
+      _peakTotal2 = varTotal2;
       do
       {
          maTotal += inReal[_i];
@@ -261,6 +264,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
          varTotal1 += _tempReal;
          _tempReal *= _tempReal;
          varTotal2 += _tempReal;
+         _peakTotal2 = (varTotal2 > _peakTotal2) ? varTotal2 : _peakTotal2;
          meanValue1 = varTotal1 * _invPeriod;
          variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
          tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
@@ -271,7 +275,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
          varTotal2 -= _tempReal;
          _trailingIdx += 1;
          _barsSinceReseed -= 1;
-         if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 )
+         if( variance < 0.000001 * (_peakTotal2 * _invPeriod) || _barsSinceReseed <= 0 )
          {
             _barsSinceReseed = 32 * optInTimePeriod;
             _windowStart = _i - _lookbackTotal;
@@ -292,8 +296,24 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
             }
             meanValue1 = varTotal1 * _invPeriod;
             variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-            /* The floor from var.c, verbatim: it owns both the sign and the
-             * dead-zone, so the square root below can be unconditional.
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) )
+            {
+               shift = inReal[_i];
+               varTotal1 = 0.0;
+               varTotal2 = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 )
+               {
+                  _tempReal = inReal[_j] - shift;
+                  varTotal1 += _tempReal;
+                  _tempReal *= _tempReal;
+                  varTotal2 += _tempReal;
+               }
+               meanValue1 = varTotal1 * _invPeriod;
+               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            }
+            _peakTotal2 = varTotal2;
+            /* The floor from var.c, verbatim: it owns the sign, so the
+             * square root below can be unconditional.
              */
             if( variance < 0.000000000001 * (varTotal2 * _invPeriod) )
             {
@@ -308,7 +328,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
           * quantity to a fixed 1e-14 and flattened all three bands onto each
           * other for any finely quoted series (#243). What replaces it skips
           * the root ONLY where the answer is already known, because the
-          * reseed floor above has made it exactly 0 -- worth doing because
+          * rebuild above has made it exactly 0 -- worth doing because
           * this root, unlike stddev.c's, sits in the fused loop with a
           * carried dependency and cannot vectorize, so running it on flat
           * input cost 1.59x.
@@ -546,6 +566,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       double variance;
       double _invPeriod;
       double _tempReal;
+      double _peakTotal2;
       int _i;
       int _j;
       int _outIdx;
@@ -581,6 +602,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       _i = startIdx;
       _outIdx = 0;
       _barsSinceReseed = 32 * optInTimePeriod;
+      _peakTotal2 = varTotal2;
       do
       {
          maTotal += (double)inReal[_i];
@@ -588,6 +610,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
          varTotal1 += _tempReal;
          _tempReal *= _tempReal;
          varTotal2 += _tempReal;
+         _peakTotal2 = (varTotal2 > _peakTotal2) ? varTotal2 : _peakTotal2;
          meanValue1 = varTotal1 * _invPeriod;
          variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
          tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
@@ -598,7 +621,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
          varTotal2 -= _tempReal;
          _trailingIdx += 1;
          _barsSinceReseed -= 1;
-         if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 )
+         if( variance < 0.000001 * (_peakTotal2 * _invPeriod) || _barsSinceReseed <= 0 )
          {
             _barsSinceReseed = 32 * optInTimePeriod;
             _windowStart = _i - _lookbackTotal;
@@ -619,6 +642,22 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
             }
             meanValue1 = varTotal1 * _invPeriod;
             variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            if( variance < 0.000001 * (varTotal2 * _invPeriod) )
+            {
+               shift = (double)inReal[_i];
+               varTotal1 = 0.0;
+               varTotal2 = 0.0;
+               for( _j = _windowStart; _j <= _i; _j += 1 )
+               {
+                  _tempReal = (double)inReal[_j] - shift;
+                  varTotal1 += _tempReal;
+                  _tempReal *= _tempReal;
+                  varTotal2 += _tempReal;
+               }
+               meanValue1 = varTotal1 * _invPeriod;
+               variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+            }
+            _peakTotal2 = varTotal2;
             if( variance < 0.000000000001 * (varTotal2 * _invPeriod) )
             {
                variance = 0.0;

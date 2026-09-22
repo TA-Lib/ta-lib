@@ -20,6 +20,7 @@
  *               and ssY are still ordinary normals, and the divide then
  *               returned NaN under TA_SUCCESS -- which the range clamp cannot
  *               catch -- or a perfect correlation from a degenerate window.
+ *  092226 MF,CC #434 rebuild against each side's peak sum of squares.
  *
  */
 
@@ -36,7 +37,7 @@ TA_RetCode correl(int startIdx, int endIdx,
    double outReal[])
 {
    double sumXY, sumX, sumY, sumX2, sumY2, x, y, trailingX, trailingY;
-   double shiftX, shiftY, ssX, ssY, spXY, leavingX, leavingY;
+   double shiftX, shiftY, ssX, ssY, spXY, peakX2, peakY2;
    double tempReal, invPeriod;
    int lookbackTotal, today, trailingIdx, outIdx, j, windowStart, barsSinceReseed;
 
@@ -72,9 +73,10 @@ TA_RetCode correl(int startIdx, int endIdx,
     * 1e-5 spread that is three of them, and the correlation of two perfectly
     * correlated series came back as 0, as -1, or as -1.73 (#242).
     *
-    * Anchor on the first window value here; every later re-anchor uses the
-    * window mean, which is better centred but costs a pass this one cannot
-    * afford before the sums exist.
+    * Anchor on the first window value here; a rebuild anchors on the window
+    * mean instead (or on a window value when the mean leaves the window
+    * flat), which is better centred but costs a pass this one cannot afford
+    * before the sums exist.
     */
    shiftX = inReal0[trailingIdx];
    shiftY = inReal1[trailingIdx];
@@ -96,8 +98,8 @@ TA_RetCode correl(int startIdx, int endIdx,
    today = startIdx;
    outIdx = 0;
    barsSinceReseed = 32 * optInTimePeriod;
-   leavingX = 0.0;
-   leavingY = 0.0;
+   peakX2 = sumX2;
+   peakY2 = sumY2;
 
    do
    {
@@ -110,26 +112,22 @@ TA_RetCode correl(int startIdx, int endIdx,
       sumXY += x*y;
       sumY  += y;
       sumY2 += y*y;
+      peakX2 = ( sumX2 > peakX2 ) ? sumX2 : peakX2;
+      peakY2 = ( sumY2 > peakY2 ) ? sumY2 : peakY2;
 
       ssX  = sumX2 - ((sumX*sumX)*invPeriod);
       ssY  = sumY2 - ((sumY*sumY)*invPeriod);
       spXY = sumXY - ((sumX*sumY)*invPeriod);
 
-      /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-       * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-       * below 1e-6 of the squared deviations it is extracted from; OR the value
-       * the PREVIOUS bar removed sat so far from the shift that its squared term
-       * dwarfs what remains (a large outlier transiting the window buries the
-       * small terms below its ulp, and the residue it leaves is cancellation
-       * garbage); OR at least every 32 windows, so a slow drift stays bounded
-       * however long the series runs.
-       *
-       * One bar late is correct, not a compromise. leavingX/leavingY are set by
-       * the removal at the BOTTOM of the loop, so the bar on which the outlier
-       * actually leaves still computes its own output from sums that legitimately
-       * contain it. The trigger then fires on the NEXT bar -- the first one whose
-       * sums carry the residue -- and the reseed below recomputes that bar's
-       * output before it is written. No bar is ever emitted from the residue.
+      /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+       * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+       * every 32 windows. Measure against that peak, not the current sum: the
+       * rounding the running sums carry scales with the peak, so once a series
+       * settles back near its shift, or an outlier leaves the window, the
+       * current sum holds nothing but that rounding. Each side keeps its own
+       * peak: one peak shared by two series of different scale fires on every
+       * bar. The collapse is seen on the first bar whose sums carry it, and the
+       * rebuild recomputes that bar's output before it is written.
        *
        * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
        * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -142,10 +140,8 @@ TA_RetCode correl(int startIdx, int endIdx,
        * startIdx-lookbackTotal+outIdx, which is >= outIdx.
        */
       barsSinceReseed--;
-      if( ssX < 0.000001 * sumX2
-         || ssY < 0.000001 * sumY2
-         || leavingX > 1000000.0 * sumX2
-         || leavingY > 1000000.0 * sumY2
+      if( ssX < 0.000001 * peakX2
+         || ssY < 0.000001 * peakY2
          || barsSinceReseed <= 0 )
       {
          barsSinceReseed = 32 * optInTimePeriod;
@@ -182,14 +178,44 @@ TA_RetCode correl(int startIdx, int endIdx,
          ssY  = sumY2 - ((sumY*sumY)*invPeriod);
          spXY = sumXY - ((sumX*sumY)*invPeriod);
 
+         /* A side flat to within the rounding of its own mean leaves its sum of
+          * squares at that rounding, which would fire the trigger again on every
+          * bar. Anchored on one of its own values it cannot, short of squares
+          * that underflow. sumXY depends on both shifts, so all five sums are
+          * redone.
+          */
+         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 )
+         {
+            if( ssX < 0.000001 * sumX2 )
+               shiftX = inReal0[today];
+            if( ssY < 0.000001 * sumY2 )
+               shiftY = inReal1[today];
+            sumXY = sumX = sumY = sumX2 = sumY2 = 0.0;
+            for( j=windowStart; j <= today; j++ )
+            {
+               x = inReal0[j] - shiftX;
+               sumX  += x;
+               sumX2 += x*x;
+
+               y = inReal1[j] - shiftY;
+               sumXY += x*y;
+               sumY  += y;
+               sumY2 += y*y;
+            }
+            ssX  = sumX2 - ((sumX*sumX)*invPeriod);
+            ssY  = sumY2 - ((sumY*sumY)*invPeriod);
+            spXY = sumXY - ((sumX*sumY)*invPeriod);
+         }
+         peakX2 = sumX2;
+         peakY2 = sumY2;
+
          /* A sum of squares is non-negative by definition, but this one is
           * extracted as a difference, so its SIGN is not guaranteed on a window
           * sitting inside a flat stretch. Enforce the invariant HERE and not at
-          * the divide: a negative ssX always reseeds on the same bar (it makes
-          * the first trigger's `negative < non-negative` true whenever sumX2 is
-          * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-          * divide below can rely on both being >= 0 and needs no sign test of
-          * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+          * the divide: a negative ssX always reseeds on the same bar, because
+          * the peak it is compared with is never negative, so the divide below
+          * can rely on both being >= 0 and needs no sign test of its own.
+          * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
           */
          if( ssX < 0.0 )
             ssX = 0.0;
@@ -252,14 +278,12 @@ TA_RetCode correl(int startIdx, int endIdx,
          outReal[outIdx++] = 0.0;
 
       /* Remove the trailing values (prepares the next window). */
-      leavingX = trailingX*trailingX;
-      leavingY = trailingY*trailingY;
       sumX  -= trailingX;
-      sumX2 -= leavingX;
+      sumX2 -= trailingX*trailingX;
 
       sumXY -= trailingX*trailingY;
       sumY  -= trailingY;
-      sumY2 -= leavingY;
+      sumY2 -= trailingY*trailingY;
 
       today++;
    } while( today <= endIdx );

@@ -73,6 +73,7 @@
  *  082326 MF,CC  #243 the SMA path's TA_EPSILON test on the variance is replaced
  *                by var.c's scale-relative reseed floor; the square root is
  *                unconditional. Bands no longer collapse on a fine tick.
+ *  092226 MF,CC  #434 the SMA path's variance step follows var.c.
  */
 
 // Import types from parent module
@@ -270,6 +271,7 @@ impl Core {
             let mut variance: f64 = 0.0_f64;
             let mut _invPeriod: f64 = 0.0_f64;
             let mut _tempReal: f64 = 0.0_f64;
+            let mut _peakTotal2: f64 = 0.0_f64;
             let mut _i: usize = 0_usize;
             let mut _j: usize = 0_usize;
             let mut _outIdx: usize = 0_usize;
@@ -305,12 +307,14 @@ impl Core {
             _i = startIdx;
             _outIdx = 0;
             _barsSinceReseed = (32 * optInTimePeriod) as usize;
+            _peakTotal2 = varTotal2;
             loop {
                 maTotal += inReal[_i];
                 _tempReal = inReal[_i] - shift;
                 varTotal1 += _tempReal;
                 _tempReal *= _tempReal;
                 varTotal2 += _tempReal;
+                _peakTotal2 = (if varTotal2 > _peakTotal2 { varTotal2 } else { _peakTotal2 });
                 meanValue1 = varTotal1 * _invPeriod;
                 variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                 outRealMiddleBand[_outIdx] = maTotal / ((optInTimePeriod) as f64);
@@ -321,7 +325,7 @@ impl Core {
                 varTotal2 -= _tempReal;
                 _trailingIdx += 1;
                 _barsSinceReseed -= 1;
-                if variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 {
+                if variance < 0.000001 * (_peakTotal2 * _invPeriod) || _barsSinceReseed <= 0 {
                     _barsSinceReseed = (32 * optInTimePeriod) as usize;
                     _windowStart = _i - _lookbackTotal;
                     _tempReal = 0.0;
@@ -341,8 +345,23 @@ impl Core {
                     _j = (_i as usize) + 1;
                     meanValue1 = varTotal1 * _invPeriod;
                     variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-                    // The floor from var.c, verbatim: it owns both the sign and the
-                    // dead-zone, so the square root below can be unconditional.
+                    if variance < 0.000001 * (varTotal2 * _invPeriod) {
+                        shift = inReal[_i];
+                        varTotal1 = 0.0;
+                        varTotal2 = 0.0;
+                        for _j in (_windowStart as usize)..(_i as usize) + 1 {
+                            _tempReal = inReal[_j] - shift;
+                            varTotal1 += _tempReal;
+                            _tempReal *= _tempReal;
+                            varTotal2 += _tempReal;
+                        }
+                        _j = (_i as usize) + 1;
+                        meanValue1 = varTotal1 * _invPeriod;
+                        variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                    }
+                    _peakTotal2 = varTotal2;
+                    // The floor from var.c, verbatim: it owns the sign, so the
+                    // square root below can be unconditional.
                     if variance < 0.000000000001 * (varTotal2 * _invPeriod) {
                         variance = 0.0;
                     }
@@ -355,7 +374,7 @@ impl Core {
                 // quantity to a fixed 1e-14 and flattened all three bands onto each
                 // other for any finely quoted series (#243). What replaces it skips
                 // the root ONLY where the answer is already known, because the
-                // reseed floor above has made it exactly 0 -- worth doing because
+                // rebuild above has made it exactly 0 -- worth doing because
                 // this root, unlike stddev.c's, sits in the fused loop with a
                 // carried dependency and cannot vectorize, so running it on flat
                 // input cost 1.59x.

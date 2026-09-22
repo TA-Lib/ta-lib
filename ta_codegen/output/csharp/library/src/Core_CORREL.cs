@@ -64,6 +64,7 @@ public partial class Core
     *               and ssY are still ordinary normals, and the divide then
     *               returned NaN under TA_SUCCESS -- which the range clamp cannot
     *               catch -- or a perfect correlation from a degenerate window.
+    *  092226 MF,CC #434 rebuild against each side's peak sum of squares.
     */
    /// <summary>
    /// Number of leading input bars <c>Correl</c> consumes before it can produce
@@ -112,8 +113,8 @@ public partial class Core
       double ssX = 0;
       double ssY = 0;
       double spXY = 0;
-      double leavingX = 0;
-      double leavingY = 0;
+      double peakX2 = 0;
+      double peakY2 = 0;
       double tempReal = 0;
       double invPeriod = 0;
       int lookbackTotal = 0;
@@ -165,9 +166,10 @@ public partial class Core
        * 1e-5 spread that is three of them, and the correlation of two perfectly
        * correlated series came back as 0, as -1, or as -1.73 (#242).
        *
-       * Anchor on the first window value here; every later re-anchor uses the
-       * window mean, which is better centred but costs a pass this one cannot
-       * afford before the sums exist.
+       * Anchor on the first window value here; a rebuild anchors on the window
+       * mean instead (or on a window value when the mean leaves the window
+       * flat), which is better centred but costs a pass this one cannot afford
+       * before the sums exist.
        */
       shiftX = inReal0[trailingIdx];
       shiftY = inReal1[trailingIdx];
@@ -189,8 +191,8 @@ public partial class Core
       today = startIdx;
       outIdx = 0;
       barsSinceReseed = 32 * optInTimePeriod;
-      leavingX = 0.0;
-      leavingY = 0.0;
+      peakX2 = sumX2;
+      peakY2 = sumY2;
       do {
          /* Add the incoming value, measured against the shift. */
          x = inReal0[today] - shiftX;
@@ -200,24 +202,20 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
          ssX = sumX2 - sumX * sumX * invPeriod;
          ssY = sumY2 - sumY * sumY * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
-         /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-          * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-          * below 1e-6 of the squared deviations it is extracted from; OR the value
-          * the PREVIOUS bar removed sat so far from the shift that its squared term
-          * dwarfs what remains (a large outlier transiting the window buries the
-          * small terms below its ulp, and the residue it leaves is cancellation
-          * garbage); OR at least every 32 windows, so a slow drift stays bounded
-          * however long the series runs.
-          *
-          * One bar late is correct, not a compromise. leavingX/leavingY are set by
-          * the removal at the BOTTOM of the loop, so the bar on which the outlier
-          * actually leaves still computes its own output from sums that legitimately
-          * contain it. The trigger then fires on the NEXT bar -- the first one whose
-          * sums carry the residue -- and the reseed below recomputes that bar's
-          * output before it is written. No bar is ever emitted from the residue.
+         /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+          * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+          * every 32 windows. Measure against that peak, not the current sum: the
+          * rounding the running sums carry scales with the peak, so once a series
+          * settles back near its shift, or an outlier leaves the window, the
+          * current sum holds nothing but that rounding. Each side keeps its own
+          * peak: one peak shared by two series of different scale fires on every
+          * bar. The collapse is seen on the first bar whose sums carry it, and the
+          * rebuild recomputes that bar's output before it is written.
           *
           * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
           * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -230,7 +228,7 @@ public partial class Core
           * startIdx-lookbackTotal+outIdx, which is >= outIdx.
           */
          barsSinceReseed -= 1;
-         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+         if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * optInTimePeriod;
             windowStart = today - lookbackTotal;
             /* Both means in one pass over the window: the rebuild below is the
@@ -262,14 +260,46 @@ public partial class Core
             ssX = sumX2 - sumX * sumX * invPeriod;
             ssY = sumY2 - sumY * sumY * invPeriod;
             spXY = sumXY - sumX * sumY * invPeriod;
+            /* A side flat to within the rounding of its own mean leaves its sum of
+             * squares at that rounding, which would fire the trigger again on every
+             * bar. Anchored on one of its own values it cannot, short of squares
+             * that underflow. sumXY depends on both shifts, so all five sums are
+             * redone.
+             */
+            if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+               if( ssX < 0.000001 * sumX2 ) {
+                  shiftX = inReal0[today];
+               }
+               if( ssY < 0.000001 * sumY2 ) {
+                  shiftY = inReal1[today];
+               }
+               sumY2 = 0.0;
+               sumX2 = sumY2;
+               sumY = sumX2;
+               sumX = sumY;
+               sumXY = sumX;
+               for( j = windowStart; j <= today; j += 1 ) {
+                  x = inReal0[j] - shiftX;
+                  sumX += x;
+                  sumX2 += x * x;
+                  y = inReal1[j] - shiftY;
+                  sumXY += x * y;
+                  sumY += y;
+                  sumY2 += y * y;
+               }
+               ssX = sumX2 - sumX * sumX * invPeriod;
+               ssY = sumY2 - sumY * sumY * invPeriod;
+               spXY = sumXY - sumX * sumY * invPeriod;
+            }
+            peakX2 = sumX2;
+            peakY2 = sumY2;
             /* A sum of squares is non-negative by definition, but this one is
              * extracted as a difference, so its SIGN is not guaranteed on a window
              * sitting inside a flat stretch. Enforce the invariant HERE and not at
-             * the divide: a negative ssX always reseeds on the same bar (it makes
-             * the first trigger's `negative < non-negative` true whenever sumX2 is
-             * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-             * divide below can rely on both being >= 0 and needs no sign test of
-             * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+             * the divide: a negative ssX always reseeds on the same bar, because
+             * the peak it is compared with is never negative, so the divide below
+             * can rely on both being >= 0 and needs no sign test of its own.
+             * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
              */
             if( ssX < 0.0 ) {
                ssX = 0.0;
@@ -329,13 +359,11 @@ public partial class Core
             outReal[outIdx++] = 0.0;
          }
          /* Remove the trailing values (prepares the next window). */
-         leavingX = trailingX * trailingX;
-         leavingY = trailingY * trailingY;
          sumX -= trailingX;
-         sumX2 -= leavingX;
+         sumX2 -= trailingX * trailingX;
          sumXY -= trailingX * trailingY;
          sumY -= trailingY;
-         sumY2 -= leavingY;
+         sumY2 -= trailingY * trailingY;
          today += 1;
       } while( today <= endIdx );
       outNBElement = outIdx;
@@ -366,8 +394,8 @@ public partial class Core
       double ssX = 0;
       double ssY = 0;
       double spXY = 0;
-      double leavingX = 0;
-      double leavingY = 0;
+      double peakX2 = 0;
+      double peakY2 = 0;
       double tempReal = 0;
       double invPeriod = 0;
       int lookbackTotal = 0;
@@ -422,8 +450,8 @@ public partial class Core
       today = startIdx;
       outIdx = 0;
       barsSinceReseed = 32 * optInTimePeriod;
-      leavingX = 0.0;
-      leavingY = 0.0;
+      peakX2 = sumX2;
+      peakY2 = sumY2;
       do {
          x = (double)inReal0[today] - shiftX;
          sumX += x;
@@ -432,11 +460,13 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
          ssX = sumX2 - sumX * sumX * invPeriod;
          ssY = sumY2 - sumY * sumY * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          barsSinceReseed -= 1;
-         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+         if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * optInTimePeriod;
             windowStart = today - lookbackTotal;
             tempReal = 0.0;
@@ -464,6 +494,33 @@ public partial class Core
             ssX = sumX2 - sumX * sumX * invPeriod;
             ssY = sumY2 - sumY * sumY * invPeriod;
             spXY = sumXY - sumX * sumY * invPeriod;
+            if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+               if( ssX < 0.000001 * sumX2 ) {
+                  shiftX = (double)inReal0[today];
+               }
+               if( ssY < 0.000001 * sumY2 ) {
+                  shiftY = (double)inReal1[today];
+               }
+               sumY2 = 0.0;
+               sumX2 = sumY2;
+               sumY = sumX2;
+               sumX = sumY;
+               sumXY = sumX;
+               for( j = windowStart; j <= today; j += 1 ) {
+                  x = (double)inReal0[j] - shiftX;
+                  sumX += x;
+                  sumX2 += x * x;
+                  y = (double)inReal1[j] - shiftY;
+                  sumXY += x * y;
+                  sumY += y;
+                  sumY2 += y * y;
+               }
+               ssX = sumX2 - sumX * sumX * invPeriod;
+               ssY = sumY2 - sumY * sumY * invPeriod;
+               spXY = sumXY - sumX * sumY * invPeriod;
+            }
+            peakX2 = sumX2;
+            peakY2 = sumY2;
             if( ssX < 0.0 ) {
                ssX = 0.0;
             }
@@ -485,13 +542,11 @@ public partial class Core
          } else {
             outReal[outIdx++] = 0.0;
          }
-         leavingX = trailingX * trailingX;
-         leavingY = trailingY * trailingY;
          sumX -= trailingX;
-         sumX2 -= leavingX;
+         sumX2 -= trailingX * trailingX;
          sumXY -= trailingX * trailingY;
          sumY -= trailingY;
-         sumY2 -= leavingY;
+         sumY2 -= trailingY * trailingY;
          today += 1;
       } while( today <= endIdx );
       outNBElement = outIdx;
@@ -668,8 +723,8 @@ public partial class Core
       internal double sumY2;
       internal double shiftX;
       internal double shiftY;
-      internal double leavingX;
-      internal double leavingY;
+      internal double peakX2;
+      internal double peakY2;
       internal double invPeriod;
       internal int lookbackTotal;
       internal int trailingIdx;
@@ -729,8 +784,8 @@ public partial class Core
          this.sumY2 = other.sumY2;
          this.shiftX = other.shiftX;
          this.shiftY = other.shiftY;
-         this.leavingX = other.leavingX;
-         this.leavingY = other.leavingY;
+         this.peakX2 = other.peakX2;
+         this.peakY2 = other.peakY2;
          this.invPeriod = other.invPeriod;
          this.lookbackTotal = other.lookbackTotal;
          this.trailingIdx = other.trailingIdx;
@@ -805,6 +860,8 @@ public partial class Core
          int barsSinceReseed = sp.barsSinceReseed;
          double cur_outReal = 0.0;
          int j = sp.j;
+         double peakX2 = sp.peakX2;
+         double peakY2 = sp.peakY2;
          double shiftX = sp.shiftX;
          double shiftY = sp.shiftY;
          double sumX = sp.sumX;
@@ -829,24 +886,20 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
          ssX = sumX2 - sumX * sumX * sp.invPeriod;
          ssY = sumY2 - sumY * sumY * sp.invPeriod;
          spXY = sumXY - sumX * sumY * sp.invPeriod;
-         /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-          * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-          * below 1e-6 of the squared deviations it is extracted from; OR the value
-          * the PREVIOUS bar removed sat so far from the shift that its squared term
-          * dwarfs what remains (a large outlier transiting the window buries the
-          * small terms below its ulp, and the residue it leaves is cancellation
-          * garbage); OR at least every 32 windows, so a slow drift stays bounded
-          * however long the series runs.
-          *
-          * One bar late is correct, not a compromise. leavingX/leavingY are set by
-          * the removal at the BOTTOM of the loop, so the bar on which the outlier
-          * actually leaves still computes its own output from sums that legitimately
-          * contain it. The trigger then fires on the NEXT bar -- the first one whose
-          * sums carry the residue -- and the reseed below recomputes that bar's
-          * output before it is written. No bar is ever emitted from the residue.
+         /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+          * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+          * every 32 windows. Measure against that peak, not the current sum: the
+          * rounding the running sums carry scales with the peak, so once a series
+          * settles back near its shift, or an outlier leaves the window, the
+          * current sum holds nothing but that rounding. Each side keeps its own
+          * peak: one peak shared by two series of different scale fires on every
+          * bar. The collapse is seen on the first bar whose sums carry it, and the
+          * rebuild recomputes that bar's output before it is written.
           *
           * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
           * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -859,7 +912,7 @@ public partial class Core
           * startIdx-lookbackTotal+outIdx, which is >= outIdx.
           */
          barsSinceReseed -= 1;
-         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || sp.leavingX > 1000000.0 * sumX2 || sp.leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+         if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * sp.optInTimePeriod;
             windowStart = sp.today - sp.lookbackTotal;
             /* Both means in one pass over the window: the rebuild below is the
@@ -891,14 +944,46 @@ public partial class Core
             ssX = sumX2 - sumX * sumX * sp.invPeriod;
             ssY = sumY2 - sumY * sumY * sp.invPeriod;
             spXY = sumXY - sumX * sumY * sp.invPeriod;
+            /* A side flat to within the rounding of its own mean leaves its sum of
+             * squares at that rounding, which would fire the trigger again on every
+             * bar. Anchored on one of its own values it cannot, short of squares
+             * that underflow. sumXY depends on both shifts, so all five sums are
+             * redone.
+             */
+            if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+               if( ssX < 0.000001 * sumX2 ) {
+                  shiftX = ((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal0[sp.today & sp.xMask] : pkVal0;
+               }
+               if( ssY < 0.000001 * sumY2 ) {
+                  shiftY = ((sp.today & sp.xMask) != pkSlot1) ? sp.x_inReal1[sp.today & sp.xMask] : pkVal1;
+               }
+               sumY2 = 0.0;
+               sumX2 = sumY2;
+               sumY = sumX2;
+               sumX = sumY;
+               sumXY = sumX;
+               for( j = windowStart; j <= sp.today; j += 1 ) {
+                  x = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0) - shiftX;
+                  sumX += x;
+                  sumX2 += x * x;
+                  y = (((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1) - shiftY;
+                  sumXY += x * y;
+                  sumY += y;
+                  sumY2 += y * y;
+               }
+               ssX = sumX2 - sumX * sumX * sp.invPeriod;
+               ssY = sumY2 - sumY * sumY * sp.invPeriod;
+               spXY = sumXY - sumX * sumY * sp.invPeriod;
+            }
+            peakX2 = sumX2;
+            peakY2 = sumY2;
             /* A sum of squares is non-negative by definition, but this one is
              * extracted as a difference, so its SIGN is not guaranteed on a window
              * sitting inside a flat stretch. Enforce the invariant HERE and not at
-             * the divide: a negative ssX always reseeds on the same bar (it makes
-             * the first trigger's `negative < non-negative` true whenever sumX2 is
-             * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-             * divide below can rely on both being >= 0 and needs no sign test of
-             * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+             * the divide: a negative ssX always reseeds on the same bar, because
+             * the peak it is compared with is never negative, so the divide below
+             * can rely on both being >= 0 and needs no sign test of its own.
+             * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
              */
             if( ssX < 0.0 ) {
                ssX = 0.0;
@@ -993,24 +1078,20 @@ public partial class Core
       sp.sumXY += x * y;
       sp.sumY += y;
       sp.sumY2 += y * y;
+      sp.peakX2 = (sp.sumX2 > sp.peakX2) ? sp.sumX2 : sp.peakX2;
+      sp.peakY2 = (sp.sumY2 > sp.peakY2) ? sp.sumY2 : sp.peakY2;
       ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
       ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
       spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
-      /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-       * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-       * below 1e-6 of the squared deviations it is extracted from; OR the value
-       * the PREVIOUS bar removed sat so far from the shift that its squared term
-       * dwarfs what remains (a large outlier transiting the window buries the
-       * small terms below its ulp, and the residue it leaves is cancellation
-       * garbage); OR at least every 32 windows, so a slow drift stays bounded
-       * however long the series runs.
-       *
-       * One bar late is correct, not a compromise. leavingX/leavingY are set by
-       * the removal at the BOTTOM of the loop, so the bar on which the outlier
-       * actually leaves still computes its own output from sums that legitimately
-       * contain it. The trigger then fires on the NEXT bar -- the first one whose
-       * sums carry the residue -- and the reseed below recomputes that bar's
-       * output before it is written. No bar is ever emitted from the residue.
+      /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+       * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+       * every 32 windows. Measure against that peak, not the current sum: the
+       * rounding the running sums carry scales with the peak, so once a series
+       * settles back near its shift, or an outlier leaves the window, the
+       * current sum holds nothing but that rounding. Each side keeps its own
+       * peak: one peak shared by two series of different scale fires on every
+       * bar. The collapse is seen on the first bar whose sums carry it, and the
+       * rebuild recomputes that bar's output before it is written.
        *
        * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
        * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -1023,7 +1104,7 @@ public partial class Core
        * startIdx-lookbackTotal+outIdx, which is >= outIdx.
        */
       sp.barsSinceReseed -= 1;
-      if( ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 ) {
+      if( ssX < 0.000001 * sp.peakX2 || ssY < 0.000001 * sp.peakY2 || sp.barsSinceReseed <= 0 ) {
          sp.barsSinceReseed = 32 * sp.optInTimePeriod;
          windowStart = sp.today - sp.lookbackTotal;
          /* Both means in one pass over the window: the rebuild below is the
@@ -1055,14 +1136,46 @@ public partial class Core
          ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
          ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
          spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+         /* A side flat to within the rounding of its own mean leaves its sum of
+          * squares at that rounding, which would fire the trigger again on every
+          * bar. Anchored on one of its own values it cannot, short of squares
+          * that underflow. sumXY depends on both shifts, so all five sums are
+          * redone.
+          */
+         if( ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 ) {
+            if( ssX < 0.000001 * sp.sumX2 ) {
+               sp.shiftX = sp.x_inReal0[sp.today & sp.xMask];
+            }
+            if( ssY < 0.000001 * sp.sumY2 ) {
+               sp.shiftY = sp.x_inReal1[sp.today & sp.xMask];
+            }
+            sp.sumY2 = 0.0;
+            sp.sumX2 = sp.sumY2;
+            sp.sumY = sp.sumX2;
+            sp.sumX = sp.sumY;
+            sp.sumXY = sp.sumX;
+            for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
+               x = sp.x_inReal0[sp.j & sp.xMask] - sp.shiftX;
+               sp.sumX += x;
+               sp.sumX2 += x * x;
+               y = sp.x_inReal1[sp.j & sp.xMask] - sp.shiftY;
+               sp.sumXY += x * y;
+               sp.sumY += y;
+               sp.sumY2 += y * y;
+            }
+            ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+            ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+            spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+         }
+         sp.peakX2 = sp.sumX2;
+         sp.peakY2 = sp.sumY2;
          /* A sum of squares is non-negative by definition, but this one is
           * extracted as a difference, so its SIGN is not guaranteed on a window
           * sitting inside a flat stretch. Enforce the invariant HERE and not at
-          * the divide: a negative ssX always reseeds on the same bar (it makes
-          * the first trigger's `negative < non-negative` true whenever sumX2 is
-          * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-          * divide below can rely on both being >= 0 and needs no sign test of
-          * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+          * the divide: a negative ssX always reseeds on the same bar, because
+          * the peak it is compared with is never negative, so the divide below
+          * can rely on both being >= 0 and needs no sign test of its own.
+          * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
           */
          if( ssX < 0.0 ) {
             ssX = 0.0;
@@ -1122,13 +1235,11 @@ public partial class Core
          sp.cur_outReal = 0.0;
       }
       /* Remove the trailing values (prepares the next window). */
-      sp.leavingX = trailingX * trailingX;
-      sp.leavingY = trailingY * trailingY;
       sp.sumX -= trailingX;
-      sp.sumX2 -= sp.leavingX;
+      sp.sumX2 -= trailingX * trailingX;
       sp.sumXY -= trailingX * trailingY;
       sp.sumY -= trailingY;
-      sp.sumY2 -= sp.leavingY;
+      sp.sumY2 -= trailingY * trailingY;
       sp.today += 1;
    }
 
@@ -1150,8 +1261,8 @@ public partial class Core
       double ssX = 0;
       double ssY = 0;
       double spXY = 0;
-      double leavingX = 0;
-      double leavingY = 0;
+      double peakX2 = 0;
+      double peakY2 = 0;
       double tempReal = 0;
       double invPeriod = 0;
       int lookbackTotal = 0;
@@ -1210,9 +1321,10 @@ public partial class Core
        * 1e-5 spread that is three of them, and the correlation of two perfectly
        * correlated series came back as 0, as -1, or as -1.73 (#242).
        *
-       * Anchor on the first window value here; every later re-anchor uses the
-       * window mean, which is better centred but costs a pass this one cannot
-       * afford before the sums exist.
+       * Anchor on the first window value here; a rebuild anchors on the window
+       * mean instead (or on a window value when the mean leaves the window
+       * flat), which is better centred but costs a pass this one cannot afford
+       * before the sums exist.
        */
       shiftX = inReal0[trailingIdx];
       shiftY = inReal1[trailingIdx];
@@ -1234,8 +1346,8 @@ public partial class Core
       today = startIdx;
       outIdx = 0;
       barsSinceReseed = 32 * optInTimePeriod;
-      leavingX = 0.0;
-      leavingY = 0.0;
+      peakX2 = sumX2;
+      peakY2 = sumY2;
       do {
          /* Add the incoming value, measured against the shift. */
          x = inReal0[today] - shiftX;
@@ -1245,24 +1357,20 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
          ssX = sumX2 - sumX * sumX * invPeriod;
          ssY = sumY2 - sumY * sumY * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
-         /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-          * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-          * below 1e-6 of the squared deviations it is extracted from; OR the value
-          * the PREVIOUS bar removed sat so far from the shift that its squared term
-          * dwarfs what remains (a large outlier transiting the window buries the
-          * small terms below its ulp, and the residue it leaves is cancellation
-          * garbage); OR at least every 32 windows, so a slow drift stays bounded
-          * however long the series runs.
-          *
-          * One bar late is correct, not a compromise. leavingX/leavingY are set by
-          * the removal at the BOTTOM of the loop, so the bar on which the outlier
-          * actually leaves still computes its own output from sums that legitimately
-          * contain it. The trigger then fires on the NEXT bar -- the first one whose
-          * sums carry the residue -- and the reseed below recomputes that bar's
-          * output before it is written. No bar is ever emitted from the residue.
+         /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+          * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+          * every 32 windows. Measure against that peak, not the current sum: the
+          * rounding the running sums carry scales with the peak, so once a series
+          * settles back near its shift, or an outlier leaves the window, the
+          * current sum holds nothing but that rounding. Each side keeps its own
+          * peak: one peak shared by two series of different scale fires on every
+          * bar. The collapse is seen on the first bar whose sums carry it, and the
+          * rebuild recomputes that bar's output before it is written.
           *
           * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
           * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -1275,7 +1383,7 @@ public partial class Core
           * startIdx-lookbackTotal+outIdx, which is >= outIdx.
           */
          barsSinceReseed -= 1;
-         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+         if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * optInTimePeriod;
             windowStart = today - lookbackTotal;
             /* Both means in one pass over the window: the rebuild below is the
@@ -1307,14 +1415,46 @@ public partial class Core
             ssX = sumX2 - sumX * sumX * invPeriod;
             ssY = sumY2 - sumY * sumY * invPeriod;
             spXY = sumXY - sumX * sumY * invPeriod;
+            /* A side flat to within the rounding of its own mean leaves its sum of
+             * squares at that rounding, which would fire the trigger again on every
+             * bar. Anchored on one of its own values it cannot, short of squares
+             * that underflow. sumXY depends on both shifts, so all five sums are
+             * redone.
+             */
+            if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+               if( ssX < 0.000001 * sumX2 ) {
+                  shiftX = inReal0[today];
+               }
+               if( ssY < 0.000001 * sumY2 ) {
+                  shiftY = inReal1[today];
+               }
+               sumY2 = 0.0;
+               sumX2 = sumY2;
+               sumY = sumX2;
+               sumX = sumY;
+               sumXY = sumX;
+               for( j = windowStart; j <= today; j += 1 ) {
+                  x = inReal0[j] - shiftX;
+                  sumX += x;
+                  sumX2 += x * x;
+                  y = inReal1[j] - shiftY;
+                  sumXY += x * y;
+                  sumY += y;
+                  sumY2 += y * y;
+               }
+               ssX = sumX2 - sumX * sumX * invPeriod;
+               ssY = sumY2 - sumY * sumY * invPeriod;
+               spXY = sumXY - sumX * sumY * invPeriod;
+            }
+            peakX2 = sumX2;
+            peakY2 = sumY2;
             /* A sum of squares is non-negative by definition, but this one is
              * extracted as a difference, so its SIGN is not guaranteed on a window
              * sitting inside a flat stretch. Enforce the invariant HERE and not at
-             * the divide: a negative ssX always reseeds on the same bar (it makes
-             * the first trigger's `negative < non-negative` true whenever sumX2 is
-             * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-             * divide below can rely on both being >= 0 and needs no sign test of
-             * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+             * the divide: a negative ssX always reseeds on the same bar, because
+             * the peak it is compared with is never negative, so the divide below
+             * can rely on both being >= 0 and needs no sign test of its own.
+             * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
              */
             if( ssX < 0.0 ) {
                ssX = 0.0;
@@ -1374,13 +1514,11 @@ public partial class Core
             outReal[outIdx++ * outStride] = 0.0;
          }
          /* Remove the trailing values (prepares the next window). */
-         leavingX = trailingX * trailingX;
-         leavingY = trailingY * trailingY;
          sumX -= trailingX;
-         sumX2 -= leavingX;
+         sumX2 -= trailingX * trailingX;
          sumXY -= trailingX * trailingY;
          sumY -= trailingY;
-         sumY2 -= leavingY;
+         sumY2 -= trailingY * trailingY;
          today += 1;
       } while( today <= endIdx );
       outNBElement = outIdx;
@@ -1407,8 +1545,8 @@ public partial class Core
       sp.sumY2 = sumY2;
       sp.shiftX = shiftX;
       sp.shiftY = shiftY;
-      sp.leavingX = leavingX;
-      sp.leavingY = leavingY;
+      sp.peakX2 = peakX2;
+      sp.peakY2 = peakY2;
       sp.invPeriod = invPeriod;
       sp.lookbackTotal = lookbackTotal;
       sp.trailingIdx = trailingIdx;

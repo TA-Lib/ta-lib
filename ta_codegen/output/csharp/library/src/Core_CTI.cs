@@ -56,6 +56,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  091526 KL     First version (proposal-drafts issue #74).
     *  092126 MF,CC  Rebuild against the peak sum of squares (issue #430).
+    *  092226 MF,CC  #434 branch-free peak update.
     */
    /// <summary>
    /// Number of leading input bars <c>Cti</c> consumes before it can produce its
@@ -154,9 +155,10 @@ public partial class Core
        * (#242): n*Sxx - Sx*Sx on raw price levels, as the author's listing writes
        * it, cancels catastrophically once the spread is small against the level.
        *
-       * Anchor on the first window value here; every later re-anchor uses the
-       * window mean, which is better centred but costs a pass this one cannot
-       * afford before the sums exist.
+       * Anchor on the first window value here; a rebuild anchors on the window
+       * mean instead (or on inReal[today] when the mean leaves the window
+       * flat), which is better centred but costs a pass this one cannot afford
+       * before the sums exist.
        */
       shift = inReal[trailingIdx];
       /* The initial window, less its last bar. This bar's y is startIdx-j, since
@@ -182,9 +184,7 @@ public partial class Core
          x = inReal[today] - shift;
          sumX += x;
          sumX2 += x * x;
-         if( sumX2 > peakX2 ) {
-            peakX2 = sumX2;
-         }
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
          ssX = sumX2 - sumX * sumX * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -220,7 +220,8 @@ public partial class Core
             /* A window flat to within the rounding of its own mean leaves ssX at
              * that rounding, which would fire the trigger again on every bar.
              * Anchored on one of its own values instead, ssX is at least half the
-             * squared range and sumX2 at most n times it, so it cannot.
+             * squared range and sumX2 at most n times it, so it cannot, short of
+             * squares that underflow.
              */
             if( sumX2 - sumX * sumX * invPeriod < 0.000001 * sumX2 ) {
                shift = inReal[today];
@@ -367,9 +368,7 @@ public partial class Core
          x = (double)inReal[today] - shift;
          sumX += x;
          sumX2 += x * x;
-         if( sumX2 > peakX2 ) {
-            peakX2 = sumX2;
-         }
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
          ssX = sumX2 - sumX * sumX * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          barsSinceReseed -= 1;
@@ -750,9 +749,7 @@ public partial class Core
          x = (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0) - shift;
          sumX += x;
          sumX2 += x * x;
-         if( sumX2 > peakX2 ) {
-            peakX2 = sumX2;
-         }
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
          ssX = sumX2 - sumX * sumX * sp.invPeriod;
          spXY = sumXY - sumX * sp.sumY * sp.invPeriod;
          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -788,7 +785,8 @@ public partial class Core
             /* A window flat to within the rounding of its own mean leaves ssX at
              * that rounding, which would fire the trigger again on every bar.
              * Anchored on one of its own values instead, ssX is at least half the
-             * squared range and sumX2 at most n times it, so it cannot.
+             * squared range and sumX2 at most n times it, so it cannot, short of
+             * squares that underflow.
              */
             if( sumX2 - sumX * sumX * sp.invPeriod < 0.000001 * sumX2 ) {
                shift = ((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0;
@@ -872,9 +870,7 @@ public partial class Core
       x = sp.x_inReal[sp.today & sp.xMask] - sp.shift;
       sp.sumX += x;
       sp.sumX2 += x * x;
-      if( sp.sumX2 > sp.peakX2 ) {
-         sp.peakX2 = sp.sumX2;
-      }
+      sp.peakX2 = (sp.sumX2 > sp.peakX2) ? sp.sumX2 : sp.peakX2;
       ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
       spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
       /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -910,7 +906,8 @@ public partial class Core
          /* A window flat to within the rounding of its own mean leaves ssX at
           * that rounding, which would fire the trigger again on every bar.
           * Anchored on one of its own values instead, ssX is at least half the
-          * squared range and sumX2 at most n times it, so it cannot.
+          * squared range and sumX2 at most n times it, so it cannot, short of
+          * squares that underflow.
           */
          if( sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod < 0.000001 * sp.sumX2 ) {
             sp.shift = sp.x_inReal[sp.today & sp.xMask];
@@ -1050,9 +1047,10 @@ public partial class Core
        * (#242): n*Sxx - Sx*Sx on raw price levels, as the author's listing writes
        * it, cancels catastrophically once the spread is small against the level.
        *
-       * Anchor on the first window value here; every later re-anchor uses the
-       * window mean, which is better centred but costs a pass this one cannot
-       * afford before the sums exist.
+       * Anchor on the first window value here; a rebuild anchors on the window
+       * mean instead (or on inReal[today] when the mean leaves the window
+       * flat), which is better centred but costs a pass this one cannot afford
+       * before the sums exist.
        */
       shift = inReal[trailingIdx];
       /* The initial window, less its last bar. This bar's y is startIdx-j, since
@@ -1078,9 +1076,7 @@ public partial class Core
          x = inReal[today] - shift;
          sumX += x;
          sumX2 += x * x;
-         if( sumX2 > peakX2 ) {
-            peakX2 = sumX2;
-         }
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
          ssX = sumX2 - sumX * sumX * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -1116,7 +1112,8 @@ public partial class Core
             /* A window flat to within the rounding of its own mean leaves ssX at
              * that rounding, which would fire the trigger again on every bar.
              * Anchored on one of its own values instead, ssX is at least half the
-             * squared range and sumX2 at most n times it, so it cannot.
+             * squared range and sumX2 at most n times it, so it cannot, short of
+             * squares that underflow.
              */
             if( sumX2 - sumX * sumX * invPeriod < 0.000001 * sumX2 ) {
                shift = inReal[today];

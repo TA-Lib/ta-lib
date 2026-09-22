@@ -56,6 +56,7 @@
  *  -------------------------------------------------------------------
  *  091526 KL     First version (proposal-drafts issue #74).
  *  092126 MF,CC  Rebuild against the peak sum of squares (issue #430).
+ *  092226 MF,CC  #434 branch-free peak update.
  */
 
 TA_LIB_API int TA_CTI_Lookback( int optInTimePeriod )
@@ -145,9 +146,10 @@ TA_LIB_API TA_RetCode TA_CTI( int    startIdx,
     * (#242): n*Sxx - Sx*Sx on raw price levels, as the author's listing writes
     * it, cancels catastrophically once the spread is small against the level.
     *
-    * Anchor on the first window value here; every later re-anchor uses the
-    * window mean, which is better centred but costs a pass this one cannot
-    * afford before the sums exist.
+    * Anchor on the first window value here; a rebuild anchors on the window
+    * mean instead (or on inReal[today] when the mean leaves the window
+    * flat), which is better centred but costs a pass this one cannot afford
+    * before the sums exist.
     */
    shift = inReal[trailingIdx];
    /* The initial window, less its last bar. This bar's y is startIdx-j, since
@@ -175,10 +177,7 @@ TA_LIB_API TA_RetCode TA_CTI( int    startIdx,
       x = inReal[today] - shift;
       sumX += x;
       sumX2 += x * x;
-      if( sumX2 > peakX2 )
-      {
-         peakX2 = sumX2;
-      }
+      peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
       ssX = sumX2 - sumX * sumX * invPeriod;
       spXY = sumXY - sumX * sumY * invPeriod;
       /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -217,7 +216,8 @@ TA_LIB_API TA_RetCode TA_CTI( int    startIdx,
          /* A window flat to within the rounding of its own mean leaves ssX at
           * that rounding, which would fire the trigger again on every bar.
           * Anchored on one of its own values instead, ssX is at least half the
-          * squared range and sumX2 at most n times it, so it cannot.
+          * squared range and sumX2 at most n times it, so it cannot, short of
+          * squares that underflow.
           */
          if( sumX2 - sumX * sumX * invPeriod < 0.000001 * sumX2 )
          {
@@ -376,10 +376,7 @@ TA_RetCode TA_S_CTI( int    startIdx,
       x = (double)inReal[today] - shift;
       sumX += x;
       sumX2 += x * x;
-      if( sumX2 > peakX2 )
-      {
-         peakX2 = sumX2;
-      }
+      peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
       ssX = sumX2 - sumX * sumX * invPeriod;
       spXY = sumXY - sumX * sumY * invPeriod;
       barsSinceReseed -= 1;
@@ -507,10 +504,7 @@ static void TA_CTI_StepImpl( struct TA_CTI_Stream *sp, double inReal, double *ou
    x = sp->x_inReal[sp->today & sp->xMask] - sp->shift;
    sumX += x;
    sumX2 += x * x;
-   if( sumX2 > sp->peakX2 )
-   {
-      sp->peakX2 = sumX2;
-   }
+   sp->peakX2 = (sumX2 > sp->peakX2) ? sumX2 : sp->peakX2;
    ssX = sumX2 - sumX * sumX * sp->invPeriod;
    spXY = sumXY - sumX * sp->sumY * sp->invPeriod;
    /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -549,7 +543,8 @@ static void TA_CTI_StepImpl( struct TA_CTI_Stream *sp, double inReal, double *ou
       /* A window flat to within the rounding of its own mean leaves ssX at
        * that rounding, which would fire the trigger again on every bar.
        * Anchored on one of its own values instead, ssX is at least half the
-       * squared range and sumX2 at most n times it, so it cannot.
+       * squared range and sumX2 at most n times it, so it cannot, short of
+       * squares that underflow.
        */
       if( sumX2 - sumX * sumX * sp->invPeriod < 0.000001 * sumX2 )
       {
@@ -703,9 +698,10 @@ static TA_RetCode TA_CTI_OpenImpl( struct TA_CTI_Stream **stream, const double i
        * (#242): n*Sxx - Sx*Sx on raw price levels, as the author's listing writes
        * it, cancels catastrophically once the spread is small against the level.
        *
-       * Anchor on the first window value here; every later re-anchor uses the
-       * window mean, which is better centred but costs a pass this one cannot
-       * afford before the sums exist.
+       * Anchor on the first window value here; a rebuild anchors on the window
+       * mean instead (or on inReal[today] when the mean leaves the window
+       * flat), which is better centred but costs a pass this one cannot afford
+       * before the sums exist.
        */
       shift = inReal[trailingIdx];
       /* The initial window, less its last bar. This bar's y is startIdx-j, since
@@ -733,10 +729,7 @@ static TA_RetCode TA_CTI_OpenImpl( struct TA_CTI_Stream **stream, const double i
          x = inReal[today] - shift;
          sumX += x;
          sumX2 += x * x;
-         if( sumX2 > peakX2 )
-         {
-            peakX2 = sumX2;
-         }
+         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
          ssX = sumX2 - sumX * sumX * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -775,7 +768,8 @@ static TA_RetCode TA_CTI_OpenImpl( struct TA_CTI_Stream **stream, const double i
             /* A window flat to within the rounding of its own mean leaves ssX at
              * that rounding, which would fire the trigger again on every bar.
              * Anchored on one of its own values instead, ssX is at least half the
-             * squared range and sumX2 at most n times it, so it cannot.
+             * squared range and sumX2 at most n times it, so it cannot, short of
+             * squares that underflow.
              */
             if( sumX2 - sumX * sumX * invPeriod < 0.000001 * sumX2 )
             {
@@ -980,10 +974,7 @@ TA_LIB_API TA_RetCode TA_CTI_Peek( const TA_CTI_Stream *stream, double inReal, d
    x = (((sp->today & sp->xMask) != pkSlot0) ? x_inReal[sp->today & sp->xMask] : pkVal0) - shift;
    sumX += x;
    sumX2 += x * x;
-   if( sumX2 > peakX2 )
-   {
-      peakX2 = sumX2;
-   }
+   peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
    ssX = sumX2 - sumX * sumX * sp->invPeriod;
    spXY = sumXY - sumX * sp->sumY * sp->invPeriod;
    /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -1022,7 +1013,8 @@ TA_LIB_API TA_RetCode TA_CTI_Peek( const TA_CTI_Stream *stream, double inReal, d
       /* A window flat to within the rounding of its own mean leaves ssX at
        * that rounding, which would fire the trigger again on every bar.
        * Anchored on one of its own values instead, ssX is at least half the
-       * squared range and sumX2 at most n times it, so it cannot.
+       * squared range and sumX2 at most n times it, so it cannot, short of
+       * squares that underflow.
        */
       if( sumX2 - sumX * sumX * sp->invPeriod < 0.000001 * sumX2 )
       {

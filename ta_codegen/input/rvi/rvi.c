@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 MF,CC  First version (issue #366).
+ *  092226 MF,CC  #434 the three variance steps follow var.c.
  */
 
 int rvi_lookback(int optInTimePeriod, int optInStdDevPeriod)
@@ -25,7 +26,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double tempReal, shift, periodTotal1, periodTotal2, meanValue1, variance;
+   double tempReal, shift, periodTotal1, periodTotal2, meanValue1, variance, peakTotal2;
    double invPeriod, sigma, delta, upValue, dnValue, upTotal, dnTotal;
    double prevUp, prevDn, wAlpha, wBeta, total;
    int i, j, outIdx, today, anchorIdx, trailingIdx, windowStart, barsSinceReseed;
@@ -74,6 +75,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
    }
 
    barsSinceReseed = 32 * optInStdDevPeriod;
+   peakTotal2 = periodTotal2;
 
    /* Seed both legs with the simple average of the first 'optInTimePeriod'
     * volatilities, as rma.c seeds. optInStdDevPeriod >= 2 is what keeps the
@@ -87,6 +89,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
       periodTotal1 += tempReal;
       tempReal *= tempReal;
       periodTotal2 += tempReal;
+      peakTotal2 = ( periodTotal2 > peakTotal2 ) ? periodTotal2 : peakTotal2;
 
       meanValue1 = periodTotal1 * invPeriod;
       variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
@@ -98,8 +101,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
       trailingIdx++;
 
       barsSinceReseed--;
-      if( variance < 0.000001 * ( periodTotal2 * invPeriod )
-         || tempReal > 1000000.0 * periodTotal2
+      if( variance < 0.000001 * ( peakTotal2 * invPeriod )
          || barsSinceReseed <= 0 )
       {
          barsSinceReseed = 32 * optInStdDevPeriod;
@@ -123,6 +125,22 @@ TA_RetCode rvi(int startIdx, int endIdx,
 
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         if( variance < 0.000001 * ( periodTotal2 * invPeriod ) )
+         {
+            shift = inReal[today];
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j=windowStart; j <= today; j++ )
+            {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         }
+         peakTotal2 = periodTotal2;
          if( variance < 0.000000000001 * ( periodTotal2 * invPeriod ) )
             variance = 0.0;
 
@@ -154,6 +172,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
       periodTotal1 += tempReal;
       tempReal *= tempReal;
       periodTotal2 += tempReal;
+      peakTotal2 = ( periodTotal2 > peakTotal2 ) ? periodTotal2 : peakTotal2;
 
       meanValue1 = periodTotal1 * invPeriod;
       variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
@@ -165,8 +184,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
       trailingIdx++;
 
       barsSinceReseed--;
-      if( variance < 0.000001 * ( periodTotal2 * invPeriod )
-         || tempReal > 1000000.0 * periodTotal2
+      if( variance < 0.000001 * ( peakTotal2 * invPeriod )
          || barsSinceReseed <= 0 )
       {
          barsSinceReseed = 32 * optInStdDevPeriod;
@@ -190,6 +208,22 @@ TA_RetCode rvi(int startIdx, int endIdx,
 
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         if( variance < 0.000001 * ( periodTotal2 * invPeriod ) )
+         {
+            shift = inReal[today];
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j=windowStart; j <= today; j++ )
+            {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         }
+         peakTotal2 = periodTotal2;
          if( variance < 0.000000000001 * ( periodTotal2 * invPeriod ) )
             variance = 0.0;
 
@@ -231,6 +265,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
       periodTotal1 += tempReal;
       tempReal *= tempReal;
       periodTotal2 += tempReal;
+      peakTotal2 = ( periodTotal2 > peakTotal2 ) ? periodTotal2 : peakTotal2;
 
       meanValue1 = periodTotal1 * invPeriod;
       variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
@@ -242,8 +277,7 @@ TA_RetCode rvi(int startIdx, int endIdx,
       trailingIdx++;
 
       barsSinceReseed--;
-      if( variance < 0.000001 * ( periodTotal2 * invPeriod )
-         || tempReal > 1000000.0 * periodTotal2
+      if( variance < 0.000001 * ( peakTotal2 * invPeriod )
          || barsSinceReseed <= 0 )
       {
          barsSinceReseed = 32 * optInStdDevPeriod;
@@ -267,6 +301,22 @@ TA_RetCode rvi(int startIdx, int endIdx,
 
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         if( variance < 0.000001 * ( periodTotal2 * invPeriod ) )
+         {
+            shift = inReal[today];
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j=windowStart; j <= today; j++ )
+            {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         }
+         peakTotal2 = periodTotal2;
          if( variance < 0.000000000001 * ( periodTotal2 * invPeriod ) )
             variance = 0.0;
 

@@ -13823,6 +13823,7 @@ class Core {
      *  082326 MF,CC  #243 the SMA path's TA_EPSILON test on the variance is replaced
      *                by var.c's scale-relative reseed floor; the square root is
      *                unconditional. Bands no longer collapse on a fine tick.
+     *  092226 MF,CC  #434 the SMA path's variance step follows var.c.
      */
 
        /**
@@ -13973,6 +13974,7 @@ class Core {
              double variance;
              double _invPeriod;
              double _tempReal;
+             double _peakTotal2;
              int _i;
              int _j;
              int _outIdx;
@@ -14005,12 +14007,14 @@ class Core {
              _i = startIdx;
              _outIdx = 0;
              _barsSinceReseed = 32 * optInTimePeriod;
+             _peakTotal2 = varTotal2;
              do {
                 maTotal += inReal[_i];
                 _tempReal = inReal[_i] - shift;
                 varTotal1 += _tempReal;
                 _tempReal *= _tempReal;
                 varTotal2 += _tempReal;
+                _peakTotal2 = (varTotal2 > _peakTotal2) ? varTotal2 : _peakTotal2;
                 meanValue1 = varTotal1 * _invPeriod;
                 variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                 tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
@@ -14021,7 +14025,7 @@ class Core {
                 varTotal2 -= _tempReal;
                 _trailingIdx += 1;
                 _barsSinceReseed -= 1;
-                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
+                if( variance < 0.000001 * (_peakTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
                    _barsSinceReseed = 32 * optInTimePeriod;
                    _windowStart = _i - _lookbackTotal;
                    _tempReal = 0.0;
@@ -14039,8 +14043,22 @@ class Core {
                    }
                    meanValue1 = varTotal1 * _invPeriod;
                    variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
-                   /* The floor from var.c, verbatim: it owns both the sign and the
-                    * dead-zone, so the square root below can be unconditional.
+                   if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+                      shift = inReal[_i];
+                      varTotal1 = 0.0;
+                      varTotal2 = 0.0;
+                      for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                         _tempReal = inReal[_j] - shift;
+                         varTotal1 += _tempReal;
+                         _tempReal *= _tempReal;
+                         varTotal2 += _tempReal;
+                      }
+                      meanValue1 = varTotal1 * _invPeriod;
+                      variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                   }
+                   _peakTotal2 = varTotal2;
+                   /* The floor from var.c, verbatim: it owns the sign, so the
+                    * square root below can be unconditional.
                     */
                    if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
                       variance = 0.0;
@@ -14054,7 +14072,7 @@ class Core {
                  * quantity to a fixed 1e-14 and flattened all three bands onto each
                  * other for any finely quoted series (#243). What replaces it skips
                  * the root ONLY where the answer is already known, because the
-                 * reseed floor above has made it exactly 0 -- worth doing because
+                 * rebuild above has made it exactly 0 -- worth doing because
                  * this root, unlike stddev.c's, sits in the fused loop with a
                  * carried dependency and cannot vectorize, so running it on flat
                  * input cost 1.59x.
@@ -14245,6 +14263,7 @@ class Core {
              double variance;
              double _invPeriod;
              double _tempReal;
+             double _peakTotal2;
              int _i;
              int _j;
              int _outIdx;
@@ -14277,12 +14296,14 @@ class Core {
              _i = startIdx;
              _outIdx = 0;
              _barsSinceReseed = 32 * optInTimePeriod;
+             _peakTotal2 = varTotal2;
              do {
                 maTotal += (double)inReal[_i];
                 _tempReal = (double)inReal[_i] - shift;
                 varTotal1 += _tempReal;
                 _tempReal *= _tempReal;
                 varTotal2 += _tempReal;
+                _peakTotal2 = (varTotal2 > _peakTotal2) ? varTotal2 : _peakTotal2;
                 meanValue1 = varTotal1 * _invPeriod;
                 variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                 tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
@@ -14293,7 +14314,7 @@ class Core {
                 varTotal2 -= _tempReal;
                 _trailingIdx += 1;
                 _barsSinceReseed -= 1;
-                if( variance < 0.000001 * (varTotal2 * _invPeriod) || _tempReal > 1000000.0 * varTotal2 || _barsSinceReseed <= 0 ) {
+                if( variance < 0.000001 * (_peakTotal2 * _invPeriod) || _barsSinceReseed <= 0 ) {
                    _barsSinceReseed = 32 * optInTimePeriod;
                    _windowStart = _i - _lookbackTotal;
                    _tempReal = 0.0;
@@ -14311,6 +14332,20 @@ class Core {
                    }
                    meanValue1 = varTotal1 * _invPeriod;
                    variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                   if( variance < 0.000001 * (varTotal2 * _invPeriod) ) {
+                      shift = (double)inReal[_i];
+                      varTotal1 = 0.0;
+                      varTotal2 = 0.0;
+                      for( _j = _windowStart; _j <= _i; _j += 1 ) {
+                         _tempReal = (double)inReal[_j] - shift;
+                         varTotal1 += _tempReal;
+                         _tempReal *= _tempReal;
+                         varTotal2 += _tempReal;
+                      }
+                      meanValue1 = varTotal1 * _invPeriod;
+                      variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
+                   }
+                   _peakTotal2 = varTotal2;
                    if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
                       variance = 0.0;
                    }
@@ -15243,8 +15278,8 @@ class Core {
              S_y += y;
              denom_scale = n * S_xx;
              denom = denom_scale - S_x * S_x;
-             /* Re-anchor and rebuild when the shift has gone stale. The same three
-              * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+             /* Re-anchor and rebuild when the shift has gone stale. Three triggers:
+              * the denominator has shrunk below 1e-6 of the scale
               * it is extracted from; OR the return that just left sat so far from the
               * shift that its squared term dwarfs what remains; OR at least every 32
               * windows.
@@ -15277,10 +15312,10 @@ class Core {
               * both from the start; this brings BETA level. S_yy exists only to scale
               * this test -- nothing else reads it.
               *
-              * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
-              * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
-              * into S_xx, so the ratio when that term leaves lands an order or two
-              * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+              * The threshold is 1e3, not the 1e6 a price-scale series takes, because a
+              * return amplifies: a tick multiplying the price by k puts k-1 into the
+              * return and (k-1)^2 into S_xx, so the ratio when that term leaves lands
+              * an order or two below the value-scale case. At 1e6 a 1e5 tick slips
               * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
               * Pinned by test_beta_outlier_transit.
               *
@@ -15955,8 +15990,8 @@ class Core {
              S_y += y;
              denom_scale = sp.n * S_xx;
              denom = denom_scale - S_x * S_x;
-             /* Re-anchor and rebuild when the shift has gone stale. The same three
-              * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+             /* Re-anchor and rebuild when the shift has gone stale. Three triggers:
+              * the denominator has shrunk below 1e-6 of the scale
               * it is extracted from; OR the return that just left sat so far from the
               * shift that its squared term dwarfs what remains; OR at least every 32
               * windows.
@@ -15989,10 +16024,10 @@ class Core {
               * both from the start; this brings BETA level. S_yy exists only to scale
               * this test -- nothing else reads it.
               *
-              * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
-              * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
-              * into S_xx, so the ratio when that term leaves lands an order or two
-              * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+              * The threshold is 1e3, not the 1e6 a price-scale series takes, because a
+              * return amplifies: a tick multiplying the price by k puts k-1 into the
+              * return and (k-1)^2 into S_xx, so the ratio when that term leaves lands
+              * an order or two below the value-scale case. At 1e6 a 1e5 tick slips
               * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
               * Pinned by test_beta_outlier_transit.
               *
@@ -16160,8 +16195,8 @@ class Core {
           sp.S_y += y;
           denom_scale = sp.n * sp.S_xx;
           denom = denom_scale - sp.S_x * sp.S_x;
-          /* Re-anchor and rebuild when the shift has gone stale. The same three
-           * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+          /* Re-anchor and rebuild when the shift has gone stale. Three triggers:
+           * the denominator has shrunk below 1e-6 of the scale
            * it is extracted from; OR the return that just left sat so far from the
            * shift that its squared term dwarfs what remains; OR at least every 32
            * windows.
@@ -16194,10 +16229,10 @@ class Core {
            * both from the start; this brings BETA level. S_yy exists only to scale
            * this test -- nothing else reads it.
            *
-           * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
-           * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
-           * into S_xx, so the ratio when that term leaves lands an order or two
-           * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+           * The threshold is 1e3, not the 1e6 a price-scale series takes, because a
+           * return amplifies: a tick multiplying the price by k puts k-1 into the
+           * return and (k-1)^2 into S_xx, so the ratio when that term leaves lands
+           * an order or two below the value-scale case. At 1e6 a 1e5 tick slips
            * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
            * Pinned by test_beta_outlier_transit.
            *
@@ -16510,8 +16545,8 @@ class Core {
              S_y += y;
              denom_scale = n * S_xx;
              denom = denom_scale - S_x * S_x;
-             /* Re-anchor and rebuild when the shift has gone stale. The same three
-              * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+             /* Re-anchor and rebuild when the shift has gone stale. Three triggers:
+              * the denominator has shrunk below 1e-6 of the scale
               * it is extracted from; OR the return that just left sat so far from the
               * shift that its squared term dwarfs what remains; OR at least every 32
               * windows.
@@ -16544,10 +16579,10 @@ class Core {
               * both from the start; this brings BETA level. S_yy exists only to scale
               * this test -- nothing else reads it.
               *
-              * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
-              * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
-              * into S_xx, so the ratio when that term leaves lands an order or two
-              * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+              * The threshold is 1e3, not the 1e6 a price-scale series takes, because a
+              * return amplifies: a tick multiplying the price by k puts k-1 into the
+              * return and (k-1)^2 into S_xx, so the ratio when that term leaves lands
+              * an order or two below the value-scale case. At 1e6 a 1e5 tick slips
               * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
               * Pinned by test_beta_outlier_transit.
               *
@@ -73948,6 +73983,7 @@ class Core {
      *               and ssY are still ordinary normals, and the divide then
      *               returned NaN under TA_SUCCESS -- which the range clamp cannot
      *               catch -- or a perfect correlation from a degenerate window.
+     *  092226 MF,CC #434 rebuild against each side's peak sum of squares.
      */
 
        /**
@@ -73994,8 +74030,8 @@ class Core {
           double ssX = 0;
           double ssY = 0;
           double spXY = 0;
-          double leavingX = 0;
-          double leavingY = 0;
+          double peakX2 = 0;
+          double peakY2 = 0;
           double tempReal = 0;
           double invPeriod = 0;
           int lookbackTotal = 0;
@@ -74044,9 +74080,10 @@ class Core {
            * 1e-5 spread that is three of them, and the correlation of two perfectly
            * correlated series came back as 0, as -1, or as -1.73 (#242).
            *
-           * Anchor on the first window value here; every later re-anchor uses the
-           * window mean, which is better centred but costs a pass this one cannot
-           * afford before the sums exist.
+           * Anchor on the first window value here; a rebuild anchors on the window
+           * mean instead (or on a window value when the mean leaves the window
+           * flat), which is better centred but costs a pass this one cannot afford
+           * before the sums exist.
            */
           shiftX = inReal0[trailingIdx];
           shiftY = inReal1[trailingIdx];
@@ -74068,8 +74105,8 @@ class Core {
           today = startIdx;
           outIdx = 0;
           barsSinceReseed = 32 * optInTimePeriod;
-          leavingX = 0.0;
-          leavingY = 0.0;
+          peakX2 = sumX2;
+          peakY2 = sumY2;
           do {
              /* Add the incoming value, measured against the shift. */
              x = inReal0[today] - shiftX;
@@ -74079,24 +74116,20 @@ class Core {
              sumXY += x * y;
              sumY += y;
              sumY2 += y * y;
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+             peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
              ssX = sumX2 - sumX * sumX * invPeriod;
              ssY = sumY2 - sumY * sumY * invPeriod;
              spXY = sumXY - sumX * sumY * invPeriod;
-             /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-              * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-              * below 1e-6 of the squared deviations it is extracted from; OR the value
-              * the PREVIOUS bar removed sat so far from the shift that its squared term
-              * dwarfs what remains (a large outlier transiting the window buries the
-              * small terms below its ulp, and the residue it leaves is cancellation
-              * garbage); OR at least every 32 windows, so a slow drift stays bounded
-              * however long the series runs.
-              *
-              * One bar late is correct, not a compromise. leavingX/leavingY are set by
-              * the removal at the BOTTOM of the loop, so the bar on which the outlier
-              * actually leaves still computes its own output from sums that legitimately
-              * contain it. The trigger then fires on the NEXT bar -- the first one whose
-              * sums carry the residue -- and the reseed below recomputes that bar's
-              * output before it is written. No bar is ever emitted from the residue.
+             /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+              * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+              * every 32 windows. Measure against that peak, not the current sum: the
+              * rounding the running sums carry scales with the peak, so once a series
+              * settles back near its shift, or an outlier leaves the window, the
+              * current sum holds nothing but that rounding. Each side keeps its own
+              * peak: one peak shared by two series of different scale fires on every
+              * bar. The collapse is seen on the first bar whose sums carry it, and the
+              * rebuild recomputes that bar's output before it is written.
               *
               * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
               * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -74109,7 +74142,7 @@ class Core {
               * startIdx-lookbackTotal+outIdx, which is >= outIdx.
               */
              barsSinceReseed -= 1;
-             if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+             if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = today - lookbackTotal;
                 /* Both means in one pass over the window: the rebuild below is the
@@ -74141,14 +74174,46 @@ class Core {
                 ssX = sumX2 - sumX * sumX * invPeriod;
                 ssY = sumY2 - sumY * sumY * invPeriod;
                 spXY = sumXY - sumX * sumY * invPeriod;
+                /* A side flat to within the rounding of its own mean leaves its sum of
+                 * squares at that rounding, which would fire the trigger again on every
+                 * bar. Anchored on one of its own values it cannot, short of squares
+                 * that underflow. sumXY depends on both shifts, so all five sums are
+                 * redone.
+                 */
+                if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+                   if( ssX < 0.000001 * sumX2 ) {
+                      shiftX = inReal0[today];
+                   }
+                   if( ssY < 0.000001 * sumY2 ) {
+                      shiftY = inReal1[today];
+                   }
+                   sumY2 = 0.0;
+                   sumX2 = sumY2;
+                   sumY = sumX2;
+                   sumX = sumY;
+                   sumXY = sumX;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      x = inReal0[j] - shiftX;
+                      sumX += x;
+                      sumX2 += x * x;
+                      y = inReal1[j] - shiftY;
+                      sumXY += x * y;
+                      sumY += y;
+                      sumY2 += y * y;
+                   }
+                   ssX = sumX2 - sumX * sumX * invPeriod;
+                   ssY = sumY2 - sumY * sumY * invPeriod;
+                   spXY = sumXY - sumX * sumY * invPeriod;
+                }
+                peakX2 = sumX2;
+                peakY2 = sumY2;
                 /* A sum of squares is non-negative by definition, but this one is
                  * extracted as a difference, so its SIGN is not guaranteed on a window
                  * sitting inside a flat stretch. Enforce the invariant HERE and not at
-                 * the divide: a negative ssX always reseeds on the same bar (it makes
-                 * the first trigger's `negative < non-negative` true whenever sumX2 is
-                 * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-                 * divide below can rely on both being >= 0 and needs no sign test of
-                 * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+                 * the divide: a negative ssX always reseeds on the same bar, because
+                 * the peak it is compared with is never negative, so the divide below
+                 * can rely on both being >= 0 and needs no sign test of its own.
+                 * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
                  */
                 if( ssX < 0.0 ) {
                    ssX = 0.0;
@@ -74208,13 +74273,11 @@ class Core {
                 outReal[outIdx++] = 0.0;
              }
              /* Remove the trailing values (prepares the next window). */
-             leavingX = trailingX * trailingX;
-             leavingY = trailingY * trailingY;
              sumX -= trailingX;
-             sumX2 -= leavingX;
+             sumX2 -= trailingX * trailingX;
              sumXY -= trailingX * trailingY;
              sumY -= trailingY;
-             sumY2 -= leavingY;
+             sumY2 -= trailingY * trailingY;
              today += 1;
           } while( today <= endIdx );
           outNBElement.value = outIdx;
@@ -74243,8 +74306,8 @@ class Core {
           double ssX = 0;
           double ssY = 0;
           double spXY = 0;
-          double leavingX = 0;
-          double leavingY = 0;
+          double peakX2 = 0;
+          double peakY2 = 0;
           double tempReal = 0;
           double invPeriod = 0;
           int lookbackTotal = 0;
@@ -74296,8 +74359,8 @@ class Core {
           today = startIdx;
           outIdx = 0;
           barsSinceReseed = 32 * optInTimePeriod;
-          leavingX = 0.0;
-          leavingY = 0.0;
+          peakX2 = sumX2;
+          peakY2 = sumY2;
           do {
              x = (double)inReal0[today] - shiftX;
              sumX += x;
@@ -74306,11 +74369,13 @@ class Core {
              sumXY += x * y;
              sumY += y;
              sumY2 += y * y;
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+             peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
              ssX = sumX2 - sumX * sumX * invPeriod;
              ssY = sumY2 - sumY * sumY * invPeriod;
              spXY = sumXY - sumX * sumY * invPeriod;
              barsSinceReseed -= 1;
-             if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+             if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = today - lookbackTotal;
                 tempReal = 0.0;
@@ -74338,6 +74403,33 @@ class Core {
                 ssX = sumX2 - sumX * sumX * invPeriod;
                 ssY = sumY2 - sumY * sumY * invPeriod;
                 spXY = sumXY - sumX * sumY * invPeriod;
+                if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+                   if( ssX < 0.000001 * sumX2 ) {
+                      shiftX = (double)inReal0[today];
+                   }
+                   if( ssY < 0.000001 * sumY2 ) {
+                      shiftY = (double)inReal1[today];
+                   }
+                   sumY2 = 0.0;
+                   sumX2 = sumY2;
+                   sumY = sumX2;
+                   sumX = sumY;
+                   sumXY = sumX;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      x = (double)inReal0[j] - shiftX;
+                      sumX += x;
+                      sumX2 += x * x;
+                      y = (double)inReal1[j] - shiftY;
+                      sumXY += x * y;
+                      sumY += y;
+                      sumY2 += y * y;
+                   }
+                   ssX = sumX2 - sumX * sumX * invPeriod;
+                   ssY = sumY2 - sumY * sumY * invPeriod;
+                   spXY = sumXY - sumX * sumY * invPeriod;
+                }
+                peakX2 = sumX2;
+                peakY2 = sumY2;
                 if( ssX < 0.0 ) {
                    ssX = 0.0;
                 }
@@ -74359,13 +74451,11 @@ class Core {
              } else {
                 outReal[outIdx++] = 0.0;
              }
-             leavingX = trailingX * trailingX;
-             leavingY = trailingY * trailingY;
              sumX -= trailingX;
-             sumX2 -= leavingX;
+             sumX2 -= trailingX * trailingX;
              sumXY -= trailingX * trailingY;
              sumY -= trailingY;
-             sumY2 -= leavingY;
+             sumY2 -= trailingY * trailingY;
              today += 1;
           } while( today <= endIdx );
           outNBElement.value = outIdx;
@@ -74530,8 +74620,8 @@ class Core {
           private double sumY2;
           private double shiftX;
           private double shiftY;
-          private double leavingX;
-          private double leavingY;
+          private double peakX2;
+          private double peakY2;
           private double invPeriod;
           private int lookbackTotal;
           private int trailingIdx;
@@ -74591,8 +74681,8 @@ class Core {
              this.sumY2 = other.sumY2;
              this.shiftX = other.shiftX;
              this.shiftY = other.shiftY;
-             this.leavingX = other.leavingX;
-             this.leavingY = other.leavingY;
+             this.peakX2 = other.peakX2;
+             this.peakY2 = other.peakY2;
              this.invPeriod = other.invPeriod;
              this.lookbackTotal = other.lookbackTotal;
              this.trailingIdx = other.trailingIdx;
@@ -74659,6 +74749,8 @@ class Core {
              int barsSinceReseed = sp.barsSinceReseed;
              double cur_outReal = 0.0;
              int j = sp.j;
+             double peakX2 = sp.peakX2;
+             double peakY2 = sp.peakY2;
              double shiftX = sp.shiftX;
              double shiftY = sp.shiftY;
              double sumX = sp.sumX;
@@ -74683,24 +74775,20 @@ class Core {
              sumXY += x * y;
              sumY += y;
              sumY2 += y * y;
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+             peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
              ssX = sumX2 - sumX * sumX * sp.invPeriod;
              ssY = sumY2 - sumY * sumY * sp.invPeriod;
              spXY = sumXY - sumX * sumY * sp.invPeriod;
-             /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-              * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-              * below 1e-6 of the squared deviations it is extracted from; OR the value
-              * the PREVIOUS bar removed sat so far from the shift that its squared term
-              * dwarfs what remains (a large outlier transiting the window buries the
-              * small terms below its ulp, and the residue it leaves is cancellation
-              * garbage); OR at least every 32 windows, so a slow drift stays bounded
-              * however long the series runs.
-              *
-              * One bar late is correct, not a compromise. leavingX/leavingY are set by
-              * the removal at the BOTTOM of the loop, so the bar on which the outlier
-              * actually leaves still computes its own output from sums that legitimately
-              * contain it. The trigger then fires on the NEXT bar -- the first one whose
-              * sums carry the residue -- and the reseed below recomputes that bar's
-              * output before it is written. No bar is ever emitted from the residue.
+             /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+              * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+              * every 32 windows. Measure against that peak, not the current sum: the
+              * rounding the running sums carry scales with the peak, so once a series
+              * settles back near its shift, or an outlier leaves the window, the
+              * current sum holds nothing but that rounding. Each side keeps its own
+              * peak: one peak shared by two series of different scale fires on every
+              * bar. The collapse is seen on the first bar whose sums carry it, and the
+              * rebuild recomputes that bar's output before it is written.
               *
               * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
               * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -74713,7 +74801,7 @@ class Core {
               * startIdx-lookbackTotal+outIdx, which is >= outIdx.
               */
              barsSinceReseed -= 1;
-             if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || sp.leavingX > 1000000.0 * sumX2 || sp.leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+             if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * sp.optInTimePeriod;
                 windowStart = sp.today - sp.lookbackTotal;
                 /* Both means in one pass over the window: the rebuild below is the
@@ -74745,14 +74833,46 @@ class Core {
                 ssX = sumX2 - sumX * sumX * sp.invPeriod;
                 ssY = sumY2 - sumY * sumY * sp.invPeriod;
                 spXY = sumXY - sumX * sumY * sp.invPeriod;
+                /* A side flat to within the rounding of its own mean leaves its sum of
+                 * squares at that rounding, which would fire the trigger again on every
+                 * bar. Anchored on one of its own values it cannot, short of squares
+                 * that underflow. sumXY depends on both shifts, so all five sums are
+                 * redone.
+                 */
+                if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+                   if( ssX < 0.000001 * sumX2 ) {
+                      shiftX = ((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal0[sp.today & sp.xMask] : pkVal0;
+                   }
+                   if( ssY < 0.000001 * sumY2 ) {
+                      shiftY = ((sp.today & sp.xMask) != pkSlot1) ? sp.x_inReal1[sp.today & sp.xMask] : pkVal1;
+                   }
+                   sumY2 = 0.0;
+                   sumX2 = sumY2;
+                   sumY = sumX2;
+                   sumX = sumY;
+                   sumXY = sumX;
+                   for( j = windowStart; j <= sp.today; j += 1 ) {
+                      x = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0) - shiftX;
+                      sumX += x;
+                      sumX2 += x * x;
+                      y = (((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1) - shiftY;
+                      sumXY += x * y;
+                      sumY += y;
+                      sumY2 += y * y;
+                   }
+                   ssX = sumX2 - sumX * sumX * sp.invPeriod;
+                   ssY = sumY2 - sumY * sumY * sp.invPeriod;
+                   spXY = sumXY - sumX * sumY * sp.invPeriod;
+                }
+                peakX2 = sumX2;
+                peakY2 = sumY2;
                 /* A sum of squares is non-negative by definition, but this one is
                  * extracted as a difference, so its SIGN is not guaranteed on a window
                  * sitting inside a flat stretch. Enforce the invariant HERE and not at
-                 * the divide: a negative ssX always reseeds on the same bar (it makes
-                 * the first trigger's `negative < non-negative` true whenever sumX2 is
-                 * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-                 * divide below can rely on both being >= 0 and needs no sign test of
-                 * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+                 * the divide: a negative ssX always reseeds on the same bar, because
+                 * the peak it is compared with is never negative, so the divide below
+                 * can rely on both being >= 0 and needs no sign test of its own.
+                 * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
                  */
                 if( ssX < 0.0 ) {
                    ssX = 0.0;
@@ -74856,24 +74976,20 @@ class Core {
           sp.sumXY += x * y;
           sp.sumY += y;
           sp.sumY2 += y * y;
+          sp.peakX2 = (sp.sumX2 > sp.peakX2) ? sp.sumX2 : sp.peakX2;
+          sp.peakY2 = (sp.sumY2 > sp.peakY2) ? sp.sumY2 : sp.peakY2;
           ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
           ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
           spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
-          /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-           * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-           * below 1e-6 of the squared deviations it is extracted from; OR the value
-           * the PREVIOUS bar removed sat so far from the shift that its squared term
-           * dwarfs what remains (a large outlier transiting the window buries the
-           * small terms below its ulp, and the residue it leaves is cancellation
-           * garbage); OR at least every 32 windows, so a slow drift stays bounded
-           * however long the series runs.
-           *
-           * One bar late is correct, not a compromise. leavingX/leavingY are set by
-           * the removal at the BOTTOM of the loop, so the bar on which the outlier
-           * actually leaves still computes its own output from sums that legitimately
-           * contain it. The trigger then fires on the NEXT bar -- the first one whose
-           * sums carry the residue -- and the reseed below recomputes that bar's
-           * output before it is written. No bar is ever emitted from the residue.
+          /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+           * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+           * every 32 windows. Measure against that peak, not the current sum: the
+           * rounding the running sums carry scales with the peak, so once a series
+           * settles back near its shift, or an outlier leaves the window, the
+           * current sum holds nothing but that rounding. Each side keeps its own
+           * peak: one peak shared by two series of different scale fires on every
+           * bar. The collapse is seen on the first bar whose sums carry it, and the
+           * rebuild recomputes that bar's output before it is written.
            *
            * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
            * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -74886,7 +75002,7 @@ class Core {
            * startIdx-lookbackTotal+outIdx, which is >= outIdx.
            */
           sp.barsSinceReseed -= 1;
-          if( ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 || sp.leavingX > 1000000.0 * sp.sumX2 || sp.leavingY > 1000000.0 * sp.sumY2 || sp.barsSinceReseed <= 0 ) {
+          if( ssX < 0.000001 * sp.peakX2 || ssY < 0.000001 * sp.peakY2 || sp.barsSinceReseed <= 0 ) {
              sp.barsSinceReseed = 32 * sp.optInTimePeriod;
              windowStart = sp.today - sp.lookbackTotal;
              /* Both means in one pass over the window: the rebuild below is the
@@ -74918,14 +75034,46 @@ class Core {
              ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
              ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
              spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+             /* A side flat to within the rounding of its own mean leaves its sum of
+              * squares at that rounding, which would fire the trigger again on every
+              * bar. Anchored on one of its own values it cannot, short of squares
+              * that underflow. sumXY depends on both shifts, so all five sums are
+              * redone.
+              */
+             if( ssX < 0.000001 * sp.sumX2 || ssY < 0.000001 * sp.sumY2 ) {
+                if( ssX < 0.000001 * sp.sumX2 ) {
+                   sp.shiftX = sp.x_inReal0[sp.today & sp.xMask];
+                }
+                if( ssY < 0.000001 * sp.sumY2 ) {
+                   sp.shiftY = sp.x_inReal1[sp.today & sp.xMask];
+                }
+                sp.sumY2 = 0.0;
+                sp.sumX2 = sp.sumY2;
+                sp.sumY = sp.sumX2;
+                sp.sumX = sp.sumY;
+                sp.sumXY = sp.sumX;
+                for( sp.j = windowStart; sp.j <= sp.today; sp.j += 1 ) {
+                   x = sp.x_inReal0[sp.j & sp.xMask] - sp.shiftX;
+                   sp.sumX += x;
+                   sp.sumX2 += x * x;
+                   y = sp.x_inReal1[sp.j & sp.xMask] - sp.shiftY;
+                   sp.sumXY += x * y;
+                   sp.sumY += y;
+                   sp.sumY2 += y * y;
+                }
+                ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
+                ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
+                spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
+             }
+             sp.peakX2 = sp.sumX2;
+             sp.peakY2 = sp.sumY2;
              /* A sum of squares is non-negative by definition, but this one is
               * extracted as a difference, so its SIGN is not guaranteed on a window
               * sitting inside a flat stretch. Enforce the invariant HERE and not at
-              * the divide: a negative ssX always reseeds on the same bar (it makes
-              * the first trigger's `negative < non-negative` true whenever sumX2 is
-              * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-              * divide below can rely on both being >= 0 and needs no sign test of
-              * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+              * the divide: a negative ssX always reseeds on the same bar, because
+              * the peak it is compared with is never negative, so the divide below
+              * can rely on both being >= 0 and needs no sign test of its own.
+              * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
               */
              if( ssX < 0.0 ) {
                 ssX = 0.0;
@@ -74985,13 +75133,11 @@ class Core {
              sp.cur_outReal = 0.0;
           }
           /* Remove the trailing values (prepares the next window). */
-          sp.leavingX = trailingX * trailingX;
-          sp.leavingY = trailingY * trailingY;
           sp.sumX -= trailingX;
-          sp.sumX2 -= sp.leavingX;
+          sp.sumX2 -= trailingX * trailingX;
           sp.sumXY -= trailingX * trailingY;
           sp.sumY -= trailingY;
-          sp.sumY2 -= sp.leavingY;
+          sp.sumY2 -= trailingY * trailingY;
           sp.today += 1;
        }
        private RetCode correlOpenImpl( CorrelStream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
@@ -75010,8 +75156,8 @@ class Core {
           double ssX = 0;
           double ssY = 0;
           double spXY = 0;
-          double leavingX = 0;
-          double leavingY = 0;
+          double peakX2 = 0;
+          double peakY2 = 0;
           double tempReal = 0;
           double invPeriod = 0;
           int lookbackTotal = 0;
@@ -75070,9 +75216,10 @@ class Core {
            * 1e-5 spread that is three of them, and the correlation of two perfectly
            * correlated series came back as 0, as -1, or as -1.73 (#242).
            *
-           * Anchor on the first window value here; every later re-anchor uses the
-           * window mean, which is better centred but costs a pass this one cannot
-           * afford before the sums exist.
+           * Anchor on the first window value here; a rebuild anchors on the window
+           * mean instead (or on a window value when the mean leaves the window
+           * flat), which is better centred but costs a pass this one cannot afford
+           * before the sums exist.
            */
           shiftX = inReal0[trailingIdx];
           shiftY = inReal1[trailingIdx];
@@ -75094,8 +75241,8 @@ class Core {
           today = startIdx;
           outIdx = 0;
           barsSinceReseed = 32 * optInTimePeriod;
-          leavingX = 0.0;
-          leavingY = 0.0;
+          peakX2 = sumX2;
+          peakY2 = sumY2;
           do {
              /* Add the incoming value, measured against the shift. */
              x = inReal0[today] - shiftX;
@@ -75105,24 +75252,20 @@ class Core {
              sumXY += x * y;
              sumY += y;
              sumY2 += y * y;
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+             peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
              ssX = sumX2 - sumX * sumX * invPeriod;
              ssY = sumY2 - sumY * sumY * invPeriod;
              spXY = sumXY - sumX * sumY * invPeriod;
-             /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
-              * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
-              * below 1e-6 of the squared deviations it is extracted from; OR the value
-              * the PREVIOUS bar removed sat so far from the shift that its squared term
-              * dwarfs what remains (a large outlier transiting the window buries the
-              * small terms below its ulp, and the residue it leaves is cancellation
-              * garbage); OR at least every 32 windows, so a slow drift stays bounded
-              * however long the series runs.
-              *
-              * One bar late is correct, not a compromise. leavingX/leavingY are set by
-              * the removal at the BOTTOM of the loop, so the bar on which the outlier
-              * actually leaves still computes its own output from sums that legitimately
-              * contain it. The trigger then fires on the NEXT bar -- the first one whose
-              * sums carry the residue -- and the reseed below recomputes that bar's
-              * output before it is written. No bar is ever emitted from the residue.
+             /* Rebuild with a fresh two-pass when either sum of squares has shrunk
+              * below 1e-6 of the LARGEST one held since the last rebuild, or at least
+              * every 32 windows. Measure against that peak, not the current sum: the
+              * rounding the running sums carry scales with the peak, so once a series
+              * settles back near its shift, or an outlier leaves the window, the
+              * current sum holds nothing but that rounding. Each side keeps its own
+              * peak: one peak shared by two series of different scale fires on every
+              * bar. The collapse is seen on the first bar whose sums carry it, and the
+              * rebuild recomputes that bar's output before it is written.
               *
               * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
               * legitimate answer - two uncorrelated series - not a loss of digits, and
@@ -75135,7 +75278,7 @@ class Core {
               * startIdx-lookbackTotal+outIdx, which is >= outIdx.
               */
              barsSinceReseed -= 1;
-             if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+             if( ssX < 0.000001 * peakX2 || ssY < 0.000001 * peakY2 || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = today - lookbackTotal;
                 /* Both means in one pass over the window: the rebuild below is the
@@ -75167,14 +75310,46 @@ class Core {
                 ssX = sumX2 - sumX * sumX * invPeriod;
                 ssY = sumY2 - sumY * sumY * invPeriod;
                 spXY = sumXY - sumX * sumY * invPeriod;
+                /* A side flat to within the rounding of its own mean leaves its sum of
+                 * squares at that rounding, which would fire the trigger again on every
+                 * bar. Anchored on one of its own values it cannot, short of squares
+                 * that underflow. sumXY depends on both shifts, so all five sums are
+                 * redone.
+                 */
+                if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 ) {
+                   if( ssX < 0.000001 * sumX2 ) {
+                      shiftX = inReal0[today];
+                   }
+                   if( ssY < 0.000001 * sumY2 ) {
+                      shiftY = inReal1[today];
+                   }
+                   sumY2 = 0.0;
+                   sumX2 = sumY2;
+                   sumY = sumX2;
+                   sumX = sumY;
+                   sumXY = sumX;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      x = inReal0[j] - shiftX;
+                      sumX += x;
+                      sumX2 += x * x;
+                      y = inReal1[j] - shiftY;
+                      sumXY += x * y;
+                      sumY += y;
+                      sumY2 += y * y;
+                   }
+                   ssX = sumX2 - sumX * sumX * invPeriod;
+                   ssY = sumY2 - sumY * sumY * invPeriod;
+                   spXY = sumXY - sumX * sumY * invPeriod;
+                }
+                peakX2 = sumX2;
+                peakY2 = sumY2;
                 /* A sum of squares is non-negative by definition, but this one is
                  * extracted as a difference, so its SIGN is not guaranteed on a window
                  * sitting inside a flat stretch. Enforce the invariant HERE and not at
-                 * the divide: a negative ssX always reseeds on the same bar (it makes
-                 * the first trigger's `negative < non-negative` true whenever sumX2 is
-                 * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
-                 * divide below can rely on both being >= 0 and needs no sign test of
-                 * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+                 * the divide: a negative ssX always reseeds on the same bar, because
+                 * the peak it is compared with is never negative, so the divide below
+                 * can rely on both being >= 0 and needs no sign test of its own.
+                 * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
                  */
                 if( ssX < 0.0 ) {
                    ssX = 0.0;
@@ -75234,13 +75409,11 @@ class Core {
                 outReal[outIdx++ * outStride] = 0.0;
              }
              /* Remove the trailing values (prepares the next window). */
-             leavingX = trailingX * trailingX;
-             leavingY = trailingY * trailingY;
              sumX -= trailingX;
-             sumX2 -= leavingX;
+             sumX2 -= trailingX * trailingX;
              sumXY -= trailingX * trailingY;
              sumY -= trailingY;
-             sumY2 -= leavingY;
+             sumY2 -= trailingY * trailingY;
              today += 1;
           } while( today <= endIdx );
           outNBElement.value = outIdx;
@@ -75267,8 +75440,8 @@ class Core {
           sp.sumY2 = sumY2;
           sp.shiftX = shiftX;
           sp.shiftY = shiftY;
-          sp.leavingX = leavingX;
-          sp.leavingY = leavingY;
+          sp.peakX2 = peakX2;
+          sp.peakY2 = peakY2;
           sp.invPeriod = invPeriod;
           sp.lookbackTotal = lookbackTotal;
           sp.trailingIdx = trailingIdx;
@@ -77065,6 +77238,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  091526 KL     First version (proposal-drafts issue #74).
      *  092126 MF,CC  Rebuild against the peak sum of squares (issue #430).
+     *  092226 MF,CC  #434 branch-free peak update.
      */
 
        /**
@@ -77159,9 +77333,10 @@ class Core {
            * (#242): n*Sxx - Sx*Sx on raw price levels, as the author's listing writes
            * it, cancels catastrophically once the spread is small against the level.
            *
-           * Anchor on the first window value here; every later re-anchor uses the
-           * window mean, which is better centred but costs a pass this one cannot
-           * afford before the sums exist.
+           * Anchor on the first window value here; a rebuild anchors on the window
+           * mean instead (or on inReal[today] when the mean leaves the window
+           * flat), which is better centred but costs a pass this one cannot afford
+           * before the sums exist.
            */
           shift = inReal[trailingIdx];
           /* The initial window, less its last bar. This bar's y is startIdx-j, since
@@ -77187,9 +77362,7 @@ class Core {
              x = inReal[today] - shift;
              sumX += x;
              sumX2 += x * x;
-             if( sumX2 > peakX2 ) {
-                peakX2 = sumX2;
-             }
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
              ssX = sumX2 - sumX * sumX * invPeriod;
              spXY = sumXY - sumX * sumY * invPeriod;
              /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -77225,7 +77398,8 @@ class Core {
                 /* A window flat to within the rounding of its own mean leaves ssX at
                  * that rounding, which would fire the trigger again on every bar.
                  * Anchored on one of its own values instead, ssX is at least half the
-                 * squared range and sumX2 at most n times it, so it cannot.
+                 * squared range and sumX2 at most n times it, so it cannot, short of
+                 * squares that underflow.
                  */
                 if( sumX2 - sumX * sumX * invPeriod < 0.000001 * sumX2 ) {
                    shift = inReal[today];
@@ -77367,9 +77541,7 @@ class Core {
              x = (double)inReal[today] - shift;
              sumX += x;
              sumX2 += x * x;
-             if( sumX2 > peakX2 ) {
-                peakX2 = sumX2;
-             }
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
              ssX = sumX2 - sumX * sumX * invPeriod;
              spXY = sumXY - sumX * sumY * invPeriod;
              barsSinceReseed -= 1;
@@ -77737,9 +77909,7 @@ class Core {
              x = (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0) - shift;
              sumX += x;
              sumX2 += x * x;
-             if( sumX2 > peakX2 ) {
-                peakX2 = sumX2;
-             }
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
              ssX = sumX2 - sumX * sumX * sp.invPeriod;
              spXY = sumXY - sumX * sp.sumY * sp.invPeriod;
              /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -77775,7 +77945,8 @@ class Core {
                 /* A window flat to within the rounding of its own mean leaves ssX at
                  * that rounding, which would fire the trigger again on every bar.
                  * Anchored on one of its own values instead, ssX is at least half the
-                 * squared range and sumX2 at most n times it, so it cannot.
+                 * squared range and sumX2 at most n times it, so it cannot, short of
+                 * squares that underflow.
                  */
                 if( sumX2 - sumX * sumX * sp.invPeriod < 0.000001 * sumX2 ) {
                    shift = ((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0;
@@ -77868,9 +78039,7 @@ class Core {
           x = sp.x_inReal[sp.today & sp.xMask] - sp.shift;
           sp.sumX += x;
           sp.sumX2 += x * x;
-          if( sp.sumX2 > sp.peakX2 ) {
-             sp.peakX2 = sp.sumX2;
-          }
+          sp.peakX2 = (sp.sumX2 > sp.peakX2) ? sp.sumX2 : sp.peakX2;
           ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
           spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
           /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -77906,7 +78075,8 @@ class Core {
              /* A window flat to within the rounding of its own mean leaves ssX at
               * that rounding, which would fire the trigger again on every bar.
               * Anchored on one of its own values instead, ssX is at least half the
-              * squared range and sumX2 at most n times it, so it cannot.
+              * squared range and sumX2 at most n times it, so it cannot, short of
+              * squares that underflow.
               */
              if( sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod < 0.000001 * sp.sumX2 ) {
                 sp.shift = sp.x_inReal[sp.today & sp.xMask];
@@ -78043,9 +78213,10 @@ class Core {
            * (#242): n*Sxx - Sx*Sx on raw price levels, as the author's listing writes
            * it, cancels catastrophically once the spread is small against the level.
            *
-           * Anchor on the first window value here; every later re-anchor uses the
-           * window mean, which is better centred but costs a pass this one cannot
-           * afford before the sums exist.
+           * Anchor on the first window value here; a rebuild anchors on the window
+           * mean instead (or on inReal[today] when the mean leaves the window
+           * flat), which is better centred but costs a pass this one cannot afford
+           * before the sums exist.
            */
           shift = inReal[trailingIdx];
           /* The initial window, less its last bar. This bar's y is startIdx-j, since
@@ -78071,9 +78242,7 @@ class Core {
              x = inReal[today] - shift;
              sumX += x;
              sumX2 += x * x;
-             if( sumX2 > peakX2 ) {
-                peakX2 = sumX2;
-             }
+             peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
              ssX = sumX2 - sumX * sumX * invPeriod;
              spXY = sumXY - sumX * sumY * invPeriod;
              /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -78109,7 +78278,8 @@ class Core {
                 /* A window flat to within the rounding of its own mean leaves ssX at
                  * that rounding, which would fire the trigger again on every bar.
                  * Anchored on one of its own values instead, ssX is at least half the
-                 * squared range and sumX2 at most n times it, so it cannot.
+                 * squared range and sumX2 at most n times it, so it cannot, short of
+                 * squares that underflow.
                  */
                 if( sumX2 - sumX * sumX * invPeriod < 0.000001 * sumX2 ) {
                    shift = inReal[today];
@@ -110418,9 +110588,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -110882,9 +111051,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -111004,9 +111172,8 @@ class Core {
            *     after it is gone (measured 31x at period 5), and this rebuilds on
            *     the bar it leaves instead.
            *
-           * The threshold compares two DEGREE-1 quantities, which is why it is 100
-           * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-           * against a sum of squares. On ordinary prices the ratio is ~1 and this
+           * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+           * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
            * never fires; it is a compare, not work. The constant is 100 rather than
            * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
            * measured accuracy gain.
@@ -111195,9 +111362,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -111541,9 +111707,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -112002,9 +112167,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -112122,9 +112286,8 @@ class Core {
            *     after it is gone (measured 31x at period 5), and this rebuilds on
            *     the bar it leaves instead.
            *
-           * The threshold compares two DEGREE-1 quantities, which is why it is 100
-           * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-           * against a sum of squares. On ordinary prices the ratio is ~1 and this
+           * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+           * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
            * never fires; it is a compare, not work. The constant is 100 rather than
            * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
            * measured accuracy gain.
@@ -112310,9 +112473,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -112652,9 +112814,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -113111,9 +113272,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -113231,9 +113391,8 @@ class Core {
            *     after it is gone (measured 31x at period 5), and this rebuilds on
            *     the bar it leaves instead.
            *
-           * The threshold compares two DEGREE-1 quantities, which is why it is 100
-           * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-           * against a sum of squares. On ordinary prices the ratio is ~1 and this
+           * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+           * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
            * never fires; it is a compare, not work. The constant is 100 rather than
            * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
            * measured accuracy gain.
@@ -113419,9 +113578,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -113759,9 +113917,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -114215,9 +114372,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -114333,9 +114489,8 @@ class Core {
            *     after it is gone (measured 31x at period 5), and this rebuilds on
            *     the bar it leaves instead.
            *
-           * The threshold compares two DEGREE-1 quantities, which is why it is 100
-           * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-           * against a sum of squares. On ordinary prices the ratio is ~1 and this
+           * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+           * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
            * never fires; it is a compare, not work. The constant is 100 rather than
            * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
            * measured accuracy gain.
@@ -114518,9 +114673,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -152007,6 +152161,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  090526 MF,CC  First version (issue #366).
+     *  092226 MF,CC  #434 the three variance steps follow var.c.
      */
 
        /**
@@ -152057,6 +152212,7 @@ class Core {
           double periodTotal2 = 0;
           double meanValue1 = 0;
           double variance = 0;
+          double peakTotal2 = 0;
           double invPeriod = 0;
           double sigma = 0;
           double delta = 0;
@@ -152132,6 +152288,7 @@ class Core {
              periodTotal2 += tempReal;
           }
           barsSinceReseed = 32 * optInStdDevPeriod;
+          peakTotal2 = periodTotal2;
           /* Seed both legs with the simple average of the first 'optInTimePeriod'
            * volatilities, as rma.c seeds. optInStdDevPeriod >= 2 is what keeps the
            * inReal[today-1] below in bounds on the very first bar.
@@ -152143,6 +152300,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = inReal[trailingIdx] - shift;
@@ -152151,7 +152309,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -152169,6 +152327,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -152195,6 +152367,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = inReal[trailingIdx] - shift;
@@ -152203,7 +152376,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -152221,6 +152394,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -152256,6 +152443,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = inReal[trailingIdx] - shift;
@@ -152264,7 +152452,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -152282,6 +152470,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -152324,6 +152526,7 @@ class Core {
           double periodTotal2 = 0;
           double meanValue1 = 0;
           double variance = 0;
+          double peakTotal2 = 0;
           double invPeriod = 0;
           double sigma = 0;
           double delta = 0;
@@ -152388,6 +152591,7 @@ class Core {
              periodTotal2 += tempReal;
           }
           barsSinceReseed = 32 * optInStdDevPeriod;
+          peakTotal2 = periodTotal2;
           upTotal = 0.0;
           dnTotal = 0.0;
           for( i = optInTimePeriod; i > 0; i -= 1 ) {
@@ -152395,6 +152599,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = (double)inReal[trailingIdx] - shift;
@@ -152403,7 +152608,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -152421,6 +152626,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = (double)inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = (double)inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -152446,6 +152665,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = (double)inReal[trailingIdx] - shift;
@@ -152454,7 +152674,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -152472,6 +152692,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = (double)inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = (double)inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -152502,6 +152736,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = (double)inReal[trailingIdx] - shift;
@@ -152510,7 +152745,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -152528,6 +152763,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = (double)inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = (double)inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -152731,6 +152980,7 @@ class Core {
           private double shift;
           private double periodTotal1;
           private double periodTotal2;
+          private double peakTotal2;
           private double invPeriod;
           private double prevUp;
           private double prevDn;
@@ -152792,6 +153042,7 @@ class Core {
              this.shift = other.shift;
              this.periodTotal1 = other.periodTotal1;
              this.periodTotal2 = other.periodTotal2;
+             this.peakTotal2 = other.peakTotal2;
              this.invPeriod = other.invPeriod;
              this.prevUp = other.prevUp;
              this.prevDn = other.prevDn;
@@ -152864,6 +153115,7 @@ class Core {
              int barsSinceReseed = sp.barsSinceReseed;
              double cur_outReal = 0.0;
              int j = sp.j;
+             double peakTotal2 = sp.peakTotal2;
              double periodTotal1 = sp.periodTotal1;
              double periodTotal2 = sp.periodTotal2;
              double prevDn = sp.prevDn;
@@ -152879,6 +153131,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * sp.invPeriod;
              variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
              tempReal = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0) - shift;
@@ -152887,7 +153140,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * sp.invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * sp.optInStdDevPeriod;
                 windowStart = sp.today - sp.nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -152905,6 +153158,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * sp.invPeriod;
                 variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) ) {
+                   shift = ((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0;
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= sp.today; j += 1 ) {
+                      tempReal = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * sp.invPeriod;
+                   variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * sp.invPeriod) ) {
                    variance = 0.0;
                 }
@@ -152970,6 +153237,7 @@ class Core {
           sp.periodTotal1 += tempReal;
           tempReal *= tempReal;
           sp.periodTotal2 += tempReal;
+          sp.peakTotal2 = (sp.periodTotal2 > sp.peakTotal2) ? sp.periodTotal2 : sp.peakTotal2;
           meanValue1 = sp.periodTotal1 * sp.invPeriod;
           variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
           tempReal = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
@@ -152978,7 +153246,7 @@ class Core {
           sp.periodTotal2 -= tempReal;
           sp.trailingIdx += 1;
           sp.barsSinceReseed -= 1;
-          if( variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
+          if( variance < 0.000001 * (sp.peakTotal2 * sp.invPeriod) || sp.barsSinceReseed <= 0 ) {
              sp.barsSinceReseed = 32 * sp.optInStdDevPeriod;
              sp.windowStart = sp.today - sp.nbInitialElementNeeded;
              tempReal = 0.0;
@@ -152996,6 +153264,20 @@ class Core {
              }
              meanValue1 = sp.periodTotal1 * sp.invPeriod;
              variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+             if( variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) ) {
+                sp.shift = sp.x_inReal[sp.today & sp.xMask];
+                sp.periodTotal1 = 0.0;
+                sp.periodTotal2 = 0.0;
+                for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
+                   tempReal = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
+                   sp.periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   sp.periodTotal2 += tempReal;
+                }
+                meanValue1 = sp.periodTotal1 * sp.invPeriod;
+                variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+             }
+             sp.peakTotal2 = sp.periodTotal2;
              if( variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
                 variance = 0.0;
              }
@@ -153028,6 +153310,7 @@ class Core {
           double periodTotal2 = 0;
           double meanValue1 = 0;
           double variance = 0;
+          double peakTotal2 = 0;
           double invPeriod = 0;
           double sigma = 0;
           double delta = 0;
@@ -153110,6 +153393,7 @@ class Core {
              periodTotal2 += tempReal;
           }
           barsSinceReseed = 32 * optInStdDevPeriod;
+          peakTotal2 = periodTotal2;
           /* Seed both legs with the simple average of the first 'optInTimePeriod'
            * volatilities, as rma.c seeds. optInStdDevPeriod >= 2 is what keeps the
            * inReal[today-1] below in bounds on the very first bar.
@@ -153121,6 +153405,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = inReal[trailingIdx] - shift;
@@ -153129,7 +153414,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -153147,6 +153432,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -153173,6 +153472,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = inReal[trailingIdx] - shift;
@@ -153181,7 +153481,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -153199,6 +153499,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -153234,6 +153548,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = inReal[trailingIdx] - shift;
@@ -153242,7 +153557,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInStdDevPeriod;
                 windowStart = today - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -153260,6 +153575,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[today];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= today; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -153303,6 +153632,7 @@ class Core {
           sp.shift = shift;
           sp.periodTotal1 = periodTotal1;
           sp.periodTotal2 = periodTotal2;
+          sp.peakTotal2 = peakTotal2;
           sp.invPeriod = invPeriod;
           sp.prevUp = prevUp;
           sp.prevDn = prevDn;
@@ -161390,9 +161720,8 @@ class Core {
            *
            * Multiply also by the ratio specified.
            *
-           * Unconditional. var owns the dead-zone and owns the sign: it returns a
-           * non-negative variance, already floored to exactly 0 on any window whose
-           * re-anchored spread sat under its own rounding noise (var.c). What used to
+           * Unconditional. var owns the sign: it returns a non-negative variance,
+           * exactly 0 on a window of identical values (var.c). What used to
            * stand here instead - zero the output wherever the variance fell under
            * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
            * at a price level rather than a noise floor: a $100.00 instrument quoted in
@@ -161806,9 +162135,8 @@ class Core {
            *
            * Multiply also by the ratio specified.
            *
-           * Unconditional. var owns the dead-zone and owns the sign: it returns a
-           * non-negative variance, already floored to exactly 0 on any window whose
-           * re-anchored spread sat under its own rounding noise (var.c). What used to
+           * Unconditional. var owns the sign: it returns a non-negative variance,
+           * exactly 0 on a window of identical values (var.c). What used to
            * stand here instead - zero the output wherever the variance fell under
            * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
            * at a price level rather than a noise floor: a $100.00 instrument quoted in
@@ -173351,9 +173679,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -173815,9 +174142,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -173937,9 +174263,8 @@ class Core {
            *     after it is gone (measured 31x at period 5), and this rebuilds on
            *     the bar it leaves instead.
            *
-           * The threshold compares two DEGREE-1 quantities, which is why it is 100
-           * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-           * against a sum of squares. On ordinary prices the ratio is ~1 and this
+           * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+           * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
            * never fires; it is a compare, not work. The constant is 100 rather than
            * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
            * measured accuracy gain.
@@ -174128,9 +174453,8 @@ class Core {
               *     after it is gone (measured 31x at period 5), and this rebuilds on
               *     the bar it leaves instead.
               *
-              * The threshold compares two DEGREE-1 quantities, which is why it is 100
-              * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
-              * against a sum of squares. On ordinary prices the ratio is ~1 and this
+              * The threshold compares two DEGREE-1 quantities, so it is 100 rather
+              * than the 1e6 a degree-2 ratio would take. On ordinary prices it is ~1 and this
               * never fires; it is a compare, not work. The constant is 100 rather than
               * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
               * measured accuracy gain.
@@ -177278,6 +177602,7 @@ class Core {
      *  052603 MF     Adapt code to compile with .NET Managed C++
      *  071726 MF,CC  #118 cancellation-free variance (shifted sums + reseed); fixes bug 90.
      *  082326 MF,CC  #243 reseed floor is scale-relative, not `variance < 0`.
+     *  092226 MF,CC  #434 rebuild against the peak sum of squares; re-anchor a flat window.
      */
 
        /**
@@ -177325,6 +177650,7 @@ class Core {
           double meanValue1 = 0;
           double variance = 0;
           double invPeriod = 0;
+          double peakTotal2 = 0;
           int i = 0;
           int j = 0;
           int outIdx = 0;
@@ -177385,12 +177711,14 @@ class Core {
           i = startIdx;
           outIdx = 0;
           barsSinceReseed = 32 * optInTimePeriod;
+          peakTotal2 = periodTotal2;
           do {
              /* Add the incoming value, measured against the shift. */
              tempReal = inReal[i] - shift;
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              /* Remove the trailing value (prepares the next window). */
@@ -177399,21 +177727,17 @@ class Core {
              tempReal *= tempReal;
              periodTotal2 -= tempReal;
              trailingIdx += 1;
-             /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
-              * when the shift is stale enough that the subtraction loses digits - i.e.
-              * the variance has shrunk below 1e-6 of the mean squared deviation it is
-              * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-              * 2e-10, so partial cancellation, not just total collapse, is caught); OR
-              * when the value just removed sat so far from the shift that its squared term
-              * (tempReal) dwarfs the surviving sum (a large outlier passing through the
-              * window buries the small terms below its ulp, and the residual left when it
-              * leaves is cancellation garbage); OR at least every 32 windows so a slow
-              * drift stays bounded regardless of the series length. The strict `<` also
-              * leaves an exactly-constant window (variance 0, scale 0) alone instead of
-              * reseeding it every bar. Guarantees a non-negative output.
+             /* Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+              * of the LARGEST mean squared deviation held since the last rebuild, or at
+              * least every 32 windows. Measure against that peak, not the current sum:
+              * the rounding the running sums carry scales with the peak, so once a
+              * series settles back near the shift, or an outlier leaves the window,
+              * the current sum holds nothing but that rounding. The collapse is seen
+              * on the first bar whose sums carry it, and the rebuild recomputes that
+              * bar.
               */
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -177431,54 +177755,31 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-                /* Floor the fresh figure at the same ratio the trigger above uses, now
-                 * measured against the RE-ANCHORED sums. With the shift AT the window
-                 * mean the deviations sum to ~0, so a real window has variance ~
-                 * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-                 * only when every deviation is the same value, i.e. when the spread is
-                 * at or under the rounding error of the mean itself. There is then no
-                 * spread the anchor could resolve, the surviving digits are noise, and
-                 * the honest answer is 0.
-                 *
-                 * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-                 * difference is load-bearing. periodTotal2*invPeriod is not the
-                 * variance here: it is variance + e^2, where e is the rounding error of
-                 * the reseed's own left-to-right sum for the mean -- exactly the term
-                 * the two-pass subtraction then cancels out. So the ratio measures how
-                 * badly that sum rounded, not how much signal survives, and matching
-                 * the trigger's 1e-6 fired ten orders before cancellation eats any
-                 * digits. It zeroed a variance the line above had just computed to nine
-                 * correct significant figures: 100011 bars at 31498938283.624615 with
-                 * two small outliers at period 99991 gives 1.0219900060103338e-09
-                 * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-                 * survives and every intended bit-zero still zeroes -- the live ratios
-                 * on flat data are 0 or ~1e-16, six orders the other side.
-                 *
-                 * This is the ONE dead-zone in the var/stddev/bbands family, and it is
-                 * relative rather than the `variance < 0.0` it replaced because two
-                 * things ride on it:
-                 *
-                 *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-                 *    side is >= 0 and any negative variance is clamped unconditionally -
-                 *    where `< 0.0` needed the three-case argument below to know that a
-                 *    negative one ever reaches this line.
-                 *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-                 *    anything under a fixed TA_EPSILON first. That compares a SQUARED
-                 *    quantity to 1e-14, which is a cliff at a price level and not a
-                 *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-                 *    variance around 1e-16 and came back exactly 0 on every bar (#243).
-                 *    Expressed here in the window's own units, the floor lets both of
-                 *    them square-root what they are handed unconditionally.
-                 *
-                 * Clamping HERE and not at the output write is what keeps this off the
-                 * per-bar path, and it is sufficient because a negative variance always
-                 * reseeds on the same bar - the guard above covers all three cases:
-                 * periodTotal2 > 0 makes its first disjunct `negative < positive`;
-                 * periodTotal2 < 0 makes the second disjunct's right side negative,
-                 * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-                 * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-                 * THIS - the alternative is an unconditional clamp at the output write,
-                 * which needs no such argument but does cost ~3%.
+                /* A window flat to within the rounding of its own mean leaves the
+                 * variance at that rounding, which would fire the trigger again on
+                 * every bar. Anchored on one of its own values it cannot: the variance
+                 * is then at least 1/(2n) of the mean square it is extracted from.
+                 */
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[i];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                /* Before the re-remove below: the peak must hold the whole window. */
+                peakTotal2 = periodTotal2;
+                /* After the re-anchor a window with any spread sits orders above this
+                 * floor, so it catches only a variance that rounding left at or below
+                 * 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+                 * square-root it unconditionally (#243). A negative variance always
+                 * gets here: the peak is never negative, so the trigger fires on it.
                  */
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
@@ -177515,6 +177816,7 @@ class Core {
           double meanValue1 = 0;
           double variance = 0;
           double invPeriod = 0;
+          double peakTotal2 = 0;
           int i = 0;
           int j = 0;
           int outIdx = 0;
@@ -177561,11 +177863,13 @@ class Core {
           i = startIdx;
           outIdx = 0;
           barsSinceReseed = 32 * optInTimePeriod;
+          peakTotal2 = periodTotal2;
           do {
              tempReal = (double)inReal[i] - shift;
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              tempReal = (double)inReal[trailingIdx] - shift;
@@ -177574,7 +177878,7 @@ class Core {
              periodTotal2 -= tempReal;
              trailingIdx += 1;
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -177592,6 +177896,20 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = (double)inReal[i];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      tempReal = (double)inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                peakTotal2 = periodTotal2;
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
                 }
@@ -177762,6 +178080,7 @@ class Core {
           private double periodTotal1;
           private double periodTotal2;
           private double invPeriod;
+          private double peakTotal2;
           private int trailingIdx;
           private int nbInitialElementNeeded;
           private int barsSinceReseed;
@@ -177818,6 +178137,7 @@ class Core {
              this.periodTotal1 = other.periodTotal1;
              this.periodTotal2 = other.periodTotal2;
              this.invPeriod = other.invPeriod;
+             this.peakTotal2 = other.peakTotal2;
              this.trailingIdx = other.trailingIdx;
              this.nbInitialElementNeeded = other.nbInitialElementNeeded;
              this.barsSinceReseed = other.barsSinceReseed;
@@ -177879,6 +178199,7 @@ class Core {
              int barsSinceReseed = sp.barsSinceReseed;
              double cur_outReal = 0.0;
              int j = sp.j;
+             double peakTotal2 = sp.peakTotal2;
              double periodTotal1 = sp.periodTotal1;
              double periodTotal2 = sp.periodTotal2;
              double shift = sp.shift;
@@ -177893,6 +178214,7 @@ class Core {
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * sp.invPeriod;
              variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
              /* Remove the trailing value (prepares the next window). */
@@ -177901,21 +178223,17 @@ class Core {
              tempReal *= tempReal;
              periodTotal2 -= tempReal;
              trailingIdx += 1;
-             /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
-              * when the shift is stale enough that the subtraction loses digits - i.e.
-              * the variance has shrunk below 1e-6 of the mean squared deviation it is
-              * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-              * 2e-10, so partial cancellation, not just total collapse, is caught); OR
-              * when the value just removed sat so far from the shift that its squared term
-              * (tempReal) dwarfs the surviving sum (a large outlier passing through the
-              * window buries the small terms below its ulp, and the residual left when it
-              * leaves is cancellation garbage); OR at least every 32 windows so a slow
-              * drift stays bounded regardless of the series length. The strict `<` also
-              * leaves an exactly-constant window (variance 0, scale 0) alone instead of
-              * reseeding it every bar. Guarantees a non-negative output.
+             /* Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+              * of the LARGEST mean squared deviation held since the last rebuild, or at
+              * least every 32 windows. Measure against that peak, not the current sum:
+              * the rounding the running sums carry scales with the peak, so once a
+              * series settles back near the shift, or an outlier leaves the window,
+              * the current sum holds nothing but that rounding. The collapse is seen
+              * on the first bar whose sums carry it, and the rebuild recomputes that
+              * bar.
               */
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * sp.invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * sp.optInTimePeriod;
                 windowStart = sp.i - sp.nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -177933,54 +178251,31 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * sp.invPeriod;
                 variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
-                /* Floor the fresh figure at the same ratio the trigger above uses, now
-                 * measured against the RE-ANCHORED sums. With the shift AT the window
-                 * mean the deviations sum to ~0, so a real window has variance ~
-                 * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-                 * only when every deviation is the same value, i.e. when the spread is
-                 * at or under the rounding error of the mean itself. There is then no
-                 * spread the anchor could resolve, the surviving digits are noise, and
-                 * the honest answer is 0.
-                 *
-                 * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-                 * difference is load-bearing. periodTotal2*invPeriod is not the
-                 * variance here: it is variance + e^2, where e is the rounding error of
-                 * the reseed's own left-to-right sum for the mean -- exactly the term
-                 * the two-pass subtraction then cancels out. So the ratio measures how
-                 * badly that sum rounded, not how much signal survives, and matching
-                 * the trigger's 1e-6 fired ten orders before cancellation eats any
-                 * digits. It zeroed a variance the line above had just computed to nine
-                 * correct significant figures: 100011 bars at 31498938283.624615 with
-                 * two small outliers at period 99991 gives 1.0219900060103338e-09
-                 * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-                 * survives and every intended bit-zero still zeroes -- the live ratios
-                 * on flat data are 0 or ~1e-16, six orders the other side.
-                 *
-                 * This is the ONE dead-zone in the var/stddev/bbands family, and it is
-                 * relative rather than the `variance < 0.0` it replaced because two
-                 * things ride on it:
-                 *
-                 *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-                 *    side is >= 0 and any negative variance is clamped unconditionally -
-                 *    where `< 0.0` needed the three-case argument below to know that a
-                 *    negative one ever reaches this line.
-                 *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-                 *    anything under a fixed TA_EPSILON first. That compares a SQUARED
-                 *    quantity to 1e-14, which is a cliff at a price level and not a
-                 *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-                 *    variance around 1e-16 and came back exactly 0 on every bar (#243).
-                 *    Expressed here in the window's own units, the floor lets both of
-                 *    them square-root what they are handed unconditionally.
-                 *
-                 * Clamping HERE and not at the output write is what keeps this off the
-                 * per-bar path, and it is sufficient because a negative variance always
-                 * reseeds on the same bar - the guard above covers all three cases:
-                 * periodTotal2 > 0 makes its first disjunct `negative < positive`;
-                 * periodTotal2 < 0 makes the second disjunct's right side negative,
-                 * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-                 * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-                 * THIS - the alternative is an unconditional clamp at the output write,
-                 * which needs no such argument but does cost ~3%.
+                /* A window flat to within the rounding of its own mean leaves the
+                 * variance at that rounding, which would fire the trigger again on
+                 * every bar. Anchored on one of its own values it cannot: the variance
+                 * is then at least 1/(2n) of the mean square it is extracted from.
+                 */
+                if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) ) {
+                   shift = ((sp.i & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.i & sp.xMask] : pkVal0;
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= sp.i; j += 1 ) {
+                      tempReal = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * sp.invPeriod;
+                   variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+                }
+                /* Before the re-remove below: the peak must hold the whole window. */
+                peakTotal2 = periodTotal2;
+                /* After the re-anchor a window with any spread sits orders above this
+                 * floor, so it catches only a variance that rounding left at or below
+                 * 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+                 * square-root it unconditionally (#243). A negative variance always
+                 * gets here: the peak is never negative, so the trigger fires on it.
                  */
                 if( variance < 0.000000000001 * (periodTotal2 * sp.invPeriod) ) {
                    variance = 0.0;
@@ -178034,6 +178329,7 @@ class Core {
           sp.periodTotal1 += tempReal;
           tempReal *= tempReal;
           sp.periodTotal2 += tempReal;
+          sp.peakTotal2 = (sp.periodTotal2 > sp.peakTotal2) ? sp.periodTotal2 : sp.peakTotal2;
           meanValue1 = sp.periodTotal1 * sp.invPeriod;
           variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
           /* Remove the trailing value (prepares the next window). */
@@ -178042,21 +178338,17 @@ class Core {
           tempReal *= tempReal;
           sp.periodTotal2 -= tempReal;
           sp.trailingIdx += 1;
-          /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
-           * when the shift is stale enough that the subtraction loses digits - i.e.
-           * the variance has shrunk below 1e-6 of the mean squared deviation it is
-           * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-           * 2e-10, so partial cancellation, not just total collapse, is caught); OR
-           * when the value just removed sat so far from the shift that its squared term
-           * (tempReal) dwarfs the surviving sum (a large outlier passing through the
-           * window buries the small terms below its ulp, and the residual left when it
-           * leaves is cancellation garbage); OR at least every 32 windows so a slow
-           * drift stays bounded regardless of the series length. The strict `<` also
-           * leaves an exactly-constant window (variance 0, scale 0) alone instead of
-           * reseeding it every bar. Guarantees a non-negative output.
+          /* Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+           * of the LARGEST mean squared deviation held since the last rebuild, or at
+           * least every 32 windows. Measure against that peak, not the current sum:
+           * the rounding the running sums carry scales with the peak, so once a
+           * series settles back near the shift, or an outlier leaves the window,
+           * the current sum holds nothing but that rounding. The collapse is seen
+           * on the first bar whose sums carry it, and the rebuild recomputes that
+           * bar.
            */
           sp.barsSinceReseed -= 1;
-          if( variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
+          if( variance < 0.000001 * (sp.peakTotal2 * sp.invPeriod) || sp.barsSinceReseed <= 0 ) {
              sp.barsSinceReseed = 32 * sp.optInTimePeriod;
              sp.windowStart = sp.i - sp.nbInitialElementNeeded;
              tempReal = 0.0;
@@ -178074,54 +178366,31 @@ class Core {
              }
              meanValue1 = sp.periodTotal1 * sp.invPeriod;
              variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
-             /* Floor the fresh figure at the same ratio the trigger above uses, now
-              * measured against the RE-ANCHORED sums. With the shift AT the window
-              * mean the deviations sum to ~0, so a real window has variance ~
-              * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-              * only when every deviation is the same value, i.e. when the spread is
-              * at or under the rounding error of the mean itself. There is then no
-              * spread the anchor could resolve, the surviving digits are noise, and
-              * the honest answer is 0.
-              *
-              * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-              * difference is load-bearing. periodTotal2*invPeriod is not the
-              * variance here: it is variance + e^2, where e is the rounding error of
-              * the reseed's own left-to-right sum for the mean -- exactly the term
-              * the two-pass subtraction then cancels out. So the ratio measures how
-              * badly that sum rounded, not how much signal survives, and matching
-              * the trigger's 1e-6 fired ten orders before cancellation eats any
-              * digits. It zeroed a variance the line above had just computed to nine
-              * correct significant figures: 100011 bars at 31498938283.624615 with
-              * two small outliers at period 99991 gives 1.0219900060103338e-09
-              * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-              * survives and every intended bit-zero still zeroes -- the live ratios
-              * on flat data are 0 or ~1e-16, six orders the other side.
-              *
-              * This is the ONE dead-zone in the var/stddev/bbands family, and it is
-              * relative rather than the `variance < 0.0` it replaced because two
-              * things ride on it:
-              *
-              *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-              *    side is >= 0 and any negative variance is clamped unconditionally -
-              *    where `< 0.0` needed the three-case argument below to know that a
-              *    negative one ever reaches this line.
-              *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-              *    anything under a fixed TA_EPSILON first. That compares a SQUARED
-              *    quantity to 1e-14, which is a cliff at a price level and not a
-              *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-              *    variance around 1e-16 and came back exactly 0 on every bar (#243).
-              *    Expressed here in the window's own units, the floor lets both of
-              *    them square-root what they are handed unconditionally.
-              *
-              * Clamping HERE and not at the output write is what keeps this off the
-              * per-bar path, and it is sufficient because a negative variance always
-              * reseeds on the same bar - the guard above covers all three cases:
-              * periodTotal2 > 0 makes its first disjunct `negative < positive`;
-              * periodTotal2 < 0 makes the second disjunct's right side negative,
-              * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-              * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-              * THIS - the alternative is an unconditional clamp at the output write,
-              * which needs no such argument but does cost ~3%.
+             /* A window flat to within the rounding of its own mean leaves the
+              * variance at that rounding, which would fire the trigger again on
+              * every bar. Anchored on one of its own values it cannot: the variance
+              * is then at least 1/(2n) of the mean square it is extracted from.
+              */
+             if( variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) ) {
+                sp.shift = sp.x_inReal[sp.i & sp.xMask];
+                sp.periodTotal1 = 0.0;
+                sp.periodTotal2 = 0.0;
+                for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                   tempReal = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
+                   sp.periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   sp.periodTotal2 += tempReal;
+                }
+                meanValue1 = sp.periodTotal1 * sp.invPeriod;
+                variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+             }
+             /* Before the re-remove below: the peak must hold the whole window. */
+             sp.peakTotal2 = sp.periodTotal2;
+             /* After the re-anchor a window with any spread sits orders above this
+              * floor, so it catches only a variance that rounding left at or below
+              * 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+              * square-root it unconditionally (#243). A negative variance always
+              * gets here: the peak is never negative, so the trigger fires on it.
               */
              if( variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
                 variance = 0.0;
@@ -178146,6 +178415,7 @@ class Core {
           double meanValue1 = 0;
           double variance = 0;
           double invPeriod = 0;
+          double peakTotal2 = 0;
           int i = 0;
           int j = 0;
           int outIdx = 0;
@@ -178213,12 +178483,14 @@ class Core {
           i = startIdx;
           outIdx = 0;
           barsSinceReseed = 32 * optInTimePeriod;
+          peakTotal2 = periodTotal2;
           do {
              /* Add the incoming value, measured against the shift. */
              tempReal = inReal[i] - shift;
              periodTotal1 += tempReal;
              tempReal *= tempReal;
              periodTotal2 += tempReal;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
              meanValue1 = periodTotal1 * invPeriod;
              variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
              /* Remove the trailing value (prepares the next window). */
@@ -178227,21 +178499,17 @@ class Core {
              tempReal *= tempReal;
              periodTotal2 -= tempReal;
              trailingIdx += 1;
-             /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
-              * when the shift is stale enough that the subtraction loses digits - i.e.
-              * the variance has shrunk below 1e-6 of the mean squared deviation it is
-              * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-              * 2e-10, so partial cancellation, not just total collapse, is caught); OR
-              * when the value just removed sat so far from the shift that its squared term
-              * (tempReal) dwarfs the surviving sum (a large outlier passing through the
-              * window buries the small terms below its ulp, and the residual left when it
-              * leaves is cancellation garbage); OR at least every 32 windows so a slow
-              * drift stays bounded regardless of the series length. The strict `<` also
-              * leaves an exactly-constant window (variance 0, scale 0) alone instead of
-              * reseeding it every bar. Guarantees a non-negative output.
+             /* Rebuild with a fresh two-pass when the variance has shrunk below 1e-6
+              * of the LARGEST mean squared deviation held since the last rebuild, or at
+              * least every 32 windows. Measure against that peak, not the current sum:
+              * the rounding the running sums carry scales with the peak, so once a
+              * series settles back near the shift, or an outlier leaves the window,
+              * the current sum holds nothing but that rounding. The collapse is seen
+              * on the first bar whose sums carry it, and the rebuild recomputes that
+              * bar.
               */
              barsSinceReseed -= 1;
-             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+             if( variance < 0.000001 * (peakTotal2 * invPeriod) || barsSinceReseed <= 0 ) {
                 barsSinceReseed = 32 * optInTimePeriod;
                 windowStart = i - nbInitialElementNeeded;
                 tempReal = 0.0;
@@ -178259,54 +178527,31 @@ class Core {
                 }
                 meanValue1 = periodTotal1 * invPeriod;
                 variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-                /* Floor the fresh figure at the same ratio the trigger above uses, now
-                 * measured against the RE-ANCHORED sums. With the shift AT the window
-                 * mean the deviations sum to ~0, so a real window has variance ~
-                 * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
-                 * only when every deviation is the same value, i.e. when the spread is
-                 * at or under the rounding error of the mean itself. There is then no
-                 * spread the anchor could resolve, the surviving digits are noise, and
-                 * the honest answer is 0.
-                 *
-                 * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
-                 * difference is load-bearing. periodTotal2*invPeriod is not the
-                 * variance here: it is variance + e^2, where e is the rounding error of
-                 * the reseed's own left-to-right sum for the mean -- exactly the term
-                 * the two-pass subtraction then cancels out. So the ratio measures how
-                 * badly that sum rounded, not how much signal survives, and matching
-                 * the trigger's 1e-6 fired ten orders before cancellation eats any
-                 * digits. It zeroed a variance the line above had just computed to nine
-                 * correct significant figures: 100011 bars at 31498938283.624615 with
-                 * two small outliers at period 99991 gives 1.0219900060103338e-09
-                 * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
-                 * survives and every intended bit-zero still zeroes -- the live ratios
-                 * on flat data are 0 or ~1e-16, six orders the other side.
-                 *
-                 * This is the ONE dead-zone in the var/stddev/bbands family, and it is
-                 * relative rather than the `variance < 0.0` it replaced because two
-                 * things ride on it:
-                 *
-                 *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
-                 *    side is >= 0 and any negative variance is clamped unconditionally -
-                 *    where `< 0.0` needed the three-case argument below to know that a
-                 *    negative one ever reaches this line.
-                 *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
-                 *    anything under a fixed TA_EPSILON first. That compares a SQUARED
-                 *    quantity to 1e-14, which is a cliff at a price level and not a
-                 *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
-                 *    variance around 1e-16 and came back exactly 0 on every bar (#243).
-                 *    Expressed here in the window's own units, the floor lets both of
-                 *    them square-root what they are handed unconditionally.
-                 *
-                 * Clamping HERE and not at the output write is what keeps this off the
-                 * per-bar path, and it is sufficient because a negative variance always
-                 * reseeds on the same bar - the guard above covers all three cases:
-                 * periodTotal2 > 0 makes its first disjunct `negative < positive`;
-                 * periodTotal2 < 0 makes the second disjunct's right side negative,
-                 * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
-                 * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
-                 * THIS - the alternative is an unconditional clamp at the output write,
-                 * which needs no such argument but does cost ~3%.
+                /* A window flat to within the rounding of its own mean leaves the
+                 * variance at that rounding, which would fire the trigger again on
+                 * every bar. Anchored on one of its own values it cannot: the variance
+                 * is then at least 1/(2n) of the mean square it is extracted from.
+                 */
+                if( variance < 0.000001 * (periodTotal2 * invPeriod) ) {
+                   shift = inReal[i];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      tempReal = inReal[j] - shift;
+                      periodTotal1 += tempReal;
+                      tempReal *= tempReal;
+                      periodTotal2 += tempReal;
+                   }
+                   meanValue1 = periodTotal1 * invPeriod;
+                   variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                }
+                /* Before the re-remove below: the peak must hold the whole window. */
+                peakTotal2 = periodTotal2;
+                /* After the re-anchor a window with any spread sits orders above this
+                 * floor, so it catches only a variance that rounding left at or below
+                 * 0. That keeps the output non-negative, which lets STDDEV and BBANDS
+                 * square-root it unconditionally (#243). A negative variance always
+                 * gets here: the peak is never negative, so the trigger fires on it.
                  */
                 if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
                    variance = 0.0;
@@ -178344,6 +178589,7 @@ class Core {
           sp.periodTotal1 = periodTotal1;
           sp.periodTotal2 = periodTotal2;
           sp.invPeriod = invPeriod;
+          sp.peakTotal2 = peakTotal2;
           sp.trailingIdx = trailingIdx;
           sp.nbInitialElementNeeded = nbInitialElementNeeded;
           sp.barsSinceReseed = barsSinceReseed;
@@ -186321,7 +186567,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "fb34c36b5d243e97";
+    static final String SPLICED_GENCODE_DIGEST = "8509e3f8408a7cd2";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

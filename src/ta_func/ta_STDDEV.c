@@ -132,9 +132,8 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
     *
     * Multiply also by the ratio specified.
     *
-    * Unconditional. var owns the dead-zone and owns the sign: it returns a
-    * non-negative variance, already floored to exactly 0 on any window whose
-    * re-anchored spread sat under its own rounding noise (var.c). What used to
+    * Unconditional. var owns the sign: it returns a non-negative variance,
+    * exactly 0 on a window of identical values (var.c). What used to
     * stand here instead - zero the output wherever the variance fell under
     * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
     * at a price level rather than a noise floor: a $100.00 instrument quoted in
@@ -337,9 +336,8 @@ static TA_RetCode TA_STDDEV_OpenImpl( struct TA_STDDEV_Stream **stream, const do
        *
        * Multiply also by the ratio specified.
        *
-       * Unconditional. var owns the dead-zone and owns the sign: it returns a
-       * non-negative variance, already floored to exactly 0 on any window whose
-       * re-anchored spread sat under its own rounding noise (var.c). What used to
+       * Unconditional. var owns the sign: it returns a non-negative variance,
+       * exactly 0 on a window of identical values (var.c). What used to
        * stand here instead - zero the output wherever the variance fell under
        * TA_EPSILON - compared a SQUARED quantity to a fixed 1e-14, which is a cliff
        * at a price level rather than a noise floor: a $100.00 instrument quoted in
