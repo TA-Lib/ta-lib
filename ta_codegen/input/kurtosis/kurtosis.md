@@ -2,7 +2,7 @@
 
 ## Summary
 
-The fourth standardised moment of the trailing window, minus 3 so a normal window reads 0. A tail-weight measure: above 0 the window has fatter tails and a sharper peak than a normal distribution of the same variance, below 0 it is flatter. The companion to the shipped [`VAR`](/functions/var) and [`STDDEV`](/functions/stddev) in the same group.
+An estimate, from the trailing window, of the excess kurtosis of the distribution its values come from: the fourth standardised moment minus 3, so a normal distribution reads 0. A tail-weight measure: above 0 the distribution has heavier tails than a normal one with the same variance, below 0 lighter ones. The companion to the shipped [`VAR`](/functions/var) and [`STDDEV`](/functions/stddev) in the same group.
 
 ## Formula
 
@@ -16,9 +16,9 @@ The result is NaN when `s² = 0`, that is when every value in the window is equa
 
 ## Notes
 
-- This is `G2`, the form Excel `KURT`, `scipy.stats.kurtosis(bias=False)` and R `e1071::kurtosis(type=2)` compute. The other form in circulation is the biased `g2 = m₄/m₂² − 3` over population moments; the two are far apart, not a rounding convention apart — on a 9-point normal sample `G2 = 1.79450407519901` against `g2 = 0.342114639479481`.
+- This is `G2`, the form Excel `KURT` and `scipy.stats.kurtosis(bias=False)` compute. The other form in circulation is the biased `g2 = m₄/m₂² − 3` over population moments, a different estimator rather than a rounding convention: `G2 = (n−1)((n+1)·g2 + 6) / ((n−2)(n−3))`.
 - A point mass has no defensible excess kurtosis, so the degenerate window is NaN rather than a number: `0` would assert normality and `−1.2` uniformity. This is deliberately unlike `VAR`, which floors to zero — a variance of zero says something true about the window.
-- The result is not bounded. A window dominated by one outlier is legitimately far above 0.
+- The result is at most `n`, the value of one reading apart from `n−1` equal ones, so a window dominated by one outlier is legitimately far above 0.
 
 ## Inputs
 
@@ -31,6 +31,22 @@ The result is NaN when `s² = 0`, that is when every value in the window is equa
 ## Parameters
 
 - `optInTimePeriod` — Number of trailing values in the window, at least 4
+
+## Implementation
+
+TA-Lib Definition: [`kurtosis.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kurtosis/kurtosis.c) · [`kurtosis.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kurtosis/kurtosis.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_KURTOSIS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_KURTOSIS.c) |
+| Rust | [`kurtosis.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kurtosis.rs) |
+| Java | [`Core_KURTOSIS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KURTOSIS.java) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Excess Kurtosis, Sample Excess Kurtosis, KURT
 
 ## See Also
 

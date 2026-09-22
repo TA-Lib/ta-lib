@@ -451,10 +451,11 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// The fourth standardised moment of the trailing window, minus 3 so a normal
-   /// window reads 0. A tail-weight measure: above 0 the window has fatter tails
-   /// and a sharper peak than a normal distribution of the same variance, below
-   /// 0 it is flatter. The companion to the shipped
+   /// An estimate, from the trailing window, of the excess kurtosis of the
+   /// distribution its values come from: the fourth standardised moment minus 3,
+   /// so a normal distribution reads 0. A tail-weight measure: above 0 the
+   /// distribution has heavier tails than a normal one with the same variance,
+   /// below 0 lighter ones. The companion to the shipped
    /// <see href="https://ta-lib.org/functions/var"><c>VAR</c></see> and
    /// <see href="https://ta-lib.org/functions/stddev"><c>STDDEV</c></see> in the
    /// same group.
@@ -465,9 +466,9 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kurtosis">ta-lib.org/functions/kurtosis</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>This is <c>G2</c>, the form Excel <c>KURT</c>, <c>scipy.stats.kurtosis(bias=False)</c> and R <c>e1071::kurtosis(type=2)</c> compute. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments; the two are far apart, not a rounding convention apart — on a 9-point normal sample <c>G2 = 1.79450407519901</c> against <c>g2 = 0.342114639479481</c>.</description></item>
+   /// <item><description>This is <c>G2</c>, the form Excel <c>KURT</c> and <c>scipy.stats.kurtosis(bias=False)</c> compute. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments, a different estimator rather than a rounding convention: <c>G2 = (n−1)((n+1)·g2 + 6) / ((n−2)(n−3))</c>.</description></item>
    /// <item><description>A point mass has no defensible excess kurtosis, so the degenerate window is NaN rather than a number: <c>0</c> would assert normality and <c>−1.2</c> uniformity. This is deliberately unlike <c>VAR</c>, which floors to zero — a variance of zero says something true about the window.</description></item>
-   /// <item><description>The result is not bounded. A window dominated by one outlier is legitimately far above 0.</description></item>
+   /// <item><description>The result is at most <c>n</c>, the value of one reading apart from <c>n−1</c> equal ones, so a window dominated by one outlier is legitimately far above 0.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -520,10 +521,11 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// The fourth standardised moment of the trailing window, minus 3 so a normal
-   /// window reads 0. A tail-weight measure: above 0 the window has fatter tails
-   /// and a sharper peak than a normal distribution of the same variance, below
-   /// 0 it is flatter. The companion to the shipped
+   /// An estimate, from the trailing window, of the excess kurtosis of the
+   /// distribution its values come from: the fourth standardised moment minus 3,
+   /// so a normal distribution reads 0. A tail-weight measure: above 0 the
+   /// distribution has heavier tails than a normal one with the same variance,
+   /// below 0 lighter ones. The companion to the shipped
    /// <see href="https://ta-lib.org/functions/var"><c>VAR</c></see> and
    /// <see href="https://ta-lib.org/functions/stddev"><c>STDDEV</c></see> in the
    /// same group.
@@ -534,9 +536,9 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/kurtosis">ta-lib.org/functions/kurtosis</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>This is <c>G2</c>, the form Excel <c>KURT</c>, <c>scipy.stats.kurtosis(bias=False)</c> and R <c>e1071::kurtosis(type=2)</c> compute. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments; the two are far apart, not a rounding convention apart — on a 9-point normal sample <c>G2 = 1.79450407519901</c> against <c>g2 = 0.342114639479481</c>.</description></item>
+   /// <item><description>This is <c>G2</c>, the form Excel <c>KURT</c> and <c>scipy.stats.kurtosis(bias=False)</c> compute. The other form in circulation is the biased <c>g2 = m₄/m₂² − 3</c> over population moments, a different estimator rather than a rounding convention: <c>G2 = (n−1)((n+1)·g2 + 6) / ((n−2)(n−3))</c>.</description></item>
    /// <item><description>A point mass has no defensible excess kurtosis, so the degenerate window is NaN rather than a number: <c>0</c> would assert normality and <c>−1.2</c> uniformity. This is deliberately unlike <c>VAR</c>, which floors to zero — a variance of zero says something true about the window.</description></item>
-   /// <item><description>The result is not bounded. A window dominated by one outlier is legitimately far above 0.</description></item>
+   /// <item><description>The result is at most <c>n</c>, the value of one reading apart from <c>n−1</c> equal ones, so a window dominated by one outlier is legitimately far above 0.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

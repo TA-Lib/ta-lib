@@ -329,9 +329,10 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
-    /// The fourth standardised moment of the trailing window, minus 3 so a normal window reads 0. A
-    /// tail-weight measure: above 0 the window has fatter tails and a sharper peak than a normal
-    /// distribution of the same variance, below 0 it is flatter. The companion to the shipped
+    /// An estimate, from the trailing window, of the excess kurtosis of the distribution its values
+    /// come from: the fourth standardised moment minus 3, so a normal distribution reads 0. A
+    /// tail-weight measure: above 0 the distribution has heavier tails than a normal one with the
+    /// same variance, below 0 lighter ones. The companion to the shipped
     /// [`VAR`](https://ta-lib.org/functions/var) and
     /// [`STDDEV`](https://ta-lib.org/functions/stddev) in the same group.
     ///
@@ -398,6 +399,9 @@ impl Core {
     /// * Microsoft, *KURT function* — the `G2` form, and `#DIV/0!` for fewer than four points or
     ///   zero standard deviation.
     #[doc(alias = "TA_KURTOSIS")]
+    #[doc(alias = "ExcessKurtosis")]
+    #[doc(alias = "SampleExcessKurtosis")]
+    #[doc(alias = "KURT")]
     pub fn kurtosis(
         &self,
         startIdx: usize,
