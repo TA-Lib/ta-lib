@@ -436,6 +436,13 @@ static ErrorNumber sync_candle_settings(int pipeIdx)
  * returns the arrays, themselves lossless since #257/#258 (the
  * Java-transcendental tolerance path). Returns -1 if the
  * function is not in ta_abstract (graceful skip). */
+static int g_svFloat;
+
+void server_verify_set_float(int on)
+{
+    g_svFloat = on;
+}
+
 static int build_request(const char *funcName,
                          TA_Integer startIdx, TA_Integer endIdx,
                          int nbBars,
@@ -455,6 +462,8 @@ static int build_request(const char *funcName,
     pos = codegen_appendf(g_reqBuf, SV_BUF_SIZE, pos,
                     "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
                     funcName, (int)startIdx, (int)endIdx);
+    if( g_svFloat )
+        pos = codegen_appendf(g_reqBuf, SV_BUF_SIZE, pos, ",\"use_float\":1");
 
     /* Count real inputs for naming (inReal vs inReal0/inReal1) */
     int nbRealInputs = 0;
@@ -736,7 +745,13 @@ ErrorNumber server_verify(
         /* Shared predicate, not a hardcoded "java": this line and the
          * --xlang-hash server table used to carry the rule separately and
          * drifted apart, leaving C# bitwise here and tolerant there. */
-        int bitwise = !(codegen_lang_needs_transcendental_tol(lang) && isTranscendental);
+        /* The servers take the float path only when returning arrays; an
+         * out_hash is always of the double tier. */
+        int bitwise = !g_svFloat
+                      && !(codegen_lang_needs_transcendental_tol(lang) && isTranscendental);
+
+        if( g_svFloat && lang && strcmp(lang, "rust") == 0 )
+            continue;
 
         /* Sync global state (unstable periods + candle settings) */
         ErrorNumber err = sync_unstable_periods(p);
@@ -783,6 +798,13 @@ ErrorNumber server_verify(
             return TA_SV_RETCODE_MISMATCH;
         }
 
+        if( g_svFloat && sv_ride_flag(g_respBuf, "\"used_float\":") != 1 )
+        {
+            printf("  SV FAIL [%s] (pipe %d, %s): server did not acknowledge "
+                   "use_float\n", funcName, p, lang ? lang : "?");
+            return TA_SV_OUTPUT_MISMATCH;
+        }
+
         if( sv_ride_read(funcName, p, lang, g_respBuf) )
             return TA_CODEGEN_RIDE_MISMATCH;
 
@@ -815,10 +837,13 @@ ErrorNumber server_verify(
         }
         else
         {
-            /* Java transcendental: element compare at the narrow tolerance. */
+            /* Element compare: bitwise for the float tier, at the narrow
+             * tolerance for Java transcendentals. */
             err = compare_output_tol(funcName, g_respBuf,
                                      crefRetCode, crefOutBegIdx, crefOutNbElement,
-                                     outReal, outInteger, CODEGEN_TRANSCENDENTAL_TOL);
+                                     outReal, outInteger,
+                                     g_svFloat ? CODEGEN_TOL_BITWISE
+                                               : CODEGEN_TRANSCENDENTAL_TOL);
             if( err != TA_TEST_PASS )
                 return err;
             g_comparisons++;

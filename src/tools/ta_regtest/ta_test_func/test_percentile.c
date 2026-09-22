@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #368).
+ *  092226 MF,CC  Legs across the scan/binary threshold and the float tiers (issue #435).
  */
 
 /* Description:
@@ -91,9 +92,15 @@
  *        test_abstract.c only compares C against each server, so a flag dropped
  *        on both sides is invisible there: 0 == 0 passes. PERCENTILE is the
  *        flag's first user, so this is the only check that it is set at all.
+ *    10. Windows either side of the 256-value threshold where the scans turn
+ *        into binary searches, BITWISE against leg 4's stable re-sort, over a
+ *        tick-grid walk and a series of -0.0, 0.0 and +-1: the order inside a
+ *        run of equal values reaches the output only as the sign of a zero.
+ *        Routed to the language servers, through the C stream tier, and
+ *        through every single-precision tier, which is a separate body.
  *
- *   Cross-language value coverage comes from server_verify in legs 1 and 2 plus
- *   the --xlang-hash sweep; the frozen ta_ref_serve predates this function, so
+ *   Cross-language value coverage comes from server_verify in legs 1, 2 and 10
+ *   plus the --xlang-hash sweep; the frozen ta_ref_serve predates this function, so
  *   the --codegen value comparison cannot run for it.
  */
 
@@ -115,6 +122,9 @@ extern double gDataClose[];
 #define PCTL_GD_NB   1000
 #define PCTL_SYN_NB  2000
 #define PCTL_BIG_NB  1150   /* enough for one period-1000 block, cheap to re-sort */
+#define PCTL_WIDE_NB 1400
+#define PCTL_WIDE_CMP        20050
+#define PCTL_WIDE_STREAM_CMP 11490
 
 typedef struct { int period; double pct; int bar; double want; } PercentileGolden;
 
@@ -268,6 +278,9 @@ static int g_pctlRankCmp;
 static int g_pctlEdgeCmp;
 static int g_pctlAliasCmp;
 static int g_pctlFlagCmp;
+static int g_pctlWideCmp;
+static int g_pctlWideStreamCmp;
+static int g_pctlWideFloatCmp;
 
 /**** Local functions declarations. ****/
 static ErrorNumber test_percentile_oracle( const TA_History *history );
@@ -283,6 +296,7 @@ static ErrorNumber test_percentile_aliasing( const char *tag, const TA_Real *in,
                                              int nbBars, int maxPeriod );
 static ErrorNumber test_percentile_range( const TA_Real *in );
 static ErrorNumber test_percentile_percent_flag( void );
+static ErrorNumber test_percentile_wide( void );
 
 /* The reference sort: STABLE insertion, never qsort. Stability is what makes
  * the +-0.0 tie order a property of the input rather than of the C library. */
@@ -360,6 +374,7 @@ ErrorNumber test_func_percentile( TA_History *history )
    g_pctlOracleCmp = g_pctlBookCmp = g_pctlExtremaCmp = 0;
    g_pctlDiffCmp = g_pctlRankCmp = g_pctlEdgeCmp = 0;
    g_pctlAliasCmp = g_pctlFlagCmp = 0;
+   g_pctlWideCmp = g_pctlWideStreamCmp = g_pctlWideFloatCmp = 0;
 
    pctlBuildStairs( stairs, PCTL_SYN_NB );
 
@@ -423,21 +438,30 @@ ErrorNumber test_func_percentile( TA_History *history )
    if( err != TA_TEST_PASS )
       return err;
 
+   err = test_percentile_wide();
+   if( err != TA_TEST_PASS )
+      return err;
+
    /* LITERAL counts rather than floors: on the shipped 252-bar corpus every
     * leg above is deterministic. */
    if( nbBars == 252
        && ( g_pctlOracleCmp != NB_PCTL_ORACLE || g_pctlBookCmp != 8
             || g_pctlExtremaCmp != 140656 || g_pctlDiffCmp != 403221
             || g_pctlRankCmp != 9110 || g_pctlEdgeCmp != 48406
-            || g_pctlAliasCmp != 129328 || g_pctlFlagCmp != 1 ) )
+            || g_pctlAliasCmp != 129328 || g_pctlFlagCmp != 1
+            || g_pctlWideCmp != PCTL_WIDE_CMP
+            || g_pctlWideStreamCmp != PCTL_WIDE_STREAM_CMP
+            || g_pctlWideFloatCmp != PCTL_WIDE_CMP ) )
    {
       printf( "PERCENTILE Fail: coverage counters (oracle %d, published %d, "
               "extrema %d, differential %d, rank %d, edges %d, alias %d, "
-              "flag %d) are not what this file was written with "
-              "(%d, 8, 140656, 403221, 9110, 48406, 129328, 1)\n",
+              "flag %d, wide %d, wide stream %d, wide float %d) are not what "
+              "this file was written with (%d, 8, 140656, 403221, 9110, 48406, "
+              "129328, 1, %d, %d, %d)\n",
               g_pctlOracleCmp, g_pctlBookCmp, g_pctlExtremaCmp, g_pctlDiffCmp,
               g_pctlRankCmp, g_pctlEdgeCmp, g_pctlAliasCmp, g_pctlFlagCmp,
-              NB_PCTL_ORACLE );
+              g_pctlWideCmp, g_pctlWideStreamCmp, g_pctlWideFloatCmp,
+              NB_PCTL_ORACLE, PCTL_WIDE_CMP, PCTL_WIDE_STREAM_CMP, PCTL_WIDE_CMP );
       return TA_PERCENTILE_VACUOUS;
    }
 
@@ -1161,4 +1185,193 @@ static ErrorNumber test_percentile_range( const TA_Real *in )
    return doRangeTestEx( pctlRangeTestFunction,
                          TA_STABLE_EXACT, TA_TEST_UNST_NONE,
                          (void *)&param, 1, 0 );
+}
+
+/* (10) Across the scan / binary-search threshold. */
+static const int pctlWideN[] = { 255, 256, 257, 258, 1000 };
+static const double pctlWideP[] = { 0.0, 7.0, 50.0, 90.0, 100.0 };
+#define NB_PCTL_WIDE_N ((int)(sizeof(pctlWideN)/sizeof(int)))
+#define NB_PCTL_WIDE_P ((int)(sizeof(pctlWideP)/sizeof(double)))
+
+static void pctlBuildWide( int which, double *x )
+{
+   static const double pm[4] = { 0.0, -0.0, 1.0, -1.0 };
+   unsigned int seed = 377u;
+   double v = 100.0;
+   int i;
+
+   for( i = 0; i < PCTL_WIDE_NB; i++ )
+   {
+      seed = (seed * 1103515245u + 12345u) & 0x7fffffffu;
+      if( which == 0 )
+      {
+         v += 0.25 * (double)((int)((seed >> 8) % 5u) - 2);
+         x[i] = v;
+      }
+      else
+         x[i] = pm[(seed >> 8) & 3u];
+   }
+}
+
+static ErrorNumber test_percentile_wide( void )
+{
+   static TA_Real x[PCTL_WIDE_NB], out[NB_PCTL_WIDE_P][PCTL_WIDE_NB];
+   static TA_Real win[PCTL_WIDE_NB], outS[PCTL_WIDE_NB];
+   static float xf[PCTL_WIDE_NB];
+   TA_PERCENTILE_Stream *s;
+   TA_Integer begIdx, nbElement;
+   TA_RetCode retCode;
+   int which, q, p, t, n, nbBars, rank;
+   double peeked, updated, first;
+
+   for( which = 0; which < 2; which++ )
+   {
+      pctlBuildWide( which, x );
+      for( t = 0; t < PCTL_WIDE_NB; t++ )
+         xf[t] = (float)x[t];
+
+      for( q = 0; q < NB_PCTL_WIDE_N; q++ )
+      {
+         n = pctlWideN[q];
+         nbBars = n + 400;
+
+         for( p = 0; p < NB_PCTL_WIDE_P; p++ )
+         {
+            retCode = TA_PERCENTILE( 0, nbBars-1, x, n, pctlWideP[p],
+                                     &begIdx, &nbElement, out[p] );
+            if( retCode != TA_SUCCESS || begIdx != n-1
+                || nbElement != nbBars - n + 1 )
+            {
+               printf( "PERCENTILE wide Fail [corpus %d N=%d P=%g]: rc=%d "
+                       "(%d,%d)\n", which, n, pctlWideP[p], (int)retCode,
+                       begIdx, nbElement );
+               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            }
+            if( server_verify_active() )
+            {
+               double optIn[2];
+               ErrorNumber e;
+               int cmpBefore = server_verify_comparisons();
+
+               optIn[0] = (double)n;
+               optIn[1] = pctlWideP[p];
+               e = server_verify( "PERCENTILE", 0, nbBars-1, nbBars,
+                                  retCode, begIdx, nbElement,
+                                  (const TA_Real*[]){ x, NULL }, optIn, 2,
+                                  (const TA_Real*[]){ out[p], NULL }, NULL );
+               if( e != TA_TEST_PASS )
+                  return e;
+               if( server_verify_comparisons() == cmpBefore )
+               {
+                  printf( "PERCENTILE wide [N=%d P=%g]: compared no server "
+                          "despite live pipes\n", n, pctlWideP[p] );
+                  return TA_PERCENTILE_VACUOUS;
+               }
+            }
+         }
+
+         for( t = n-1; t < nbBars; t++ )
+         {
+            pctlSortWindow( x, t, n, win );
+            for( p = 0; p < NB_PCTL_WIDE_P; p++ )
+            {
+               rank = pctlRankFp( n, pctlWideP[p] );
+               g_pctlWideCmp++;
+               if( memcmp( &out[p][t-(n-1)], &win[rank-1], sizeof(double) ) != 0 )
+               {
+                  printf( "PERCENTILE wide Fail [corpus %d N=%d P=%g] bar %d: "
+                          "%.17g, fresh re-sort %.17g\n", which, n,
+                          pctlWideP[p], t, out[p][t-(n-1)], win[rank-1] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+
+         /* Both corpora are float-exact, so TA_S_PERCENTILE must return the
+          * same doubles. */
+         for( p = 0; p < NB_PCTL_WIDE_P; p++ )
+         {
+            retCode = TA_S_PERCENTILE( 0, nbBars-1, xf, n, pctlWideP[p],
+                                       &begIdx, &nbElement, outS );
+            if( retCode != TA_SUCCESS || begIdx != n-1
+                || nbElement != nbBars - n + 1 )
+            {
+               printf( "PERCENTILE wide float Fail [corpus %d N=%d P=%g]: rc=%d "
+                       "(%d,%d)\n", which, n, pctlWideP[p], (int)retCode,
+                       begIdx, nbElement );
+               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            }
+            if( server_verify_active() )
+            {
+               double optIn[2];
+               ErrorNumber e;
+               int cmpBefore = server_verify_comparisons();
+
+               optIn[0] = (double)n;
+               optIn[1] = pctlWideP[p];
+               server_verify_set_float( 1 );
+               e = server_verify( "PERCENTILE", 0, nbBars-1, nbBars,
+                                  retCode, begIdx, nbElement,
+                                  (const TA_Real*[]){ x, NULL }, optIn, 2,
+                                  (const TA_Real*[]){ outS, NULL }, NULL );
+               server_verify_set_float( 0 );
+               if( e != TA_TEST_PASS )
+                  return e;
+               if( server_verify_comparisons() == cmpBefore )
+               {
+                  printf( "PERCENTILE wide float [N=%d P=%g]: compared no server "
+                          "despite live pipes\n", n, pctlWideP[p] );
+                  return TA_PERCENTILE_VACUOUS;
+               }
+            }
+            for( t = 0; t < nbElement; t++ )
+            {
+               g_pctlWideFloatCmp++;
+               if( memcmp( &outS[t], &out[p][t], sizeof(double) ) != 0 )
+               {
+                  printf( "PERCENTILE wide float Fail [corpus %d N=%d P=%g] bar "
+                          "%d: TA_S_ %.17g, TA_ %.17g\n", which, n,
+                          pctlWideP[p], t + n-1, outS[t], out[p][t] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+
+         /* The stream tier: Open over a warm-up, then Peek and Update every
+          * later bar, each bitwise against the batch value. */
+         for( p = 0; p < NB_PCTL_WIDE_P; p += 2 )
+         {
+            retCode = TA_PERCENTILE_Open( &s, x, n + 17, n, pctlWideP[p], &first );
+            if( retCode != TA_SUCCESS )
+            {
+               printf( "PERCENTILE wide stream Fail [N=%d P=%g]: Open rc=%d\n",
+                       n, pctlWideP[p], (int)retCode );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            for( t = n + 17; t < nbBars; t++ )
+            {
+               if( TA_PERCENTILE_Peek( s, x[t], &peeked ) != TA_SUCCESS
+                   || TA_PERCENTILE_Update( s, x[t], &updated ) != TA_SUCCESS )
+               {
+                  TA_PERCENTILE_Close( s );
+                  return TA_TESTUTIL_TFRR_BAD_RETCODE;
+               }
+               g_pctlWideStreamCmp++;
+               if( memcmp( &peeked, &out[p][t-(n-1)], sizeof(double) ) != 0
+                   || memcmp( &updated, &out[p][t-(n-1)], sizeof(double) ) != 0 )
+               {
+                  printf( "PERCENTILE wide stream Fail [corpus %d N=%d P=%g] "
+                          "bar %d: peek %.17g, update %.17g, batch %.17g\n",
+                          which, n, pctlWideP[p], t, peeked, updated,
+                          out[p][t-(n-1)] );
+                  TA_PERCENTILE_Close( s );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+            TA_PERCENTILE_Close( s );
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
 }

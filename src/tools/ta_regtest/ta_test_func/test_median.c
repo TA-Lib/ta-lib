@@ -45,6 +45,7 @@
  *  -------------------------------------------------------------------
  *  091526 KL     First version (proposal-drafts issue #73).
  *  092226 MF,CC  Legs across the linear/binary search threshold (issue #432).
+ *  092226 MF,CC  An independent reference for the large windows (issue #435).
  *
  */
 
@@ -89,8 +90,9 @@
 /**** Local declarations. ****/
 #define MEDIAN_CAP 1100
 #define MED_LARGE_N 2400
-#define MED_LARGE_CMP  23928
+#define MED_LARGE_CMP  27938
 #define MED_STREAM_CMP 11780
+#define MED_FLOAT_CMP  7218
 
 /* The legs below diff their own corpora against the language servers
  * bit-for-bit (issue #427). Without it every vector here is checked against
@@ -192,6 +194,7 @@ static int g_medAliasCmp;
 static int g_medTopCmp;
 static int g_medLargeCmp;
 static int g_medStreamCmp;
+static int g_medFloatCmp;
 
 /**** Local functions declarations. ****/
 static ErrorNumber test_median_odd_identity( const TA_History *history );
@@ -214,7 +217,7 @@ ErrorNumber test_func_median( TA_History *history )
 
    g_medOddCmp = g_medEvenCmp = g_medEvenDiff = g_medGoldenCmp = 0;
    g_medInventedCmp = g_medExactCmp = g_medAliasCmp = g_medTopCmp = 0;
-   g_medLargeCmp = g_medStreamCmp = 0;
+   g_medLargeCmp = g_medStreamCmp = g_medFloatCmp = 0;
 
    err = test_median_odd_identity( history );
    if( err != TA_TEST_PASS )
@@ -262,15 +265,16 @@ ErrorNumber test_func_median( TA_History *history )
    if( g_medGoldenCmp != 88 || g_medInventedCmp != 13 || g_medExactCmp != 29640
        || g_medOddCmp == 0 || g_medEvenCmp == 0 || g_medEvenDiff == 0
        || g_medAliasCmp == 0 || g_medTopCmp != 3 || g_medLargeCmp != MED_LARGE_CMP
-       || g_medStreamCmp != MED_STREAM_CMP )
+       || g_medStreamCmp != MED_STREAM_CMP || g_medFloatCmp != MED_FLOAT_CMP )
    {
       printf( "MEDIAN Fail: coverage counters (odd %d, even %d with %d "
               "differing, golden %d, invented %d, exact %d, alias %d, top %d, "
-              "large %d, stream %d) are not what this file was written with "
-              "(>0, >0, >0, 88, 13, 29640, >0, 3, %d, %d)\n",
+              "large %d, stream %d, float %d) are not what this file was "
+              "written with (>0, >0, >0, 88, 13, 29640, >0, 3, %d, %d, %d)\n",
               g_medOddCmp, g_medEvenCmp, g_medEvenDiff, g_medGoldenCmp,
               g_medInventedCmp, g_medExactCmp, g_medAliasCmp, g_medTopCmp,
-              g_medLargeCmp, g_medStreamCmp, MED_LARGE_CMP, MED_STREAM_CMP );
+              g_medLargeCmp, g_medStreamCmp, g_medFloatCmp, MED_LARGE_CMP,
+              MED_STREAM_CMP, MED_FLOAT_CMP );
       return TA_MEDIAN_VACUOUS;
    }
 
@@ -689,12 +693,14 @@ static ErrorNumber test_median_period_top( void )
 }
 
 /* (8) Windows past the 128-value threshold, where the search turns binary.
- * Odd n is asserted against TA_PERCENTILE(50), whose scan stays linear at
- * every size; even n against a stable insertion sort of each window, which
- * lays equal values out in the same age order MEDIAN keeps. Both memcmp, over
- * a tick-grid walk full of ties and over a series of -0.0, 0.0 and +-1, where
+ * Every period is asserted against a stable insertion sort of each window,
+ * which lays equal values out in the same age order MEDIAN keeps, and odd n
+ * also against TA_PERCENTILE(50) over the whole series. The single-precision
+ * tier is a separate body: both corpora are float-exact, so TA_S_MEDIAN must
+ * return the same doubles, in C and in every server that has that tier. All memcmp, over a
+ * tick-grid walk full of ties and over a series of -0.0, 0.0 and +-1, where
  * the order within a run of equal values is what decides the sign of a zero.
- * 127 to 130 straddle the threshold.
+ * 127 to 131 straddle the threshold.
  */
 static void med_large_corpus( int which, double *x )
 {
@@ -719,9 +725,10 @@ static void med_large_corpus( int which, double *x )
 static ErrorNumber test_median_large_windows( void )
 {
    static const int oddN[]  = { 127, 129, 131, 257, 1001 };
-   static const int evenN[] = { 128, 130, 256, 1000 };
+   static const int sortN[] = { 127, 128, 129, 130, 131, 256, 257, 1000, 1001 };
    static TA_Real x[MED_LARGE_N], med[MED_LARGE_N], ref[MED_LARGE_N];
-   static TA_Real w[MED_LARGE_N];
+   static TA_Real w[MED_LARGE_N], medS[MED_LARGE_N];
+   static float xf[MED_LARGE_N];
    TA_Integer begM, nbM, begP, nbP;
    TA_RetCode retCode;
    int which, k, n, nbBars, i, j, a;
@@ -760,9 +767,9 @@ static ErrorNumber test_median_large_windows( void )
          }
       }
 
-      for( k = 0; k < (int)(sizeof(evenN)/sizeof(evenN[0])); k++ )
+      for( k = 0; k < (int)(sizeof(sortN)/sizeof(sortN[0])); k++ )
       {
-         n = evenN[k];
+         n = sortN[k];
          nbBars = n + 400;
          retCode = TA_MEDIAN( 0, nbBars-1, x, n, &begM, &nbM, med );
          if( retCode != TA_SUCCESS || begM != n-1 || nbM != nbBars-n+1 )
@@ -772,6 +779,30 @@ static ErrorNumber test_median_large_windows( void )
             return TA_TESTUTIL_TFRR_BAD_RETCODE;
          }
          MEDIAN_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begM, nbM, x, n, med );
+
+         for( i = 0; i < nbBars; i++ )
+            xf[i] = (float)x[i];
+         retCode = TA_S_MEDIAN( 0, nbBars-1, xf, n, &begM, &nbM, medS );
+         if( retCode != TA_SUCCESS || begM != n-1 || nbM != nbBars-n+1 )
+         {
+            printf( "MEDIAN float Fail [N=%d]: rc=%d (%d,%d)\n", n, (int)retCode,
+                    begM, nbM );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         server_verify_set_float( 1 );
+         MEDIAN_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begM, nbM, x, n, medS );
+         server_verify_set_float( 0 );
+         for( i = 0; i < nbM; i++ )
+         {
+            g_medFloatCmp++;
+            if( memcmp( &medS[i], &med[i], sizeof(double) ) != 0 )
+            {
+               printf( "MEDIAN float Fail [corpus %d, N=%d] bar %d: TA_S_ %.17g, "
+                       "TA_ %.17g\n", which, n, begM+i, medS[i], med[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+
          for( i = 0; i < nbM; i++ )
          {
             for( a = 0; a < n; a++ )
@@ -785,7 +816,7 @@ static ErrorNumber test_median_large_windows( void )
                }
                w[j] = v;
             }
-            v = ( w[n/2-1] + w[n/2] ) / 2.0;
+            v = ( n % 2 ) ? w[n/2] : ( w[n/2-1] + w[n/2] ) / 2.0;
             g_medLargeCmp++;
             if( memcmp( &med[i], &v, sizeof(double) ) != 0 )
             {

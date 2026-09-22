@@ -7505,7 +7505,9 @@ CTolVerdict codegen_compare_tol(const char *resp,
                 double c = gold[j], sv = srv[j];
                 double diff = fabs(c - sv);
                 double t = (fabs(c) > 1.0) ? tol * fabs(c) : tol;
-                if( (isnan(c) != isnan(sv)) || diff > t )
+                int bad = ( tol < 0.0 ) ? memcmp(&c, &sv, sizeof(double)) != 0
+                                        : (isnan(c) != isnan(sv)) || diff > t;
+                if( bad )
                 {
                     detail->output = (int)o; detail->element = j; detail->isInt = 0;
                     detail->cReal = c; detail->sReal = sv;

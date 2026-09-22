@@ -121,6 +121,9 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * CODEGEN_EPSILON_DOUBLE. ---- */
 #define CODEGEN_TRANSCENDENTAL_TOL 1e-9
 
+/* Passed as codegen_compare_tol's tol, compares bits: the sign of a zero counts. */
+#define CODEGEN_TOL_BITWISE (-1.0)
+
 /* True if the FUNCTION name calls a transcendental C math routine directly.
  * Source-derived fixed list (ta_codegen/input grep). */
 int codegen_is_transcendental(const char *name);

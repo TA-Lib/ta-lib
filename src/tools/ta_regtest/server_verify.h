@@ -62,6 +62,12 @@ int server_verify_value_comparisons(void);
  *
  * Returns TA_TEST_PASS on success (or if no servers are active).
  */
+/* While on, server_verify() asks each server for its single-precision tier
+ * ("use_float"), so the caller's outputs must come from TA_S_<F> and its inputs
+ * must be float-representable. Languages with no single-precision surface are
+ * skipped; a server that does not acknowledge the float path fails. */
+void server_verify_set_float(int on);
+
 ErrorNumber server_verify(
     const char       *funcName,
     TA_Integer        startIdx,
