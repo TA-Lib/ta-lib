@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #368).
+ *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  */
 
 TA_LIB_API int TA_PERCENTILE_Lookback( int optInTimePeriod, double optInPercentile )
@@ -88,6 +89,9 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
    int pos;
    int nbSorted;
    int rank;
+   int lo;
+   int hi;
+   int mid;
    double local_ring[30];
    double *ring = &local_ring[0];
    int ring_Idx;
@@ -156,6 +160,10 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
    {
       sorted = &local_sorted[0];
    }
+   /* Never read: set so two handles opened over the same bars hold the same
+    * state.
+    */
+   sorted[lookbackTotal] = 0.0;
    /* Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
     * arithmetic; P/100 is inexact in binary64 and lands the product just above
     * an integer, one order statistic too high, at exactly the round
@@ -191,55 +199,122 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
    /* Both scratch buffers hold copies and inReal is never read below i, so
     * inReal and outReal may be the same buffer.
     *
-    * Every buffer store sits BELOW the output store on purpose: deriving the
-    * whole answer read-only above it is what lets the streaming peek frame drop
-    * the state update rather than shadow a shift loop, which it cannot do.
+    * Every buffer store sits BELOW the output store: deriving the whole answer
+    * read-only above it is what lets the streaming peek frame drop the state
+    * update.
     */
    outIdx = 0;
    do
    {
       newValue = inReal[i];
-      pos = 0;
-      while( pos < lookbackTotal && sorted[pos] <= newValue )
+      /* The full window is the retained values with newValue inserted after
+       * its equals, so its rank-th value is newValue clamped to
+       * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+       * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+       * selects, not branches: which side wins is a coin flip.
+       */
+      result = newValue;
+      if( rank <= lookbackTotal )
       {
-         pos += 1;
+         result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
       }
-      if( rank - 1 < pos )
+      if( rank > 1 )
       {
-         result = sorted[rank - 1];
-      } else if( rank - 1 == pos )
-      {
-         result = newValue;
-      } else 
-      {
-         result = sorted[rank - 2];
+         result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
       }
       outReal[outIdx] = result;
       outIdx += 1;
-      /* Shifting only the strictly greater entries leaves equal values in
-       * insertion order, which is age order -- that is what lets the delete
-       * below evict the oldest of a run by value alone, with no slot array.
+      /* pos counts the retained values <= newValue and j is the first retained
+       * value >= oldValue. Below 256 values a linear scan beats a binary
+       * search: one mispredicted loop exit costs less than log2(n)
+       * unpredictable halvings. From 64 values the scan steps 4 at a time
+       * first, which is what pays for that step's own mispredicted exit.
+       *
+       * Keep every run of equal values in age order (newValue goes after its
+       * equals): the oldest of a run is then the departing value bit for bit,
+       * which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+       * instead changes no value but flips the sign of some zero outputs.
        */
-      j = lookbackTotal;
-      while( j > pos )
-      {
-         sorted[j] = sorted[j - 1];
-         j -= 1;
-      }
-      sorted[pos] = newValue;
       ring[ring_Idx] = newValue;
       ring_Idx++;
       if( ring_Idx > maxIdx_ring ) ring_Idx = 0;
       oldValue = ring[ring_Idx];
-      j = 0;
-      while( j < lookbackTotal && sorted[j] < oldValue )
+      if( lookbackTotal < 256 )
       {
-         j += 1;
+         pos = 0;
+         if( lookbackTotal >= 64 )
+         {
+            while( pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue )
+            {
+               pos += 4;
+            }
+         }
+         while( pos < lookbackTotal && sorted[pos] <= newValue )
+         {
+            pos += 1;
+         }
+         j = 0;
+         if( lookbackTotal >= 64 )
+         {
+            while( j + 4 <= lookbackTotal && sorted[j + 3] < oldValue )
+            {
+               j += 4;
+            }
+         }
+         while( j < lookbackTotal && sorted[j] < oldValue )
+         {
+            j += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] <= newValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         pos = lo;
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] < oldValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         j = lo;
       }
-      while( j < lookbackTotal )
+      /* Evict oldValue and place newValue with one shift of the slots between
+       * them.
+       */
+      if( j < pos )
       {
-         sorted[j] = sorted[j + 1];
-         j += 1;
+         while( j < pos - 1 )
+         {
+            sorted[j] = sorted[j + 1];
+            j += 1;
+         }
+         sorted[pos - 1] = newValue;
+      } else 
+      {
+         while( j > pos )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
+         sorted[pos] = newValue;
       }
       i += 1;
    } while( i <= endIdx );
@@ -269,6 +344,9 @@ TA_RetCode TA_S_PERCENTILE( int    startIdx,
    int pos;
    int nbSorted;
    int rank;
+   int lo;
+   int hi;
+   int mid;
    double local_ring[30];
    double *ring = &local_ring[0];
    int ring_Idx;
@@ -336,6 +414,7 @@ TA_RetCode TA_S_PERCENTILE( int    startIdx,
    {
       sorted = &local_sorted[0];
    }
+   sorted[lookbackTotal] = 0.0;
    rank = (int)ceil(optInPercentile * (double)optInTimePeriod / 100.0);
    if( rank < 1 )
    {
@@ -367,43 +446,94 @@ TA_RetCode TA_S_PERCENTILE( int    startIdx,
    do
    {
       newValue = (double)inReal[i];
-      pos = 0;
-      while( pos < lookbackTotal && sorted[pos] <= newValue )
+      result = newValue;
+      if( rank <= lookbackTotal )
       {
-         pos += 1;
+         result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
       }
-      if( rank - 1 < pos )
+      if( rank > 1 )
       {
-         result = sorted[rank - 1];
-      } else if( rank - 1 == pos )
-      {
-         result = newValue;
-      } else 
-      {
-         result = sorted[rank - 2];
+         result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
       }
       outReal[outIdx] = result;
       outIdx += 1;
-      j = lookbackTotal;
-      while( j > pos )
-      {
-         sorted[j] = sorted[j - 1];
-         j -= 1;
-      }
-      sorted[pos] = newValue;
       ring[ring_Idx] = newValue;
       ring_Idx++;
       if( ring_Idx > maxIdx_ring ) ring_Idx = 0;
       oldValue = ring[ring_Idx];
-      j = 0;
-      while( j < lookbackTotal && sorted[j] < oldValue )
+      if( lookbackTotal < 256 )
       {
-         j += 1;
+         pos = 0;
+         if( lookbackTotal >= 64 )
+         {
+            while( pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue )
+            {
+               pos += 4;
+            }
+         }
+         while( pos < lookbackTotal && sorted[pos] <= newValue )
+         {
+            pos += 1;
+         }
+         j = 0;
+         if( lookbackTotal >= 64 )
+         {
+            while( j + 4 <= lookbackTotal && sorted[j + 3] < oldValue )
+            {
+               j += 4;
+            }
+         }
+         while( j < lookbackTotal && sorted[j] < oldValue )
+         {
+            j += 1;
+         }
+      } else 
+      {
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] <= newValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         pos = lo;
+         lo = 0;
+         hi = lookbackTotal;
+         while( lo < hi )
+         {
+            mid = (lo + hi) / 2;
+            if( sorted[mid] < oldValue )
+            {
+               lo = mid + 1;
+            } else 
+            {
+               hi = mid;
+            }
+         }
+         j = lo;
       }
-      while( j < lookbackTotal )
+      if( j < pos )
       {
-         sorted[j] = sorted[j + 1];
-         j += 1;
+         while( j < pos - 1 )
+         {
+            sorted[j] = sorted[j + 1];
+            j += 1;
+         }
+         sorted[pos - 1] = newValue;
+      } else 
+      {
+         while( j > pos )
+         {
+            sorted[j] = sorted[j - 1];
+            j -= 1;
+         }
+         sorted[pos] = newValue;
       }
       i += 1;
    } while( i <= endIdx );
@@ -453,35 +583,38 @@ static void TA_PERCENTILE_StepImpl( struct TA_PERCENTILE_Stream *sp, double inRe
    double result;
    int j;
    int pos;
+   int lo;
+   int hi;
+   int mid;
 
    newValue = inReal;
-   pos = 0;
-   while( pos < sp->lookbackTotal && sp->cb_sorted[pos] <= newValue )
+   /* The full window is the retained values with newValue inserted after
+    * its equals, so its rank-th value is newValue clamped to
+    * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+    * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+    * selects, not branches: which side wins is a coin flip.
+    */
+   result = newValue;
+   if( sp->rank <= sp->lookbackTotal )
    {
-      pos += 1;
+      result = (result < sp->cb_sorted[sp->rank - 1]) ? result : sp->cb_sorted[sp->rank - 1];
    }
-   if( sp->rank - 1 < pos )
+   if( sp->rank > 1 )
    {
-      result = sp->cb_sorted[sp->rank - 1];
-   } else if( sp->rank - 1 == pos )
-   {
-      result = newValue;
-   } else 
-   {
-      result = sp->cb_sorted[sp->rank - 2];
+      result = (result < sp->cb_sorted[sp->rank - 2]) ? sp->cb_sorted[sp->rank - 2] : result;
    }
    *outReal= result;
-   /* Shifting only the strictly greater entries leaves equal values in
-    * insertion order, which is age order -- that is what lets the delete
-    * below evict the oldest of a run by value alone, with no slot array.
+   /* pos counts the retained values <= newValue and j is the first retained
+    * value >= oldValue. Below 256 values a linear scan beats a binary
+    * search: one mispredicted loop exit costs less than log2(n)
+    * unpredictable halvings. From 64 values the scan steps 4 at a time
+    * first, which is what pays for that step's own mispredicted exit.
+    *
+    * Keep every run of equal values in age order (newValue goes after its
+    * equals): the oldest of a run is then the departing value bit for bit,
+    * which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+    * instead changes no value but flips the sign of some zero outputs.
     */
-   j = sp->lookbackTotal;
-   while( j > pos )
-   {
-      sp->cb_sorted[j] = sp->cb_sorted[j - 1];
-      j -= 1;
-   }
-   sp->cb_sorted[pos] = newValue;
    sp->cb_ring[sp->ring_Idx] = newValue;
    sp->ring_Idx = sp->ring_Idx + 1;
    if( sp->ring_Idx > sp->maxIdx_ring )
@@ -489,15 +622,82 @@ static void TA_PERCENTILE_StepImpl( struct TA_PERCENTILE_Stream *sp, double inRe
       sp->ring_Idx = 0;
    }
    oldValue = sp->cb_ring[sp->ring_Idx];
-   j = 0;
-   while( j < sp->lookbackTotal && sp->cb_sorted[j] < oldValue )
+   if( sp->lookbackTotal < 256 )
    {
-      j += 1;
+      pos = 0;
+      if( sp->lookbackTotal >= 64 )
+      {
+         while( pos + 4 <= sp->lookbackTotal && sp->cb_sorted[pos + 3] <= newValue )
+         {
+            pos += 4;
+         }
+      }
+      while( pos < sp->lookbackTotal && sp->cb_sorted[pos] <= newValue )
+      {
+         pos += 1;
+      }
+      j = 0;
+      if( sp->lookbackTotal >= 64 )
+      {
+         while( j + 4 <= sp->lookbackTotal && sp->cb_sorted[j + 3] < oldValue )
+         {
+            j += 4;
+         }
+      }
+      while( j < sp->lookbackTotal && sp->cb_sorted[j] < oldValue )
+      {
+         j += 1;
+      }
+   } else 
+   {
+      lo = 0;
+      hi = sp->lookbackTotal;
+      while( lo < hi )
+      {
+         mid = (lo + hi) / 2;
+         if( sp->cb_sorted[mid] <= newValue )
+         {
+            lo = mid + 1;
+         } else 
+         {
+            hi = mid;
+         }
+      }
+      pos = lo;
+      lo = 0;
+      hi = sp->lookbackTotal;
+      while( lo < hi )
+      {
+         mid = (lo + hi) / 2;
+         if( sp->cb_sorted[mid] < oldValue )
+         {
+            lo = mid + 1;
+         } else 
+         {
+            hi = mid;
+         }
+      }
+      j = lo;
    }
-   while( j < sp->lookbackTotal )
+   /* Evict oldValue and place newValue with one shift of the slots between
+    * them.
+    */
+   if( j < pos )
    {
-      sp->cb_sorted[j] = sp->cb_sorted[j + 1];
-      j += 1;
+      while( j < pos - 1 )
+      {
+         sp->cb_sorted[j] = sp->cb_sorted[j + 1];
+         j += 1;
+      }
+      sp->cb_sorted[pos - 1] = newValue;
+   } else 
+   {
+      while( j > pos )
+      {
+         sp->cb_sorted[j] = sp->cb_sorted[j - 1];
+         j -= 1;
+      }
+      sp->cb_sorted[pos] = newValue;
    }
    sp->cur_outReal = *outReal;
 }
@@ -548,6 +748,9 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
       int pos;
       int nbSorted;
       int rank = 0;
+      int lo;
+      int hi;
+      int mid;
       /* The window is carried twice: "ring" by age, "sorted" by value. */
       lookbackTotal = optInTimePeriod - 1;
       if( startIdx < lookbackTotal )
@@ -591,6 +794,10 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
       }
       maxIdx_sorted = (optInTimePeriod-1);
       sorted_Idx = 0;
+      /* Never read: set so two handles opened over the same bars hold the same
+       * state.
+       */
+      sorted[lookbackTotal] = 0.0;
       /* Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
        * arithmetic; P/100 is inexact in binary64 and lands the product just above
        * an integer, one order statistic too high, at exactly the round
@@ -626,55 +833,122 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
       /* Both scratch buffers hold copies and inReal is never read below i, so
        * inReal and outReal may be the same buffer.
        *
-       * Every buffer store sits BELOW the output store on purpose: deriving the
-       * whole answer read-only above it is what lets the streaming peek frame drop
-       * the state update rather than shadow a shift loop, which it cannot do.
+       * Every buffer store sits BELOW the output store: deriving the whole answer
+       * read-only above it is what lets the streaming peek frame drop the state
+       * update.
        */
       outIdx = 0;
       do
       {
          newValue = inReal[i];
-         pos = 0;
-         while( pos < lookbackTotal && sorted[pos] <= newValue )
+         /* The full window is the retained values with newValue inserted after
+          * its equals, so its rank-th value is newValue clamped to
+          * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+          * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+          * selects, not branches: which side wins is a coin flip.
+          */
+         result = newValue;
+         if( rank <= lookbackTotal )
          {
-            pos += 1;
+            result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
          }
-         if( rank - 1 < pos )
+         if( rank > 1 )
          {
-            result = sorted[rank - 1];
-         } else if( rank - 1 == pos )
-         {
-            result = newValue;
-         } else 
-         {
-            result = sorted[rank - 2];
+            result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
          }
          outReal[outIdx * outStride] = result;
          outIdx += 1;
-         /* Shifting only the strictly greater entries leaves equal values in
-          * insertion order, which is age order -- that is what lets the delete
-          * below evict the oldest of a run by value alone, with no slot array.
+         /* pos counts the retained values <= newValue and j is the first retained
+          * value >= oldValue. Below 256 values a linear scan beats a binary
+          * search: one mispredicted loop exit costs less than log2(n)
+          * unpredictable halvings. From 64 values the scan steps 4 at a time
+          * first, which is what pays for that step's own mispredicted exit.
+          *
+          * Keep every run of equal values in age order (newValue goes after its
+          * equals): the oldest of a run is then the departing value bit for bit,
+          * which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+          * instead changes no value but flips the sign of some zero outputs.
           */
-         j = lookbackTotal;
-         while( j > pos )
-         {
-            sorted[j] = sorted[j - 1];
-            j -= 1;
-         }
-         sorted[pos] = newValue;
          ring[ring_Idx] = newValue;
          ring_Idx++;
          if( ring_Idx > maxIdx_ring ) ring_Idx = 0;
          oldValue = ring[ring_Idx];
-         j = 0;
-         while( j < lookbackTotal && sorted[j] < oldValue )
+         if( lookbackTotal < 256 )
          {
-            j += 1;
+            pos = 0;
+            if( lookbackTotal >= 64 )
+            {
+               while( pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue )
+               {
+                  pos += 4;
+               }
+            }
+            while( pos < lookbackTotal && sorted[pos] <= newValue )
+            {
+               pos += 1;
+            }
+            j = 0;
+            if( lookbackTotal >= 64 )
+            {
+               while( j + 4 <= lookbackTotal && sorted[j + 3] < oldValue )
+               {
+                  j += 4;
+               }
+            }
+            while( j < lookbackTotal && sorted[j] < oldValue )
+            {
+               j += 1;
+            }
+         } else 
+         {
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi )
+            {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] <= newValue )
+               {
+                  lo = mid + 1;
+               } else 
+               {
+                  hi = mid;
+               }
+            }
+            pos = lo;
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi )
+            {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] < oldValue )
+               {
+                  lo = mid + 1;
+               } else 
+               {
+                  hi = mid;
+               }
+            }
+            j = lo;
          }
-         while( j < lookbackTotal )
+         /* Evict oldValue and place newValue with one shift of the slots between
+          * them.
+          */
+         if( j < pos )
          {
-            sorted[j] = sorted[j + 1];
-            j += 1;
+            while( j < pos - 1 )
+            {
+               sorted[j] = sorted[j + 1];
+               j += 1;
+            }
+            sorted[pos - 1] = newValue;
+         } else 
+         {
+            while( j > pos )
+            {
+               sorted[j] = sorted[j - 1];
+               j -= 1;
+            }
+            sorted[pos] = newValue;
          }
          i += 1;
       } while( i <= endIdx );
@@ -771,27 +1045,26 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_Peek( const TA_PERCENTILE_Stream *stream, do
    const struct TA_PERCENTILE_Stream *sp = stream;
    double newValue;
    double result;
-   int pos;
    double *cb_sorted;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    cb_sorted = sp->cb_sorted;
    newValue = inReal;
-   pos = 0;
-   while( pos < sp->lookbackTotal && cb_sorted[pos] <= newValue )
+   /* The full window is the retained values with newValue inserted after
+    * its equals, so its rank-th value is newValue clamped to
+    * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+    * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+    * selects, not branches: which side wins is a coin flip.
+    */
+   result = newValue;
+   if( sp->rank <= sp->lookbackTotal )
    {
-      pos += 1;
+      result = (result < cb_sorted[sp->rank - 1]) ? result : cb_sorted[sp->rank - 1];
    }
-   if( sp->rank - 1 < pos )
+   if( sp->rank > 1 )
    {
-      result = cb_sorted[sp->rank - 1];
-   } else if( sp->rank - 1 == pos )
-   {
-      result = newValue;
-   } else 
-   {
-      result = cb_sorted[sp->rank - 2];
+      result = (result < cb_sorted[sp->rank - 2]) ? cb_sorted[sp->rank - 2] : result;
    }
    *outReal= result;
    return TA_SUCCESS;

@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090426 MF,CC  First version (issue #368).
+    *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
     */
    /// <summary>
    /// Number of leading input bars <c>Percentile</c> consumes before it can
@@ -105,6 +106,9 @@ public partial class Core
       int pos = 0;
       int nbSorted = 0;
       int rank = 0;
+      int lo = 0;
+      int hi = 0;
+      int mid = 0;
       double[] ring;
       int ring_Idx = 0;
       int maxIdx_ring = (30)-1;
@@ -148,6 +152,10 @@ public partial class Core
       sorted = new double[optInTimePeriod];
       maxIdx_sorted = (optInTimePeriod)-1;
       sorted_Idx = 0;
+      /* Never read: set so two handles opened over the same bars hold the same
+       * state.
+       */
+      sorted[lookbackTotal] = 0.0;
       /* Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
        * arithmetic; P/100 is inexact in binary64 and lands the product just above
        * an integer, one order statistic too high, at exactly the round
@@ -179,47 +187,101 @@ public partial class Core
       /* Both scratch buffers hold copies and inReal is never read below i, so
        * inReal and outReal may be the same buffer.
        *
-       * Every buffer store sits BELOW the output store on purpose: deriving the
-       * whole answer read-only above it is what lets the streaming peek frame drop
-       * the state update rather than shadow a shift loop, which it cannot do.
+       * Every buffer store sits BELOW the output store: deriving the whole answer
+       * read-only above it is what lets the streaming peek frame drop the state
+       * update.
        */
       outIdx = 0;
       do {
          newValue = inReal[i];
-         pos = 0;
-         while( pos < lookbackTotal && sorted[pos] <= newValue ) {
-            pos += 1;
+         /* The full window is the retained values with newValue inserted after
+          * its equals, so its rank-th value is newValue clamped to
+          * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+          * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+          * selects, not branches: which side wins is a coin flip.
+          */
+         result = newValue;
+         if( rank <= lookbackTotal ) {
+            result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
          }
-         if( rank - 1 < pos ) {
-            result = sorted[rank - 1];
-         } else if( rank - 1 == pos ) {
-            result = newValue;
-         } else {
-            result = sorted[rank - 2];
+         if( rank > 1 ) {
+            result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
          }
          outReal[outIdx] = result;
          outIdx += 1;
-         /* Shifting only the strictly greater entries leaves equal values in
-          * insertion order, which is age order -- that is what lets the delete
-          * below evict the oldest of a run by value alone, with no slot array.
+         /* pos counts the retained values <= newValue and j is the first retained
+          * value >= oldValue. Below 256 values a linear scan beats a binary
+          * search: one mispredicted loop exit costs less than log2(n)
+          * unpredictable halvings. From 64 values the scan steps 4 at a time
+          * first, which is what pays for that step's own mispredicted exit.
+          *
+          * Keep every run of equal values in age order (newValue goes after its
+          * equals): the oldest of a run is then the departing value bit for bit,
+          * which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+          * instead changes no value but flips the sign of some zero outputs.
           */
-         j = lookbackTotal;
-         while( j > pos ) {
-            sorted[j] = sorted[j - 1];
-            j -= 1;
-         }
-         sorted[pos] = newValue;
          ring[ring_Idx] = newValue;
          ring_Idx++;
          if( ring_Idx > maxIdx_ring ) { ring_Idx = 0; }
          oldValue = ring[ring_Idx];
-         j = 0;
-         while( j < lookbackTotal && sorted[j] < oldValue ) {
-            j += 1;
+         if( lookbackTotal < 256 ) {
+            pos = 0;
+            if( lookbackTotal >= 64 ) {
+               while( pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue ) {
+                  pos += 4;
+               }
+            }
+            while( pos < lookbackTotal && sorted[pos] <= newValue ) {
+               pos += 1;
+            }
+            j = 0;
+            if( lookbackTotal >= 64 ) {
+               while( j + 4 <= lookbackTotal && sorted[j + 3] < oldValue ) {
+                  j += 4;
+               }
+            }
+            while( j < lookbackTotal && sorted[j] < oldValue ) {
+               j += 1;
+            }
+         } else {
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi ) {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] <= newValue ) {
+                  lo = mid + 1;
+               } else {
+                  hi = mid;
+               }
+            }
+            pos = lo;
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi ) {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] < oldValue ) {
+                  lo = mid + 1;
+               } else {
+                  hi = mid;
+               }
+            }
+            j = lo;
          }
-         while( j < lookbackTotal ) {
-            sorted[j] = sorted[j + 1];
-            j += 1;
+         /* Evict oldValue and place newValue with one shift of the slots between
+          * them.
+          */
+         if( j < pos ) {
+            while( j < pos - 1 ) {
+               sorted[j] = sorted[j + 1];
+               j += 1;
+            }
+            sorted[pos - 1] = newValue;
+         } else {
+            while( j > pos ) {
+               sorted[j] = sorted[j - 1];
+               j -= 1;
+            }
+            sorted[pos] = newValue;
          }
          i += 1;
       } while( i <= endIdx );
@@ -248,6 +310,9 @@ public partial class Core
       int pos = 0;
       int nbSorted = 0;
       int rank = 0;
+      int lo = 0;
+      int hi = 0;
+      int mid = 0;
       double[] ring;
       int ring_Idx = 0;
       int maxIdx_ring = (30)-1;
@@ -290,6 +355,7 @@ public partial class Core
       sorted = new double[optInTimePeriod];
       maxIdx_sorted = (optInTimePeriod)-1;
       sorted_Idx = 0;
+      sorted[lookbackTotal] = 0.0;
       rank = (int)Math.Ceiling(optInPercentile * (double)optInTimePeriod / 100.0);
       if( rank < 1 ) {
          rank = 1;
@@ -316,36 +382,74 @@ public partial class Core
       outIdx = 0;
       do {
          newValue = (double)inReal[i];
-         pos = 0;
-         while( pos < lookbackTotal && sorted[pos] <= newValue ) {
-            pos += 1;
+         result = newValue;
+         if( rank <= lookbackTotal ) {
+            result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
          }
-         if( rank - 1 < pos ) {
-            result = sorted[rank - 1];
-         } else if( rank - 1 == pos ) {
-            result = newValue;
-         } else {
-            result = sorted[rank - 2];
+         if( rank > 1 ) {
+            result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
          }
          outReal[outIdx] = result;
          outIdx += 1;
-         j = lookbackTotal;
-         while( j > pos ) {
-            sorted[j] = sorted[j - 1];
-            j -= 1;
-         }
-         sorted[pos] = newValue;
          ring[ring_Idx] = newValue;
          ring_Idx++;
          if( ring_Idx > maxIdx_ring ) { ring_Idx = 0; }
          oldValue = ring[ring_Idx];
-         j = 0;
-         while( j < lookbackTotal && sorted[j] < oldValue ) {
-            j += 1;
+         if( lookbackTotal < 256 ) {
+            pos = 0;
+            if( lookbackTotal >= 64 ) {
+               while( pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue ) {
+                  pos += 4;
+               }
+            }
+            while( pos < lookbackTotal && sorted[pos] <= newValue ) {
+               pos += 1;
+            }
+            j = 0;
+            if( lookbackTotal >= 64 ) {
+               while( j + 4 <= lookbackTotal && sorted[j + 3] < oldValue ) {
+                  j += 4;
+               }
+            }
+            while( j < lookbackTotal && sorted[j] < oldValue ) {
+               j += 1;
+            }
+         } else {
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi ) {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] <= newValue ) {
+                  lo = mid + 1;
+               } else {
+                  hi = mid;
+               }
+            }
+            pos = lo;
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi ) {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] < oldValue ) {
+                  lo = mid + 1;
+               } else {
+                  hi = mid;
+               }
+            }
+            j = lo;
          }
-         while( j < lookbackTotal ) {
-            sorted[j] = sorted[j + 1];
-            j += 1;
+         if( j < pos ) {
+            while( j < pos - 1 ) {
+               sorted[j] = sorted[j + 1];
+               j += 1;
+            }
+            sorted[pos - 1] = newValue;
+         } else {
+            while( j > pos ) {
+               sorted[j] = sorted[j - 1];
+               j -= 1;
+            }
+            sorted[pos] = newValue;
          }
          i += 1;
       } while( i <= endIdx );
@@ -645,19 +749,20 @@ public partial class Core
          PercentileStream sp = this;
          double newValue = 0.0;
          double result = 0.0;
-         int pos = 0;
          double cur_outReal = 0.0;
          newValue = inReal;
-         pos = 0;
-         while( pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue ) {
-            pos += 1;
+         /* The full window is the retained values with newValue inserted after
+          * its equals, so its rank-th value is newValue clamped to
+          * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+          * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+          * selects, not branches: which side wins is a coin flip.
+          */
+         result = newValue;
+         if( sp.rank <= sp.lookbackTotal ) {
+            result = (result < sp.cb_sorted[sp.rank - 1]) ? result : sp.cb_sorted[sp.rank - 1];
          }
-         if( sp.rank - 1 < pos ) {
-            result = sp.cb_sorted[sp.rank - 1];
-         } else if( sp.rank - 1 == pos ) {
-            result = newValue;
-         } else {
-            result = sp.cb_sorted[sp.rank - 2];
+         if( sp.rank > 1 ) {
+            result = (result < sp.cb_sorted[sp.rank - 2]) ? sp.cb_sorted[sp.rank - 2] : result;
          }
          cur_outReal = result;
          return cur_outReal;
@@ -687,42 +792,99 @@ public partial class Core
       double result = 0.0;
       int j = 0;
       int pos = 0;
+      int lo = 0;
+      int hi = 0;
+      int mid = 0;
       newValue = inReal;
-      pos = 0;
-      while( pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue ) {
-         pos += 1;
+      /* The full window is the retained values with newValue inserted after
+       * its equals, so its rank-th value is newValue clamped to
+       * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+       * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+       * selects, not branches: which side wins is a coin flip.
+       */
+      result = newValue;
+      if( sp.rank <= sp.lookbackTotal ) {
+         result = (result < sp.cb_sorted[sp.rank - 1]) ? result : sp.cb_sorted[sp.rank - 1];
       }
-      if( sp.rank - 1 < pos ) {
-         result = sp.cb_sorted[sp.rank - 1];
-      } else if( sp.rank - 1 == pos ) {
-         result = newValue;
-      } else {
-         result = sp.cb_sorted[sp.rank - 2];
+      if( sp.rank > 1 ) {
+         result = (result < sp.cb_sorted[sp.rank - 2]) ? sp.cb_sorted[sp.rank - 2] : result;
       }
       sp.cur_outReal = result;
-      /* Shifting only the strictly greater entries leaves equal values in
-       * insertion order, which is age order -- that is what lets the delete
-       * below evict the oldest of a run by value alone, with no slot array.
+      /* pos counts the retained values <= newValue and j is the first retained
+       * value >= oldValue. Below 256 values a linear scan beats a binary
+       * search: one mispredicted loop exit costs less than log2(n)
+       * unpredictable halvings. From 64 values the scan steps 4 at a time
+       * first, which is what pays for that step's own mispredicted exit.
+       *
+       * Keep every run of equal values in age order (newValue goes after its
+       * equals): the oldest of a run is then the departing value bit for bit,
+       * which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+       * instead changes no value but flips the sign of some zero outputs.
        */
-      j = sp.lookbackTotal;
-      while( j > pos ) {
-         sp.cb_sorted[j] = sp.cb_sorted[j - 1];
-         j -= 1;
-      }
-      sp.cb_sorted[pos] = newValue;
       sp.cb_ring[sp.ring_Idx] = newValue;
       sp.ring_Idx = sp.ring_Idx + 1;
       if( sp.ring_Idx > sp.maxIdx_ring ) {
          sp.ring_Idx = 0;
       }
       oldValue = sp.cb_ring[sp.ring_Idx];
-      j = 0;
-      while( j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue ) {
-         j += 1;
+      if( sp.lookbackTotal < 256 ) {
+         pos = 0;
+         if( sp.lookbackTotal >= 64 ) {
+            while( pos + 4 <= sp.lookbackTotal && sp.cb_sorted[pos + 3] <= newValue ) {
+               pos += 4;
+            }
+         }
+         while( pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue ) {
+            pos += 1;
+         }
+         j = 0;
+         if( sp.lookbackTotal >= 64 ) {
+            while( j + 4 <= sp.lookbackTotal && sp.cb_sorted[j + 3] < oldValue ) {
+               j += 4;
+            }
+         }
+         while( j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue ) {
+            j += 1;
+         }
+      } else {
+         lo = 0;
+         hi = sp.lookbackTotal;
+         while( lo < hi ) {
+            mid = (lo + hi) / 2;
+            if( sp.cb_sorted[mid] <= newValue ) {
+               lo = mid + 1;
+            } else {
+               hi = mid;
+            }
+         }
+         pos = lo;
+         lo = 0;
+         hi = sp.lookbackTotal;
+         while( lo < hi ) {
+            mid = (lo + hi) / 2;
+            if( sp.cb_sorted[mid] < oldValue ) {
+               lo = mid + 1;
+            } else {
+               hi = mid;
+            }
+         }
+         j = lo;
       }
-      while( j < sp.lookbackTotal ) {
-         sp.cb_sorted[j] = sp.cb_sorted[j + 1];
-         j += 1;
+      /* Evict oldValue and place newValue with one shift of the slots between
+       * them.
+       */
+      if( j < pos ) {
+         while( j < pos - 1 ) {
+            sp.cb_sorted[j] = sp.cb_sorted[j + 1];
+            j += 1;
+         }
+         sp.cb_sorted[pos - 1] = newValue;
+      } else {
+         while( j > pos ) {
+            sp.cb_sorted[j] = sp.cb_sorted[j - 1];
+            j -= 1;
+         }
+         sp.cb_sorted[pos] = newValue;
       }
    }
 
@@ -740,6 +902,9 @@ public partial class Core
       int pos = 0;
       int nbSorted = 0;
       int rank = 0;
+      int lo = 0;
+      int hi = 0;
+      int mid = 0;
       double[] ring = [];
       int ring_Idx = 0;
       int maxIdx_ring = (30)-1;
@@ -787,6 +952,10 @@ public partial class Core
       sorted = new double[optInTimePeriod];
       maxIdx_sorted = (optInTimePeriod)-1;
       sorted_Idx = 0;
+      /* Never read: set so two handles opened over the same bars hold the same
+       * state.
+       */
+      sorted[lookbackTotal] = 0.0;
       /* Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
        * arithmetic; P/100 is inexact in binary64 and lands the product just above
        * an integer, one order statistic too high, at exactly the round
@@ -818,47 +987,101 @@ public partial class Core
       /* Both scratch buffers hold copies and inReal is never read below i, so
        * inReal and outReal may be the same buffer.
        *
-       * Every buffer store sits BELOW the output store on purpose: deriving the
-       * whole answer read-only above it is what lets the streaming peek frame drop
-       * the state update rather than shadow a shift loop, which it cannot do.
+       * Every buffer store sits BELOW the output store: deriving the whole answer
+       * read-only above it is what lets the streaming peek frame drop the state
+       * update.
        */
       outIdx = 0;
       do {
          newValue = inReal[i];
-         pos = 0;
-         while( pos < lookbackTotal && sorted[pos] <= newValue ) {
-            pos += 1;
+         /* The full window is the retained values with newValue inserted after
+          * its equals, so its rank-th value is newValue clamped to
+          * [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+          * sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+          * selects, not branches: which side wins is a coin flip.
+          */
+         result = newValue;
+         if( rank <= lookbackTotal ) {
+            result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
          }
-         if( rank - 1 < pos ) {
-            result = sorted[rank - 1];
-         } else if( rank - 1 == pos ) {
-            result = newValue;
-         } else {
-            result = sorted[rank - 2];
+         if( rank > 1 ) {
+            result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
          }
          outReal[outIdx * outStride] = result;
          outIdx += 1;
-         /* Shifting only the strictly greater entries leaves equal values in
-          * insertion order, which is age order -- that is what lets the delete
-          * below evict the oldest of a run by value alone, with no slot array.
+         /* pos counts the retained values <= newValue and j is the first retained
+          * value >= oldValue. Below 256 values a linear scan beats a binary
+          * search: one mispredicted loop exit costs less than log2(n)
+          * unpredictable halvings. From 64 values the scan steps 4 at a time
+          * first, which is what pays for that step's own mispredicted exit.
+          *
+          * Keep every run of equal values in age order (newValue goes after its
+          * equals): the oldest of a run is then the departing value bit for bit,
+          * which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+          * instead changes no value but flips the sign of some zero outputs.
           */
-         j = lookbackTotal;
-         while( j > pos ) {
-            sorted[j] = sorted[j - 1];
-            j -= 1;
-         }
-         sorted[pos] = newValue;
          ring[ring_Idx] = newValue;
          ring_Idx++;
          if( ring_Idx > maxIdx_ring ) { ring_Idx = 0; }
          oldValue = ring[ring_Idx];
-         j = 0;
-         while( j < lookbackTotal && sorted[j] < oldValue ) {
-            j += 1;
+         if( lookbackTotal < 256 ) {
+            pos = 0;
+            if( lookbackTotal >= 64 ) {
+               while( pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue ) {
+                  pos += 4;
+               }
+            }
+            while( pos < lookbackTotal && sorted[pos] <= newValue ) {
+               pos += 1;
+            }
+            j = 0;
+            if( lookbackTotal >= 64 ) {
+               while( j + 4 <= lookbackTotal && sorted[j + 3] < oldValue ) {
+                  j += 4;
+               }
+            }
+            while( j < lookbackTotal && sorted[j] < oldValue ) {
+               j += 1;
+            }
+         } else {
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi ) {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] <= newValue ) {
+                  lo = mid + 1;
+               } else {
+                  hi = mid;
+               }
+            }
+            pos = lo;
+            lo = 0;
+            hi = lookbackTotal;
+            while( lo < hi ) {
+               mid = (lo + hi) / 2;
+               if( sorted[mid] < oldValue ) {
+                  lo = mid + 1;
+               } else {
+                  hi = mid;
+               }
+            }
+            j = lo;
          }
-         while( j < lookbackTotal ) {
-            sorted[j] = sorted[j + 1];
-            j += 1;
+         /* Evict oldValue and place newValue with one shift of the slots between
+          * them.
+          */
+         if( j < pos ) {
+            while( j < pos - 1 ) {
+               sorted[j] = sorted[j + 1];
+               j += 1;
+            }
+            sorted[pos - 1] = newValue;
+         } else {
+            while( j > pos ) {
+               sorted[j] = sorted[j - 1];
+               j -= 1;
+            }
+            sorted[pos] = newValue;
          }
          i += 1;
       } while( i <= endIdx );

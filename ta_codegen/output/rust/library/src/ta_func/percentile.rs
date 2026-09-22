@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #368).
+ *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  */
 
 // Import types from parent module
@@ -138,6 +139,9 @@ impl Core {
         let mut pos: usize = 0_usize;
         let mut nbSorted: usize = 0_usize;
         let mut rank: i32 = 0_i32;
+        let mut lo: usize = 0_usize;
+        let mut hi: usize = 0_usize;
+        let mut mid: usize = 0_usize;
         let mut local_ring: [f64; 30] = [0.0_f64; 30];
         let mut heap_ring: Vec<f64> = Vec::new();
         let mut ring: &mut [f64] = &mut [];
@@ -176,6 +180,9 @@ impl Core {
         }
         maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
         sorted_Idx = 0;
+        // Never read: set so two handles opened over the same bars hold the same
+        // state.
+        sorted[lookbackTotal] = 0.0;
         // Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
         // arithmetic; P/100 is inexact in binary64 and lands the product just above
         // an integer, one order statistic too high, at exactly the round
@@ -206,45 +213,97 @@ impl Core {
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
         //
-        // Every buffer store sits BELOW the output store on purpose: deriving the
-        // whole answer read-only above it is what lets the streaming peek frame drop
-        // the state update rather than shadow a shift loop, which it cannot do.
+        // Every buffer store sits BELOW the output store: deriving the whole answer
+        // read-only above it is what lets the streaming peek frame drop the state
+        // update.
         outIdx = 0;
         loop {
             newValue = inReal[i];
-            pos = 0;
-            while pos < lookbackTotal && sorted[pos] <= newValue {
-                pos += 1;
+            // The full window is the retained values with newValue inserted after
+            // its equals, so its rank-th value is newValue clamped to
+            // [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+            // sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+            // selects, not branches: which side wins is a coin flip.
+            result = newValue;
+            if rank <= ((lookbackTotal) as i32) {
+                result = (if result < sorted[(rank - 1) as usize] { result } else { sorted[(rank - 1) as usize] });
             }
-            if rank - 1 < ((pos) as i32) {
-                result = sorted[(rank - 1) as usize];
-            } else if rank - 1 == ((pos) as i32) {
-                result = newValue;
-            } else {
-                result = sorted[(rank - 2) as usize];
+            if rank > 1 {
+                result = (if result < sorted[(rank - 2) as usize] { sorted[(rank - 2) as usize] } else { result });
             }
             outReal[outIdx] = result;
             outIdx += 1;
-            // Shifting only the strictly greater entries leaves equal values in
-            // insertion order, which is age order -- that is what lets the delete
-            // below evict the oldest of a run by value alone, with no slot array.
-            j = lookbackTotal;
-            while j > pos {
-                sorted[j] = sorted[j - 1];
-                j -= 1;
-            }
-            sorted[pos] = newValue;
+            // pos counts the retained values <= newValue and j is the first retained
+            // value >= oldValue. Below 256 values a linear scan beats a binary
+            // search: one mispredicted loop exit costs less than log2(n)
+            // unpredictable halvings. From 64 values the scan steps 4 at a time
+            // first, which is what pays for that step's own mispredicted exit.
+            //
+            // Keep every run of equal values in age order (newValue goes after its
+            // equals): the oldest of a run is then the departing value bit for bit,
+            // which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+            // instead changes no value but flips the sign of some zero outputs.
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
             if ring_Idx > maxIdx_ring { ring_Idx = 0; }
             oldValue = ring[ring_Idx];
-            j = 0;
-            while j < lookbackTotal && sorted[j] < oldValue {
-                j += 1;
+            if lookbackTotal < 256 {
+                pos = 0;
+                if lookbackTotal >= 64 {
+                    while pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue {
+                        pos += 4;
+                    }
+                }
+                while pos < lookbackTotal && sorted[pos] <= newValue {
+                    pos += 1;
+                }
+                j = 0;
+                if lookbackTotal >= 64 {
+                    while j + 4 <= lookbackTotal && sorted[j + 3] < oldValue {
+                        j += 4;
+                    }
+                }
+                while j < lookbackTotal && sorted[j] < oldValue {
+                    j += 1;
+                }
+            } else {
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] <= newValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                pos = lo;
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] < oldValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                j = lo;
             }
-            while j < lookbackTotal {
-                sorted[j] = sorted[j + 1];
-                j += 1;
+            // Evict oldValue and place newValue with one shift of the slots between
+            // them.
+            if j < pos {
+                while j < pos - 1 {
+                    sorted[j] = sorted[j + 1];
+                    j += 1;
+                }
+                sorted[pos - 1] = newValue;
+            } else {
+                while j > pos {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
+                sorted[pos] = newValue;
             }
             i += 1;
             if !(i <= endIdx) { break; }
@@ -414,41 +473,96 @@ impl Core {
         let mut result: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
         let mut pos: usize = 0_usize;
+        let mut lo: usize = 0_usize;
+        let mut hi: usize = 0_usize;
+        let mut mid: usize = 0_usize;
         newValue = inReal;
-        pos = 0;
-        while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
-            pos += 1;
+        // The full window is the retained values with newValue inserted after
+        // its equals, so its rank-th value is newValue clamped to
+        // [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+        // sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+        // selects, not branches: which side wins is a coin flip.
+        result = newValue;
+        if sp.rank <= ((sp.lookbackTotal) as i32) {
+            result = (if result < sp.cb_sorted[(sp.rank - 1) as usize] { result } else { sp.cb_sorted[(sp.rank - 1) as usize] });
         }
-        if sp.rank - 1 < ((pos) as i32) {
-            result = sp.cb_sorted[(sp.rank - 1) as usize];
-        } else if sp.rank - 1 == ((pos) as i32) {
-            result = newValue;
-        } else {
-            result = sp.cb_sorted[(sp.rank - 2) as usize];
+        if sp.rank > 1 {
+            result = (if result < sp.cb_sorted[(sp.rank - 2) as usize] { sp.cb_sorted[(sp.rank - 2) as usize] } else { result });
         }
         (*outReal) = result;
-        // Shifting only the strictly greater entries leaves equal values in
-        // insertion order, which is age order -- that is what lets the delete
-        // below evict the oldest of a run by value alone, with no slot array.
-        j = sp.lookbackTotal;
-        while j > pos {
-            sp.cb_sorted[j] = sp.cb_sorted[j - 1];
-            j -= 1;
-        }
-        sp.cb_sorted[pos] = newValue;
+        // pos counts the retained values <= newValue and j is the first retained
+        // value >= oldValue. Below 256 values a linear scan beats a binary
+        // search: one mispredicted loop exit costs less than log2(n)
+        // unpredictable halvings. From 64 values the scan steps 4 at a time
+        // first, which is what pays for that step's own mispredicted exit.
+        //
+        // Keep every run of equal values in age order (newValue goes after its
+        // equals): the oldest of a run is then the departing value bit for bit,
+        // which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+        // instead changes no value but flips the sign of some zero outputs.
         sp.cb_ring[sp.ring_Idx] = newValue;
         sp.ring_Idx = sp.ring_Idx + 1;
         if sp.ring_Idx > sp.maxIdx_ring {
             sp.ring_Idx = 0;
         }
         oldValue = sp.cb_ring[sp.ring_Idx];
-        j = 0;
-        while j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue {
-            j += 1;
+        if sp.lookbackTotal < 256 {
+            pos = 0;
+            if sp.lookbackTotal >= 64 {
+                while pos + 4 <= sp.lookbackTotal && sp.cb_sorted[pos + 3] <= newValue {
+                    pos += 4;
+                }
+            }
+            while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
+                pos += 1;
+            }
+            j = 0;
+            if sp.lookbackTotal >= 64 {
+                while j + 4 <= sp.lookbackTotal && sp.cb_sorted[j + 3] < oldValue {
+                    j += 4;
+                }
+            }
+            while j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue {
+                j += 1;
+            }
+        } else {
+            lo = 0;
+            hi = sp.lookbackTotal;
+            while lo < hi {
+                mid = (lo + hi) / 2;
+                if sp.cb_sorted[mid] <= newValue {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
+            }
+            pos = lo;
+            lo = 0;
+            hi = sp.lookbackTotal;
+            while lo < hi {
+                mid = (lo + hi) / 2;
+                if sp.cb_sorted[mid] < oldValue {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
+            }
+            j = lo;
         }
-        while j < sp.lookbackTotal {
-            sp.cb_sorted[j] = sp.cb_sorted[j + 1];
-            j += 1;
+        // Evict oldValue and place newValue with one shift of the slots between
+        // them.
+        if j < pos {
+            while j < pos - 1 {
+                sp.cb_sorted[j] = sp.cb_sorted[j + 1];
+                j += 1;
+            }
+            sp.cb_sorted[pos - 1] = newValue;
+        } else {
+            while j > pos {
+                sp.cb_sorted[j] = sp.cb_sorted[j - 1];
+                j -= 1;
+            }
+            sp.cb_sorted[pos] = newValue;
         }
         sp.cur_outReal = (*outReal);
     }
@@ -494,6 +608,9 @@ impl Core {
         let mut pos: usize = 0_usize;
         let mut nbSorted: usize = 0_usize;
         let mut rank: i32 = 0_i32;
+        let mut lo: usize = 0_usize;
+        let mut hi: usize = 0_usize;
+        let mut mid: usize = 0_usize;
         let mut ring: Vec<f64> = Vec::new();
         let mut ring_Idx: usize = 0;
         let mut maxIdx_ring: usize = 29;
@@ -518,6 +635,9 @@ impl Core {
         sorted = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
         sorted_Idx = 0;
+        // Never read: set so two handles opened over the same bars hold the same
+        // state.
+        sorted[lookbackTotal] = 0.0;
         // Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
         // arithmetic; P/100 is inexact in binary64 and lands the product just above
         // an integer, one order statistic too high, at exactly the round
@@ -548,45 +668,97 @@ impl Core {
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
         //
-        // Every buffer store sits BELOW the output store on purpose: deriving the
-        // whole answer read-only above it is what lets the streaming peek frame drop
-        // the state update rather than shadow a shift loop, which it cannot do.
+        // Every buffer store sits BELOW the output store: deriving the whole answer
+        // read-only above it is what lets the streaming peek frame drop the state
+        // update.
         outIdx = 0;
         loop {
             newValue = inReal[i];
-            pos = 0;
-            while pos < lookbackTotal && sorted[pos] <= newValue {
-                pos += 1;
+            // The full window is the retained values with newValue inserted after
+            // its equals, so its rank-th value is newValue clamped to
+            // [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+            // sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+            // selects, not branches: which side wins is a coin flip.
+            result = newValue;
+            if rank <= ((lookbackTotal) as i32) {
+                result = (if result < sorted[(rank - 1) as usize] { result } else { sorted[(rank - 1) as usize] });
             }
-            if rank - 1 < ((pos) as i32) {
-                result = sorted[(rank - 1) as usize];
-            } else if rank - 1 == ((pos) as i32) {
-                result = newValue;
-            } else {
-                result = sorted[(rank - 2) as usize];
+            if rank > 1 {
+                result = (if result < sorted[(rank - 2) as usize] { sorted[(rank - 2) as usize] } else { result });
             }
             outReal[(outIdx * outStride) as usize] = result;
             outIdx += 1;
-            // Shifting only the strictly greater entries leaves equal values in
-            // insertion order, which is age order -- that is what lets the delete
-            // below evict the oldest of a run by value alone, with no slot array.
-            j = lookbackTotal;
-            while j > pos {
-                sorted[j] = sorted[j - 1];
-                j -= 1;
-            }
-            sorted[pos] = newValue;
+            // pos counts the retained values <= newValue and j is the first retained
+            // value >= oldValue. Below 256 values a linear scan beats a binary
+            // search: one mispredicted loop exit costs less than log2(n)
+            // unpredictable halvings. From 64 values the scan steps 4 at a time
+            // first, which is what pays for that step's own mispredicted exit.
+            //
+            // Keep every run of equal values in age order (newValue goes after its
+            // equals): the oldest of a run is then the departing value bit for bit,
+            // which is what keeps -0.0 and 0.0 apart. Inserting before the equals
+            // instead changes no value but flips the sign of some zero outputs.
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
             if ring_Idx > maxIdx_ring { ring_Idx = 0; }
             oldValue = ring[ring_Idx];
-            j = 0;
-            while j < lookbackTotal && sorted[j] < oldValue {
-                j += 1;
+            if lookbackTotal < 256 {
+                pos = 0;
+                if lookbackTotal >= 64 {
+                    while pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue {
+                        pos += 4;
+                    }
+                }
+                while pos < lookbackTotal && sorted[pos] <= newValue {
+                    pos += 1;
+                }
+                j = 0;
+                if lookbackTotal >= 64 {
+                    while j + 4 <= lookbackTotal && sorted[j + 3] < oldValue {
+                        j += 4;
+                    }
+                }
+                while j < lookbackTotal && sorted[j] < oldValue {
+                    j += 1;
+                }
+            } else {
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] <= newValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                pos = lo;
+                lo = 0;
+                hi = lookbackTotal;
+                while lo < hi {
+                    mid = (lo + hi) / 2;
+                    if sorted[mid] < oldValue {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                j = lo;
             }
-            while j < lookbackTotal {
-                sorted[j] = sorted[j + 1];
-                j += 1;
+            // Evict oldValue and place newValue with one shift of the slots between
+            // them.
+            if j < pos {
+                while j < pos - 1 {
+                    sorted[j] = sorted[j + 1];
+                    j += 1;
+                }
+                sorted[pos - 1] = newValue;
+            } else {
+                while j > pos {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
+                sorted[pos] = newValue;
             }
             i += 1;
             if !(i <= endIdx) { break; }
@@ -786,18 +958,18 @@ impl PercentileStream {
             let outReal = &mut outReal;
             let mut newValue: f64 = 0.0_f64;
             let mut result: f64 = 0.0_f64;
-            let mut pos: usize = 0_usize;
             newValue = inReal;
-            pos = 0;
-            while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
-                pos += 1;
+            // The full window is the retained values with newValue inserted after
+            // its equals, so its rank-th value is newValue clamped to
+            // [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
+            // sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
+            // selects, not branches: which side wins is a coin flip.
+            result = newValue;
+            if sp.rank <= ((sp.lookbackTotal) as i32) {
+                result = (if result < sp.cb_sorted[(sp.rank - 1) as usize] { result } else { sp.cb_sorted[(sp.rank - 1) as usize] });
             }
-            if sp.rank - 1 < ((pos) as i32) {
-                result = sp.cb_sorted[(sp.rank - 1) as usize];
-            } else if sp.rank - 1 == ((pos) as i32) {
-                result = newValue;
-            } else {
-                result = sp.cb_sorted[(sp.rank - 2) as usize];
+            if sp.rank > 1 {
+                result = (if result < sp.cb_sorted[(sp.rank - 2) as usize] { sp.cb_sorted[(sp.rank - 2) as usize] } else { result });
             }
             (*outReal) = result;
         }
