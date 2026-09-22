@@ -515,6 +515,9 @@ typedef enum
   TA_OPEN_CONTRACT_WROTE             = 1680,
   TA_OPEN_CONTRACT_VACUOUS           = 1682,
 
+  /* (#432) MEDIAN legs that ran while comparing nothing. */
+  TA_MEDIAN_VACUOUS                  = 1683,
+
   /* (#430) CTI legs that ran while comparing nothing. */
   TA_CTI_VACUOUS                     = 1684,
 

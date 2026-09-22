@@ -328,7 +328,7 @@
 //! * [`TYPPRICE`](Core::typprice) — Typical Price
 //! * [`WCLPRICE`](Core::wclprice) — Weighted Close Price
 //!
-//! ## Statistic Functions (12)
+//! ## Statistic Functions (13)
 //!
 //! * [`BETA`](Core::beta) — Beta
 //! * [`CORREL`](Core::correl) — Pearson's Correlation Coefficient (r)
@@ -337,6 +337,7 @@
 //! * [`LINEARREG_ANGLE`](Core::linearreg_angle) — Linear Regression Angle
 //! * [`LINEARREG_INTERCEPT`](Core::linearreg_intercept) — Linear Regression Intercept
 //! * [`LINEARREG_SLOPE`](Core::linearreg_slope) — Linear Regression Slope
+//! * [`MEDIAN`](Core::median) — Rolling Median
 //! * [`PERCENTILE`](Core::percentile) — Percentile (nearest rank)
 //! * [`PERCENTRANK`](Core::percentrank) — Percent Rank
 //! * [`STDDEV`](Core::stddev) — Standard Deviation

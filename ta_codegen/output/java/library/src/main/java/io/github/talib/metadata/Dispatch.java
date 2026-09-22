@@ -464,6 +464,9 @@ final class Dispatch {
          case "MAXINDEX":
             return core.maxindex(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOutput(0));
+         case "MEDIAN":
+            return core.median(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "MEDPRICE":
             return core.medprice(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOutput(0));
@@ -951,6 +954,8 @@ final class Dispatch {
             return core.maxLookback(h.intOpt(0));
          case "MAXINDEX":
             return core.maxindexLookback(h.intOpt(0));
+         case "MEDIAN":
+            return core.medianLookback(h.intOpt(0));
          case "MEDPRICE":
             return core.medpriceLookback();
          case "MFI":

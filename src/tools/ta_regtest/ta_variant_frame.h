@@ -5804,6 +5804,45 @@ static const TA_VOptSpec TA_VOpt_MAXINDEX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
+static TA_RetCode TA_MEDIAN_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_MEDIAN(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_MEDIAN_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_MEDIAN(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_MEDIAN[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_MEDIAN[] = { 0 };
+static const TA_VOptSpec TA_VOpt_MEDIAN[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 10000.0, 30.0 },
+};
+
 static TA_RetCode TA_MEDPRICE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8892,6 +8931,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_MAX, 1, TA_VOpt_MAX, 1, TA_VOutIsInt_MAX, 0 },
    { "MAXINDEX", TA_MAXINDEX_VFrameD, TA_MAXINDEX_VFrameS,
      1, TA_VIn_MAXINDEX, 1, TA_VOpt_MAXINDEX, 1, TA_VOutIsInt_MAXINDEX, 0 },
+   { "MEDIAN", TA_MEDIAN_VFrameD, TA_MEDIAN_VFrameS,
+     1, TA_VIn_MEDIAN, 1, TA_VOpt_MEDIAN, 1, TA_VOutIsInt_MEDIAN, 0 },
    { "MEDPRICE", TA_MEDPRICE_VFrameD, TA_MEDPRICE_VFrameS,
      2, TA_VIn_MEDPRICE, 0, NULL, 1, TA_VOutIsInt_MEDPRICE, 0 },
    { "MFI", TA_MFI_VFrameD, TA_MFI_VFrameS,
@@ -9030,6 +9071,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 204
+#define TA_VARIANT_TABLE_SIZE 205
 
 #endif /* TA_VARIANT_FRAME_H */
