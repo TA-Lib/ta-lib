@@ -423,10 +423,9 @@ is scale-blind: a third of those values sit below magnitude 10, where it admits
 >0.1% relative error, and on a bounded output (BOP, CORREL) the row is close to
 no assertion. Freezing full-precision values removes transcription as an error
 source. **Why freeze when the frozen-release fuzz compares** (`scripts/build.py
-ref`, member `0_6_4`): that gate builds the release from its pinned commit, so it
-needs the repository history and a second CMake build, cannot run from a release
-tarball, and ends when the member is pruned. Broad-and-transient against
-narrow-and-permanent.
+ref`, member `0_6_4`): that gate needs the release's tag and shipped library, so
+it cannot run from a release tarball, and it ends when the member is pruned.
+Broad-and-transient against narrow-and-permanent.
 
 **What it is not.** Not a correctness oracle — v0.6.4 is the same lineage and
 cannot catch a bug it already had. It is a *pin*. Correctness lives in the
@@ -541,12 +540,13 @@ member (`--versions=` narrows); the nightly runs them all, and
   everywhere; `ta_regtest` refuses a version whose file is gone even when `bin/`
   still holds its serve. Which releases are members, and when one is pruned, is
   a human decision.
-- **Oracle:** `bin/ta_ref_<X_Y_Z>_serve`, the release's `libta-lib.a` behind the
-  current JSON-RPC transport, built with `-DTA_REF_SERVE`. Only values are
-  frozen: its metadata answers are the current generator's, so no metadata gate
-  may be built on a serve. The current library is called **in-process**; only
-  the release crosses the pipe. A serve that dies is reopened and the case
-  retried once.
+- **Oracle:** `bin/ta_ref_<X_Y_Z>_serve`: the `libta-lib.a` the release's Linux
+  package shipped (a source build of the pinned commit where no package fits the
+  host, or where that build fused multiply-adds on aarch64, #150), behind the
+  current JSON-RPC transport, built with `-DTA_REF_SERVE`. Only values are frozen: its metadata
+  answers are the current generator's, so no metadata gate may be built on a
+  serve. The current library is called **in-process**; only the release crosses
+  the pipe. A serve that dies is reopened and the case retried once.
 - **Inputs by seed:** the request carries only `(gen_shape, gen_seed, gen_n)` and
   both ends run the identical generator in `fuzz_data.h`, so inputs are
   byte-identical by construction. `FP_CONTRACT` is forced off so the generator

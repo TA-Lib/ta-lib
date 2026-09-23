@@ -61,9 +61,10 @@ Which tool measures which:
 - `ta_bench --language=c` — `ta_codegen_serve_c` (row 3), *not* `ta_bench_cg`.
 - `ta_bench --language=cref` — the newest `ta_ref` member's serve, a frozen
   release (`--cref=X_Y_Z` picks another; `scripts/build.py ref --build-only`
-  builds it). Different code, not just a different build; the only cross-*version*
-  number. The baseline moves when a newer member is added, so read the serve name
-  ta_bench prints at startup before comparing two runs.
+  builds it). Different code, and on Linux the release's own compiler and flags
+  too (its shipped `libta-lib.a`); the only cross-*version* number. The baseline
+  moves when a newer member is added, so read the serve name ta_bench prints at
+  startup before comparing two runs.
 - `ta_bench_stream` — itself, both arms, which is why its speedup column is the
   one ratio here that isn't cross-configuration.
 - `ta_bench_icount` — `libta-lib.a` (row 1), the shipped build. The only

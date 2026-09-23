@@ -29,7 +29,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # each member builds from its release tag
+          fetch-depth: 0 # the release tags the members pin
 
       - name: Install Python
         uses: actions/setup-python@v6

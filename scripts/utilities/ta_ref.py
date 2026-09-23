@@ -1,35 +1,51 @@
 """Build the frozen-release serves, one per member of ta_ref/.
 
 A member is ta_ref/ta_ref_<X>_<Y>_<Z>.c. Its serve, bin/ta_ref_<X>_<Y>_<Z>_serve,
-is the current generated transport linked against the libta-lib.a of tag
-v<X>.<Y>.<Z>, built from the commit the member pins. Only VALUES are frozen:
-metadata answers come from the current tree (#161), so no metadata gate may be
-built on a serve.
+is the current generated transport linked against release v<X>.<Y>.<Z>'s
+libta-lib.a: the one its Linux package shipped, authenticated by the commit the
+member pins, or a source build of that commit where no shipped library is sound
+on this host. Only VALUES are frozen: metadata answers come from the current
+tree (#161), so no metadata gate may be built on a serve.
 
 The facts that make linking the current transport against an old library sound
 are checked here for every member, never assumed: identical batch prototypes,
 unstable-period ids that name the same functions, and the MAType ceiling.
+
+Libraries and serves are cached per machine under $XDG_CACHE_HOME/ta-lib/ta_ref
+(default ~/.cache), keyed by content, so a worktree whose generated transport
+matches one already built reuses its serve. Deleting that directory is safe.
 """
 
+import glob
 import hashlib
+import io
+import json
 import os
+import platform
 import re
 import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
+import urllib.request
 
-# An oracle must differ from the tree in its code, never in how its compiler was
-# told to behave (issue #150, #192). -ffp-contract=off makes explicit fma() the
-# only fusion; without it a target with baseline FMA (any aarch64) fuses inside
-# the release and the gate measures a compiler difference. -fno-math-errno
-# cannot change a value, but a scalar sqrt left in the release reads as an
-# algorithm difference under ta_bench.
+# An oracle's values must differ from the tree's only through its code (#150).
+# -ffp-contract=off makes explicit fma() the only fusion: a release built without
+# it fuses inside its own library on a host with baseline FMA (any aarch64), so
+# there its package is refused and a source build stands in. FROZEN_CFLAGS apply
+# to source builds only; a shipped library keeps its release's flags, so its
+# ta_bench timings can include an errno-guarded sqrt (#192).
 FP_CONTRACT_FLAG = "-ffp-contract=off"
 MATH_ERRNO_FLAG = "-fno-math-errno"
 FROZEN_CFLAGS = f"{FP_CONTRACT_FLAG} {MATH_ERRNO_FLAG}"
 
 MEMBER_RE = re.compile(r'^ta_ref_(\d+)_(\d+)_(\d+)\.c$')
 SHARED_FILES = ('ta_ref.h', 'ta_ref_serve.c')
+
+RELEASE_URL = 'https://github.com/TA-Lib/ta-lib/releases/download/{tag}/{asset}'
+DEB_ARCH = {'x86_64': 'amd64', 'aarch64': 'arm64'}
+SERVES_KEPT = 32
 
 
 class RefError(Exception):
@@ -46,34 +62,40 @@ def _run_quiet(cmd, cwd, what):
     return r.stdout
 
 
-def _build_frozen_lib(src, build, label):
-    """Configure and build the release's static library. Unconditional: cmake's
-    own tracking is the "build once" mechanism. A cache configured without
-    FROZEN_CFLAGS is discarded rather than reconfigured in place, because
-    mtime-based invalidation within one second recompiles only some objects."""
-    cache = os.path.join(build, "CMakeCache.txt")
-    if os.path.exists(cache):
-        with open(cache) as f:
-            flags = next((line for line in f if line.startswith("CMAKE_C_FLAGS:")), "")
-        if any(flag not in flags for flag in FROZEN_CFLAGS.split()):
-            print(f"  {label}: discarding a build tree configured without {FROZEN_CFLAGS}")
-            shutil.rmtree(build)
-    os.makedirs(build, exist_ok=True)
-    _run_quiet(["cmake", src, "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_C_FLAGS={FROZEN_CFLAGS}"],
-               build, f"{label}: cmake configure")
-    out = _run_quiet(["cmake", "--build", ".", "--target", "ta-lib-static",
-                      "-j", str(os.cpu_count() or 4)], build, f"{label}: cmake build")
-    if "Building C object" in out:
-        print(f"  {label}: rebuilt frozen libta-lib.a ({FROZEN_CFLAGS})")
-    return os.path.join(build, "libta-lib.a")
+def cache_dir():
+    base = os.environ.get('XDG_CACHE_HOME') or os.path.join(os.path.expanduser('~'), '.cache')
+    return os.path.join(base, 'ta-lib', 'ta_ref')
 
 
-def _func_names(root):
-    """The function names of a tree's ta_func_list.txt. Never the archive's symbol
-    table: v0.6.4 compiles unlisted NVI/PVI stubs whose prototypes differ from the
+def _mkdtemp(parent, prefix):
+    os.makedirs(parent, exist_ok=True)
+    return tempfile.mkdtemp(prefix=prefix, dir=parent)
+
+
+def _publish(tmp, final):
+    """Moves a complete tmp directory into place. A concurrent builder of the same
+    key may have got there first; its content is equivalent, so ours is dropped."""
+    try:
+        os.rename(tmp, final)
+    except OSError:
+        if not os.path.isdir(final):
+            raise
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _sha256(data):
+    return hashlib.sha256(data if isinstance(data, bytes) else data.encode()).hexdigest()
+
+
+def _cc_id():
+    return subprocess.run(['cc', '--version'], capture_output=True, text=True).stdout.split('\n')[0]
+
+
+def _func_names(text):
+    """The function names of a ta_func_list.txt. Never an archive's symbol table:
+    v0.6.4 compiles unlisted NVI/PVI stubs whose prototypes differ from the
     current ones."""
-    with open(os.path.join(root, "ta_func_list.txt")) as f:
-        return {line.split()[0] for line in f if line.strip()}
+    return {line.split()[0] for line in text.splitlines() if line.strip()}
 
 
 # One list_functions entry; only the first carries no leading comma.
@@ -86,8 +108,15 @@ def _filter_list_functions(text, absent):
     """Drops the absent functions from the transport's list_functions payload,
     then re-normalizes the leading commas: removing the first entry would leave
     the next one's comma dangling."""
-    for name in absent:
-        text, n = re.subn(r'[^\n]*\\"TA_' + re.escape(name) + r'\\"[^\n]*\n', '', text)
+    removed = dict.fromkeys(absent, 0)
+
+    def drop(m):
+        if m.group(1) not in removed:
+            return m.group(0)
+        removed[m.group(1)] += 1
+        return ''
+    text = re.sub(r'^[^\n]*\\"TA_([A-Z0-9_]+)\\"[^\n]*\n', drop, text, flags=re.M)
+    for name, n in removed.items():
         if n != 1:
             raise RefError(f"list_functions: expected 1 TA_{name} entry, removed {n}")
     entries = list(_LIST_ENTRY_RE.finditer(text))
@@ -164,6 +193,10 @@ def _member_path(root, v):
     return os.path.join(ref_dir(root), f"ta_ref_{v}.c")
 
 
+def _tag(v):
+    return 'v' + v.replace('_', '.')
+
+
 def _pinned_commit(root, v):
     with open(_member_path(root, v)) as f:
         m = re.search(r'\.commit\s*=\s*"([0-9a-f]{40})"', f.read())
@@ -176,8 +209,14 @@ def _git(root, *args):
     return subprocess.run(['git', *args], cwd=root, capture_output=True, text=True)
 
 
+def _git_blob(root, commit, path):
+    r = subprocess.run(['git', 'cat-file', 'blob', f'{commit}:{path}'], cwd=root,
+                       capture_output=True)
+    return r.stdout if r.returncode == 0 else None
+
+
 def _verify_tag(root, v, commit):
-    tag = 'v' + v.replace('_', '.')
+    tag = _tag(v)
     r = _git(root, 'rev-parse', '--verify', '--quiet', f'refs/tags/{tag}^{{commit}}')
     if r.returncode != 0:
         raise RefError(f"tag {tag} is unavailable; fetch tags (git fetch --tags, or "
@@ -186,23 +225,120 @@ def _verify_tag(root, v, commit):
         raise RefError(f"tag {tag} is {r.stdout.strip()} but ta_ref_{v}.c pins {commit}")
 
 
-def _frozen_src(root, build_dir, v, commit):
-    """The member's tree, extracted once per pinned commit. git archive stamps
-    every file with the commit time, older than any object already built, so a
-    tree is never refreshed in place: a new pin gets a new directory."""
-    base = os.path.join(build_dir, 'ta_ref', v, commit[:12])
-    src = os.path.join(base, 'src')
-    if not os.path.isdir(src):
-        tmp = src + '.tmp'
-        shutil.rmtree(tmp, ignore_errors=True)
-        os.makedirs(tmp)
+def _shipped(root, v, commit):
+    """(asset, sha256, bytes or None) for the release's package on this host, or a
+    string saying why a source build stands in. The pinned commit authenticates
+    the package: it holds either the package itself or its dist/digests record."""
+    arch = DEB_ARCH.get(platform.machine())
+    if platform.system() != 'Linux' or platform.libc_ver()[0] != 'glibc' or arch is None:
+        return f"no release package for {platform.system()} {platform.machine()}"
+    if arch == 'arm64' and FP_CONTRACT_FLAG.encode() not in (_git_blob(root, commit, 'CMakeLists.txt') or b''):
+        return "its build fuses multiply-adds on aarch64 (#150)"
+    asset = f"ta-lib_{v.replace('_', '.')}_{arch}.deb"
+    blob = _git_blob(root, commit, f'dist/{asset}')
+    if blob is not None:
+        return asset, _sha256(blob), blob
+    record = _git_blob(root, commit, f'dist/digests/{asset}.digest')
+    if record is None:
+        return f"the release shipped no {asset}"
+    return asset, json.loads(record)['package_sha256'], None
+
+
+def _download(v, asset, sha):
+    url = RELEASE_URL.format(tag=_tag(v), asset=asset)
+    print(f"  downloading {url}")
+    try:
+        with urllib.request.urlopen(url, timeout=120) as r:
+            data = r.read()
+    except OSError as e:
+        raise RefError(f"download of {url} failed: {e}")
+    if _sha256(data) != sha:
+        raise RefError(f"{asset}: sha256 {_sha256(data)} is not the {sha} its release recorded")
+    return data
+
+
+def _unpack_deb(data, out):
+    """libta-lib.a and the public headers of a .deb (an ar archive holding a
+    data.tar.*), without dpkg."""
+    if not data.startswith(b'!<arch>\n'):
+        raise RefError("the package is not an ar archive")
+    pos, tarball = 8, None
+    while pos + 60 <= len(data):
+        size = int(data[pos + 48:pos + 58])
+        if data[pos:pos + 16].startswith(b'data.tar'):
+            tarball = data[pos + 60:pos + 60 + size]
+        pos += 60 + size + (size & 1)
+    if tarball is None:
+        raise RefError("the package has no data.tar member")
+    os.makedirs(os.path.join(out, 'include'))
+    with tarfile.open(fileobj=io.BytesIO(tarball)) as tar:
+        for m in tar:
+            path = os.path.normpath(m.name)
+            if not m.isfile():
+                continue
+            if path == 'usr/lib/libta-lib.a':
+                dest = os.path.join(out, 'libta-lib.a')
+            elif os.path.dirname(path) == 'usr/include/ta-lib' and path.endswith('.h'):
+                dest = os.path.join(out, 'include', os.path.basename(path))
+            else:
+                continue
+            with open(dest, 'wb') as f:
+                f.write(tar.extractfile(m).read())
+    for need in ('libta-lib.a', os.path.join('include', 'ta_func.h'), os.path.join('include', 'ta_defs.h')):
+        if not os.path.exists(os.path.join(out, need)):
+            raise RefError(f"the package has no {need}")
+
+
+def _build_from_source(root, commit, out):
+    """The release's static library and public headers, built from the pinned
+    commit with FROZEN_CFLAGS."""
+    work = _mkdtemp(os.path.dirname(out), '.src-')
+    try:
+        src = os.path.join(work, 'src')
+        os.makedirs(src)
         archive = subprocess.Popen(['git', 'archive', commit], cwd=root, stdout=subprocess.PIPE)
-        untar = subprocess.run(['tar', '-x', '-C', tmp], stdin=archive.stdout)
+        untar = subprocess.run(['tar', '-x', '-C', src], stdin=archive.stdout)
         archive.stdout.close()
         if archive.wait() != 0 or untar.returncode != 0:
             raise RefError(f"git archive {commit} failed")
-        os.rename(tmp, src)
-    return base, src
+        build = os.path.join(work, 'build')
+        os.makedirs(build)
+        _run_quiet(["cmake", src, "-DCMAKE_BUILD_TYPE=Release", f"-DCMAKE_C_FLAGS={FROZEN_CFLAGS}"],
+                   build, "cmake configure")
+        _run_quiet(["cmake", "--build", ".", "--target", "ta-lib-static",
+                    "-j", str(os.cpu_count() or 4)], build, "cmake build")
+        os.makedirs(os.path.join(out, 'include'))
+        for h in glob.glob(os.path.join(src, 'include', '*.h')):
+            shutil.copy2(h, os.path.join(out, 'include'))
+        shutil.copy2(os.path.join(build, 'libta-lib.a'), out)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def _frozen_lib(root, v, commit):
+    """(include dir, libta-lib.a) of the release, filling the machine cache on a miss."""
+    shipped = _shipped(root, v, commit)
+    if isinstance(shipped, str):
+        key = f"src-{commit[:12]}-{_sha256(FROZEN_CFLAGS + _cc_id())[:12]}"
+        how = f"source build of {commit[:12]}: {shipped}"
+    else:
+        asset, sha, blob = shipped
+        key = f"deb-{sha[:16]}"
+        how = f"{asset} (sha256 {sha[:12]})"
+    final = os.path.join(cache_dir(), 'lib', key)
+    if not os.path.isdir(final):
+        tmp = _mkdtemp(os.path.dirname(final), '.tmp-')
+        try:
+            if isinstance(shipped, str):
+                print(f"  building the library from source ({shipped})")
+                _build_from_source(root, commit, tmp)
+            else:
+                _unpack_deb(blob if blob is not None else _download(v, asset, sha), tmp)
+            _publish(tmp, final)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+    print(f"  library: {how}")
+    return os.path.join(final, 'include'), os.path.join(final, 'libta-lib.a')
 
 
 def _enum_values(include_dir, prefix, work, tag):
@@ -234,12 +370,11 @@ def _batch_decls(header):
     return {m.group(1): ' '.join(m.group(0).split()) for m in _DECL_RE.finditer(text)}
 
 
-def _check_abi(root, src, v, work):
+def _check_abi(root, include, common, v, work):
     """Refuses a member whose frozen library the current transport cannot call
     soundly. Returns the MAType ceiling."""
-    common = _func_names(root) & _func_names(src)
     cur = _batch_decls(os.path.join(root, 'include', 'ta_func.h'))
-    old = _batch_decls(os.path.join(src, 'include', 'ta_func.h'))
+    old = _batch_decls(os.path.join(include, 'ta_func.h'))
     for name in sorted(common):
         for sym in (f'TA_{name}', f'TA_S_{name}', f'TA_{name}_Lookback'):
             if sym in cur and cur.get(sym) != old.get(sym):
@@ -249,7 +384,7 @@ def _check_abi(root, src, v, work):
     cur_unst = {val: n for n, val in
                 _enum_values(os.path.join(root, 'include'), 'TA_FUNC_UNST_', work, 'cur').items()}
     old_unst = {val: n for n, val in
-                _enum_values(os.path.join(src, 'include'), 'TA_FUNC_UNST_', work, v).items()}
+                _enum_values(include, 'TA_FUNC_UNST_', work, v).items()}
     with open(os.path.join(root, 'ta_codegen', 'output', 'c', 'tools', 'ta_codegen_serve.c')) as f:
         transport = f.read()
     dispatch = transport[transport.index('static void handle_request('):]
@@ -267,10 +402,10 @@ def _check_abi(root, src, v, work):
         if ids:
             unst[name] = ids
 
-    return max(_enum_values(os.path.join(src, 'include'), 'TA_MAType_', work, v).values()), unst
+    return max(_enum_values(include, 'TA_MAType_', work, v).values()), unst
 
 
-def _transport(root, src, work, post_funcs):
+def _transport(root, work, post_funcs):
     """The generated server with the indicator and ta_common sources stripped,
     so the frozen library provides them."""
     with open(os.path.join(root, 'ta_codegen', 'output', 'c', 'tools', 'ta_codegen_serve.c')) as f:
@@ -311,30 +446,6 @@ def _write_if_changed(path, text):
         f.write(text)
 
 
-def _deps(depfile):
-    with open(depfile) as f:
-        text = f.read().replace('\\\n', ' ')
-    return text.split(':', 1)[1].split()
-
-
-def _fingerprint(cmds, depfiles, lib_a):
-    h = hashlib.sha256()
-    for c in cmds:
-        h.update('\0'.join(c).encode())
-    for d in depfiles:
-        if not os.path.exists(d):
-            return None
-        for path in _deps(d):
-            if not os.path.exists(path):
-                return None
-            h.update(path.encode())
-            with open(path, 'rb') as f:
-                h.update(f.read())
-    with open(lib_a, 'rb') as f:
-        h.update(f.read())
-    return h.hexdigest()
-
-
 def _include_dirs(root, work):
     c_out = os.path.join(root, 'ta_codegen', 'output', 'c')
     return [
@@ -361,19 +472,55 @@ def _gnu_ld():
     return 'GNU ld' in r.stdout or 'GNU gold' in r.stdout
 
 
+def _preprocessed(cmd, source):
+    """The translation unit cmd compiles, preprocessed without line markers, so no
+    path of this worktree reaches the cache key."""
+    r = subprocess.run([*cmd, '-E', '-P', source], capture_output=True)
+    if r.returncode != 0:
+        sys.stderr.write(r.stderr.decode(errors='replace'))
+        raise RefError(f"preprocessing {source} failed")
+    return r.stdout
+
+
+def _prune(parent, keep):
+    entries = sorted((e for e in os.scandir(parent) if e.is_dir() and not e.name.startswith('.')),
+                     key=lambda e: e.stat().st_mtime, reverse=True)
+    for e in entries[keep:]:
+        shutil.rmtree(e.path, ignore_errors=True)
+
+
+def _install(exe, bin_exe):
+    """Copies exe to bin_exe unless it is already there. The copy is renamed into
+    place, so a serve that is running keeps its own file."""
+    if os.path.exists(bin_exe):
+        with open(exe, 'rb') as a, open(bin_exe, 'rb') as b:
+            if a.read() == b.read():
+                return False
+    os.makedirs(os.path.dirname(bin_exe), exist_ok=True)
+    tmp = f"{bin_exe}.{os.getpid()}.tmp"
+    shutil.copy2(exe, tmp)
+    os.replace(tmp, bin_exe)
+    return True
+
+
 def build_serve(root, build_dir, v):
-    """Builds bin/ta_ref_<v>_serve unless every input is unchanged."""
+    """Installs bin/ta_ref_<v>_serve, compiling only on a machine-cache miss."""
     print(f"=== {serve_name(v)} ===")
     commit = _pinned_commit(root, v)
     _verify_tag(root, v, commit)
-    base, src = _frozen_src(root, build_dir, v, commit)
-    work = os.path.join(base, 'serve')
+    include, lib_a = _frozen_lib(root, v, commit)
+    work = os.path.join(build_dir, 'ta_ref', v)
     os.makedirs(work, exist_ok=True)
 
-    lib_a = _build_frozen_lib(src, os.path.join(base, 'build'), serve_name(v))
-    matype_max, unst = _check_abi(root, src, v, work)
-    post_funcs = sorted(_func_names(root) - _func_names(src))
-    transport = _transport(root, src, work, post_funcs)
+    with open(os.path.join(root, 'ta_func_list.txt')) as f:
+        current = _func_names(f.read())
+    listed = _git_blob(root, commit, 'ta_func_list.txt')
+    if listed is None:
+        raise RefError(f"{commit[:12]} has no ta_func_list.txt")
+    release = _func_names(listed.decode())
+    matype_max, unst = _check_abi(root, include, current & release, v, work)
+    post_funcs = sorted(current - release)
+    transport = _transport(root, work, post_funcs)
     # The unstable-period ids each function's own handler sets, verified above
     # to name the same functions in the release: abstract_call applies them.
     rows = '\n'.join('   { "%s", %d, { %s } },' % (n, len(ids), ', '.join(map(str, ids)))
@@ -384,55 +531,57 @@ def build_serve(root, build_dir, v):
                       f'static const struct {{ const char *func; int nb; int ids[TA_REF_MAX_UNST_IDS]; }}\n'
                       f'ta_ref_unst[] = {{\n{rows}\n   {{ NULL, 0, {{ 0 }} }}\n}};\n')
 
-    # FP_CONTRACT_FLAG is load-bearing even where the tag's own build sets it:
+    # FP_CONTRACT_FLAG is load-bearing even where the release's own build sets it:
     # this TU compiles fuzz_data.h, whose FP_CONTRACT pragma GCC ignores, and the
     # seeded inputs must be generated exactly as ta_regtest generates them.
     flags = ['-O3', '-flto', '-DNDEBUG', FP_CONTRACT_FLAG, MATH_ERRNO_FLAG]
-    t_obj = os.path.join(work, 'transport.o')
-    m_obj = os.path.join(work, 'member.o')
-    compile_t = (['cc', *flags, '-Wno-everything', '-DTA_REF_SERVE',
-                  f'-DTA_REF_VERSION="{v}"', f'-DTA_REF_MATYPE_MAX={matype_max}']
-                 + [f'-I{d}' for d in _include_dirs(root, work)]
-                 + ['-MMD', '-MF', t_obj + '.d', '-c', transport, '-o', t_obj])
-    compile_m = (['cc', *flags, '-Wall', '-Wextra', f'-I{ref_dir(root)}',
-                  '-MMD', '-MF', m_obj + '.d', '-c', _member_path(root, v), '-o', m_obj])
-    exe_tmp = os.path.join(work, serve_name(v))
-    link = ['cc', *flags, '-o', exe_tmp, t_obj, m_obj, lib_a, '-lm']
-    if _gnu_ld():
-        link.append('-Wl,--trace-symbol=TA_Globals')
+    cc_t = (['cc', *flags, '-Wno-everything', '-DTA_REF_SERVE',
+             f'-DTA_REF_VERSION="{v}"', f'-DTA_REF_MATYPE_MAX={matype_max}']
+            + [f'-I{d}' for d in _include_dirs(root, work)])
+    cc_m = ['cc', *flags, '-Wall', '-Wextra', f'-I{ref_dir(root)}']
+    member = _member_path(root, v)
 
-    bin_exe = os.path.join(root, 'bin', serve_name(v))
-    stamp = os.path.join(work, 'stamp')
-    depfiles = [t_obj + '.d', m_obj + '.d']
-    fp = _fingerprint([compile_t, compile_m, link], depfiles, lib_a)
-    if fp and os.path.exists(bin_exe) and os.path.exists(stamp):
-        with open(stamp) as f:
-            if f.read() == fp + _file_sha(bin_exe):
-                print(f"  {serve_name(v)}: up to date")
-                return
+    key = hashlib.sha256()
+    for part in (_cc_id().encode(), ' '.join(flags).encode(),
+                 _preprocessed(cc_t, transport), _preprocessed(cc_m, member)):
+        key.update(_sha256(part).encode())
+    with open(lib_a, 'rb') as f:
+        key.update(_sha256(f.read()).encode())
+    serves = os.path.join(cache_dir(), 'serve')
+    entry = os.path.join(serves, key.hexdigest()[:24])
+    cached = os.path.join(entry, serve_name(v))
 
-    for cmd in (compile_t, compile_m):
-        if subprocess.run(cmd).returncode != 0:
-            raise RefError(f"{serve_name(v)}: compile failed")
-    r = subprocess.run(link, capture_output=True, text=True)
-    sys.stdout.write(r.stdout if r.returncode else '')
-    sys.stderr.write(r.stderr if r.returncode else '')
-    if r.returncode != 0:
-        raise RefError(f"{serve_name(v)}: link failed")
-    # The frozen TA_Globals has the release's layout, not the current headers'.
-    for line in (r.stdout + r.stderr).splitlines():
-        if 'reference to TA_Globals' in line and os.path.basename(lib_a) not in line:
-            raise RefError(f"{serve_name(v)}: the transport reads TA_Globals ({line.strip()})")
+    if os.path.exists(cached):
+        os.utime(entry)
+        how = "cached"
+    else:
+        t_obj = os.path.join(work, 'transport.o')
+        m_obj = os.path.join(work, 'member.o')
+        for cmd in (cc_t + ['-c', transport, '-o', t_obj], cc_m + ['-c', member, '-o', m_obj]):
+            if subprocess.run(cmd).returncode != 0:
+                raise RefError(f"{serve_name(v)}: compile failed")
+        exe = os.path.join(work, serve_name(v))
+        link = ['cc', *flags, '-o', exe, t_obj, m_obj, lib_a, '-lm']
+        if _gnu_ld():
+            link.append('-Wl,--trace-symbol=TA_Globals')
+        r = subprocess.run(link, capture_output=True, text=True)
+        sys.stdout.write(r.stdout if r.returncode else '')
+        sys.stderr.write(r.stderr if r.returncode else '')
+        if r.returncode != 0:
+            raise RefError(f"{serve_name(v)}: link failed")
+        # The frozen TA_Globals has the release's layout, not the current headers'.
+        for line in (r.stdout + r.stderr).splitlines():
+            if 'reference to TA_Globals' in line and os.path.basename(lib_a) not in line:
+                raise RefError(f"{serve_name(v)}: the transport reads TA_Globals ({line.strip()})")
+        tmp = _mkdtemp(serves, '.tmp-')
+        try:
+            shutil.copy2(exe, os.path.join(tmp, serve_name(v)))
+            _publish(tmp, entry)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        _prune(serves, SERVES_KEPT)
+        how = "built"
 
-    os.makedirs(os.path.dirname(bin_exe), exist_ok=True)
-    os.replace(exe_tmp, bin_exe)
-    fp = _fingerprint([compile_t, compile_m, link], depfiles, lib_a)
-    with open(stamp, 'w') as f:
-        f.write(fp + _file_sha(bin_exe))
-    print(f"  {serve_name(v)}: built from {commit[:12]}"
-          + (f", {len(post_funcs)} newer function(s) refused" if post_funcs else ""))
-
-
-def _file_sha(path):
-    with open(path, 'rb') as f:
-        return hashlib.sha256(f.read()).hexdigest()
+    installed = _install(cached, os.path.join(root, 'bin', serve_name(v)))
+    print(f"  {serve_name(v)}: {how}" + ("" if installed else ", bin/ up to date")
+          + (f"; {len(post_funcs)} newer function(s) refused" if post_funcs else ""))

@@ -968,7 +968,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # each member builds from its release tag
+          fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -1011,7 +1011,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # each ta_ref member builds from its release tag
+          fetch-depth: 0 # the release tags the ta_ref members pin
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -1043,9 +1043,10 @@ jobs:
           python3 scripts/build.py ta_regtest
           cd bin && ./ta_regtest
 
-      # Half (1) and half (2): each member builds its release library AND a
-      # transport that compiles fuzz_data.h, so this exercises both the cmake
-      # sites and the raw-cc site in one run.
+      # Half (1) and half (2): a release whose own build fused is built from
+      # source here instead of taken from its package, and every member's
+      # transport compiles fuzz_data.h, so this exercises both the cmake site and
+      # the raw-cc site in one run.
       - name: Fuzz current library vs each frozen release
         shell: bash
         run: python3 scripts/build.py ref
