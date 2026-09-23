@@ -49,12 +49,9 @@
  *
  *   Test TA_KC (Keltner Channels).
  *
- *   The --codegen sweep cannot VALUE-compare KC against the frozen ta_ref_serve,
- *   which predates this function, so the value comparison comes from this file
- *   plus server_verify / --xlang-hash. Two legs of that sweep do still run --
- *   the float leg and, more importantly, codegen_range_generic, which drives the
- *   in-process library and is the only automated gate that varies startIdx. Do
- *   not drop it for KC: the anchoring below is exactly what it watches.
+ *   This file sweeps no startIdx; the --codegen range sweep does, over the
+ *   in-process library. Do not drop KC from it: the anchoring below is exactly
+ *   what it watches.
  *
  *   Legs:
  *     1. EXTERNAL ORACLE (formula correctness) on the 1000-bar gData corpus,

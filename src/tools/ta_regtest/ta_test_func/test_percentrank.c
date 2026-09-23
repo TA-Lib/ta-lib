@@ -77,9 +77,9 @@
  *        every bar is recounted from its own window, so no range may move a
  *        value at all.
  *
- *   Cross-language value coverage comes from server_verify in leg 1 plus the
- *   --xlang-hash sweep; the frozen ta_ref_serve predates this function, so the
- *   --codegen value comparison cannot run for it (same situation as VHF).
+ *   Cross-language value coverage comes from server_verify in leg 1,
+ *   --codegen and --xlang-hash. All three compare against this library, so
+ *   none can catch a wrong formula.
  */
 
 /**** Headers ****/

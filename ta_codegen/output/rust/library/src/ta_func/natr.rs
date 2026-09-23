@@ -222,7 +222,7 @@ impl Core {
         // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
         // measures closer to the exact recursion than the 1/period-first spelling
         // at nearly every period. The order is a gated contract, not a preference:
-        // swapping it reddens the frozen v0.6.4 comparison.
+        // swapping it reddens the frozen-release comparison.
         wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
         wAlpha = 1.0 - wBeta;
         // The True Range of each bar is computed inline in a single
@@ -617,7 +617,7 @@ impl Core {
         // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
         // measures closer to the exact recursion than the 1/period-first spelling
         // at nearly every period. The order is a gated contract, not a preference:
-        // swapping it reddens the frozen v0.6.4 comparison.
+        // swapping it reddens the frozen-release comparison.
         wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
         wAlpha = 1.0 - wBeta;
         // The True Range of each bar is computed inline in a single

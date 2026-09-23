@@ -72,10 +72,7 @@
  *     5. In-place aliasing, bitwise, every (output, price input) pair.
  *
  *   Legs 2, 3 and 5 are built from shipped primitives, so they prove the
- *   composition, never the formula; that is leg 1's job. The frozen
- *   ta_ref_serve predates this function, so the --codegen sweep value-compares
- *   nothing for it -- server_verify in leg 1 and --xlang-hash are the
- *   cross-language gates.
+ *   composition, never the formula; that is leg 1's job.
  */
 
 /**** Headers ****/

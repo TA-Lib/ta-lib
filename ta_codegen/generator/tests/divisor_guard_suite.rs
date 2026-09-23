@@ -12,11 +12,11 @@
 //!   - ER used its asymmetric KAMA-parity clamp (`sumROC1 <= periodROC`) as the zero
 //!     guard. It cannot fire when `periodROC < 0`, so a zero denominator divided.
 //!
-//! No existing gate sees this class. All four backends are generated from one input
-//! body, so `--xlang-hash` agrees bitwise on the same wrong answer; `--codegen` has no
-//! frozen baseline for a post-cutover function; and the reference corpus is benign in
-//! exactly the ways that matter (no bar with TR == 0, no 14-bar halt, no consecutive
-//! close ratio outside Sterbenz range).
+//! No existing gate sees this class. All four backends, and the in-process C library
+//! `--codegen` diffs them against, are generated from one input body, so `--codegen`
+//! and `--xlang-hash` agree on the same wrong answer; and the reference corpus is
+//! benign in exactly the ways that matter (no bar with TR == 0, no 14-bar halt, no
+//! consecutive close ratio outside Sterbenz range).
 //!
 //! Data cannot settle it either. `TA_IS_ZERO_SCALED` is scale-invariant, so no series
 //! magnitude distinguishes it from a fixed band — `test_kdj.c`'s small-magnitude leg is

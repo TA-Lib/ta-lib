@@ -104,8 +104,9 @@ static TA_FuncUnstId sv_func_unst_id(const char *name)
  * with --xlang-hash); server_verify uses codegen_write_hexbits_array to serialize
  * inputs and codegen_compare_tol to parse+compare the Java-transcendental path. */
 
-/* -1 when the key is absent: ta_ref_serve and any pre-feature build emit no ride
- * fields, and that must read as "not offered" rather than as a reported zero. */
+/* -1 when the key is absent: a ta_ref serve and any pre-feature build emit no
+ * ride fields, and that must read as "not offered" rather than as a reported
+ * zero. */
 static int sv_ride_flag(const char *resp, const char *key)
 {
     const char *q = strstr(resp, key);

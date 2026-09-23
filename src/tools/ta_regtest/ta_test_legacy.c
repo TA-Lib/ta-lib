@@ -455,7 +455,7 @@ static ErrorNumber do_test_legacy_case( const TA_History *history,
       /* fabs(got - want) <= tol, with tol == 0.0 meaning bit-exact. Note this
        * also accepts -0.0 against +0.0, which is correct: they are numerically
        * equal and MIN/MAX/MINMAX/MIDPOINT legitimately differ from v0.6.4 in
-       * that bit alone (--fuzz-064 calls those out as BENIGN). */
+       * that bit alone (the frozen-release fuzz calls those out as BENIGN). */
       if( !( fabs( got - s->value ) <= tol ) )
       {
          printf( "Fail: [%s] output %d index %d = %.17g, frozen v0.6.4 gave "

@@ -50,11 +50,6 @@
  *   Regression tests for ZLEMA, an EMA over the de-lagged series
  *   d[j] = 2*P[j] - P[j-lag] with lag = (n-1)/2 truncating.
  *
- *   ZLEMA is post-cutover, so the --codegen VALUE sweep skips it: that sweep
- *   diffs against the frozen ta_ref_serve, which predates the function. Every
- *   value below therefore has to come from here, from server_verify (which
- *   this file drives) or from --xlang-hash.
- *
  *   Coverage:
  *     (1) External oracles, two of them, at two periods -- the only leg that
  *         can catch a wrong FORMULA.

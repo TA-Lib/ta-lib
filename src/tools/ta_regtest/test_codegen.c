@@ -51,9 +51,6 @@ static int  g_floatCapableLangTested = 0;
 #include "ta_stream_frame.h"  /* in-process Open/OpenAndFill/Close dispatch (issue #256) */
 #include "../ta_alloc_check.h"
 
-/* Timing now comes from each server's JSON-RPC timing_ns field (the reference
- * baseline is ta_ref_serve, task #7), so no in-process timer is needed here. */
-
 /* ---- Language definitions ---- */
 
 typedef struct {
@@ -66,12 +63,6 @@ static const char *const argv_rust[]  = {"./ta_codegen_serve_rust", NULL};
 static const char *const argv_c[]     = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_java[]  = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
 static const char *const argv_csharp[]= {"dotnet", "ta_codegen_csharp/TaCodegenServe.dll", NULL};
-/* Reference oracle (reference-as-server, task #7): the frozen reference C
- * library exposed as a JSON-RPC server. NOT a tested language — it is the
- * baseline every language server (including the generated C server) is diffed
- * against. Built from the pinned-tag worktree by scripts/regtest.py so it stays
- * frozen once src/ta_func becomes the generated code. */
-static const char *const argv_cref[]  = {"./ta_ref_serve", NULL};
 static const CodegenLanguage ALL_LANGUAGES[] = {
     {"c",      "C",            argv_c},
     {"rust",   "Rust",         argv_rust},
@@ -219,10 +210,6 @@ static long g_floatSentinelEnumWithheld = 0;
  * case where the output bound switches off. */
 static long g_startSweepCompared[NUM_LANGUAGES];
 static long g_startSweepWithOutput[NUM_LANGUAGES];
-/* Pairs withheld because the frozen reference is known-wrong there (see
- * ref_diverges_on_partial_range). Printed, so the carve-out cannot quietly grow
- * to swallow the axis. */
-static long g_startSweepSkipped98 = 0;
 
 /* ---- zero-produced-count comparisons ----
  * Calls where C answered TA_SUCCESS with outNBElement == 0 and the server's own
@@ -276,8 +263,8 @@ static const char *const RC_NAME[RC_BUCKETS] = {
 };
 static long g_retCodeSeen[NUM_LANGUAGES][RC_BUCKETS];
 /* Set when a language's pass COMPLETED, which `g_codegenCompared[]` cannot
- * stand in for: a filter selecting only post-cutover functions compares no
- * values and leaves that counter at 0 on a language that very much ran. */
+ * stand in for: a filter that selects no function compares no values and
+ * leaves that counter at 0 on a language that very much ran. */
 static int g_langRan[NUM_LANGUAGES];
 
 static void record_retcode( int langIndex, int code )
@@ -312,34 +299,9 @@ static long g_slackCalls[NUM_LANGUAGES];
  * would not distinguish "the bound is a minimum" from "the bound is unchecked". */
 #define OUT_SLACK_PAD 7
 
-/* The reference this leg compares against is `ta_ref_serve`, the frozen
- * pre-cutover library — and issue #98 fixed two functions whose OLD behaviour it
- * still has. Both changed what they compute on a PARTIAL range only, so the
- * divergence is exactly `startIdx > lookback`, which is precisely what the
- * startIdx axis sends. `--fuzz-064` makes the same carve-out against v0.6.4 (its
- * `skipped98` counter); this is the same two names for the same reason, and the
- * cases it withholds are covered against the in-process C library by
- * `--xlang-hash`, whose golden is not frozen. */
-static int ref_diverges_on_partial_range( const char *name, TA_Integer startIdx,
-                                          TA_Integer lookback )
-{
-    if( startIdx <= lookback )
-        return 0;
-    return strcmp(name, "TRIX") == 0 || strcmp(name, "NATR") == 0;
-}
-
-/* Functions that reached a real value comparison, per language. The closing
- * banner used to read "All N language(s) passed codegen verification" off
- * `langsTested` alone — a count of servers that STARTED, not of anything
- * compared. A run filtered to post-cutover functions skips every one of them
- * for want of a frozen ta_ref_serve baseline and still printed that line over a
- * "0 passed, 0 failed" table, which is the most confident-sounding output in
- * the tool attached to the least evidence. The skip itself is legitimate (those
- * functions are covered by server_verify, --xlang-hash and their hard-coded
- * tests), so this is not a failure on a filtered run — it is a banner that must
- * stop claiming a pass it did not earn. Unfiltered it IS a failure: 171 shipped
- * functions cannot all legitimately skip, so zero there means the sweep went
- * dark. Mirrors the sentinel floor below. */
+/* Functions that reached a real value comparison, per language: the closing
+ * banner claims a pass only off this, never off a count of servers that
+ * started. Zero on an unfiltered run means the sweep went dark. */
 static long g_codegenCompared[NUM_LANGUAGES];
 
 /* Offsets above each IntegerRange default that the large-period pass stresses.
@@ -347,10 +309,7 @@ static long g_codegenCompared[NUM_LANGUAGES];
  * are usually even, so +50 reaches only even periods and never the odd arm of a
  * parity-split body. It also fixes whether the period is a power of two, where
  * 1/period is exact -- RSI's default+50 is 64, so a scaling change from a divide
- * to a reciprocal is bit-identical there. That second effect is invisible to
- * THIS leg, which diffs against ta_ref_serve at CODEGEN_EPSILON_DOUBLE, but the
- * period it selects is also what --xlang-hash and the stream legs inherit, and
- * those compare bitwise. */
+ * to a reciprocal is bit-identical there. */
 static const int LARGE_INT_OFFSETS[] = { 50, 51 };
 #define NB_LARGE_INT_OFFSETS ((int)(sizeof(LARGE_INT_OFFSETS)/sizeof(LARGE_INT_OFFSETS[0])))
 
@@ -389,7 +348,6 @@ static int g_streamShapeSeen[FUZZ_NSHAPES];
 
 typedef struct {
     char   funcName[64];
-    double c_ref_ns;
     struct {
         int    tested;   /* 0=skipped, 1=pass, -1=fail */
         double avg_ns;
@@ -508,32 +466,29 @@ static int check_stream_counter_parity( void )
 /* ---- Constants ---- */
 
 #define CODEGEN_EPSILON  1e-6   /* float leg (TA_S_*): single-precision noise */
-/* Double-leg cross-language / cross-version tolerance. Tightened from 1e-6 to
- * 1e-9 (issue #113 follow-up): a full-precision measurement of every language
- * server vs the frozen reference showed the real floor is <1e-11 for every
- * function except LINEARREG_ANGLE (~4.4e-10, the authorized recurrence) —
- * the %.15g transport was never the limit. Applied as 1e-9 * max(1, |value|). */
+/* Float leg: a server's single-precision entry point against its own double
+ * one on float-widened inputs. Applied as 1e-9 * max(1, |value|). */
 #define CODEGEN_EPSILON_DOUBLE  1e-9
 #define JSON_BUF_SIZE    (128 * 1024)   /* 128KB: enough for OHLCV inputs */
 #define MAX_OUTPUTS      CODEGEN_MAX_OUTPUTS   /* enforced at startup, issue #352 */
 
 /* ---- Minimal JSON helpers (no library dependency) ---- */
 
+/* As IEEE-754 bits (the hex-string form every server's array parser takes), so
+ * the double leg's bitwise compare never hinges on a decimal round trip. widen
+ * rounds each value to float first. */
 static int json_write_double_array(char *buf, int buf_size, int pos,
                                    const TA_Real *data, int count, int widen)
 {
-    pos = codegen_appendc(buf, buf_size, pos, '[');
+    pos = codegen_appendc(buf, buf_size, pos, '"');
     for( int i = 0; i < count; i++ )
     {
-        if( i > 0 )
-            pos = codegen_appendc(buf, buf_size, pos, ',');
-        if( widen )
-            /* Round to float then back to double; %.17g round-trips exactly. */
-            pos = codegen_appendf(buf, buf_size, pos, "%.17g", (double)(float)data[i]);
-        else
-            pos = codegen_appendf(buf, buf_size, pos, "%.15g", data[i]);
+        double v = widen ? (double)(float)data[i] : data[i];
+        unsigned long long bits;
+        memcpy(&bits, &v, sizeof(bits));
+        pos = codegen_appendf(buf, buf_size, pos, "%016llx", bits);
     }
-    return codegen_appendc(buf, buf_size, pos, ']');
+    return codegen_appendc(buf, buf_size, pos, '"');
 }
 
 /* Lossless input transport (issue #115, shared via test_codegen.h): serialize
@@ -752,10 +707,9 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"MACDFIX",      TA_FUNC_UNST_EMA},
     /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. PVO is
      * PPO over volume and defaults to EMA the same way, so it belongs here for
-     * the same reason. Its absence classified it EPSILON, and the range gate
-     * that would have said so is the one post-cutover functions never reach --
-     * measured, PVO moves by whole multiples across startIdx (4.7 at 40, 25.1
-     * at 80) where a genuine EPSILON function moves by ~1e-13. */
+     * the same reason. Without it PVO classifies EPSILON -- measured, it moves
+     * by whole multiples across startIdx (4.7 at 40, 25.1 at 80) where a
+     * genuine EPSILON function moves by ~1e-13. */
     {"APO",          TA_FUNC_UNST_EMA},
     {"PPO",          TA_FUNC_UNST_EMA},
     {"PVO",          TA_FUNC_UNST_EMA},
@@ -806,8 +760,8 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * ids and needed a row each. Measured at bar 380 with the defaults: 16.80
      * at startIdx 0, 48.09 at 40, 89.68 at 80 -- whole multiples, the same
      * shape RVI itself shows, where a genuine EPSILON function moves by
-     * ~1e-13. Without this row it classified EPSILON and the post-cutover
-     * range gate failed it by 5.8%. */
+     * ~1e-13. Without this row it classifies EPSILON and the range gate fails
+     * it by 5.8%. */
     {"RVIR",         TA_FUNC_UNST_RVI},
     /* SUPERTREND is listed for the SECOND consumer of this map, not the first.
      * It carries `path_dependent`, so stability_class() answers SKIP before it
@@ -977,8 +931,6 @@ typedef struct {
      * enum sentinel, the index for its per-language non-vacuity counters. */
     const char *langName;
     int         langIndex;
-    /* Reference oracle pipe (ta_ref_serve) — fills the comparison baseline */
-    CodegenPipe *refCp;
     char *requestBuf;
     char *responseBuf;
 
@@ -991,7 +943,7 @@ typedef struct {
      * the holder was set to; 0 means "use the default". */
     int useLargePeriod;
 
-    /* Ref differential sweep: when optOverrideActive, build_json_request
+    /* Parameter sweep: when optOverrideActive, build_json_request
      * emits optOverride[i] for optional param i instead of the default (or
      * large-period) value. Stored as double; integer params truncate on
      * emission. Takes precedence over useLargePeriod. */
@@ -1035,7 +987,6 @@ typedef struct {
     int    langSupported;
 
     /* Timing */
-    long long c_ref_total_ns;
     long long server_total_ns;
     int       timing_count;
 } CodegenRangeTestParam;
@@ -1111,6 +1062,22 @@ static void reset_opt_periods_to_default(TA_ParamHolder *paramHolder,
 }
 
 /* ---- Generic JSON request builder (Task 7) ---- */
+
+/* Optional parameter i as build_json_request sends it: the override, else the
+ * large-period value, else the default. The in-process baseline calls with the
+ * same value, which is what makes it the baseline for that request. */
+static double request_opt_value(const CodegenRangeTestParam *p, unsigned int i)
+{
+    const TA_OptInputParameterInfo *optInfo;
+    TA_GetOptInputParameterInfo(p->funcInfo->handle, i, &optInfo);
+    if( p->optOverrideActive )
+        return optInfo->type == TA_OptInput_IntegerRange || optInfo->type == TA_OptInput_IntegerList
+               ? (double)(int)p->optOverride[i] : p->optOverride[i];
+    if( p->useLargePeriod && optInfo->type == TA_OptInput_IntegerRange )
+        return (double)compute_large_int(optInfo, p->nbBars, p->useLargePeriod);
+    return optInfo->type == TA_OptInput_IntegerRange || optInfo->type == TA_OptInput_IntegerList
+           ? (double)(int)optInfo->defaultValue : optInfo->defaultValue;
+}
 
 static int build_json_request(CodegenRangeTestParam *p,
                               TA_Integer startIdx, TA_Integer endIdx)
@@ -1230,26 +1197,10 @@ static int build_json_request(CodegenRangeTestParam *p,
 
         pos = codegen_appendf(buf, bufSize, pos, ",\"%s\":", optInfo->paramName);
 
-        switch( optInfo->type )
-        {
-        case TA_OptInput_RealRange:
-        case TA_OptInput_RealList:
-            pos = codegen_appendf(buf, bufSize, pos, "%.17g",
-                p->optOverrideActive ? p->optOverride[i] : optInfo->defaultValue);
-            break;
-        case TA_OptInput_IntegerRange:
-            pos = codegen_appendf(buf, bufSize, pos, "%d",
-                p->optOverrideActive ? (int)p->optOverride[i]
-                : p->useLargePeriod  ? compute_large_int(optInfo, p->nbBars,
-                                                        p->useLargePeriod)
-                                     : (int)optInfo->defaultValue);
-            break;
-        case TA_OptInput_IntegerList:
-            pos = codegen_appendf(buf, bufSize, pos, "%d",
-                p->optOverrideActive ? (int)p->optOverride[i]
-                                     : (int)optInfo->defaultValue);
-            break;
-        }
+        if( optInfo->type == TA_OptInput_RealRange || optInfo->type == TA_OptInput_RealList )
+            pos = codegen_appendf(buf, bufSize, pos, "%.17g", request_opt_value(p, i));
+        else
+            pos = codegen_appendf(buf, bufSize, pos, "%d", (int)request_opt_value(p, i));
     }
 
     /* Unstable period (for functions with TA_FUNC_FLG_UNST_PER) */
@@ -1270,34 +1221,6 @@ static int build_json_request(CodegenRangeTestParam *p,
 
 /* ---- Generic output comparison (Task 8) ---- */
 
-/* Functions whose OUTPUT VALUES intentionally diverge from the frozen pre-cutover
- * reference (ta_ref_serve) and are pinned by hand-written tests instead.
- * STOCHRSI (issue #107): its internal STOCHF now answers a machine-flat window
- * with 0 where the reference divided a sub-epsilon flat-RSI-window residue into
- * full-scale [0,100] noise — so ta_ref_serve is the wrong value oracle for it
- * (same reason it is excluded from --fuzz-064). STOCHRSI's structural parity
- * (retCode/outBegIdx/outNBElement) stays strict on every backend, and its values
- * are pinned by test_stoch.c (test_stochrsi_epsilon_issue107). Standalone STOCH/
- * STOCHF keep the same guard but do NOT diverge from the reference on raw OHLC
- * (a flat raw window has highest==lowest exactly), so they stay strictly
- * value-compared.
- *
- * CORREL (issue #242): the reference carries the one-pass
- * sumX2-(sumX*sumX)/period form, which keeps only the digits that survive that
- * subtraction. It reported a perfect correlation as 0, as -1, and as -1.73 —
- * outside [-1,1] — so it cannot referee the shifted-data form that replaced it.
- * Its values are pinned instead by test_correl.c, against oracles that share no
- * code with either version: a fresh per-window two-pass, NIST StRD Norris's
- * certified R-Squared, and identities exact by construction.
- *
- * This exemption applies ONLY to comparisons whose baseline is
- * the frozen reference — NOT the float leg, whose baseline is the current double
- * variant (a self-consistency check, see the widenFloatInputs guard at callsite). */
-static int codegen_ref_value_exempt(const char *name)
-{
-    return strcmp(name, "STOCHRSI") == 0
-        || strcmp(name, "CORREL") == 0;
-}
 
 /* The JSON response key for output `o`: the type name plus that output's rank
  * among outputs of the SAME type, rank omitted at 0 — so [real, integer, real]
@@ -1436,14 +1359,6 @@ static void compare_codegen_output_generic(
         return;
     }
 
-    /* Structural parity verified above; skip the VALUE diff for functions that
-     * intentionally diverge from the frozen reference (#107 STOCHRSI, #242
-     * CORREL).
-     * NOT in the float leg (widenFloatInputs): there the baseline is the current
-     * double variant, so TA_S_ vs TA_ self-consistency must stay strictly checked. */
-    if( !p->widenFloatInputs && codegen_ref_value_exempt(p->funcInfo->name) )
-        return;
-
     /* Compare output values for the requested outputNb */
     if( p->outputIsInteger[outputNb] )
     {
@@ -1477,47 +1392,61 @@ static void compare_codegen_output_generic(
         int parsed = json_get_double_array(p->responseBuf, fieldName,
                                             cg_out, MAX_NB_TEST_ELEMENT);
         if( codegen_check_parsed(p, fieldName, parsed) ) return;
+        /* The double leg's baseline is the in-process library on the same
+         * inputs, so every server is held bit for bit, bar the calls that reach
+         * a transcendental on a language whose math is not the C libm. */
+        int transcendental = 0;
+        if( !p->widenFloatInputs && p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES
+            && codegen_lang_needs_transcendental_tol(ALL_LANGUAGES[p->langIndex].name) )
+        {
+            double optVals[SWEEP_MAX_OPT];
+            unsigned int k;
+            for( k = 0; k < p->funcInfo->nbOptInput && k < SWEEP_MAX_OPT; k++ )
+                optVals[k] = request_opt_value(p, k);
+            transcendental = codegen_call_is_transcendental(p->funcInfo->handle, optVals, (int)k);
+        }
         for( int i = 0; i < p->lastNbElement && i < parsed; i++ )
         {
             double cVal = p->outRealBufs[outputNb][i];
             double diff = fabs(cVal - cg_out[i]);
             double threshold;
+            if( !p->widenFloatInputs && !transcendental )
+            {
+                if( memcmp(&cVal, &cg_out[i], sizeof(double)) != 0 )
+                {
+                    printf("CODEGEN MISMATCH [TA_%s]: %s[%d] C=%.17g (%a) codegen=%.17g (%a), "
+                           "bitwise\n", p->funcInfo->name, fieldName, i,
+                           cVal, cVal, cg_out[i], cg_out[i]);
+                    p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
+                    return;
+                }
+                continue;
+            }
+            /* A bound scaled by |value| is infinite at an infinity, and a NaN
+             * fails every comparison: both must match in kind before it applies
+             * (a NaN's payload may differ between languages). */
+            if( !isfinite(cVal) || !isfinite(cg_out[i]) )
+            {
+                if( (isnan(cVal) && isnan(cg_out[i])) || cVal == cg_out[i] )
+                    continue;
+                printf("CODEGEN MISMATCH [TA_%s]: %s[%d] C=%.17g codegen=%.17g\n",
+                       p->funcInfo->name, fieldName, i, cVal, cg_out[i]);
+                p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
+                return;
+            }
             if( p->widenFloatInputs )
             {
                 /* Float leg: BOTH sides are the same server on the same
-                 * float-widened inputs — its single-precision entry point vs its
-                 * own double one — so equal computation must give equal doubles
-                 * and the only spread is the transport (it was <1e-11 through
-                 * %.15g; output arrays are exact on every backend since
-                 * #257/#258).
-                 *
-                 * The old 1e-6 here dated from when this leg compared against the
-                 * frozen single-precision reference, which computed IN float.
-                 * That rationale is gone, and 1e-6 is useless against the defect
-                 * this leg exists for: one arithmetic op left in float is ~6e-8
-                 * relative (float's own resolution is 2^-23 = 1.19e-7), i.e.
-                 * BELOW the threshold. Use the same 1e-9 the double leg proved
-                 * holds through this transport.
-                 *
-                 * epsilonScale is still honoured so a caller can widen it. */
+                 * float-widened inputs, its single-precision entry point vs its
+                 * own double one, so equal computation must give equal doubles.
+                 * Keep the bound far below float's resolution: one arithmetic op
+                 * left in float is ~6e-8 relative, which a float-sized bound
+                 * would pass. */
                 double scale = (p->epsilonScale > 0.0) ? p->epsilonScale : 1.0;
                 threshold = CODEGEN_EPSILON_DOUBLE * fmax(1.0, fabs(cVal)) * scale;
             }
             else
-            {
-                /* Double leg, tightened 1e-6 -> 1e-9 (issue #113 follow-up).
-                 * A full-precision measurement of every language server against the
-                 * frozen reference found the cross-language / cross-version
-                 * divergence is <1e-11 for every function EXCEPT LINEARREG_ANGLE
-                 * (~4.4e-10, the authorized #103 O(1) sliding-sum recurrence vs the
-                 * frozen O(n) recompute). The 1e-6 floor was never a transport
-                 * limit — the transport contributes <1e-11, and since #257/#258
-                 * only through the %.15g INPUTS — so 1e-9 holds with margin:
-                 * 1e-9 absolute below 1, 1e-9 relative above. Bit-exact
-                 * cross-language parity on seed data is separately gated by
-                 * --xlang-hash. */
-                threshold = CODEGEN_EPSILON_DOUBLE * fmax(1.0, fabs(cVal));
-            }
+                threshold = CODEGEN_TRANSCENDENTAL_TOL * fmax(1.0, fabs(cVal));
             if( diff > threshold )
             {
                 printf("CODEGEN MISMATCH [TA_%s]: %s[%d] C=%.10f codegen=%.10f diff=%.2e\n",
@@ -1558,39 +1487,66 @@ static void compare_codegen_output_generic(
  * dead); in a DEBUG-profile server it panics on the overflow check.
  *
  * This sweep drives the server across short ranges near the lookback (startIdx 0,
- * endIdx 0..lookback+margin) and diffs each against ta_ref_serve, so:
+ * endIdx 0..lookback+margin) and diffs each against the in-process library, so:
  *   - release: adds value-coherency coverage at the lookback boundary, and
  *   - debug:   turns any arithmetic overflow/underflow into a hard failure
  *              (a server crash closes the pipe -> a non-PASS read here).
  *
- * Comparing ref-vs-server at the SAME (startIdx, endIdx) is always valid, so no
+ * Comparing both at the SAME (startIdx, endIdx) is always valid, so no
  * DO_NOT_COMPARE exemptions are needed: path-dependence (AD/OBV/SAR/...) only
  * affects cross-range coherency, which this does not test. */
 #define EDGE_SWEEP_MARGIN 3
-static double parse_ref_baseline(CodegenRangeTestParam *p);  /* defined below */
 
-/* One (startIdx, endIdx) pair, reference against the server under test. Returns
- * 0 when the caller should stop (the error is already recorded and printed), 1
- * to carry on -- including when the range was skipped because the reference
- * itself answered an error. */
+static void setup_inputs(TA_ParamHolder *paramHolder, const TA_FuncInfo *funcInfo,
+                         const TA_History *history);
+
+/* The baseline every server's double leg is diffed against: the in-process
+ * library, called with exactly what build_json_request sends -- the same
+ * inputs, the optional values of request_opt_value(), and the unstable periods
+ * the request reads from this process. */
+static void inproc_baseline(CodegenRangeTestParam *p, TA_Integer startIdx, TA_Integer endIdx)
+{
+    TA_ParamHolder *h = NULL;
+    TA_Integer beg = 0, nb = 0;
+    unsigned int i;
+
+    if( TA_ParamHolderAlloc(p->funcInfo->handle, &h) != TA_SUCCESS )
+    {
+        p->lastRetCode = TA_ALLOC_ERR;
+        p->lastBegIdx = p->lastNbElement = 0;
+        return;
+    }
+    setup_inputs(h, p->funcInfo, p->history);
+    for( i = 0; i < p->funcInfo->nbOptInput; i++ )
+    {
+        const TA_OptInputParameterInfo *optInfo;
+        TA_GetOptInputParameterInfo(p->funcInfo->handle, i, &optInfo);
+        if( optInfo->type == TA_OptInput_RealRange || optInfo->type == TA_OptInput_RealList )
+            TA_SetOptInputParamReal(h, i, request_opt_value(p, i));
+        else
+            TA_SetOptInputParamInteger(h, i, (TA_Integer)request_opt_value(p, i));
+    }
+    for( i = 0; i < p->funcInfo->nbOutput && i < MAX_OUTPUTS; i++ )
+    {
+        if( p->outputIsInteger[i] )
+            TA_SetOutputParamIntegerPtr(h, i, p->outIntBufs[i]);
+        else
+            TA_SetOutputParamRealPtr(h, i, p->outRealBufs[i]);
+    }
+    p->lastRetCode   = TA_CallFunc(h, startIdx, endIdx, &beg, &nb);
+    p->lastBegIdx    = beg;
+    p->lastNbElement = nb;
+    TA_ParamHolderFree(h);
+}
+
+/* One (startIdx, endIdx) pair, the in-process library against the server under
+ * test. Returns 0 when the caller should stop (the error is already recorded
+ * and printed), 1 to carry on. */
 static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
                             TA_Integer endIdx, int countAsStartSweep)
 {
     build_json_request(p, startIdx, endIdx);
-
-    /* Reference baseline (ta_ref_serve). */
-    ErrorNumber rref = codegen_pipe_call(p->refCp, p->requestBuf,
-                                         p->responseBuf, JSON_BUF_SIZE);
-    if( rref != TA_TEST_PASS )
-    {
-        printf("EDGE SWEEP [TA_%s]: reference server call failed at (%d,%d)\n",
-               p->funcInfo->name, (int)startIdx, (int)endIdx);
-        p->codegenError = rref;
-        return 0;
-    }
-    if( json_is_error(p->responseBuf) )
-        return 1;  /* function unsupported / errored at this range */
-    parse_ref_baseline(p);
+    inproc_baseline(p, startIdx, endIdx);
     TA_Integer refNb = p->lastNbElement;
 
     /* Language server under test. A crash (e.g. a debug-build arithmetic
@@ -1606,15 +1562,14 @@ static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
         return 0;
     }
 
-    /* The reference answered this exact request, so an error from a server that
-     * answered the same function at the full range is a divergence, not an
-     * unsupported-skip -- and compare_codegen_output_generic returns SILENTLY on
-     * an error response, so without this the interesting failures land in the
-     * one place nothing looks. */
+    /* An error from a server that answered the same function at the full range
+     * is a divergence, not an unsupported-skip -- and compare_codegen_output_
+     * generic returns SILENTLY on an error response, so without this the
+     * interesting failures land in the one place nothing looks. */
     if( p->langSupported && json_is_error(p->responseBuf) )
     {
         printf("CODEGEN EDGE MISMATCH [TA_%s]: server error at range (%d,%d) "
-               "where the reference produced a result: %.160s\n",
+               "where the in-process library produced a result: %.160s\n",
                p->funcInfo->name, (int)startIdx, (int)endIdx, p->responseBuf);
         p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
         return 0;
@@ -1673,7 +1628,7 @@ static void run_edge_range_sweep(CodegenRangeTestParam *p)
      * lookback and never approached the bound. Sized to the produced extent
      * (see the server emitters), each pair below is now a live test of it.
      *
-     * Comparing ref-vs-server at the SAME (startIdx, endIdx) is valid whatever
+     * Comparing both at the SAME (startIdx, endIdx) is valid whatever
      * the function's range-stability class, so no exemptions are needed here
      * either: path dependence affects cross-range coherency, which this does
      * not test. */
@@ -1702,11 +1657,6 @@ static void run_edge_range_sweep(CodegenRangeTestParam *p)
 
             if( sIdx < 1 || sIdx > N - 1 || eIdx > N - 1 || eIdx < sIdx )
                 continue;   /* startIdx 0 is the sweep above; the rest is off the series */
-            if( ref_diverges_on_partial_range(p->funcInfo->name, sIdx, lookback) )
-            {
-                g_startSweepSkipped98++;
-                continue;
-            }
             for( j = 0; j < i; j++ )
                 if( pairs[j][0] == sIdx && pairs[j][1] == eIdx ) { dup = 1; break; }
             if( dup )
@@ -2063,16 +2013,11 @@ static int codegen_matches_filter(const char *filter, const char *name)
     return 0;
 }
 
-/* ---- Reference-as-server baseline (task #7) ----
- * Parse a ta_ref_serve JSON-RPC response into the same baseline fields that
- * compare_codegen_output_generic() diffs each language server against. This
- * replaces the former in-process TA_CallFunc baseline so that post-cutover
- * (when src/ta_func is the generated code) the reference comes from the frozen
- * reference library exposed as a server, not from an in-process call that would
- * be the generated code comparing against itself. Field names mirror
- * compare_codegen_output_generic() exactly (output 0 has no numeric suffix).
- * Returns the server's timing_ns (raw indicator time) for the C-ref column. */
-static double parse_ref_baseline(CodegenRangeTestParam *p)
+/* A server's response, read into the baseline fields compare_codegen_output_
+ * generic() diffs against: the float leg's baseline is the server's own double
+ * answer. Field names mirror compare_codegen_output_generic() exactly (output 0
+ * has no numeric suffix). */
+static void parse_server_baseline(CodegenRangeTestParam *p)
 {
     p->lastRetCode   = (TA_RetCode)json_get_int(p->responseBuf, "retCode");
     p->lastBegIdx    = json_get_int(p->responseBuf, "outBegIdx");
@@ -2094,10 +2039,6 @@ static double parse_ref_baseline(CodegenRangeTestParam *p)
                                       p->outRealBufs[o], MAX_NB_TEST_ELEMENT);
         }
     }
-
-    int len;
-    const char *t = json_find_field(p->responseBuf, "timing_ns", &len);
-    return t ? (double)strtoll(t, NULL, 10) : 0.0;
 }
 
 /* ---- Per-function callback for TA_ForEachFunc (Task 9) ---- */
@@ -2106,43 +2047,22 @@ typedef struct {
     const TA_History *history;
     const char       *functionFilter;
     CodegenPipe      *cp;
-    CodegenPipe      *refCp;       /* ta_ref_serve oracle (shared across languages) */
-    const char       *refFuncList; /* ta_ref_serve list_functions payload (subset
-                                    * gate: skip functions the frozen reference
-                                    * lacks — post-tag additions have no baseline) */
     char             *requestBuf;
     char             *responseBuf;
     ErrorNumber       error;
     int               passed;
     int               failed;
     int               skipped;
-    /* Names behind the aggregate `skipped` count. An unnamed "N skipped" reads
-     * as noise; naming them is what makes a post-cutover addition's reduced
-     * coverage visible at a glance (issue #137). */
-    char              skipNames[MAX_FUNCTIONS][20];
-    int               nbSkipNames;
     char              intInputSkipNames[MAX_FUNCTIONS][20];
     int               nbIntInputSkipNames;
-    /* sweep_one_function has its own subset gate that used to `return` with no
-     * counter at all — sweep skips were invisible even in the aggregate. */
-    int               sweepSkipped;
-    /* Post-cutover functions that reached the range-stability leg. Counted so
-     * "post-cutover" cannot quietly come to mean "range-unverified" again. */
-    int               postCutRangeChecked;
-    /* Of those, the ones whose class actually compared VALUES across ranges.
-     * TA_STABLE_SKIP reaches the leg and checks coherency only, so counting it
-     * as "verified" overstates the ratchet below -- and the inert set grows
-     * with every new post-cutover path-dependent indicator. */
-    int               postCutRangeValueCompared;
-    /* Ride-along over the post-cutover set, counted APART from the corpus-wide
-     * ride numbers below: those bump numerator and denominator at one site, so
-     * a post-cutover function that stops riding is invisible in them. */
-    int               postCutStream;        /* post-cutover funcs the flag says stream */
-    int               postCutRideOpen;      /* of those, compared >=1 bar via Open+Update */
-    int               postCutRideSkip;      /* of those, the server declined to replay */
+    /* Passed functions that reached the range-stability leg, and of those the
+     * ones whose class compares VALUES across ranges (TA_STABLE_SKIP checks
+     * coherency only). */
+    int               rangeChecked;
+    int               rangeValueCompared;
     int               langIndex;   /* index into ALL_LANGUAGES */
     const CodegenLanguage *lang;
-    /* Ref differential sweep counters */
+    /* Parameter sweep counters */
     int               sweepVariants;
     int               sweepFunctions;
     /* Stream verification counters */
@@ -2232,13 +2152,6 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) )
         return;
 
-    /* Subset gate: the comparison baseline is the FROZEN ta_ref_serve, so a
-     * function added after the pinned reference tag has no baseline there
-     * (ta_ref_serve omits it from list_functions and stubs its symbol — see
-     * scripts/serve_version.py). Skip it rather than hard-fail on the missing
-     * baseline; it stays covered by server_verify, --xlang-hash and its
-     * hard-coded tests. Mirrors the --fuzz-064 subset gate. */
-
     /* Skip functions with integer inputs (very rare, no test data) */
     unsigned int hasIntegerInput = 0;
     for( unsigned int i = 0; i < funcInfo->nbInput; i++ )
@@ -2306,7 +2219,6 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     params.cp          = ctx->cp;
     params.langName    = ctx->lang->name;
     params.langIndex   = ctx->langIndex;
-    params.refCp       = ctx->refCp;
     params.requestBuf  = ctx->requestBuf;
     params.responseBuf = ctx->responseBuf;
     params.codegenError = TA_TEST_PASS;
@@ -2317,171 +2229,10 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     /* Set up output buffers */
     setup_outputs(&params);
 
-    /* Frozen-reference subset gate, applied HERE rather than on entry.
-     *
-     * The functions added after the pinned reference tag have no ta_ref_serve
-     * baseline, so everything below that diffs against it must be skipped. The
-     * run names them rather than counting them, because the set only grows.
-     *
-     * Two legs must NOT be skipped, and both are here for the same reason --
-     * they compare against something other than the frozen reference, so the
-     * missing baseline is irrelevant to them:
-     *
-     *   FLOAT — compares a language's single-precision entry point against that
-     *   same language's own double entry point; never touches refCp. Skipping it
-     *   left 14 shipped float entry points (7 Java, 7 C#) with no value
-     *   verification at all.
-     *
-     *   RANGE STABILITY — codegen_range_generic calls TA_CallFunc on the
-     *   in-process library, never a server at all. Skipping it left every
-     *   post-cutover function with no startIdx-stability coverage, which is how
-     *   PVO's missing UNSTABLE_MAP row survived from #119.
-     *
-     *   RIDE-ALONG: the server replays the arrays THIS request carried through
-     *   its own streaming tiers and diffs them against its own batch answer, so
-     *   it never touches refCp either. Skipping it left the post-cutover set
-     *   with no ride CENSUS and no floor anywhere, and on rust, which skips the
-     *   float leg, with no request at all (#427).
-     *
-     * Run all three, then skip the reference-dependent remainder. */
-    if( ctx->refFuncList )
-    {
-        char needle[80];
-        snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
-        if( !strstr(ctx->refFuncList, needle) )
-        {
-            /* First, before doRangeTestMulti below leaves the unstable periods
-             * at high values: the corpus-wide leg rides its batch call at the
-             * defaults, and this one must ride the same shape. */
-            if( funcInfo->flags & TA_FUNC_FLG_STREAM )
-            {
-                ctx->postCutStream++;
-                params.outPad = 0;
-                build_json_request(&params, 0, params.nbBars - 1);
-                if( codegen_pipe_call(params.cp, params.requestBuf,
-                                      params.responseBuf, JSON_BUF_SIZE) == TA_TEST_PASS
-                    && !json_is_error(params.responseBuf) )
-                {
-                    ctx->rideFnOpen = 0;
-                    ctx->rideFnFill = 0;
-                    ctx->rideFnSkip = 0;
-                    ride_read(ctx, funcInfo->name, params.responseBuf);
-                    if( ctx->rideFnOpen )
-                    { ctx->rideOpenFunctions++; ctx->postCutRideOpen++; }
-                    if( ctx->rideFnFill ) ctx->rideFillFunctions++;
-                    if( ctx->rideFnSkip )
-                    { ctx->rideSkipFunctions++; ctx->postCutRideSkip++; }
-                    if( ctx->rideResponses > 0 ) ctx->rideEligible++;
-                }
-                else
-                {
-                    /* Name the function that went dark, rather than leaving it
-                     * to the floor's arithmetic at the end of this pass. */
-                    printf("FAILED (TA_%s: the %s server answered no batch call "
-                           "for the post-cutover ride)\n",
-                           funcInfo->name, ctx->lang->name);
-                    ctx->failed++;
-                    ctx->error = TA_CODEGEN_RIDE_VACUOUS;
-                    free_outputs(&params);
-                    TA_ParamHolderFree(paramHolder);
-                    return;
-                }
-            }
-            if( strcmp(ctx->lang->name, "rust") != 0 )
-                run_float_leg(&params, 1);
-            if( params.codegenError != TA_TEST_PASS )
-            {
-                printf("CODEGEN FAILED (code=%d)  (TA_%s is post-reference: "
-                       "only the float leg ran)\n",
-                       params.codegenError, funcInfo->name);
-                ctx->failed++;
-                ctx->error = params.codegenError;
-                free_outputs(&params);
-                TA_ParamHolderFree(paramHolder);
-                return;
-            }
-            /* The RANGE-STABILITY leg must not be skipped here either, for the
-             * same reason as the float leg above: codegen_range_generic calls
-             * TA_CallFunc on the in-process library and never touches refCp or
-             * the language server, so it needs no frozen baseline. Leaving it
-             * below this gate left every post-cutover function with no
-             * startIdx-stability coverage at all -- which is how PVO's missing
-             * UNSTABLE_MAP row survived since #119. */
-            {
-                TA_Integer postLookback = 0;
-                if( TA_GetLookback( paramHolder, &postLookback ) == TA_SUCCESS &&
-                    (int)ctx->history->nbBars > postLookback )
-                {
-                    TA_RangeStability postStability = stability_class(funcInfo);
-                    TA_FuncUnstId postIds[TA_MAX_SWEPT_UNST];
-                    int nbPostIds = get_unst_ids(funcInfo->name, postIds,
-                                                 TA_MAX_SWEPT_UNST);
-                    ErrorNumber rangeErr = doRangeTestMulti(
-                        codegen_range_generic,
-                        postStability,
-                        postIds, nbPostIds,
-                        (void *)&params,
-                        funcInfo->nbOutput,
-                        get_integer_tolerance(funcInfo));
-                    if( rangeErr != TA_TEST_PASS )
-                    {
-                        printf("RANGE TEST FAILED (code=%d)  (TA_%s is "
-                               "post-reference)\n", rangeErr, funcInfo->name);
-                        ctx->failed++;
-                        ctx->error = rangeErr;
-                        free_outputs(&params);
-                        TA_ParamHolderFree(paramHolder);
-                        return;
-                    }
-                    ctx->postCutRangeChecked++;
-                    /* Reaching the leg is what the ratchet proves; comparing
-                     * values is a strictly stronger thing that TA_STABLE_SKIP
-                     * does not do. Split the two rather than let one number
-                     * claim both. */
-                    if( postStability != TA_STABLE_SKIP )
-                        ctx->postCutRangeValueCompared++;
-                }
-            }
-            if( ctx->nbSkipNames < MAX_FUNCTIONS )
-                strncpy(ctx->skipNames[ctx->nbSkipNames++], funcInfo->name,
-                        sizeof(ctx->skipNames[0]) - 1);
-            ctx->skipped++;
-            free_outputs(&params);
-            TA_ParamHolderFree(paramHolder);
-            return;
-        }
-    }
-
-    /* ---- Baseline from ta_ref_serve (reference-as-server, task #7) ----
-     * The codegen comparison baseline is the reference C library exposed as a
-     * JSON-RPC server, NOT an in-process call. ta_ref_serve links the frozen
-     * pinned-tag reference and speaks the same protocol, so one request drives
-     * both it and the language server under test. Post-cutover this keeps the
-     * generated C server diffed against a frozen reference, not against itself.
-     * (doRangeTest below still calls the in-process lib for self-coherency.) */
     /* This leg — the full-range value comparison and its baseline — is the one
      * that sends an OVER-SIZED output. See CodegenRangeTestParam::outPad. */
     params.outPad = OUT_SLACK_PAD;
-    build_json_request(&params, 0, params.nbBars - 1);
-    /* Warmup (discard) then measured baseline call (same request). */
-    codegen_pipe_call(params.refCp, params.requestBuf, params.responseBuf, JSON_BUF_SIZE);
-    ErrorNumber refErr = codegen_pipe_call(params.refCp, params.requestBuf,
-                                           params.responseBuf, JSON_BUF_SIZE);
-    if( refErr != TA_TEST_PASS || json_is_error(params.responseBuf) )
-    {
-        printf("FAILED (ta_ref_serve: %s for TA_%s)\n",
-               refErr != TA_TEST_PASS ? "call failed" : "no result",
-               funcInfo->name);
-        free_outputs(&params);
-        TA_ParamHolderFree(paramHolder);
-        ctx->error = (refErr != TA_TEST_PASS) ? refErr : TA_CODEGEN_RETCODE_MISMATCH;
-        ctx->failed++;
-        return;
-    }
-    /* The reference is the frozen pre-cutover server and does not report
-     * `out_len`; only the language server under test does, further down. */
-    double c_avg_ns = parse_ref_baseline(&params);
-    params.c_ref_total_ns = (long long)c_avg_ns;
+    inproc_baseline(&params, 0, params.nbBars - 1);
     /* Default-period element count, captured for the doRangeTest guard below
      * (params.lastNbElement is overwritten by the large-period pass). */
     TA_Integer nbElem = params.lastNbElement;
@@ -2494,7 +2245,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     /* Codegen comparison: one full-range JSON-RPC call, compare all outputs.
      * This is done BEFORE doRangeTest to separate concerns:
-     * - codegen comparison: does generated code match C reference?
+     * - codegen comparison: does the server match the in-process library?
      * - range test: is the C function coherent across sub-ranges?
      */
     build_json_request(&params, 0, params.nbBars - 1);
@@ -2547,9 +2298,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                            && !json_is_error(params.responseBuf);
     params.langSupported = defaultSupported;
 
-    /* Snapshot server timing from the full-range comparison call. Both c_ref_ns
-     * (ta_ref_serve) and s_avg_ns are single full-range JSON-RPC calls measuring
-     * the raw indicator time server-side — apples-to-apples. */
+    /* Server timing from the full-range comparison call. */
     double s_avg_ns = (params.timing_count > 0)
                       ? (double)params.server_total_ns / (double)params.timing_count
                       : 0.0;
@@ -2594,19 +2343,10 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                            largeOffset);
         if( nLarge > 0 )
         {
-            /* Large-period baseline also comes from ta_ref_serve; the same request
-             * (built with useLargePeriod) then drives the language server. */
             params.useLargePeriod = largeOffset;
             build_json_request(&params, 0, params.nbBars - 1);
-            ErrorNumber lref = codegen_pipe_call(params.refCp, params.requestBuf,
-                                                 params.responseBuf, JSON_BUF_SIZE);
-            if( lref != TA_TEST_PASS )
+            inproc_baseline(&params, 0, params.nbBars - 1);
             {
-                params.codegenError = lref;
-            }
-            else if( !json_is_error(params.responseBuf) )
-            {
-                parse_ref_baseline(&params);
                 if( params.lastNbElement > 0 )
                 {
                     ErrorNumber le = codegen_pipe_call(params.cp, params.requestBuf,
@@ -2615,11 +2355,11 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         params.codegenError = le;
                     else if( defaultSupported && json_is_error(params.responseBuf) )
                     {
-                        /* Reference produced output at this period but the backend
+                        /* The library produced output at this period but the backend
                          * errored only at the large period -- a real divergence, not
                          * an unsupported-skip. */
                         printf("CODEGEN MISMATCH [TA_%s]: large-period +%d (lnb=%d) "
-                               "server error where C reference succeeded\n",
+                               "server error where the in-process library succeeded\n",
                                funcInfo->name, largeOffset,
                                (int)params.lastNbElement);
                         params.codegenError = TA_CODEGEN_RETCODE_MISMATCH;
@@ -2632,8 +2372,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         }
                 }
             }
-            /* else: reference produced no result at the large period (e.g. lookback
-             * exceeds the test history) — nothing to compare, like the old lnb==0. */
+            /* No output at the large period (the lookback exceeds the test
+             * history): nothing to compare. */
             params.useLargePeriod = 0;
         }
         /* set_large_opt_periods mutated the holder (for every IntegerRange param,
@@ -2643,7 +2383,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     }
 
     /* Edge-range server sweep: drive the server across short ranges near the
-     * lookback and diff each against ta_ref_serve (see run_edge_range_sweep).
+     * lookback and diff each against the in-process library (see run_edge_range_sweep).
      * Runs at default params, after the large-period restore above. */
     run_edge_range_sweep(&params);
 
@@ -2651,6 +2391,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * Skip when lookback exceeds data range (no output possible) or the edge
      * sweep already failed. */
     ErrorNumber errNb = TA_TEST_PASS;
+    int rangeChecked = 0;
     if( nbElem > 0 && params.codegenError == TA_TEST_PASS )
     {
         TA_FuncUnstId sweepIds[TA_MAX_SWEPT_UNST];
@@ -2662,6 +2403,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             (void *)&params,
             funcInfo->nbOutput,
             get_integer_tolerance(funcInfo));
+        rangeChecked = 1;
     }
 
     /* Record results in global timing table */
@@ -2680,7 +2422,6 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         memset(&g_timingResults[resultIdx], 0, sizeof(FuncTimingResult));
         strncpy(g_timingResults[resultIdx].funcName, funcInfo->name,
                 sizeof(g_timingResults[resultIdx].funcName) - 1);
-        g_timingResults[resultIdx].c_ref_ns = c_avg_ns;
     }
 
     /* Check for codegen mismatch */
@@ -2721,66 +2462,44 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         g_timingResults[resultIdx].langs[ctx->langIndex].avg_ns  = s_avg_ns;
     }
 
-    /* Print result with timing and speedup ratio */
-    if( s_avg_ns > 0 && c_avg_ns > 0 )
-    {
-        double ratio = c_avg_ns / s_avg_ns;
-        printf("PASS   (c-ref: %.0fns, %s: %.0fns, %.2fx %s)\n",
-               c_avg_ns, ctx->lang->display, s_avg_ns,
-               (ratio >= 1.0) ? ratio : 1.0 / ratio,
-               (ratio >= 1.0) ? "faster" : "slower");
-    }
+    if( s_avg_ns > 0 )
+        printf("PASS   (%s: %.0fns)\n", ctx->lang->display, s_avg_ns);
     else
-    {
         printf("PASS\n");
-    }
     ctx->passed++;
+    if( rangeChecked )
+    {
+        ctx->rangeChecked++;
+        if( stability_class(funcInfo) != TA_STABLE_SKIP )
+            ctx->rangeValueCompared++;
+    }
 
     free_outputs(&params);
     TA_ParamHolderFree(paramHolder);
 }
 
 
-/* ---- Ref differential sweep (#94 groundwork) ----
+/* ---- Parameter sweep (#94 groundwork) ----
  * The default and large-period passes above diff each language server against
- * ta_ref_serve at two parameter points per function. This sweep broadens the
- * sample: every IntegerRange param at a few non-default values, every
- * IntegerList (MAType) value, RealRange params at their suggested bounds,
- * plus an unstable-period pass at the
- * defaults. Purely differential: for every variant both servers must agree on
- * retCode, outBegIdx, outNBElement and every output value.
- *
- * Integer periods are floored at max(min, 2): period=1 is the intentional
- * divergence from the frozen reference fixed for #48/#59 (the reference is
- * wrong there), and that territory is owned by the PERIOD1/BOUNDARY
- * hand-written group with its own pinned expected values.
+ * the in-process library at two parameter points per function. This sweep
+ * broadens the sample: every IntegerRange param at a few non-default values,
+ * every IntegerList (MAType) value, RealRange params at their suggested bounds,
+ * plus an unstable-period pass at the defaults. For every variant the server
+ * must agree on retCode, outBegIdx, outNBElement and every output value.
  */
 
 /* SWEEP_MAX_OPT is defined with CodegenRangeTestParam, which sizes
  * optOverride[] by it — the two were always coupled (sweep_one_function bails
  * on nbOptInput > SWEEP_MAX_OPT precisely so the writes fit), just not visibly. */
 
-/* --- Post-freeze enum values (issue #139) --------------------------------
- * TA_MAType_HMA (9) exists only in the current library: the frozen oracles
- * (ta_ref_serve @ reference-pre-cutover, ta_064_serve @ v0.6.4) reject it
- * with TA_BAD_PARAM while the current side computes -- a guaranteed false
- * mismatch that would diff the feature itself, not a bug. Vector builders
- * that feed a FROZEN oracle therefore skip IntegerList values above this
- * max, and the affected run summaries print the skip count so the exclusion
- * is loud, never silent. Current-vs-current gates are unaffected and DO
- * exercise the new value: --xlang-hash, stream_verify's enum sweep, the
- * VARIANT gate and the per-function hand tests (TA_MAType_HMA, TA_MAType_ZLEMA
- * and TA_MAType_RMA dispatch parity). When a frozen oracle is re-frozen on a tag
- * that includes #139, raise (or retire) this max accordingly. */
-#define FROZEN_ORACLE_MATYPE_MAX 8   /* == TA_MAType_T3; 9+ postdate the frozen
-                                        oracles (HMA #139, DISABLED #93,
-                                        DEFAULT #182, ZLEMA #347, RMA #348) */
+/* MAType values a frozen release predates: it rejects them where the current
+ * library computes, so --ref's vectors skip them, and says how many. */
 static long long g_frozenEnumSkips = 0;
 
-static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int value)
+static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int value, int max)
 {
     if( oi->paramName && strstr(oi->paramName, "MAType")
-        && value > FROZEN_ORACLE_MATYPE_MAX )
+        && value > max )
     {
         g_frozenEnumSkips++;
         return 1;
@@ -2788,100 +2507,16 @@ static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int va
     return 0;
 }
 
-/* In-process GUARDED comparison buffers for the sweep triangle (see below). */
-static TA_Real    sweepGuardedReal[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
-static TA_Integer sweepGuardedInt[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
-
-/* Compare the in-process GUARDED call against the ta_ref_serve baseline for one
- * sweep variant. C only — the in-process library IS the C backend. */
-static void sweep_compare_guarded(CodegenRangeTestParam *p)
-{
-    unsigned int i;
-    int outBegIdx = -1, outNbElement = -1;
-
-    if( p->paramHolder == NULL )
-        return;
-
-    /* Apply this variant's optional params to the holder. */
-    for( i = 0; i < p->funcInfo->nbOptInput; i++ )
-    {
-        const TA_OptInputParameterInfo *optInfo;
-        TA_GetOptInputParameterInfo(p->funcInfo->handle, i, &optInfo);
-        if( optInfo->type == TA_OptInput_RealRange ||
-            optInfo->type == TA_OptInput_RealList )
-            TA_SetOptInputParamReal(p->paramHolder, i, p->optOverride[i]);
-        else
-            TA_SetOptInputParamInteger(p->paramHolder, i, (int)p->optOverride[i]);
-    }
-
-    if( TA_CallFunc(p->paramHolder, 0, p->nbBars - 1,
-                    &outBegIdx, &outNbElement) != p->lastRetCode
-        || outBegIdx != p->lastBegIdx
-        || outNbElement != p->lastNbElement )
-    {
-        printf("SWEEP GUARDED MISMATCH [TA_%s]: rc/begIdx/nbElement "
-               "guarded=%d/%d vs ref=%d/%d (nb %d vs %d)\n",
-               p->funcInfo->name, outBegIdx, outNbElement,
-               (int)p->lastBegIdx, (int)p->lastNbElement,
-               outNbElement, (int)p->lastNbElement);
-        p->codegenError = TA_CODEGEN_BEGIDX_MISMATCH;
-        return;
-    }
-
-    /* Structural parity verified above; skip the VALUE diff for functions that
-     * intentionally diverge from the frozen reference (#107 STOCHRSI, #242
-     * CORREL). */
-    if( codegen_ref_value_exempt(p->funcInfo->name) )
-        return;
-
-    for( i = 0; i < p->funcInfo->nbOutput && i < MAX_OUTPUTS; i++ )
-    {
-        int j;
-        if( p->outputIsInteger[i] )
-        {
-            for( j = 0; j < outNbElement; j++ )
-                if( sweepGuardedInt[i][j] != p->outIntBufs[i][j] )
-                {
-                    printf("SWEEP GUARDED MISMATCH [TA_%s]: outInt%u[%d] "
-                           "guarded=%d ref=%d\n", p->funcInfo->name, i, j,
-                           sweepGuardedInt[i][j], p->outIntBufs[i][j]);
-                    p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
-                    return;
-                }
-        }
-        else
-        {
-            for( j = 0; j < outNbElement; j++ )
-                if( fabs(sweepGuardedReal[i][j] - p->outRealBufs[i][j]) > 1e-6 )
-                {
-                    printf("SWEEP GUARDED MISMATCH [TA_%s]: out%u[%d] "
-                           "guarded=%.12g ref=%.12g\n", p->funcInfo->name, i, j,
-                           sweepGuardedReal[i][j], p->outRealBufs[i][j]);
-                    p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
-                    return;
-                }
-        }
-    }
-}
-
 /* Everything a float-leg pass overwrites in *p, so the leg can be a no-op on
  * the caller's state.
  *
- * Every pass calls parse_ref_baseline(), which rewrites lastRetCode /
- * lastBegIdx / lastNbElement and the output buffers — the exact fields
- * sweep_compare_guarded() diffs the in-process guarded call against — and the
- * sentinel pass additionally rewrites optOverride[]. Before this snapshot the
- * leg was safe only because it happened to be the LAST statement of
- * sweep_run_variant(); an extra pass inserted anywhere else produced
+ * Every pass calls parse_server_baseline(), which rewrites lastRetCode /
+ * lastBegIdx / lastNbElement and the output buffers, and the sentinel pass
+ * additionally rewrites optOverride[]: without the snapshot, any leg run after
+ * this one would compare against the float leg's baseline (issue #170).
  *
- *     SWEEP GUARDED MISMATCH [TA_ACCBANDS]: guarded=2/250 vs ref=19/233
- *
- * — the guarded call at the swept period 3 against a baseline the extra pass
- * had left holding the default period 20. That is an ordering constraint no
- * signature states, so it is removed rather than documented (issue #170).
- *
- * File-static, like this file's other big scratch (sweepGuardedReal): ~10KB,
- * and the structs that reach here are main() locals on a 1MB Windows stack.
+ * File-static (~10KB): the structs that reach here are main() locals on a 1MB
+ * Windows stack.
  * Not reentrant — nothing calls the leg from inside the leg. */
 static struct {
     TA_RetCode lastRetCode;
@@ -2986,7 +2621,7 @@ static int float_leg_pass(CodegenRangeTestParam *p, int strict, const char *what
                                     JSON_BUF_SIZE) == TA_TEST_PASS);
     if( callOk && !json_is_error(p->responseBuf) )
     {
-        parse_ref_baseline(p);
+        parse_server_baseline(p);
 
         /* Single-precision variant on the same inputs. */
         p->useFloat = 1;
@@ -3053,7 +2688,7 @@ static int float_leg_set_sentinels(CodegenRangeTestParam *p)
 
     /* optOverrideActive makes build_json_request read optOverride[i] for EVERY
      * optional parameter, so a function wider than the array would send it off
-     * the end. The ref sweep holds the same invariant by refusing such a
+     * the end. The parameter sweep holds the same invariant by refusing such a
      * function up front; here it cannot be a silent skip — that would drop the
      * function's sentinel coverage without saying so. Widest shipped function is
      * SAREXT at 8, so this is a guard against a future definition, not a live
@@ -3122,8 +2757,7 @@ static int float_leg_set_sentinels(CodegenRangeTestParam *p)
  * withSentinel adds a SECOND pass with every optional parameter set to
  * TA_INTEGER_DEFAULT / TA_REAL_DEFAULT (issue #170). Both halves of that pass
  * carry the sentinel, so the property under test is "each tier substitutes the
- * SAME declared default" — self-contained, no oracle, and it holds for the
- * post-reference functions that have no ta_ref_serve baseline.
+ * SAME declared default" — self-contained, and needing no baseline.
  *
  * That vector is the one that exposed the TA_S_EMA defect fixed in 2e9767397:
  * the float body derived EMA's k factor from the raw sentinel because the
@@ -3171,32 +2805,24 @@ static void run_float_leg(CodegenRangeTestParam *p, int withSentinel)
     float_leg_restore_state(p);
 }
 
-/* Run one variant: ta_ref_serve fills the baseline, the language server is
- * diffed against it. Returns 1 if the variant was comparable (counted), 0 if
- * the reference could not answer it. Mismatches land in p->codegenError. */
-static int sweep_run_variant(CodegenRangeTestParam *p)
+/* Run one variant: the in-process library fills the baseline, the language
+ * server is diffed against it. Mismatches land in p->codegenError. */
+static void sweep_run_variant(CodegenRangeTestParam *p)
 {
     build_json_request(p, 0, p->nbBars - 1);
-    if( codegen_pipe_call(p->refCp, p->requestBuf, p->responseBuf,
-                          JSON_BUF_SIZE) != TA_TEST_PASS
-        || json_is_error(p->responseBuf) )
-        return 0;   /* reference cannot answer this variant -- nothing to diff */
-    parse_ref_baseline(p);
+    inproc_baseline(p, 0, p->nbBars - 1);
 
     if( codegen_pipe_call(p->cp, p->requestBuf, p->responseBuf,
                           JSON_BUF_SIZE) != TA_TEST_PASS )
     {
         p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
-        return 1;
+        return;
     }
     for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
         compare_codegen_output_generic(p, o);
 
-    if( p->codegenError == TA_TEST_PASS )
-        sweep_compare_guarded(p);
     if( p->sweepFloatLeg )
         run_float_leg(p, 0);
-    return 1;
 }
 
 static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
@@ -3210,15 +2836,6 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         return;
     if( funcInfo->nbOptInput == 0 || funcInfo->nbOptInput > SWEEP_MAX_OPT )
         return;
-
-    /* Subset gate: this sweep diffs against the FROZEN ta_ref_serve too, so skip
-     * functions the reference lacks (post-tag additions — see test_one_function). */
-    if( ctx->refFuncList )
-    {
-        char needle[80];
-        snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
-        if( !strstr(ctx->refFuncList, needle) ) { ctx->sweepSkipped++; return; }
-    }
 
     /* Skip functions with integer inputs (same rule as the main pass). */
     for( i = 0; i < funcInfo->nbInput; i++ )
@@ -3241,34 +2858,13 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     params.cp          = ctx->cp;
     params.langName    = ctx->lang->name;
     params.langIndex   = ctx->langIndex;
-    params.refCp       = ctx->refCp;
     params.requestBuf  = ctx->requestBuf;
     params.responseBuf = ctx->responseBuf;
     params.codegenError = TA_TEST_PASS;
     setup_outputs(&params);
 
-    /* In-process GUARDED triangle leg (see sweep_compare_guarded): only while
-     * sweeping the C server — the in-process library is the C backend, so
-     * repeating it for the other language iterations would be identical. */
     if( strcmp(ctx->lang->name, "c") == 0 )
-    {
         params.sweepFloatLeg = 1;
-        if( TA_ParamHolderAlloc(funcInfo->handle, &params.paramHolder) == TA_SUCCESS )
-        {
-            setup_inputs(params.paramHolder, funcInfo, ctx->history);
-            for( i = 0; i < funcInfo->nbOutput && i < MAX_OUTPUTS; i++ )
-            {
-                const TA_OutputParameterInfo *outputInfo;
-                TA_GetOutputParameterInfo(funcInfo->handle, i, &outputInfo);
-                if( outputInfo->type == TA_Output_Real )
-                    TA_SetOutputParamRealPtr(params.paramHolder, i, &sweepGuardedReal[i][0]);
-                else
-                    TA_SetOutputParamIntegerPtr(params.paramHolder, i, &sweepGuardedInt[i][0]);
-            }
-        }
-        else
-            params.paramHolder = NULL;
-    }
 
     /* Seed every override with the default value. */
     double defVals[SWEEP_MAX_OPT];
@@ -3291,17 +2887,15 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(funcInfo->handle, i, &optInfo);
 
-        /* Sized past the widest single-param list (MAType: 12 values today, 11
-         * non-default after #93's DISABLED and #182's DEFAULT) so the cap below never silently drops
-         * a value even if FROZEN_ORACLE_MATYPE_MAX is retired after a re-freeze
-         * (which would let all non-default MATypes through). */
+        /* Sized past the widest single-param list (MAType: 14 values today, 13
+         * non-default). */
         double cand[16];
         int nc = 0;
 
         if( optInfo->type == TA_OptInput_IntegerRange )
         {
             const TA_IntegerRange *r = (const TA_IntegerRange *)optInfo->dataSet;
-            int lo  = (r->min < 2) ? 2 : r->min;       /* floor: see header comment */
+            int lo  = r->min;
             int hi  = (r->max > 100) ? 100 : r->max;   /* keep lookbacks < nbBars */
             int def = (int)optInfo->defaultValue;
             int base[5];
@@ -3328,15 +2922,14 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             {
                 if( l->data[e].value == (int)optInfo->defaultValue )
                     continue;
-                /* This sweep diffs against the frozen ta_ref_serve: skip enum
-                 * values it predates (counted; see FROZEN_ORACLE_MATYPE_MAX).
-                 * Evaluated BEFORE the cand cap so the exclusion stays loud --
-                 * an `nc` bound in the loop condition would silently truncate
-                 * the tail value instead of counting it. */
-                if( frozen_excludes_enum_value( optInfo, l->data[e].value ) )
-                    continue;
-                if( nc < 16 )
-                    cand[nc++] = (double)l->data[e].value;
+                if( nc >= 16 )
+                {
+                    printf("  SWEEP CANDIDATE OVERFLOW [TA_%s]: %s has more than 16 values\n",
+                           funcInfo->name, optInfo->paramName);
+                    params.codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
+                    break;
+                }
+                cand[nc++] = (double)l->data[e].value;
             }
         }
         else if( optInfo->type == TA_OptInput_RealRange )
@@ -3361,7 +2954,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         for( int c = 0; c < nc && params.codegenError == TA_TEST_PASS; c++ )
         {
             params.optOverride[i] = cand[c];
-            variants += sweep_run_variant(&params);
+            { sweep_run_variant(&params); variants++; }
             if( params.codegenError != TA_TEST_PASS )
             {
                 failParam = optInfo->paramName;
@@ -3382,15 +2975,14 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         params.unstId != TA_TEST_UNST_NONE )
     {
         TA_SetUnstablePeriod(params.unstId, 3);
-        variants += sweep_run_variant(&params);
+        { sweep_run_variant(&params); variants++; }
         TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
         /* The per-call unstablePeriod field is sticky server-side (each call
          * sets the server's global for that function). Send one defaults call
-         * carrying 0 so BOTH servers are restored for later functions and
-         * languages — ta_ref_serve is shared across the language loop, and
-         * dependents like ADOSC read EMA's global without sending the field. */
+         * carrying 0 so the server is restored for later functions: dependents
+         * like ADOSC read EMA's global without sending the field. */
         if( params.codegenError == TA_TEST_PASS )
-            variants += sweep_run_variant(&params);
+            { sweep_run_variant(&params); variants++; }
         if( params.codegenError != TA_TEST_PASS )
         {
             failParam = "unstablePeriod";
@@ -3406,7 +2998,7 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     if( params.codegenError != TA_TEST_PASS )
     {
-        printf("  REF SWEEP FAIL [TA_%s]: %s=%g (mismatch detail above)\n",
+        printf("  SWEEP FAIL [TA_%s]: %s=%g (mismatch detail above)\n",
                funcInfo->name, failParam ? failParam : "?", failValue);
         ctx->failed++;
         ctx->error = params.codegenError;
@@ -3476,8 +3068,7 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
 }
 
 /* Param vectors: defaults, integer params at their true minimum (period==1
- * territory, issues #93/#94 — deliberately NOT floored at 2 like the 0.6.4
- * fuzz), and min+1. Real params stay at their defaults. Then one extra
+ * territory, issues #93/#94), and min+1. Real params stay at their defaults. Then one extra
  * vector per non-default enum (MAType) list value, everything else at
  * defaults: dispatch streams (MA) select their sub-stream by these values,
  * so every arm gets its own bit-exact legs; arms without a sub-stream are
@@ -3530,8 +3121,7 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
      * smallest periods. For a dual-mode function (DI/DM) the min period selects
      * the degenerate arm, which IGNORES the unstable period while the general
      * arm honors it — so the K-leg (variant 1) must run on these vectors too,
-     * else period=1+K (the only place the two arms can diverge) goes untested.
-     * fuzz-064 floors periods at 2, so this is the sole gate covering it. */
+     * else period=1+K (the only place the two arms can diverge) goes untested. */
     for( v = 0; v < nvec; v++ ) vecIsEnum[v] = 0;
     for( v = 1; v < nvec; v++ ) vecIsMin[v] = 1;
 
@@ -4090,7 +3680,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     rejArms++;
                 /* Cross-tier +0.0/-0.0 pairs the server chose not to fail on
                  * (issue #147). Reported, never a failure — the same benign
-                 * class --fuzz-064 carries. `-1` is a server that predates the
+                 * class the frozen-release fuzz carries. `-1` is a server that predates the
                  * field, which stream_flag reports as absent, not as a count. */
                 {
                     int z = stream_flag(ctx->responseBuf, "\"benign\":");
@@ -4149,7 +3739,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         return;
     }
     ctx->streamStateLegs += stateLegs;
-    /* Named per function, like --fuzz-064's BENIGN line: a summary total that
+    /* Named per function, like the frozen-release fuzz's BENIGN line: a summary total that
      * starts moving says only that something did, not what. */
     if( benign > 0 )
         printf("  BENIGN TA_%s: %lld cross-tier signed-zero case(s) "
@@ -4754,8 +4344,7 @@ static ErrorNumber test_codegen_for_language(
     const CodegenLanguage *lang,
     int langIndex,
     const TA_History *history,
-    const char *functionFilter,
-    CodegenPipe *refCp)
+    const char *functionFilter)
 {
     CodegenPipe cp;
     ErrorNumber errNb;
@@ -4805,59 +4394,20 @@ static ErrorNumber test_codegen_for_language(
     ctx.history        = history;
     ctx.functionFilter = functionFilter;
     ctx.cp             = &cp;
-    ctx.refCp          = refCp;
     ctx.requestBuf     = requestBuf;
     ctx.responseBuf    = responseBuf;
     ctx.error          = TA_TEST_PASS;
     ctx.passed         = 0;
     ctx.failed         = 0;
     ctx.skipped        = 0;
-    ctx.nbSkipNames    = 0;
     ctx.nbIntInputSkipNames = 0;
-    ctx.sweepSkipped   = 0;
-    ctx.postCutRangeChecked = 0;
-    ctx.postCutRangeValueCompared = 0;
-    ctx.postCutStream  = 0;
-    ctx.postCutRideOpen = 0;
-    ctx.postCutRideSkip = 0;
     ctx.langIndex      = langIndex;
     ctx.lang           = lang;
-
-    /* Cache the frozen reference's supported-function set for the subset gate:
-     * functions added after the pinned tag have no ta_ref_serve baseline and are
-     * skipped (see test_one_function / sweep_one_function). Mirrors --fuzz-064. */
-    char *refFuncList = NULL;
-    if( refCp )
-    {
-        refFuncList = malloc(JSON_BUF_SIZE);
-        if( refFuncList
-            && codegen_pipe_call(refCp, "{\"method\":\"list_functions\",\"params\":{}}",
-                                 refFuncList, JSON_BUF_SIZE) == TA_TEST_PASS
-            && strstr(refFuncList, "\"functions\"") )
-            ctx.refFuncList = refFuncList;
-        else
-        {
-            /* Fail, don't warn. With refFuncList NULL the subset gate is off,
-             * every function is compared against a reference that does not
-             * have all of them, and the run still prints "0 skipped" — which
-             * reads as MORE coverage than a healthy run, not less (#137). */
-            printf("\nCODEGEN FAILED: ta_ref_serve list_functions failed, so the "
-                   "subset gate cannot be applied.\n"
-                   "  Continuing would report '0 skipped' while silently comparing "
-                   "post-cutover functions\n  against a reference that lacks them.\n");
-            free(refFuncList);
-            free(requestBuf);
-            free(responseBuf);
-            codegen_pipe_close(&cp);
-            return TA_CODEGEN_SUBSET_GATE_UNAVAILABLE;
-        }
-    }
 
     TA_ForEachFunc(test_one_function, &ctx);
 
     /* Cross-language boolean-builtin parity (IS_ZERO family) vs the in-process
-     * C macro. Independent of the frozen reference (ta_ref_serve predates the
-     * eval_predicate method), so it runs against the current language server. */
+     * C macro. */
     if( ctx.error == TA_TEST_PASS )
     {
         ErrorNumber predErr = test_predicate_parity(&cp, lang, requestBuf, responseBuf);
@@ -4868,8 +4418,7 @@ static ErrorNumber test_codegen_for_language(
         }
     }
 
-    /* TA_MAX_INDEX bounds startIdx/endIdx in this backend too (#180). Not
-     * frozen-reference-dependent: ta_ref_serve predates the cap, so the
+    /* TA_MAX_INDEX bounds startIdx/endIdx in this backend too (#180); the
      * expectation comes from the in-process C contract. */
     if( ctx.error == TA_TEST_PASS )
     {
@@ -4907,52 +4456,28 @@ static ErrorNumber test_codegen_for_language(
         }
     }
 
-    /* Ref differential sweep: broaden the ta_ref_serve comparison beyond the
-     * default and large-period points (see sweep_one_function). */
-    if( ctx.error == TA_TEST_PASS && refCp )
+    /* Parameter sweep: broaden the comparison beyond the default and
+     * large-period points (see sweep_one_function). */
+    if( ctx.error == TA_TEST_PASS )
     {
         ctx.sweepVariants  = 0;
         ctx.sweepFunctions = 0;
-        g_frozenEnumSkips  = 0;
         TA_ForEachFunc(sweep_one_function, &ctx);
 
-        /* Vacuity floor. A sweep MISMATCH is already loud (REF SWEEP FAIL,
-         * nonzero exit); this catches the opposite — a green run that verified
-         * nothing. Every guard in sweep_one_function `return`s without failing:
-         * the filter, the nbOptInput bounds, and the refFuncList subset gate. So
-         * an empty/garbled refFuncList, or a broken enumeration, prints
-         * "0 variants across 0 functions, all match ta_ref_serve" and passes.
-         * Two floors, both self-scaling (no coverage constant to maintain):
-         * an unfiltered sweep must verify something, and it must not skip more
-         * functions as absent-from-the-reference than it actually sweeps.
-         * Skipped under --function, where sweeping one function — or zero, for a
-         * post-reference one like CMF — is exactly the intent. Same shape as the
-         * STREAM VACUOUS / STREAM FILL VACUOUS floors above. */
-        if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL )
+        /* Vacuity floor. A sweep MISMATCH is already loud (SWEEP FAIL, nonzero
+         * exit); this catches the opposite: every guard in sweep_one_function
+         * `return`s without failing, so a broken enumeration would print "0
+         * variants" and pass. Skipped under --function, where sweeping one
+         * function, or none, is the intent. */
+        if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL
+            && (ctx.sweepFunctions <= 0 || ctx.sweepVariants <= 0) )
         {
-            if( ctx.sweepFunctions <= 0 || ctx.sweepVariants <= 0 )
-            {
-                printf("REF SWEEP VACUOUS: %d variants across %d functions — an "
-                       "unfiltered sweep must verify something\n",
-                       ctx.sweepVariants, ctx.sweepFunctions);
-                ctx.error = TA_CODEGEN_SWEEP_VACUOUS;
-                ctx.failed++;
-            }
-            else if( ctx.sweepSkipped > ctx.sweepFunctions )
-            {
-                printf("REF SWEEP VACUOUS: %d function(s) skipped as absent from "
-                       "ta_ref_serve, only %d swept — the subset gate is skipping "
-                       "more than it verifies\n",
-                       ctx.sweepSkipped, ctx.sweepFunctions);
-                ctx.error = TA_CODEGEN_SWEEP_VACUOUS;
-                ctx.failed++;
-            }
+            printf("SWEEP VACUOUS: %d variants across %d functions — an "
+                   "unfiltered sweep must verify something\n",
+                   ctx.sweepVariants, ctx.sweepFunctions);
+            ctx.error = TA_CODEGEN_SWEEP_VACUOUS;
+            ctx.failed++;
         }
-
-        if( g_frozenEnumSkips > 0 )
-            printf("  post-freeze enums: %lld MAType value(s) > %d excluded vs ta_ref_serve "
-                   "(#139, #93, #182, #347, #348; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
-                   g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     }
 
     /* Stream verification: batch-vs-stream bitwise, computed in-server.
@@ -5069,26 +4594,11 @@ static ErrorNumber test_codegen_for_language(
                        ctx.streamValueFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
-            /* EXACT, not a ratio: the corpus equality below cannot see a
-             * decline here AT ALL, bumping its numerator and its denominator at
-             * the same site, and all 40 replay today. Deliberately not guarded
-             * by rideResponses: a server emitting no ride fields at all is a
-             * stale binary, the one case the siblings below let pass. */
-            if( ctx.error == TA_TEST_PASS && ctx.postCutStream > 0 &&
-                ctx.postCutRideOpen != ctx.postCutStream )
-            {
-                printf("RIDE VACUOUS: %d of %d post-cutover streaming functions "
-                       "replayed on the %s server (%d declined); a function with "
-                       "no frozen reference is still one the ride must reach\n",
-                       ctx.postCutRideOpen, ctx.postCutStream, lang->name,
-                       ctx.postCutRideSkip);
-                ctx.error = TA_CODEGEN_RIDE_VACUOUS;
-            }
             /* Ride-along floors. Two numerators, one per leg: a single
              * combined floor passes while either leg is dead, which is how the
              * OpenAndFill compare stayed green across 178 functions.
              * rideResponses == 0 means the server does not offer the check at
-             * all (a pre-feature build, or ta_ref_serve) -- that is a skip, and
+             * all (a pre-feature build) -- that is a skip, and
              * the language table below is what makes a MISSING server loud. */
             if( ctx.error == TA_TEST_PASS && ctx.rideResponses > 0 &&
                 ctx.rideOpenFunctions + ctx.rideSkipFunctions != ctx.rideEligible )
@@ -5176,9 +4686,6 @@ static ErrorNumber test_codegen_for_language(
                 for( i = 1; i < CODEGEN_RIDE_SKIP_N; i++ )
                     printf(" %s=%ld", g_rideSkipName[i], codegen_ride_skips(i));
                 printf("; rejection legs compared: %ld\n", codegen_ride_rejects());
-                printf("  ride-along post-cutover: %d of %d streaming function(s) "
-                       "with no frozen reference, %d declined\n",
-                       ctx.postCutRideOpen, ctx.postCutStream, ctx.postCutRideSkip);
             }
             if( ctx.rideBenign > 0 )
                 printf("  BENIGN ride-along: %lld cross-tier signed-zero case(s)\n",
@@ -5300,7 +4807,6 @@ static ErrorNumber test_codegen_for_language(
 
     free(requestBuf);
     free(responseBuf);
-    free(refFuncList);
     codegen_pipe_close(&cp);
 
     if( ctx.error != TA_TEST_PASS )
@@ -5313,42 +4819,20 @@ static ErrorNumber test_codegen_for_language(
         g_codegenCompared[langIndex] = ctx.passed;
     g_langRan[langIndex] = 1;
 
+    /* Every passed function with output at its defaults reaches the
+     * range-stability leg; one that did not has gone unverified. */
+    if( ctx.functionFilter == NULL && ctx.rangeChecked < ctx.passed )
+    {
+        printf("CODEGEN FAILED: %d of %d passed function(s) reached the "
+               "range-stability leg on %s\n", ctx.rangeChecked, ctx.passed, lang->name);
+        return TA_CODEGEN_RANGE_VACUOUS;
+    }
+
     /* Name the skips — an unnamed "6 skipped" reads as noise. The set is the
-     * same for every language, so print it once (issue #137). All four variants
-     * of every function are gated bitwise anyway by the VARIANT group. */
+     * same for every language, so print it once (issue #137). */
     if( langIndex == 0 )
     {
         int s;
-        /* Name the value-exempt functions too. Their structural parity is
-         * checked here, but the frozen reference is the wrong VALUE oracle for
-         * them, so this leg compares no numbers -- and a gate that silently
-         * compares nothing reads exactly like one that compared and agreed.
-         * Say so, and say what does pin them instead. */
-        printf("    values not ref-compared (reference is the wrong oracle): "
-               "STOCHRSI (#107, pinned by test_stoch.c), "
-               "CORREL (#242, pinned by test_correl.c + --xlang-hash)\n");
-        if( ctx.nbSkipNames > 0 )
-        {
-            printf("    no frozen-reference baseline (post-cutover): ");
-            for( s = 0; s < ctx.nbSkipNames; s++ )
-                printf("%s%s", ctx.skipNames[s], (s + 1 < ctx.nbSkipNames) ? "," : "");
-            printf("  [sweep skipped %d; all still bitwise-gated by VARIANT]\n",
-                   ctx.sweepSkipped);
-            /* The reference-independent legs still run for these, and must:
-             * a post-cutover function is not an unverified one. */
-            printf("    post-cutover range-stability verified: %d of %d"
-                   " (%d value-compared, %d path-dependent: coherency only)\n",
-                   ctx.postCutRangeChecked, ctx.nbSkipNames,
-                   ctx.postCutRangeValueCompared,
-                   ctx.postCutRangeChecked - ctx.postCutRangeValueCompared);
-            if( ctx.postCutRangeChecked < ctx.nbSkipNames )
-            {
-                printf("CODEGEN FAILED: %d post-cutover function(s) skipped the "
-                       "range-stability leg, which needs no frozen baseline\n",
-                       ctx.nbSkipNames - ctx.postCutRangeChecked);
-                return TA_CODEGEN_RANGE_VACUOUS;
-            }
-        }
         if( ctx.nbIntInputSkipNames > 0 )
         {
             printf("    integer inputs (no test data): ");
@@ -5400,7 +4884,7 @@ static void print_timing_table(const char *languageFilter)
     int showGuarded = !g_hideGuarded;
 
     /* Header */
-    printf("%-20s %9s", "Function", "C-ref");
+    printf("%-20s", "Function");
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
     {
         if( showLang[li] )
@@ -5411,11 +4895,10 @@ static void print_timing_table(const char *languageFilter)
     }
     printf("\n");
 
-    /* Rows — C column uses ANSI color: red if slower than C-ref, green if faster */
     for( int ri = 0; ri < g_numTimingResults; ri++ )
     {
         FuncTimingResult *r = &g_timingResults[ri];
-        printf("%-20s %9.0f", r->funcName, r->c_ref_ns);
+        printf("%-20s", r->funcName);
         for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
         {
             if( !showLang[li] )
@@ -5431,21 +4914,8 @@ static void print_timing_table(const char *languageFilter)
             }
             else
             {
-                /* Guarded column: color relative to C-ref */
                 if( showGuarded )
-                {
-                    if( r->c_ref_ns > 0 )
-                    {
-                        if( r->langs[li].avg_ns > r->c_ref_ns )
-                            printf(" \033[31m%9.0f\033[0m", r->langs[li].avg_ns);
-                        else if( r->langs[li].avg_ns < r->c_ref_ns )
-                            printf(" \033[32m%9.0f\033[0m", r->langs[li].avg_ns);
-                        else
-                            printf(" %9.0f", r->langs[li].avg_ns);
-                    }
-                    else
-                        printf(" %9.0f", r->langs[li].avg_ns);
-                }
+                    printf(" %9.0f", r->langs[li].avg_ns);
 
             }
         }
@@ -5482,7 +4952,7 @@ static void write_timing_report(const char *filepath)
         FuncTimingResult *r = &g_timingResults[ri];
         if( !first ) fprintf(f, ",");
         first = 0;
-        fprintf(f, "\"%s\":{\"c_ref_ns\":%.3f,\"langs\":{", r->funcName, r->c_ref_ns);
+        fprintf(f, "\"%s\":{\"langs\":{", r->funcName);
         int firstLang = 1;
         for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
         {
@@ -5510,15 +4980,6 @@ static void fmt_ns(char *buf, int buf_size, double ns)
     if( ns <= 0 )      snprintf(buf, buf_size, "<42");
     else if( ns < 100 ) snprintf(buf, buf_size, "%.0f", ns);
     else               snprintf(buf, buf_size, "%.0f", ns);
-}
-
-static void fmt_ratio(char *buf, int buf_size, double val, double ref)
-{
-    if( val <= 0 || ref <= 0 ) { snprintf(buf, buf_size, "\xe2\x80\x94"); return; }
-    double ratio = val / ref;
-    if( ratio > 1.1 )      snprintf(buf, buf_size, "%.1f\xc3\x97 slower", ratio);
-    else if( ratio < 0.9 ) snprintf(buf, buf_size, "%.1f\xc3\x97 faster", 1.0/ratio);
-    else                    snprintf(buf, buf_size, "\xe2\x89\x88 same");
 }
 
 static void write_markdown_report(const char *filepath, const char *languageFilter)
@@ -5557,10 +5018,8 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
     memset(langSum, 0, sizeof(langSum));
     memset(langMeasured, 0, sizeof(langMeasured));
 
-    double cRefSum = 0; int cRefCount = 0;
     for( int ri = 0; ri < g_numTimingResults; ri++ ) {
         FuncTimingResult *r = &g_timingResults[ri];
-        if( r->c_ref_ns > 0 ) { cRefSum += r->c_ref_ns; cRefCount++; }
         for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
             if( r->langs[li].tested == 1 ) langPass[li]++;
             if( r->langs[li].tested == 1 && r->langs[li].avg_ns > 0 ) {
@@ -5569,7 +5028,6 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
             }
         }
     }
-    double cRefAvg = cRefCount > 0 ? cRefSum / cRefCount : 0;
 
     /* Header */
     fprintf(f, "# ta_regtest Cross-Language Report\n\n");
@@ -5590,62 +5048,51 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
             "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
-            "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\x90\n");
 
-    fprintf(f, "\xe2\x94\x82 %-9s\xe2\x94\x82 %-5s\xe2\x94\x82 %-5s\xe2\x94\x82 %-11s\xe2\x94\x82 %-15s\xe2\x94\x82\n",
-            "Language", "Pass", "Fail", "Avg (ns)", "vs C-ref");
+    fprintf(f, "\xe2\x94\x82 %-9s\xe2\x94\x82 %-5s\xe2\x94\x82 %-5s\xe2\x94\x82 %-11s\xe2\x94\x82\n",
+            "Language", "Pass", "Fail", "Avg (ns)");
 
     fprintf(f, "\xe2\x94\x9c\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
-            "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xa4\n");
 
-    /* C-ref row */
-    {
-        char avg[32]; fmt_ns(avg, sizeof(avg), cRefAvg);
-        fprintf(f, "\xe2\x94\x82 %-9s\xe2\x94\x82 %-5d\xe2\x94\x82 %-5d\xe2\x94\x82 %-11s\xe2\x94\x82 %-15s\xe2\x94\x82\n",
-                "C-ref", total, 0, avg, "baseline");
-    }
 
     /* Per-language rows */
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( !showLang[li] ) continue;
         double avg = langMeasured[li] > 0 ? langSum[li] / langMeasured[li] : 0;
-        char avgStr[40], vsStr[32];
+        char avgStr[40];
         if( langMeasured[li] < total / 2 ) {
             char raw[32];
             fmt_ns(raw, sizeof(raw), avg);
-            snprintf(avgStr, sizeof(avgStr), "~%s*", raw);
-            snprintf(vsStr, sizeof(vsStr), "*%d/%d measured", langMeasured[li], total);
+            snprintf(avgStr, sizeof(avgStr), "~%s", raw);
         } else {
             fmt_ns(avgStr, sizeof(avgStr), avg);
-            fmt_ratio(vsStr, sizeof(vsStr), avg, cRefAvg);
         }
         int fail = total - langPass[li];
-        fprintf(f, "\xe2\x94\x82 %-9s\xe2\x94\x82 %-5d\xe2\x94\x82 %-5d\xe2\x94\x82 %-11s\xe2\x94\x82 %-15s\xe2\x94\x82\n",
-                ALL_LANGUAGES[li].display, langPass[li], fail, avgStr, vsStr);
+        fprintf(f, "\xe2\x94\x82 %-9s\xe2\x94\x82 %-5d\xe2\x94\x82 %-5d\xe2\x94\x82 %-11s\xe2\x94\x82\n",
+                ALL_LANGUAGES[li].display, langPass[li], fail, avgStr);
     }
 
     fprintf(f, "\xe2\x94\x94\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
-            "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
             "\xe2\x94\x98\n");
     fprintf(f, "```\n\n");
 
     /* Detailed per-function table */
     fprintf(f, "## Results (ns/call)\n\n");
-    fprintf(f, "| Function |  C-ref |");
+    fprintf(f, "| Function |");
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( showLang[li] ) {
             fprintf(f, " %s |", ALL_LANGUAGES[li].display);
         }
     }
-    fprintf(f, "\n|----------|--------|");
+    fprintf(f, "\n|----------|");
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( showLang[li] ) {
             fprintf(f, "--------|");
@@ -5655,8 +5102,7 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
 
     for( int ri = 0; ri < g_numTimingResults; ri++ ) {
         FuncTimingResult *r = &g_timingResults[ri];
-        char cref[32]; fmt_ns(cref, sizeof(cref), r->c_ref_ns);
-        fprintf(f, "| %-8s | %6s |", r->funcName, cref);
+        fprintf(f, "| %-8s |", r->funcName);
         for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
             if( !showLang[li] ) continue;
             if( r->langs[li].tested == -1 ) {
@@ -5675,11 +5121,12 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
     fclose(f);
 }
 
-/* Bit-exact differential fuzz of the current library vs frozen v0.6.4.
- * Seed-generated inputs (fuzz_data.h), outputs compared by hash.
- * Full spec: src/tools/ta_regtest/CLAUDE.md (--fuzz-064). */
-
-static const char *const argv_064[] = {"./ta_064_serve", NULL};
+/* --ref=<X_Y_Z>: differential fuzz of the current library vs a frozen release,
+ * served by bin/ta_ref_<X_Y_Z>_serve. Seed-generated inputs (fuzz_data.h),
+ * outputs compared by hash. Everything specific to the release -- tolerance
+ * rows, waivers, exclusions, the period floor -- comes from the serve, which
+ * compiles the member ta_ref/ta_ref_<X_Y_Z>.c.
+ * Full spec: src/tools/ta_regtest/CLAUDE.md (--ref). */
 
 #define FUZZ_MAXN     256   /* bars per config (<= MAX_NB_TEST_ELEMENT) */
 #define FUZZ_MAX_OPT  16
@@ -5690,44 +5137,70 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
                              * without this the MAType sweep would truncate
                              * silently (it never reaches the FUZZ_MAX_VEC guard). */
 #define FUZZ_MAX_VEC  80    /* parameter vectors per function. MACDEXT is widest:
-                             * 3 period ranges (<= 6 candidates + 2 reject + 1
+                             * 3 period ranges (<= 8 candidates + 2 reject + 1
                              * sentinel each) + 3 MAType lists (M-1 values + 1
-                             * sentinel each, #162) + the defaults vector <= 3*M+28
-                             * in the MAType-list length M. M=13 today => 67 worst
-                             * case, one fewer actually built (one of
-                             * optInSignalPeriod's boundary candidates lands on its
-                             * own default and is dropped). 80 gives runway to M=17,
-                             * and still matches
-                             * STREAM_MAX_VEC.
+                             * sentinel each, #162) + the defaults vector <= 3*M+34
+                             * in the MAType-list length M. M=14 today => 76 worst
+                             * case, and still within STREAM_MAX_VEC.
                              * fuzz_build_vectors reports any overflow (this cap or
                              * the cand cap) and the caller fails the run loudly. */
-#define FUZZ_MIN_PERIOD 2   /* period 1 is out of scope vs 0.6.4 (see CLAUDE.md) */
+#define FUZZ_LARGE_OFFSET 50
+#define FUZZ_REF_UNST     3 /* the --ref unstable pass */
 typedef char fuzz_maxn_fits_output_bufs[FUZZ_MAXN <= MAX_NB_TEST_ELEMENT ? 1 : -1];
 
 /* Static scratch (one function at a time; TA_ForEachFunc is serial). */
 static double     g_fzBuf[6][FUZZ_MAXN];              /* O,H,L,C,V,OI          */
-static TA_Real    g_fz064Real[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
-static TA_Integer g_fz064Int[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+static TA_Real    g_fzRefReal[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+static TA_Integer g_fzRefInt[MAX_OUTPUTS][MAX_NB_TEST_ELEMENT];
+
+#define REF_MAX_TOL      64
+#define REF_MAX_WAIVERS  16
+#define REF_MAX_EXCLUDED 16
+
+/* Same order as ta_ref.h's TaRefTolMode; the wire carries the names. */
+enum { TOL_ABS = 0, TOL_REL_IN, TOL_REL_OUT, TOL_REL_OUT_INFLOOR, TOL_NAN_TO };
+
+typedef struct {
+    char      func[32];
+    int       mode;
+    double    tol, cap;
+    double    maxSeen;    /* largest divergence absorbed, in the row's own units */
+    long long cases, funcCases;
+} RefTol;
+
+typedef struct {
+    char      id[48];
+    char      why[256];
+    double    maxFraction;
+    long long cases, funcCases;
+} RefWaiver;
+
+typedef struct {
+    char      version[16];
+    char      commit[48];
+    char      libVersion[32];
+    int       nbFunctions, intFloor, maTypeMax;
+    char      excluded[REF_MAX_EXCLUDED][32];
+    int       nbExcluded;
+    RefTol    tol[REF_MAX_TOL];
+    int       nbTol;
+    RefWaiver waiver[REF_MAX_WAIVERS];
+    int       nbWaivers;
+} RefMember;
 
 typedef struct {
     const char  *functionFilter;
+    const char  *const *argv;
     CodegenPipe *cp;
     char        *reqBuf;
     char        *respBuf;
-    const char  *funcList;   /* 0.6.4's list_functions payload (subset gate) */
-    long long    comparisons, matches, benign, failures;
-    long long    skipped98;   /* TRIX startIdx>lookback cases (issue #98 fix) */
-    long long    cciTol;      /* CCI near-zero cases tolerated vs 0.6.4 (issue #7 fix) */
-    long long    fmaTol;      /* cases tolerated by the one-time FMA re-baselining gate (PR #96) */
-    double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
-    long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
-    long long    mfiSkipped;      /* MFI cases skipped: v0.6.4 categorically wrong there (issue #244) */
-    long long    kamaSkipped;     /* KAMA (and KAMA-smoothed STOCH/STOCHF): v0.6.4 divides residue (#253, #390) */
-    long long    ultoscSkipped;   /* ULTOSC: same (issue #253) */
-    long long    varianceSkipped; /* VAR/STDDEV/BBANDS cases skipped: cancellation-free variance re-baseline (issue #118) */
-    long long    xySkipped;      /* CORREL/BETA cases skipped: same re-baseline over two series (issue #242) */
+    const char  *funcList;   /* the release's list_functions payload (subset gate) */
+    RefMember   *m;
+    long long    comparisons, matches, benign, tolerated, waived, failures;
     int          reportedThisFunc;
-    int          funcsWithFailures, funcsBenign, funcsSkipped;
+    int          funcsWithFailures, funcsBenign, funcsAbsent, funcsExcluded;
+    int          funcsUncompared;   /* every case waived: the function went untested */
+    int          funcsLargeEligible, funcsLargeOutput;
     int          serverRestarts;
     ErrorNumber  error;
 } FuzzContext;
@@ -5740,7 +5213,7 @@ static int fuzz_call(FuzzContext *ctx)
         return 1;
     ctx->serverRestarts++;
     codegen_pipe_close(ctx->cp);
-    if( codegen_pipe_open(ctx->cp, argv_064) != TA_TEST_PASS )
+    if( codegen_pipe_open(ctx->cp, ctx->argv) != TA_TEST_PASS )
     {
         ctx->error = TA_CODEGEN_ALLOC_FAILED;
         return 0;
@@ -5786,7 +5259,7 @@ static unsigned long long fuzz_hash_local(const CodegenRangeTestParam *p, int nb
  * hash mode unless fullOutput. */
 static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
                                int s, int e, int shape, int seed, int n,
-                               const double *optVals, int fullOutput)
+                               const double *optVals, int fullOutput, int unst)
 {
     int pos = codegen_appendf(buf, JSON_BUF_SIZE, 0,
         "{\"method\":\"abstract_call\",\"params\":{\"funcName\":\"%s\","
@@ -5805,7 +5278,7 @@ static void fuzz_build_request(char *buf, const TA_FuncInfo *fi,
             pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"%s\":%d", oi->paramName, (int)optVals[i]);
     }
     if( fi->flags & TA_FUNC_FLG_UNST_PER )
-        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":0");
+        pos = codegen_appendf(buf, JSON_BUF_SIZE, pos, ",\"unstablePeriod\":%d", unst);
     codegen_appendf(buf, JSON_BUF_SIZE, pos, "}}");
 }
 
@@ -5895,17 +5368,18 @@ static void fuzz_add_default_sentinel(const TA_OptInputParameterInfo *oi,
 }
 
 /* Parameter vectors: defaults + one-param-varied boundary/list sweeps, plus the
- * two contract classes (see the !frozenOracle guard below). */
-/* frozenOracle: 1 when the vectors feed a frozen oracle (--fuzz-064's
- * ta_064_serve) -- IntegerList values the freeze predates are then excluded
- * (see FROZEN_ORACLE_MATYPE_MAX). --xlang-hash is current-vs-current and
- * passes 0, so the new values stay bitwise-gated there.
+ * two contract classes (see the !frozenOracle guard below).
  *
+ * frozenOracle: 1 when the vectors feed a frozen release (--ref), which then
+ * gets no contract candidates and no MAType value above maTypeMax.
+ * intFloor: the lowest IntegerRange value swept; 0 keeps each declared minimum.
  * kind: one FUZZ_VEC_* class per returned vector, or NULL if not needed. */
 static int fuzz_build_vectors(const TA_FuncInfo *fi,
                               double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT],
                               int *overflow,
                               int frozenOracle,
+                              int intFloor,
+                              int maTypeMax,
                               char kind[FUZZ_MAX_VEC])
 {
     *overflow = 0;
@@ -5936,22 +5410,23 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
         {
             const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
             int def_i = (int)oi->defaultValue;
-            int lo = r ? (int)r->min : FUZZ_MIN_PERIOD;
-            if( lo < FUZZ_MIN_PERIOD ) lo = FUZZ_MIN_PERIOD;  /* period 1 tested by non-0.6.4 comparisons */
-            /* min / min+1 / min+7 boundary, plus the tight neighbourhood around
-             * the default (default-1, default+1) and one a bit further out
-             * (default+3). vec[0] already carries the default itself, so the
-             * full {default-1, default, default+1} triple is covered. */
-            int base[6]; base[0]=lo; base[1]=lo+1; base[2]=lo+7;
+            int lo = r ? (int)r->min : intFloor;
+            if( lo < intFloor ) lo = intFloor;
+            /* min / min+1 / min+7 boundary, the tight neighbourhood around the
+             * default (default-1, default+1), one a bit further out (default+3),
+             * and default+50/+51, past the period-sized static buffers, one of
+             * each parity. vec[0] already carries the default itself. */
+            int base[8]; base[0]=lo; base[1]=lo+1; base[2]=lo+7;
             base[3]=def_i-1; base[4]=def_i+1; base[5]=def_i+3;
-            for( int b = 0; b < 6; b++ )
+            base[6]=def_i+FUZZ_LARGE_OFFSET; base[7]=def_i+FUZZ_LARGE_OFFSET+1;
+            for( int b = 0; b < 8; b++ )
             {
                 int v = base[b];
                 if( v < lo ) v = lo;
                 if( r && v > (int)r->max ) v = (int)r->max;
                 if( v == def_i ) continue;
                 int dup = 0; for( c = 0; c < nc; c++ ) if( (int)cand[c] == v ) dup = 1;
-                if( !dup && nc < FUZZ_MAX_CAND ) cand[nc++] = (double)v;  /* <= 6, cannot overflow */
+                if( !dup && nc < FUZZ_MAX_CAND ) cand[nc++] = (double)v;  /* <= 8, cannot overflow */
             }
         }
         else if( oi->type == TA_OptInput_IntegerList )
@@ -5960,7 +5435,7 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
             for( unsigned int e2 = 0; l && e2 < l->nbElement; e2++ )
             {
                 if( l->data[e2].value == (int)oi->defaultValue ) continue;
-                if( frozenOracle && frozen_excludes_enum_value( oi, l->data[e2].value ) )
+                if( frozenOracle && frozen_excludes_enum_value( oi, l->data[e2].value, maTypeMax ) )
                     continue;
                 /* A MAType list longer than cand[] would otherwise truncate
                  * SILENTLY here (this loop never reaches the FUZZ_MAX_VEC guard
@@ -5994,8 +5469,8 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
 
         for( c = 0; c < nc; c++ )
         {
-            /* Silent truncation would quietly stop comparing parameter values
-             * vs 0.6.4 — count drops so the caller fails the run loudly. */
+            /* Silent truncation would quietly stop comparing parameter values —
+             * count drops so the caller fails the run loudly. */
             if( nvec >= FUZZ_MAX_VEC ) { (*overflow)++; continue; }
             for( unsigned int j = 0; j < fi->nbOptInput && j < FUZZ_MAX_OPT; j++ )
                 vec[nvec][j] = def[j];
@@ -6007,607 +5482,166 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
     return nvec;
 }
 
-/* Tolerance for CCI vs 0.6.4 (issue #7 / SF bug 107 only). CCI's algorithm is
- * byte-identical to 0.6.4 except the final guard: where prices over the period
- * are (near-)identical the fix now returns exactly 0.0, whereas 0.6.4 divided
- * sub-epsilon residue into a near-zero value (observed ~5e-14). This tolerance
- * absorbs exactly that — orders of magnitude below any real CCI value, so a
- * genuine divergence still fails. Applied ONLY to CCI. */
-/* latest -> 0.6.4 tolerance manifest: the authorized, bounded numeric
- * divergences from the frozen reference. Everything not listed here must be
- * bit-exact (hash-equal). Each entry cites the issue that authorized it.
- *
- *   TOL_ABS    : |current - v0.6.4| <= tol                (a fixed absolute bound)
- *   TOL_REL_IN : |current - v0.6.4| <= min(tol * inScale, cap), where inScale is
- *                the max |primary input| over the case. Used for algebraic
- *                re-orderings whose rounding is proportional to the DATA
- *                magnitude, which a fixed absolute bound cannot express because
- *                the fuzz shapes span 1e-7 .. 1e9 (FUZZ_EXTREME) and cross slope
- *                zero (the running-sum LINEARREG family, #103). Certified max
- *                ratio 2.9e-11 (ANGLE) -> tol 1e-9 keeps ~35x margin while staying
- *                tight on real prices.
- *                `cap` (0 = none) bounds the data-scaled tolerance for outputs
- *                that DON'T grow with input magnitude: ANGLE is atan-compressed
- *                degrees in [-90,90], so on FUZZ_EXTREME (inScale ~2e9) an
- *                uncapped bound would balloon to ~2 deg; the cap holds it near
- *                ANGLE's true worst-case drift (measured 0.065 deg) so a real
- *                future ANGLE regression can't hide, while realistic-scale cases
- *                (bound ~1e-7 deg) are unaffected (cap never binds there).
- *
- *   TOL_NAN_TO : 0.6.4 emitted NaN from an unguarded x/0 in a *successful* call;
- *                the fix substitutes a defined neutral value. This is NOT a
- *                numeric bound — it is the categorical divergence NaN(0.6.4) ->
- *                finite. Tolerated ONLY when 0.6.4 is NaN AND current equals the
- *                authorized value carried in `tol` (e.g. IMI #112: 50.0). Any
- *                other element diff for such a function is a real failure, so a
- *                regression that returns a *different* value where 0.6.4 was NaN
- *                (or diverges anywhere 0.6.4 was finite) still fails. Kept
- *                maximally tight by requiring the exact neutral value, not merely
- *                "any finite". */
-/* ---- One-time FMA re-baselining transition gate (PR #96) -------------------
- * TA-Lib adopted an explicit-FMA numerical contract: each function is faithful
- * to its algorithm within 1e-9 relative, NOT bit-for-bit
- * (docs/studies/fma-readiness-audit.md). The current library now fuses `a*b + c`
- * into `fma()` wherever the shared codegen detector fires; the frozen v0.6.4
- * oracle does not. So the two differ by <=~1.7e-10 relative on the fused
- * functions — authorized, below the 1e-9 contract, but no longer hash-exact.
- *
- * While this is 1, any per-element diff NOT covered by an explicit FUZZ_064_TOL
- * entry is tolerated when it is within the contract itself:
- *     |current - v0.6.4| <= 1e-9 * max(|current|, |v0.6.4|, inScale)
- * Output-relative (so it scales correctly for volume-magnitude outputs like
- * ADOSC and bounded oscillators alike), floored at the input scale so the few
- * functions that difference two large near-equal quantities (DEMA/MACDFIX/
- * MACDEXT EMA cascades, HT_PHASOR) are judged against the ULP-of-operands drift
- * near a zero-crossing rather than the ill-posed near-zero output. These cases
- * are counted and reported on their OWN summary line, with the largest relative
- * divergence seen, so a genuine >1e-9 regression still fails loudly and is never
- * folded into the authorized-manifest bucket. Integer outputs are NOT given any
- * tolerance here — a candlestick/index flip must still fail.
- *
- * RE-FREEZE (once a FMA-enabled release is tagged): point
- * scripts/build_064_serve.py's REF_TAG at that release, rebuild the oracle, then
- * set FMA_TRANSITION_TOLERANCE to 0 — current == new reference bitwise, so every
- * function returns to strict hash-exact comparison against the FMA baseline. */
-#define FMA_TRANSITION_TOLERANCE 1
-#define FMA_TRANSITION_REL 1e-9
-
-/* Functions whose output differences two large near-equal quantities (EMA
- * cascades near a zero-crossing, near-zero phasor components). Their FMA drift
- * is bounded by the ULP of the ~price-scale operands, not the tiny output, so
- * the transition tolerance for them is floored at the input scale rather than
- * the ill-posed output-relative bound. Kept to the SHORT list that empirically
- * needs it (all four exceed output-relative 1e-9 near a crossing without it);
- * every other function — bounded oscillators included — stays tight
- * output-relative so an extreme-scale regression cannot hide behind inScale. */
-static int fma_needs_input_scale(const char *name)
+/* String field `field` of a flat JSON response, unescaped into out. */
+static int ref_get_string(const char *resp, const char *field, char *out, int size)
 {
-    /* The EMA-cascade differences (output = a difference of large ~price-scale
-     * EMAs, tiny near a crossing) + HT_PHASOR (near-zero I/Q components). NOT the
-     * bounded oscillators (HT_SINE/HT_DCPHASE/HT_DCPERIOD/STOCH/...), which are
-     * well-conditioned at their own scale and stay tight output-relative. */
-    return strcmp(name, "DEMA") == 0 || strcmp(name, "TEMA") == 0
-        || strcmp(name, "TRIX") == 0 || strcmp(name, "MACD") == 0
-        || strcmp(name, "MACDFIX") == 0 || strcmp(name, "MACDEXT") == 0
-        || strcmp(name, "APO") == 0 || strcmp(name, "PPO") == 0
-        || strcmp(name, "HT_PHASOR") == 0;
-}
-
-enum { TOL_ABS = 0, TOL_REL_IN = 1, TOL_NAN_TO = 2, TOL_REL_OUT = 3 };
-typedef struct { const char *name; int mode; double tol; double cap; } TA_Fuzz064Tol;
-static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
-    { "CCI",                 TOL_ABS,    1e-9, 0.0 },  /* #7   near-zero identical-price fix */
-    /* #118 cancellation-free variance. Bounded relative to the OUTPUT, not the
-     * input: VAR's output is a squared quantity, so an inScale-relative bound is
-     * the wrong dimension for it and would be meaningless at FUZZ_EXTREME
-     * magnitudes. Only well-conditioned windows reach here at all — see
-     * fuzz_variance_condition(). */
-    { "VAR",                 TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
-    { "STDDEV",              TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
-    { "BBANDS",              TOL_REL_OUT, 1e-9, 0.0 }, /* #118 */
-    /* #242 the same treatment for the two-series forms. Output-relative: CORREL
-     * is a coefficient in [-1,1] and BETA a ratio of return scales, so neither
-     * is commensurate with the input magnitude. Only well-conditioned windows
-     * reach here -- see fuzz_correl_condition() / fuzz_beta_condition(). */
-    { "CORREL",              TOL_REL_OUT, 4e-9, 0.0 },  /* #242  measured 1.12e-09            */
-    { "BETA",                TOL_REL_OUT, 1e-9, 0.0 },  /* #242  measured 3.08e-10            */
-    { "LINEARREG",           TOL_REL_IN, 1e-9, 0.0 },  /* #103 O(1) sliding-sum recurrence   */
-    { "LINEARREG_SLOPE",     TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
-    { "LINEARREG_INTERCEPT", TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
-    { "LINEARREG_ANGLE",     TOL_REL_IN, 1e-9, 0.5 },  /* #103 bounded degrees -> capped 0.5 */
-    { "TSF",                 TOL_REL_IN, 1e-9, 0.0 },  /* #103                               */
-    /* #255 TA_WMA's weighted running totals are re-anchored every 8*period
-     * bars. Input-relative, like the LINEARREG family and for the same reason:
-     * WMA's output is a convex combination of the window, so it lives on the
-     * input's magnitude. STOCH and STOCHF are here only because they DISPATCH
-     * to it -- their %K/%D smoothing runs TA_MAType_WMA in the fuzz vectors --
-     * which is the same way APO and PPO acquired rows in ta_test_legacy.c. */
-    { "WMA",                 TOL_REL_IN, 1e-9, 0.0 },  /* #255                               */
-    { "STOCH",               TOL_REL_IN, 1e-9, 0.0 },  /* #255  via TA_MAType_WMA            */
-    { "STOCHF",              TOL_REL_IN, 1e-9, 0.0 },  /* #255  via TA_MAType_WMA            */
-    /* #338 the two-coefficient Wilder step. Named rather than left to the FMA
-     * transition bucket, whose 1e-9 is six orders looser than these two need
-     * and would swallow a real ATR regression whole. Input-relative because an
-     * ATR is a convex combination of true ranges; NATR divides by a close, so
-     * it is a percentage and output-relative. */
-    { "ATR",                 TOL_REL_IN,  2e-15, 0.0 }, /* #338  measured 5.19e-16 */
-    { "NATR",                TOL_REL_OUT, 4e-15, 0.0 }, /* #338  measured 1.29e-15 */
-    /* #395 %R divides by the window range and scales after, rather than by a
-     * copy pre-scaled by 1/-100. Named for the reason #338 gives above: the FMA
-     * bucket's output-relative 1e-9 is five orders looser than this needs and
-     * would swallow a real WILLR regression. Absolute, because %R is a bounded
-     * dimensionless oscillator -- its error floor is a ULP of 100 whatever the
-     * input magnitude, so neither input- nor output-relative is its dimension. */
-    { "WILLR",               TOL_ABS,     5e-14, 0.0 }, /* #395  measured 1.42e-14 */
-    /* RSI's Wilder step scales by a hoisted 1/period instead of dividing by
-     * period. Named for the reason #338 gives above. Absolute because the
-     * divergence is unmoved by the price scale -- measured identical at 1e-7,
-     * 1 and 1e9 -- so neither input- nor output-relative is its dimension. What
-     * it does grow with is the PERIOD, and this corpus stops at 17: the bound
-     * does not cover the long-period end of the 2..100000 range. */
-    { "RSI",                 TOL_ABS,     2e-13, 0.0 }, /* #410  measured 5.68e-14 */
-    /* #411 applies RSI's hoisted 1/period to CMO and the DM/DI/DX/ADX family,
-     * named for the same reason. The oscillators are absolute, as RSI is; a DM
-     * is a running sum of price moves, so its bound is output-relative. ADX,
-     * ADXR and CMO also changed the step's form and grow with the period, which
-     * this corpus stops at 17. */
-    { "CMO",                 TOL_ABS,     3e-13, 0.0 }, /* #411  measured 8.44e-14 */
-    { "PLUS_DM",             TOL_REL_OUT, 5e-15, 0.0 }, /* #411  measured 1.40e-15 */
-    { "MINUS_DM",            TOL_REL_OUT, 2e-14, 0.0 }, /* #411  measured 3.53e-15 */
-    { "PLUS_DI",             TOL_ABS,     2e-13, 0.0 }, /* #411  measured 4.26e-14 */
-    { "MINUS_DI",            TOL_ABS,     2e-13, 0.0 }, /* #411  measured 5.68e-14 */
-    { "DX",                  TOL_ABS,     2e-13, 0.0 }, /* #411  measured 5.68e-14 */
-    { "ADX",                 TOL_ABS,     3e-13, 0.0 }, /* #411  measured 8.53e-14 */
-    { "ADXR",                TOL_ABS,     3e-13, 0.0 }, /* #411  measured 7.11e-14 */
-    { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
-};
-
-/* Largest divergence each manifest entry actually absorbed, in the units of its
- * own bound. A gate that tolerates should say HOW MUCH it tolerated: without it
- * an entry can be an order of magnitude looser than the divergence it authorizes
- * and nothing says so -- and the next person to set one has no measurement to
- * size it from. The FMA bucket already reports its own ("max observed 4.13e-11");
- * this is the same for the named entries. Indexed by FUZZ_064_TOL slot. */
-static double g_fuzz064TolMax[sizeof(FUZZ_064_TOL)/sizeof(FUZZ_064_TOL[0])];
-
-/* Record `achieved` (in bound units) against the entry `e` returned by lookup. */
-static void fuzz_064_tol_record(const void *e, double achieved)
-{
-    long idx;
-    if( !e ) return;
-    idx = (const TA_Fuzz064Tol *)e - FUZZ_064_TOL;
-    if( idx < 0 || (unsigned long)idx >= sizeof(FUZZ_064_TOL)/sizeof(FUZZ_064_TOL[0]) ) return;
-    if( achieved > g_fuzz064TolMax[idx] ) g_fuzz064TolMax[idx] = achieved;
-}
-
-/* Look up a function's authorized tolerance; returns NULL if it must be exact. */
-static const void *fuzz_064_tol_lookup(const char *name, int *mode, double *tol, double *cap)
-{
-    for( unsigned int i = 0; i < sizeof(FUZZ_064_TOL)/sizeof(FUZZ_064_TOL[0]); i++ )
-        if( strcmp(name, FUZZ_064_TOL[i].name) == 0 )
-        { *mode = FUZZ_064_TOL[i].mode; *tol = FUZZ_064_TOL[i].tol; *cap = FUZZ_064_TOL[i].cap;
-          return &FUZZ_064_TOL[i]; }
-    return NULL;
-}
-
-/* Conditioning of v0.6.4's variance form over the windows a case evaluates.
- *
- * 0.6.4 computes variance as E[x^2] - mean^2, which cancels catastrophically
- * when the mean dominates the spread (SourceForge bug 90); 0.8.1 uses the
- * shifted-data form and does not. The severity is the condition number
- * kappa = mean^2 / variance: 0.6.4 loses roughly log10(kappa) significant
- * digits, i.e. its relative error is about DBL_EPSILON * kappa.
- *
- * Crucially the severity is NOT a property of the window alone. Both versions
- * keep RUNNING sums over the sliding window, so the accumulators carry rounding
- * from every value they ever absorbed, not just the ones currently inside it.
- * On FUZZ_EXTREME (values alternating ~1e9 and ~1e-7) a window of tiny values
- * looks perfectly conditioned on its own -- measured kappa 26.7 -- while 0.6.4
- * reports 256 for a true variance of 7.6e-16, because its accumulator absorbed
- * the ~1e9 values earlier and carries an absolute error of eps*(1e9)^2 ~ 220.
- *
- * So the measure is the largest magnitude the accumulators absorb over the case,
- * squared, against the smallest window variance the case reports:
- *
- *     kappa = max|x|^2 / min(variance)
- *
- * The naive bound on 0.6.4's relative error is DBL_EPSILON * kappa, but the
- * sliding accumulator also rounds once per step, so long cases drift further:
- * at kappa just under 1e6 a 240-bar VAR case was measured at 1.21e-9 relative,
- * about 5x the naive estimate. The threshold is therefore set an order of
- * magnitude tighter than the model, which keeps observed divergence inside the
- * manifest's 1e-9 bound with margin. Returns HUGE_VAL for a flat window, where
- * 0.6.4 can go negative and produce NaN through the sqrt. */
-#define FUZZ_VAR_MAX_KAPPA 1.0e5
-static double fuzz_variance_condition( const double *x, int n, int period, int s, int e )
-{
-    double maxAbs = 0.0, minVar = HUGE_VAL;
-    int t, first, j;
-
-    if( period < 2 ) return 0.0;      /* no cancellation possible */
-    first = (s > period - 1) ? s : period - 1;
-    if( first > e || first >= n ) return 0.0;
-
-    /* Largest magnitude the running accumulators absorb over this case, from the
-     * first bar they read (window start of the first output) through the last. */
-    for( j = first - period + 1; j <= e && j < n; j++ )
+    int len, n = 0;
+    const char *p = json_find_field(resp, field, &len);
+    if( !p || *p != '"' ) return 0;
+    for( p++; *p && *p != '"'; p++ )
     {
-        double m = fabs(x[j]);
-        if( m > maxAbs ) maxAbs = m;
+        if( *p == '\\' && p[1] ) p++;
+        if( n < size - 1 ) out[n++] = *p;
     }
-
-    /* Smallest window variance the case reports. Two-pass on purpose: the test
-     * must not reuse the algorithm under test to decide whether to trust the
-     * oracle. */
-    for( t = first; t <= e && t < n; t++ )
-    {
-        double sum = 0.0, mean, var = 0.0;
-        for( j = t - period + 1; j <= t; j++ ) sum += x[j];
-        mean = sum / (double)period;
-        for( j = t - period + 1; j <= t; j++ ) { double dv = x[j] - mean; var += dv * dv; }
-        var /= (double)period;
-        if( !(var > 0.0) ) return HUGE_VAL;   /* flat window: 0.6.4 can go negative */
-        if( var < minVar ) minVar = var;
-    }
-    if( !(minVar > 0.0) || !(maxAbs > 0.0) ) return HUGE_VAL;
-
-    return (maxAbs * maxAbs) / minVar;
+    out[n] = '\0';
+    return *p == '"';
 }
 
-/* Conditioning of v0.6.4's one-pass CORREL/BETA form over the windows a case
- * evaluates (issue #242). Same measure, same reasoning and the same caveat as
- * fuzz_variance_condition() above: v0.6.4 extracts each sum of squares as
- * S2 - (S*S)/n, a difference of two ~n*mean^2 quantities, and its running
- * accumulators carry rounding from every value they ever absorbed -- so the
- * severity is a property of the CASE, not of any one window. Hence
- *
- *     kappa = max|v|^2 / min(window variance)
- *
- * over the values the accumulators actually read.
- *
- * HUGE_VAL (always skip) is returned for the windows where v0.6.4 does not
- * merely lose digits but has no answer at all: a flat window, where its
- * subtraction lands either side of zero, and any window its ABSOLUTE epsilon
- * guard zeroes. Those are categorical divergences -- v0.6.4 returns exactly 0,
- * or a correlation outside [-1,1] -- and no numeric tolerance can express them.
- * They are precisely what #242 fixed, so v0.6.4 is not an oracle there.
- *
- * Two-pass on purpose: the test must not reuse either implementation to decide
- * whether to trust the oracle. */
-#define FUZZ_XY_MAX_KAPPA 1.0e5
-
-/* Shared core: kappa of one series over the windows [first..e], plus the
- * smallest sum-of-squared-deviations any window reaches (the quantity v0.6.4's
- * epsilon guard is applied to). Returns 0 when there is nothing to judge. */
-static double fuzz_series_condition(const double *v, int n, int period,
-                                    int first, int e, double *outMinSS)
+static double ref_get_double(const char *resp, const char *field)
 {
-    double maxAbs = 0.0, minVar = HUGE_VAL, minSS = HUGE_VAL;
-    int t, j;
-
-    if( outMinSS ) *outMinSS = 0.0;
-    if( period < 2 ) return 0.0;
-    if( first > e || first >= n ) return 0.0;
-
-    for( j = first - period + 1; j <= e && j < n; j++ )
-    {
-        double m = fabs(v[j]);
-        if( m > maxAbs ) maxAbs = m;
-    }
-
-    for( t = first; t <= e && t < n; t++ )
-    {
-        double sum = 0.0, mean, ss = 0.0;
-        for( j = t - period + 1; j <= t; j++ ) sum += v[j];
-        mean = sum / (double)period;
-        for( j = t - period + 1; j <= t; j++ ) { double d = v[j] - mean; ss += d * d; }
-        if( !(ss > 0.0) ) { if( outMinSS ) *outMinSS = 0.0; return HUGE_VAL; }
-        if( ss < minSS ) minSS = ss;
-        if( ss / (double)period < minVar ) minVar = ss / (double)period;
-    }
-    if( !(minVar > 0.0) || !(maxAbs > 0.0) ) return HUGE_VAL;
-    if( outMinSS ) *outMinSS = minSS;
-    return (maxAbs * maxAbs) / minVar;
+    int len;
+    const char *p = json_find_field(resp, field, &len);
+    return p ? strtod(p, NULL) : 0.0;
 }
 
-/* CORREL: v0.6.4 guards the PRODUCT of the two sums of squares against a fixed
- * TA_EPSILON, so the pair is what decides whether it returns a number at all. */
-/* v0.6.4 is not an oracle for the MFI cases it gets categorically wrong
- * (issue #244). Unlike the variance and CORREL/BETA carve-outs, this is not a
- * question of lost digits, so there is no kappa to threshold: v0.6.4 either
- * reports the index or it reports something that is not one.
- *
- *   1. Its `sum < 1.0` guard fires. Money flow is a price times a volume, so
- *      that literal lives in whatever unit the instrument happens to be quoted
- *      in; where it fires, v0.6.4 emits 0 for an index that is well defined.
- *   2. The window is empty -- no bar moved, or none carried volume -- so the
- *      true sums are 0/0. v0.6.4's running sums then hold nothing but the
- *      rounding residue they accumulated, of arbitrary sign, and it divides
- *      that by itself.
- *   3. Some window is one-sided: every bar that moved went the same way, so
- *      the true sum on the other side is exactly 0 and again what v0.6.4
- *      divides by is residue. This is what put its output above 100.
- *
- * Everything else IS compared, and at ZERO tolerance -- no manifest entry: over
- * the fuzz corpus all 3222 surviving case-slots are bit-identical to v0.6.4,
- * because neither the reseed nor the range clamp can fire on a case that got
- * past this predicate. Two-pass on purpose, like fuzz_variance_condition()
- * above: the test must not reuse the algorithm under test to decide whether to
- * trust the oracle. */
-static int fuzz_mfi_064_blind( const double *h, const double *l,
-                               const double *c, const double *v,
-                               int n, int period, int s, int e )
+/* One ref_* request with an index; 0 on a transport failure or an error answer. */
+static int ref_query(CodegenPipe *cp, char *req, char *resp, const char *method, int index)
 {
-    int t, j, first;
+    snprintf(req, JSON_BUF_SIZE, "{\"method\":\"%s\",\"params\":{\"index\":%d}}", method, index);
+    return codegen_pipe_call(cp, req, resp, JSON_BUF_SIZE) == TA_TEST_PASS
+           && !json_is_error(resp);
+}
 
-    if( period < 1 ) return 0;
-    first = (s > period) ? s : period;
-    if( first > e || first >= n ) return 0;
+/* Loads the member the serve was built from. Refuses a serve that is not the
+ * requested release, or whose tables do not fit. */
+static int ref_load(CodegenPipe *cp, char *req, char *resp, const char *version, RefMember *m)
+{
+    static const char *const modes[] = { "abs", "rel_in", "rel_out", "rel_out_infloor", "nan_to" };
+    char expectLib[32];
+    int i;
 
-    for( t = first; t <= e && t < n; t++ )
+    memset(m, 0, sizeof(*m));
+    if( !ref_query(cp, req, resp, "ref_info", 0) )
     {
-        double pos = 0.0, neg = 0.0, total;
-        for( j = t - period + 1; j <= t; j++ )
+        printf("FAILED: the serve answered no ref_info (%.160s)\n", resp);
+        return 0;
+    }
+    ref_get_string(resp, "version", m->version, sizeof(m->version));
+    ref_get_string(resp, "commit", m->commit, sizeof(m->commit));
+    ref_get_string(resp, "libVersion", m->libVersion, sizeof(m->libVersion));
+    m->nbFunctions = json_get_int(resp, "nbFunctions");
+    m->intFloor    = json_get_int(resp, "intFloor");
+    m->maTypeMax   = json_get_int(resp, "maTypeMax");
+    m->nbExcluded  = json_get_int(resp, "nbExcluded");
+    m->nbTol       = json_get_int(resp, "nbTol");
+    m->nbWaivers   = json_get_int(resp, "nbWaivers");
+
+    snprintf(expectLib, sizeof(expectLib), "%s", version);
+    for( i = 0; expectLib[i]; i++ ) if( expectLib[i] == '_' ) expectLib[i] = '.';
+    if( strcmp(m->version, version) != 0 || strcmp(m->libVersion, expectLib) != 0 )
+    {
+        printf("FAILED: asked for %s, the serve is member %s over libta-lib %s\n",
+               version, m->version, m->libVersion);
+        return 0;
+    }
+    if( m->nbExcluded < 0 || m->nbExcluded > REF_MAX_EXCLUDED
+        || m->nbTol < 0 || m->nbTol > REF_MAX_TOL
+        || m->nbWaivers < 0 || m->nbWaivers > REF_MAX_WAIVERS
+        || m->nbFunctions <= 0 )
+    {
+        printf("FAILED: member %s's tables exceed the driver's (%d excluded, %d rows, "
+               "%d waivers, %d functions)\n", version, m->nbExcluded, m->nbTol,
+               m->nbWaivers, m->nbFunctions);
+        return 0;
+    }
+    for( i = 0; i < m->nbExcluded; i++ )
+        if( !ref_query(cp, req, resp, "ref_excluded", i)
+            || !ref_get_string(resp, "name", m->excluded[i], sizeof(m->excluded[i])) )
+            return 0;
+    for( i = 0; i < m->nbTol; i++ )
+    {
+        char mode[24];
+        int k;
+        if( !ref_query(cp, req, resp, "ref_tol", i)
+            || !ref_get_string(resp, "func", m->tol[i].func, sizeof(m->tol[i].func))
+            || !ref_get_string(resp, "mode", mode, sizeof(mode)) )
+            return 0;
+        for( k = 0; k < (int)(sizeof(modes) / sizeof(modes[0])); k++ )
+            if( strcmp(mode, modes[k]) == 0 ) break;
+        if( k == (int)(sizeof(modes) / sizeof(modes[0])) )
         {
-            double tp  = (h[j]   + l[j]   + c[j])   / 3.0;
-            double tpp = (h[j-1] + l[j-1] + c[j-1]) / 3.0;
-            if     ( tp > tpp ) pos += tp * v[j];
-            else if( tp < tpp ) neg += tp * v[j];
+            printf("FAILED: member %s row %s has unknown mode '%s'\n", version, m->tol[i].func, mode);
+            return 0;
         }
-        total = pos + neg;
-        if( !(total > 0.0) )                return 1;   /* (2) empty window   */
-        if( total < 1.0 )                   return 1;   /* (1) v0.6.4's guard */
-        if( !(pos > 0.0) || !(neg > 0.0) )  return 1;   /* (3) one-sided      */
+        m->tol[i].mode = k;
+        m->tol[i].tol  = ref_get_double(resp, "tol");
+        m->tol[i].cap  = ref_get_double(resp, "cap");
     }
+    for( i = 0; i < m->nbWaivers; i++ )
+    {
+        if( !ref_query(cp, req, resp, "ref_waiver", i)
+            || !ref_get_string(resp, "id", m->waiver[i].id, sizeof(m->waiver[i].id)) )
+            return 0;
+        ref_get_string(resp, "why", m->waiver[i].why, sizeof(m->waiver[i].why));
+        m->waiver[i].maxFraction = ref_get_double(resp, "maxFraction");
+    }
+    return 1;
+}
+
+/* The row bounding `name`: its own, else the member's "*" row, else NULL. */
+static RefTol *ref_tol_for(RefMember *m, const char *name)
+{
+    RefTol *any = NULL;
+    for( int i = 0; i < m->nbTol; i++ )
+    {
+        if( strcmp(m->tol[i].func, name) == 0 ) return &m->tol[i];
+        if( strcmp(m->tol[i].func, "*") == 0 ) any = &m->tol[i];
+    }
+    return any;
+}
+
+static int ref_excludes(const RefMember *m, const char *name)
+{
+    for( int i = 0; i < m->nbExcluded; i++ )
+        if( strcmp(m->excluded[i], name) == 0 ) return 1;
     return 0;
-}
-
-
-/* KAMA, and the two functions that hand KAMA a series this predicate cannot
- * see (issue #253).
- *
- * KAMA's efficiency ratio is periodROC/sumROC1, and sumROC1 is a sliding sum of
- * |1-day changes| maintained by add-then-subtract. On a window that has gone
- * flat the true sum is zero but the accumulator holds residue, sized by the
- * largest change that ever passed through. v0.6.4 decides the 0/0 with an
- * absolute band on that accumulator, so its answer -- ratio 1 (fastest
- * adaptation) or ratio 0 (slowest) -- depends on which side of 1e-14 the
- * residue happened to land, and on the ZEROSUM shape it lands on both. The fix
- * answers it exactly by counting flat bars, so the two differ there and only
- * there.
- *
- * That residue drives a second divergence, which is #390 rather than #253. Once
- * it is comparable to the window's own true sum the accumulator can report a
- * total below the window's net move, and v0.6.4 then divides out a ratio above
- * 1 -- its mathematical maximum -- and smooths with a constant outside the
- * adaptive range. On the EXTREME shape that reaches an output outside the hull
- * of an all-positive input, from an OVERLAP-flagged function. The fix clamps
- * the ratio, so the two differ exactly where v0.6.4's ratio left [0,1].
- *
- * A case is not compared when any window KAMA evaluates is exactly flat, when
- * the true sum is inside v0.6.4's band, or when absorption can put the residue
- * at the scale of the true sum. Two-pass on purpose, like fuzz_mfi_064_blind:
- * the predicate must not re-run the algorithm under test -- it recomputes each
- * window's sum fresh and tracks the running maximum, neither of which is what
- * the library does. The scan starts at the first bar with a full window rather
- * than at the call's startIdx, because a divergence at one bar is carried
- * forward by prevKAMA. */
-static int fuzz_kama_064_blind( const double *x, int n, int period, int s, int e )
-{
-    int t, j;
-    double everSeen = 0.0;             /* largest |1-bar change| so far */
-
-    (void)s;
-    if( period < 2 ) return 0;         /* period 1 is a copy of the input */
-    if( e >= n ) e = n - 1;
-
-    for( t = 1; t < period && t < n; t++ )
-    {
-        double d = fabs( x[t] - x[t-1] );
-        if( d > everSeen ) everSeen = d;
-    }
-
-    for( t = period; t <= e; t++ )
-    {
-        double sum = 0.0, d;
-        int flat = 1;
-        d = fabs( x[t] - x[t-1] );
-        if( d > everSeen ) everSeen = d;
-        for( j = t - period + 1; j <= t; j++ )
-        {
-            double c = x[j] - x[j-1];
-            if( c != 0.0 ) flat = 0;
-            sum += fabs(c);
-        }
-        if( flat ) return 1;
-        if( sum < 1e-14 ) return 1;    /* v0.6.4's band, on the true sum */
-        if( everSeen * DBL_EPSILON >= sum ) return 1;   /* absorption (#390) */
-    }
-    return 0;
-}
-
-/* True when this parameter vector asks for KAMA smoothing. STOCH and STOCHF
- * then run KAMA over the Fast-K series, which is not an input and so cannot be
- * examined without re-running the library; those vectors are dropped whole.
- * MACDEXT can also smooth a derived series with KAMA and is deliberately left
- * compared -- it does not diverge on this corpus, and if it ever starts to,
- * this gate should say so rather than have been silenced in advance. */
-static int fuzz_vector_smooths_with_kama( const TA_FuncInfo *fi, const double *v )
-{
-    unsigned int i;
-    for( i = 0; i < fi->nbOptInput && i < FUZZ_MAX_OPT; i++ )
-    {
-        const TA_OptInputParameterInfo *oi;
-        TA_GetOptInputParameterInfo(fi->handle, i, &oi);
-        if( oi->type == TA_OptInput_IntegerList &&
-            oi->paramName && strstr(oi->paramName, "MAType") &&
-            (int)v[i] == (int)TA_MAType_KAMA )
-            return 1;
-    }
-    return 0;
-}
-
-/* ULTOSC (issue #253). Its three moving totals are sliding sums of true ranges,
- * so a window that has gone empty leaves them holding residue of arbitrary
- * sign, and v0.6.4 divides one residue by another: on the ZEROSUM shape it
- * returns -92.9 for an oscillator documented to run 0..100. The fix recognizes
- * an empty window by counting bars and contributes 0 for it.
- *
- * A case is not compared when any of the three windows is empty, or when its
- * true total is inside v0.6.4's band. Two-pass, and from the first full window
- * rather than the call's startIdx, for the same two reasons as above. */
-static int fuzz_ultosc_064_blind( const double *h, const double *l, const double *c,
-                                  int n, int p1, int p2, int p3, int s, int e )
-{
-    int per[3], k, t, j, longest;
-
-    (void)s;
-    per[0] = p1; per[1] = p2; per[2] = p3;
-    longest = p1 > p2 ? p1 : p2;
-    if( p3 > longest ) longest = p3;
-    if( longest < 1 || longest >= n ) return 0;
-    if( e >= n ) e = n - 1;
-
-    for( t = longest; t <= e; t++ )
-        for( k = 0; k < 3; k++ )
-        {
-            double total = 0.0;
-            if( per[k] < 1 ) continue;
-            for( j = t - per[k] + 1; j <= t; j++ )
-            {
-                double prevClose = c[j-1];
-                double trueLow   = ( l[j] < prevClose ) ? l[j] : prevClose;
-                double trueHigh  = ( h[j] > prevClose ) ? h[j] : prevClose;
-                total += trueHigh - trueLow;
-            }
-            if( total < 1e-14 ) return 1;
-        }
-    return 0;
-}
-
-static double fuzz_correl_condition(const double *x, const double *y,
-                                    int n, int period, int s, int e)
-{
-    double kx, ky, ssx = 0.0, ssy = 0.0;
-    int first = (s > period - 1) ? s : period - 1;
-
-    kx = fuzz_series_condition(x, n, period, first, e, &ssx);
-    if( kx == HUGE_VAL ) return HUGE_VAL;
-    ky = fuzz_series_condition(y, n, period, first, e, &ssy);
-    if( ky == HUGE_VAL ) return HUGE_VAL;
-    if( kx == 0.0 && ky == 0.0 ) return 0.0;
-    /* v0.6.4: if( !TA_IS_ZERO_OR_NEG(ssX*ssY) ) ... else 0.0 */
-    if( ssx * ssy < 1e-14 ) return HUGE_VAL;
-    return (kx > ky) ? kx : ky;
-}
-
-/* BETA: same, over the RETURNS (its regressor), with BETA's own zero-price
- * guard, and against its own absolute guard on n*S_xx - S_x*S_x. Both series
- * matter: the denominator cancels on x, the numerator on x and y alike. */
-static double fuzz_beta_condition(const double *p0, const double *p1,
-                                  int n, int period, int s, int e)
-{
-    static double rx[MAX_NB_TEST_ELEMENT], ry[MAX_NB_TEST_ELEMENT];
-    double kx, ky, ssx = 0.0, ssy = 0.0;
-    int first, j;
-
-    if( n > MAX_NB_TEST_ELEMENT || n < 2 ) return HUGE_VAL;
-    /* BETA's lookback is optInTimePeriod: the first output at bar t reads the
-     * `period` returns ending at t, and a return needs its predecessor. */
-    rx[0] = ry[0] = 0.0;
-    for( j = 1; j < n; j++ )
-    {
-        rx[j] = ( p0[j-1] > 1e-14 || p0[j-1] < -1e-14 )
-                ? ( p0[j] - p0[j-1] ) / p0[j-1] : 0.0;
-        ry[j] = ( p1[j-1] > 1e-14 || p1[j-1] < -1e-14 )
-                ? ( p1[j] - p1[j-1] ) / p1[j-1] : 0.0;
-    }
-    first = (s > period) ? s : period;
-    if( first > e || first >= n ) return 0.0;
-
-    kx = fuzz_series_condition(rx, n, period, first, e, &ssx);
-    if( kx == HUGE_VAL ) return HUGE_VAL;
-    ky = fuzz_series_condition(ry, n, period, first, e, &ssy);
-    if( ky == HUGE_VAL ) return HUGE_VAL;
-    if( kx == 0.0 && ky == 0.0 ) return 0.0;
-    /* v0.6.4: if( !TA_IS_ZERO(n*S_xx - S_x*S_x) ) ... else 0.0, and that
-     * quantity is exactly period * ssx. */
-    if( (double)period * ssx < 1e-14 ) return HUGE_VAL;
-    if( ky > kx ) kx = ky;
-
-    /* The NUMERATOR cancels on its own axis, and the denominator measure above
-     * is blind to it: a window where the two return series are uncorrelated has
-     * a perfectly well-conditioned S_xx and a slope that is pure residue --
-     * 1e-16 against a natural scale of order 1, with the two versions disagreeing
-     * on its SIGN. Judging that as a relative divergence is meaningless.
-     *
-     * The measure is the Cauchy-Schwarz ceiling over what survives, which is
-     * exactly 1/|correlation| on the window: 1 when the returns move together,
-     * unbounded as they decouple. So this reads "skip where the two series are
-     * essentially uncorrelated", and at the shared 1e5 threshold that is
-     * |r| < 1e-5. CORREL needs no such term -- its OUTPUT is r, so a window
-     * this measure would reject is one its own epsilon-guard check already has.
-     */
-    for( j = first; j <= e && j < n; j++ )
-    {
-        double mx = 0.0, my = 0.0, sxx = 0.0, syy = 0.0, sxy = 0.0, ceil_, kn;
-        int t;
-        for( t = j - period + 1; t <= j; t++ ) { mx += rx[t]; my += ry[t]; }
-        mx /= (double)period; my /= (double)period;
-        for( t = j - period + 1; t <= j; t++ )
-        {
-            double dx = rx[t] - mx, dy = ry[t] - my;
-            sxx += dx * dx; syy += dy * dy; sxy += dx * dy;
-        }
-        if( sxx <= 0.0 || syy <= 0.0 ) return HUGE_VAL;
-        ceil_ = sqrt( sxx * syy );
-        if( !(fabs(sxy) > 0.0) ) return HUGE_VAL;
-        kn = ceil_ / fabs(sxy);
-        if( kn > kx ) kx = kn;
-    }
-    return kx;
 }
 
 /* Returns 0 if a REAL divergence, 1 if benign (+0.0 vs -0.0), 2 if tolerated
- * within the latest->0.6.4 manifest bound. Prints detail, capped per func.
- * inScale = max |primary input| over the case (for TOL_REL_IN entries). */
+ * by a member row. Prints detail, capped per func. inScale = max |close| over
+ * the case (TOL_REL_IN, TOL_REL_OUT_INFLOOR). */
 static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
                                     CodegenRangeTestParam *p, int shape, int seed, int n,
-                                    int s, int e, const double *optVals, double inScale,
+                                    int s, int e, const double *optVals, int unst, double inScale,
                                     int curRc, int curBeg, int curNb,
                                     int refRc, int refBeg, int refNb)
 {
+    const char *ver = ctx->m->libVersion;
     int report = (ctx->reportedThisFunc < 3);
     if( curRc != refRc || curBeg != refBeg || curNb != refNb )
     {
         if( report )
         {
             ctx->reportedThisFunc++;
-            printf("  MISMATCH TA_%s shape=%d seed=%d n=%d range=[%d,%d]: "
-                   "rc %d/%d begIdx %d/%d nbElem %d/%d (current/v0.6.4)\n",
-                   fi->name, shape, seed, n, s, e, curRc, refRc, curBeg, refBeg, curNb, refNb);
+            printf("  MISMATCH TA_%s shape=%d seed=%d n=%d range=[%d,%d] unst=%d: "
+                   "rc %d/%d begIdx %d/%d nbElem %d/%d (current/%s)\n",
+                   fi->name, shape, seed, n, s, e, unst, curRc, refRc, curBeg, refBeg, curNb, refNb, ver);
         }
         return 0;
     }
 
     /* Values differ: re-issue with full_output to inspect elements. */
-    fuzz_build_request(ctx->reqBuf, fi, s, e, shape, seed, n, optVals, 1);
-    if( !fuzz_call(ctx) )
-        return 0;   /* treat as real; the pipe failure is also counted */
+    fuzz_build_request(ctx->reqBuf, fi, s, e, shape, seed, n, optVals, 1, unst);
+    if( !fuzz_call(ctx) || json_is_error(ctx->respBuf) )
+        return 0;   /* treat as real; a pipe failure is also counted */
 
-    int realDiff = 0, benignDiff = 0, tolDiff = 0, fmaDiff = 0;
-    int tolMode = 0; double tolVal = 0.0, tolCap = 0.0;
-    const void *tolEntry = fuzz_064_tol_lookup(fi->name, &tolMode, &tolVal, &tolCap);
-    /* TOL_REL_IN bound is data-scaled (optionally capped); TOL_ABS is fixed. */
-    double tolBound = 0.0;
-    if( tolEntry )
+    int realDiff = 0, benignDiff = 0, tolDiff = 0;
+    RefTol *row = ref_tol_for(ctx->m, fi->name);
+    double inBound = 0.0;
+    if( row && row->mode == TOL_REL_IN )
     {
-        if( tolMode == TOL_REL_IN )
-        {
-            tolBound = tolVal * inScale;
-            if( tolCap > 0.0 && tolBound > tolCap ) tolBound = tolCap;
-        }
-        else tolBound = tolVal;
+        inBound = row->tol * inScale;
+        if( row->cap > 0.0 && inBound > row->cap ) inBound = row->cap;
     }
     int firstO = -1, firstJ = -1;
     for( unsigned int o = 0; o < fi->nbOutput && o < MAX_OUTPUTS; o++ )
@@ -6616,91 +5650,62 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
         codegen_output_field(field, sizeof(field), p->outputIsInteger, o);
         if( p->outputIsInteger[o] )
         {
-            json_get_int_array(ctx->respBuf, field, g_fz064Int[o], MAX_NB_TEST_ELEMENT);
+            json_get_int_array(ctx->respBuf, field, g_fzRefInt[o], MAX_NB_TEST_ELEMENT);
             for( int j = 0; j < curNb; j++ )
-                if( p->outIntBufs[o][j] != g_fz064Int[o][j] )
+                if( p->outIntBufs[o][j] != g_fzRefInt[o][j] )
                 { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
+            continue;
         }
-        else
+        json_get_double_array(ctx->respBuf, field, g_fzRefReal[o], MAX_NB_TEST_ELEMENT);
+        for( int j = 0; j < curNb; j++ )
         {
-            json_get_double_array(ctx->respBuf, field, g_fz064Real[o], MAX_NB_TEST_ELEMENT);
-            for( int j = 0; j < curNb; j++ )
+            double a = p->outRealBufs[o][j], b = g_fzRefReal[o][j];
+            if( memcmp(&a, &b, sizeof(double)) == 0 ) continue;
+            /* Before the signed-zero test: tolerated ONLY when the release is NaN
+             * (b != b catches -nan too) AND current is exactly the row's value. */
+            if( row && row->mode == TOL_NAN_TO )
             {
-                double a = p->outRealBufs[o][j], b = g_fz064Real[o][j];
-                if( memcmp(&a, &b, sizeof(double)) == 0 ) continue;
-                /* NaN-to-neutral manifest case (#112): 0.6.4's successful call
-                 * emitted NaN (an unguarded x/0); the fix substitutes a defined
-                 * neutral value. Tolerate ONLY when 0.6.4 is NaN AND current is
-                 * exactly the authorized value; any other diff is real. (b != b
-                 * is true only for NaN — catches -nan too.) */
-                if( tolEntry && tolMode == TOL_NAN_TO )
-                {
-                    if( (b != b) && a == tolVal ) tolDiff = 1;
-                    else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
-                    continue;
-                }
-                double d = a - b; if( d < 0 ) d = -d;
-                /* TOL_REL_OUT is output-relative, so its bound is per element and
-                 * cannot be precomputed like the others. */
-                double outBound = tolBound;
-                if( tolEntry && tolMode == TOL_REL_OUT )
-                {
-                    double m = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
-                    outBound = tolVal * m;
-                }
-                if( a == b ) benignDiff = 1;        /* numerically equal => signed zero */
-                else if( tolEntry && d <= outBound )
-                {
-                    tolDiff = 1;                    /* within manifest bound */
-                    if( tolMode == TOL_REL_OUT )
-                    {
-                        double m = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
-                        if( m > 0.0 ) fuzz_064_tol_record(tolEntry, d / m);
-                    }
-                    else if( tolMode == TOL_REL_IN )
-                    {
-                        if( inScale > 0.0 ) fuzz_064_tol_record(tolEntry, d / inScale);
-                    }
-                    else fuzz_064_tol_record(tolEntry, d);
-                }
-#if FMA_TRANSITION_TOLERANCE
-                /* One-time FMA re-baseline: within the 1e-9 relative contract,
-                 * output-relative (`1e-9 × max(|current|, |v0.6.4|)`). The
-                 * input-scale floor is applied ONLY to the functions that
-                 * difference two large near-equal quantities (see
-                 * fma_needs_input_scale): near the difference's zero-crossing the
-                 * FMA drift is a ULP of the ~price-scale operands yet unbounded
-                 * relative to the near-zero output, so output-relative is
-                 * ill-posed there. Everyone else stays tight output-relative — a
-                 * blanket inScale floor would over-loosen bounded oscillators at
-                 * extreme input magnitude (HT_SINE ∈ [-1,1] would get a ~2.0
-                 * bound on FUZZ_EXTREME's close≈2e9, masking real divergence).
-                 * Tracked separately so a >bound regression still fails. */
-                else if( !tolEntry )
-                {
-                    double m = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
-                    if( fma_needs_input_scale(fi->name) && inScale > m ) m = inScale;
-                    if( m > 0.0 && d <= FMA_TRANSITION_REL * m )
-                    {
-                        fmaDiff = 1;
-                        if( d / m > ctx->maxFmaRel ) ctx->maxFmaRel = d / m;
-                    }
-                    else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
-                }
-#endif
+                if( (b != b) && a == row->tol ) tolDiff = 1;
                 else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
+                continue;
             }
+            if( a == b ) { benignDiff = 1; continue; }   /* numerically equal => signed zero */
+            /* A relative bound grows with |a| and |b|: at an infinity it accepts
+             * anything, so a non-finite difference is never tolerated. */
+            if( !isfinite(a) || !isfinite(b) )
+            { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } continue; }
+
+            double d = fabs(a - b), bound = 0.0, unit = 1.0;
+            double mag = fabs(a) > fabs(b) ? fabs(a) : fabs(b);
+            if( row ) switch( row->mode )
+            {
+            case TOL_ABS:     bound = row->tol; break;
+            case TOL_REL_IN:  bound = inBound; unit = inScale; break;
+            case TOL_REL_OUT: bound = row->tol * mag; unit = mag; break;
+            case TOL_REL_OUT_INFLOOR:
+                if( inScale > mag ) mag = inScale;
+                bound = row->tol * mag; unit = mag; break;
+            }
+            if( row && unit > 0.0 && d <= bound )
+            {
+                tolDiff = 1;
+                if( d / unit > row->maxSeen ) row->maxSeen = d / unit;
+            }
+            else { realDiff = 1; if( firstO < 0 ) { firstO = (int)o; firstJ = j; } }
         }
     }
 
-    if( !realDiff && (benignDiff || tolDiff || fmaDiff) )
-        return tolDiff ? 2 : (fmaDiff ? 3 : 1);   /* 2 = manifest, 3 = FMA re-baseline, 1 = signed-zero */
+    if( !realDiff && (benignDiff || tolDiff) )
+    {
+        if( tolDiff ) { row->cases++; row->funcCases++; }
+        return tolDiff ? 2 : 1;
+    }
 
     if( report )
     {
         ctx->reportedThisFunc++;
-        printf("  MISMATCH TA_%s shape=%d seed=%d n=%d range=[%d,%d]  params:",
-               fi->name, shape, seed, n, s, e);
+        printf("  MISMATCH TA_%s shape=%d seed=%d n=%d range=[%d,%d] unst=%d  params:",
+               fi->name, shape, seed, n, s, e, unst);
         for( unsigned int i = 0; i < fi->nbOptInput; i++ )
         {
             const TA_OptInputParameterInfo *oi;
@@ -6710,20 +5715,34 @@ static int fuzz_classify_and_report(FuzzContext *ctx, const TA_FuncInfo *fi,
         if( !realDiff )
             printf("\n    hash differs but elements match (nbElem %d) — investigate\n", curNb);
         else if( p->outputIsInteger[firstO] )
-            printf("\n    out%d[%d]: current=%d  v0.6.4=%d\n",
-                   firstO, firstJ, p->outIntBufs[firstO][firstJ], g_fz064Int[firstO][firstJ]);
+            printf("\n    out%d[%d]: current=%d  %s=%d\n",
+                   firstO, firstJ, p->outIntBufs[firstO][firstJ], ver, g_fzRefInt[firstO][firstJ]);
         else
-            printf("\n    out%d[%d]: current=%.17g (%a)  v0.6.4=%.17g (%a)\n",
+            printf("\n    out%d[%d]: current=%.17g (%a)  %s=%.17g (%a)\n",
                    firstO, firstJ, p->outRealBufs[firstO][firstJ], p->outRealBufs[firstO][firstJ],
-                   g_fz064Real[firstO][firstJ], g_fz064Real[firstO][firstJ]);
+                   ver, g_fzRefReal[firstO][firstJ], g_fzRefReal[firstO][firstJ]);
     }
     return 0;
+}
+
+static void fuzz_print_bound(const RefTol *r)
+{
+    switch( r->mode )
+    {
+    case TOL_ABS:             printf("%g", r->tol); break;
+    case TOL_REL_IN:          printf("%g * max|input|%s", r->tol, r->cap > 0.0 ? " (capped)" : ""); break;
+    case TOL_REL_OUT:         printf("%g relative", r->tol); break;
+    case TOL_REL_OUT_INFLOOR: printf("%g relative, floored at max|input|", r->tol); break;
+    case TOL_NAN_TO:          printf("NaN -> %g", r->tol); break;
+    }
 }
 
 static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 {
     FuzzContext *ctx = (FuzzContext *)opaqueData;
+    RefMember *m = ctx->m;
     unsigned int i;
+    int w;
 
     if( ctx->error != TA_TEST_PASS ) return;
     if( !codegen_matches_filter(ctx->functionFilter, funcInfo->name) ) return;
@@ -6743,49 +5762,12 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         return;
     }
 
-    /* Subset tolerance is 0.6.4-only: skip functions added after 0.6.4. */
-    if( ctx->funcList )
     {
         char needle[80];
         snprintf(needle, sizeof(needle), "\"TA_%s\"", funcInfo->name);
-        if( !strstr(ctx->funcList, needle) ) { ctx->funcsSkipped++; return; }
+        if( !strstr(ctx->funcList, needle) ) { ctx->funcsAbsent++; return; }
     }
-
-    /* STOCHRSI intentionally diverges from 0.6.4 (issue #107): its internal
-     * STOCHF now guards the divide with TA_IS_ZERO where 0.6.4 divided a sub-
-     * epsilon flat-RSI-window residue into full-scale [0,100] noise. That makes
-     * 0.6.4 the wrong oracle for STOCHRSI, so it is excluded from the differential
-     * fuzz; the new behaviour is pinned by hardcoded tests in test_stoch.c.
-     * (STOCH/STOCHF on raw OHLC do NOT diverge and stay strictly compared.) */
-    if( strcmp(funcInfo->name, "STOCHRSI") == 0 ) { ctx->stochRsiSkipped++; return; }
-
-
-    /* VAR/STDDEV/BBANDS intentionally diverge from 0.6.4 (issue #118): their
-     * variance moved from the catastrophically-cancelling E[x^2]-mean^2 to a
-     * cancellation-free shifted-data form, so on ILL-CONDITIONED windows 0.6.4
-     * (which collapsed - SourceForge bug 90) is the wrong oracle. Those cases are
-     * skipped per-case below, gated on fuzz_variance_condition(); every
-     * well-conditioned case IS compared, at the manifest's output-relative bound.
-     * The new behaviour is additionally pinned by test_stddev.c and the BBANDS
-     * stable-variance test, stays bitwise cross-language (--xlang-hash) and
-     * batch==stream (stream_verify). */
-    int isVarianceFunc = ( strcmp(funcInfo->name, "VAR") == 0 ||
-                           strcmp(funcInfo->name, "STDDEV") == 0 ||
-                           strcmp(funcInfo->name, "BBANDS") == 0 );
-
-    /* CORREL/BETA intentionally diverge from 0.6.4 (issue #242), for the same
-     * reason and by the same remedy as #118 above: their sums moved off the
-     * cancelling one-pass form onto shifted data with a reseed, and their fixed
-     * TA_EPSILON guards became scale-relative. On an ILL-CONDITIONED window
-     * 0.6.4 does not merely round differently -- it returned exactly 0, or a
-     * correlation outside [-1,1] -- so it is the wrong oracle there. Skipped
-     * per-case below on fuzz_correl_condition()/fuzz_beta_condition(); every
-     * better-conditioned case IS compared, at the manifest's output-relative
-     * bound. The new behaviour is pinned by test_correl.c / test_beta.c against
-     * oracles sharing no code with either version, stays bitwise cross-language
-     * (--xlang-hash) and batch==stream (stream_verify). */
-    int isCorrelFunc = ( strcmp(funcInfo->name, "CORREL") == 0 );
-    int isBetaFunc   = ( strcmp(funcInfo->name, "BETA")   == 0 );
+    if( ref_excludes(m, funcInfo->name) ) { ctx->funcsExcluded++; return; }
 
     for( i = 0; i < funcInfo->nbInput; i++ )
     {
@@ -6812,15 +5794,16 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     double vec[FUZZ_MAX_VEC][FUZZ_MAX_OPT];
     int vecOverflow = 0;
-    /* frozenOracle=1: no contract candidates — the 0.6.4 oracle certifies numbers,
-     * not the parameter contract. NULL kind: nothing to flag. */
-    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow, 1, NULL);
+    /* No contract candidates: a release certifies numbers, not the current
+     * parameter contract. */
+    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow, 1,
+                                  m->intFloor, m->maTypeMax, NULL);
     if( vecOverflow > 0 )
     {
         printf("FUZZ VECTOR OVERFLOW [TA_%s]: %d parameter value(s) dropped by "
-               "the FUZZ_MAX_VEC/FUZZ_MAX_CAND caps — they would go uncompared vs 0.6.4\n",
-               funcInfo->name, vecOverflow);
-        ctx->failures++;   /* run fails: failures != 0 (see the 064 exit check) */
+               "the FUZZ_MAX_VEC/FUZZ_MAX_CAND caps — they would go uncompared vs %s\n",
+               funcInfo->name, vecOverflow, m->libVersion);
+        ctx->failures++;
         TA_ParamHolderFree(paramHolder);
         return;
     }
@@ -6830,26 +5813,42 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->reportedThisFunc = 0;
     long long failBefore = ctx->failures;
     long long benignBefore = ctx->benign;
-    long long cciTolBefore = ctx->cciTol;
-    long long fmaTolBefore = ctx->fmaTol;
+    long long cases = 0, compared = 0, unstCompared = 0, unstMoved = 0;
+    long long fullWithOutput = 0, clampWithOutput = 0, largeWithOutput = 0;
+    TA_FuncUnstId unstIds[TA_MAX_SWEPT_UNST];
+    int nbUnstIds = (funcInfo->flags & TA_FUNC_FLG_UNST_PER)
+                    ? get_unst_ids(funcInfo->name, unstIds, TA_MAX_SWEPT_UNST) : 0;
+    int hasIntRange = 0;
+    for( i = 0; i < (unsigned int)m->nbTol; i++ ) m->tol[i].funcCases = 0;
+    for( w = 0; w < m->nbWaivers; w++ ) m->waiver[w].funcCases = 0;
+    for( i = 0; i < funcInfo->nbOptInput; i++ )
+    {
+        const TA_OptInputParameterInfo *oi;
+        TA_GetOptInputParameterInfo(funcInfo->handle, i, &oi);
+        if( oi->type == TA_OptInput_IntegerRange ) hasIntRange = 1;
+    }
 
+    /* The second pass repeats every case at a non-zero unstable period. */
+    for( int pass = 0; pass < (nbUnstIds > 0 ? 2 : 1); pass++ )
     for( int shape = 0; shape < FUZZ_NSHAPES; shape++ )
     for( int si = 0; si < (int)(sizeof(seeds)/sizeof(seeds[0])); si++ )
     for( int zi = 0; zi < (int)(sizeof(sizes)/sizeof(sizes[0])); zi++ )
     {
+        int unst = pass ? FUZZ_REF_UNST : 0;
         int n = sizes[zi]; if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
         fuzz_gen(shape, seeds[si], n,
                  g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
         hist.nbBars = (unsigned int)n;
         p.nbBars = n;
-        /* Data scale for the manifest's TOL_REL_IN bound (max |close|; close is
-         * the single real input the LINEARREG family reads). Floored at 1. */
+        /* Data scale for the input-relative rows (max |close|; close is the
+         * first real input). Floored at 1. */
         double inScale = 1.0;
         for( int z = 0; z < n; z++ )
             if( fabs(g_fzBuf[3][z]) > inScale ) inScale = fabs(g_fzBuf[3][z]);
 
         for( int k = 0; k < nvec; k++ )
         {
+            int large = 0;
             for( i = 0; i < funcInfo->nbOptInput && i < FUZZ_MAX_OPT; i++ )
             {
                 const TA_OptInputParameterInfo *oi;
@@ -6858,12 +5857,25 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     TA_SetOptInputParamReal(paramHolder, i, vec[k][i]);
                 else
                     TA_SetOptInputParamInteger(paramHolder, i, (int)vec[k][i]);
+                if( oi->type == TA_OptInput_IntegerRange
+                    && vec[k][i] >= oi->defaultValue + FUZZ_LARGE_OFFSET )
+                    large = 1;
             }
 
-            /* subranges: full, plus two deterministic random windows */
+            /* The lookback at unstable 0, and at this pass's period: the clamp
+             * ranges sit on the latter, and the release must report it too. */
+            TA_Integer lb0 = 0, lb = 0;
+            TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+            TA_GetLookback(paramHolder, &lb0);
+            for( int u = 0; u < nbUnstIds; u++ )
+                TA_SetUnstablePeriod(unstIds[u], (unsigned int)unst);
+            TA_GetLookback(paramHolder, &lb);
+
+            /* subranges: full, two deterministic random windows, then startIdx
+             * just below, at and just above the lookback clamp */
             unsigned long long rs = 0xF0F0ULL ^ ((unsigned long long)shape<<8)
                                     ^ ((unsigned long long)seeds[si]<<16) ^ ((unsigned long long)k<<24);
-            int ranges[3][2];
+            int ranges[6][2], nr = 3;
             ranges[0][0] = 0; ranges[0][1] = n - 1;
             for( int rr = 1; rr < 3; rr++ )
             {
@@ -6874,82 +5886,48 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 if( rsE < rsS ) rsE = rsS;
                 ranges[rr][0] = rsS; ranges[rr][1] = rsE;
             }
+            for( int c = -1; c <= 1; c++ )
+                if( lb + c >= 1 && lb + c <= n - 1 )
+                { ranges[nr][0] = (int)lb + c; ranges[nr][1] = n - 1; nr++; }
 
-            for( int ri = 0; ri < 3; ri++ )
+            for( int ri = 0; ri < nr; ri++ )
             {
                 int s = ranges[ri][0], e = ranges[ri][1];
                 TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+                for( int u = 0; u < nbUnstIds; u++ )
+                    TA_SetUnstablePeriod(unstIds[u], (unsigned int)unst);
 
-                /* #98 fixes diverge from 0.6.4 only on their trigger cases:
-                 * TRIX/NATR startIdx > lookback; NATR also when a close in
-                 * the output range is zero (old code wrote outReal[0]). */
-                if( strcmp(funcInfo->name, "TRIX") == 0 ||
-                    strcmp(funcInfo->name, "NATR") == 0 )
+                fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0, unst);
+                if( !fuzz_call(ctx) ) { if( ctx->error != TA_TEST_PASS ) return; continue; }
+                cases++;
+                int len;
+                if( json_find_field(ctx->respBuf, "waived", &len) )
                 {
-                    TA_Integer lb98 = 0;
-                    int skip98 = 0;
-                    if( TA_GetLookback(paramHolder, &lb98) == TA_SUCCESS )
+                    w = json_get_int(ctx->respBuf, "waived");
+                    if( w < 0 || w >= m->nbWaivers )
                     {
-                        if( s > lb98 )
-                            skip98 = 1;
-                        else if( strcmp(funcInfo->name, "NATR") == 0 )
-                        {
-                            for( int z = (s > lb98 ? s : lb98); z <= e; z++ )
-                                if( g_fzBuf[3][z] < 0.00000001 &&
-                                    g_fzBuf[3][z] > -0.00000001 )
-                                { skip98 = 1; break; }
-                        }
+                        printf("  BAD WAIVER TA_%s: the serve answered waiver %d of %d\n",
+                               funcInfo->name, w, m->nbWaivers);
+                        ctx->failures++;
+                        continue;
                     }
-                    if( skip98 ) { ctx->skipped98++; continue; }
+                    m->waiver[w].cases++;
+                    m->waiver[w].funcCases++;
+                    ctx->waived++;
+                    continue;
                 }
-
-                /* #118: compare against 0.6.4 only where its cancelling variance
-                 * form still has significant digits. optInTimePeriod is opt 0 for
-                 * all three; the primary input is close (g_fzBuf[3]). */
-                if( isVarianceFunc )
+                if( json_is_error(ctx->respBuf) )
                 {
-                    double kappa = fuzz_variance_condition( g_fzBuf[3], n, (int)vec[k][0], s, e );
-                    if( kappa > FUZZ_VAR_MAX_KAPPA ) { ctx->varianceSkipped++; continue; }
+                    printf("  SERVE ERROR TA_%s shape=%d seed=%d n=%d range=[%d,%d] unst=%d: %.160s\n",
+                           funcInfo->name, shape, seeds[si], n, s, e, unst, ctx->respBuf);
+                    ctx->failures++;
+                    continue;
                 }
-
-                /* #242: the same carve-out over two series. Both take
-                 * (inReal0, inReal1) = (close, volume) per setup_inputs, and
-                 * optInTimePeriod is opt 0 for both. */
-                if( isCorrelFunc || isBetaFunc )
-                {
-                    double kappa = isCorrelFunc
-                        ? fuzz_correl_condition( g_fzBuf[3], g_fzBuf[4], n, (int)vec[k][0], s, e )
-                        : fuzz_beta_condition  ( g_fzBuf[3], g_fzBuf[4], n, (int)vec[k][0], s, e );
-                    if( kappa > FUZZ_XY_MAX_KAPPA ) { ctx->xySkipped++; continue; }
-                }
-
-                /* #244: skip only the cases v0.6.4 reports wrongly; the rest
-                 * stay bit-exact. g_fzBuf is O,H,L,C,V,OI and optInTimePeriod
-                 * is opt 0. */
-                if( strcmp(funcInfo->name, "MFI") == 0 &&
-                    fuzz_mfi_064_blind( g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4],
-                                        n, (int)vec[k][0], s, e ) )
-                { ctx->mfiSkipped++; continue; }
-
-                /* #253: the same shape -- v0.6.4 divides accumulator residue on
-                 * a window that has emptied, and reports whatever the residue
-                 * happened to be. Skip only those windows; everything else stays
-                 * bit-exact. optInTimePeriod is opt 0 for KAMA, and ULTOSC's
-                 * three periods are opts 0,1,2. */
-                if( strcmp(funcInfo->name, "KAMA") == 0 &&
-                    fuzz_kama_064_blind( g_fzBuf[3], n, (int)vec[k][0], s, e ) )
-                { ctx->kamaSkipped++; continue; }
-
-                if( ( strcmp(funcInfo->name, "STOCH") == 0 ||
-                      strcmp(funcInfo->name, "STOCHF") == 0 ) &&
-                    fuzz_vector_smooths_with_kama( funcInfo, vec[k] ) )
-                { ctx->kamaSkipped++; continue; }
-
-                if( strcmp(funcInfo->name, "ULTOSC") == 0 &&
-                    fuzz_ultosc_064_blind( g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], n,
-                                           (int)vec[k][0], (int)vec[k][1], (int)vec[k][2],
-                                           s, e ) )
-                { ctx->ultoscSkipped++; continue; }
+                int refRc  = json_get_int(ctx->respBuf, "retCode");
+                int refBeg = json_get_int(ctx->respBuf, "outBegIdx");
+                int refNb  = json_get_int(ctx->respBuf, "outNBElement");
+                int refLb  = json_get_int(ctx->respBuf, "lookback");
+                unsigned long long refHash = fuzz_parse_hash(ctx->respBuf);
 
                 TA_Integer curBeg = 0, curNb = 0;
                 for( unsigned int o = 0; o < funcInfo->nbOutput; o++ )
@@ -6963,14 +5941,19 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 unsigned long long curHash =
                     fuzz_hash_local(&p, (curRc == TA_SUCCESS) ? curNb : 0);
 
-                fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
-                if( !fuzz_call(ctx) ) { if( ctx->error != TA_TEST_PASS ) return; continue; }
-                int refRc  = json_get_int(ctx->respBuf, "retCode");
-                int refBeg = json_get_int(ctx->respBuf, "outBegIdx");
-                int refNb  = json_get_int(ctx->respBuf, "outNBElement");
-                unsigned long long refHash = fuzz_parse_hash(ctx->respBuf);
-
                 ctx->comparisons++;
+                compared++;
+                if( pass )
+                {
+                    unstCompared++;
+                    if( refLb > lb0 ) unstMoved++;
+                }
+                if( refRc == TA_SUCCESS && refNb > 0 )
+                {
+                    if( ri == 0 ) fullWithOutput++;
+                    if( ri >= 3 ) clampWithOutput++;
+                    if( large )   largeWithOutput++;
+                }
                 int mismatch = 0;
                 if( (int)curRc != refRc ) mismatch = 1;
                 else if( curRc == TA_SUCCESS )
@@ -6981,41 +5964,61 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 if( !mismatch ) { ctx->matches++; continue; }
 
                 int cls = fuzz_classify_and_report(ctx, funcInfo, &p, shape, seeds[si], n, s, e,
-                                             vec[k], inScale, (int)curRc, curBeg, curNb,
+                                             vec[k], unst, inScale, (int)curRc, curBeg, curNb,
                                              refRc, refBeg, refNb);
                 if( cls == 0 )      ctx->failures++;
-                else if( cls == 2 ) ctx->cciTol++;   /* manifest-tolerated (CCI #7 / LINEARREG #103 / IMI #112) — not a failure */
-                else if( cls == 3 ) ctx->fmaTol++;   /* one-time FMA re-baseline tolerance (PR #96) — not a failure */
+                else if( cls == 2 ) ctx->tolerated++;
                 else                ctx->benign++;
             }
         }
     }
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+
+    /* A waiver that swallows the function untests it; one that grows past its
+     * member's ceiling is a predicate that has started to over-fire. Each axis
+     * must also reach the release: an unstable period that moves no lookback
+     * there, or clamp ranges that never produce output, compare nothing new. */
+    if( compared == 0 )
+    {
+        printf("  UNCOMPARED TA_%s: every one of its %lld case(s) was waived\n", funcInfo->name, cases);
+        ctx->funcsUncompared++;
+        ctx->failures++;
+    }
+    if( nbUnstIds > 0 && compared > 0 && unstMoved == 0 )
+    {
+        printf("  UNSTABLE INERT TA_%s: %lld case(s) at unstable period %d, none moved "
+               "the release's lookback\n", funcInfo->name, unstCompared, FUZZ_REF_UNST);
+        ctx->failures++;
+    }
+    if( fullWithOutput > 0 && clampWithOutput == 0 )
+    {
+        printf("  CLAMP VACUOUS TA_%s: no range starting at the lookback produced output\n",
+               funcInfo->name);
+        ctx->failures++;
+    }
+    if( hasIntRange )
+    {
+        ctx->funcsLargeEligible++;
+        if( largeWithOutput > 0 ) ctx->funcsLargeOutput++;
+    }
+    for( w = 0; w < m->nbWaivers; w++ )
+        if( cases > 0 && (double)m->waiver[w].funcCases > m->waiver[w].maxFraction * (double)cases )
+        {
+            printf("  WAIVER CEILING TA_%s: %s waived %lld of %lld case(s), above its %.2f ceiling\n",
+                   funcInfo->name, m->waiver[w].id, m->waiver[w].funcCases, cases,
+                   m->waiver[w].maxFraction);
+            ctx->failures++;
+        }
 
     if( ctx->failures > failBefore ) ctx->funcsWithFailures++;
-    else if( ctx->cciTol > cciTolBefore )
-    {
-        int tm = 0; double tv = 0.0, tc = 0.0;
-        fuzz_064_tol_lookup(funcInfo->name, &tm, &tv, &tc);
-        if( tm == TOL_NAN_TO )
-            printf("  TOLERATED TA_%s: %lld case(s) where v0.6.4 emitted NaN (x/0) and current "
-                   "returns the guarded %g (authorized manifest)\n",
-                   funcInfo->name, ctx->cciTol - cciTolBefore, tv);
-        else
+    for( i = 0; i < (unsigned int)m->nbTol; i++ )
+        if( m->tol[i].funcCases > 0 )
         {
-            int ti = 0; double tmax = 0.0;
-            const void *te = fuzz_064_tol_lookup(funcInfo->name, &ti, &tv, &tc);
-            if( te ) tmax = g_fuzz064TolMax[(const TA_Fuzz064Tol *)te - FUZZ_064_TOL];
-            printf("  TOLERATED TA_%s: %lld case(s) within %g%s%s vs 0.6.4 (authorized manifest bound, max observed %.3g)\n",
-                   funcInfo->name, ctx->cciTol - cciTolBefore, tv,
-                   tm == TOL_REL_IN ? " * max|input|" : "",
-                   (tm == TOL_REL_IN && tc > 0.0) ? " (capped)" : "", tmax);
+            printf("  TOLERATED TA_%s: %lld case(s) within ", funcInfo->name, m->tol[i].funcCases);
+            fuzz_print_bound(&m->tol[i]);
+            printf(" of %s (row %s)\n", m->libVersion, m->tol[i].func);
         }
-    }
-    else if( ctx->fmaTol > fmaTolBefore )
-        printf("  FMA-REBASELINE TA_%s: %lld case(s) within 1e-9 relative of v0.6.4 "
-               "(explicit fma() adoption, PR #96)\n",
-               funcInfo->name, ctx->fmaTol - fmaTolBefore);
-    else if( ctx->benign > benignBefore )
+    if( ctx->benign > benignBefore )
     {
         ctx->funcsBenign++;
         printf("  BENIGN TA_%s: %lld signed-zero case(s) (numerically equal, +0.0 vs -0.0)\n",
@@ -7025,26 +6028,68 @@ static void fuzz_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     TA_ParamHolderFree(paramHolder);
 }
 
-ErrorNumber fuzz_ref064(const char *functionFilter)
+/* Every name the member's tables use must be a function of the release. */
+static int ref_names_are_functions(const RefMember *m, const char *funcList)
 {
+    char needle[80];
+    int i, ok = 1;
+    for( i = 0; i < m->nbExcluded; i++ )
+    {
+        snprintf(needle, sizeof(needle), "\"TA_%s\"", m->excluded[i]);
+        if( !strstr(funcList, needle) )
+        { printf("FAILED: member %s excludes %s, which it lacks\n", m->version, m->excluded[i]); ok = 0; }
+    }
+    for( i = 0; i < m->nbTol; i++ )
+    {
+        if( strcmp(m->tol[i].func, "*") == 0 ) continue;
+        snprintf(needle, sizeof(needle), "\"TA_%s\"", m->tol[i].func);
+        if( !strstr(funcList, needle) )
+        { printf("FAILED: member %s has a row for %s, which it lacks\n", m->version, m->tol[i].func); ok = 0; }
+    }
+    return ok;
+}
+
+ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
+{
+    char serve[64], memberFile[96];
+    static const char *argv[2];
+    RefMember member;
+    FILE *fp;
+    int i, nbListed = 0;
+    const char *q;
+
     printf("\n=============================================\n");
-    printf("Bit-exact differential fuzz vs released v0.6.4\n");
+    printf("Differential fuzz vs frozen release %s\n", version);
     printf("=============================================\n");
 
-    CodegenPipe cp;
-    if( codegen_pipe_open(&cp, argv_064) != TA_TEST_PASS )
+    /* bin/ keeps whatever it was ever given: a member whose file is gone must
+     * be refused here, not answered by a stale serve. */
+    snprintf(memberFile, sizeof(memberFile), "../ta_ref/ta_ref_%s.c", version);
+    fp = fopen(memberFile, "r");
+    if( !fp )
     {
-        printf("FAILED: cannot start ta_064_serve.\n"
-               "        Build it first (scripts/build_064_serve.py): it links the\n"
-               "        frozen v0.6.4 lib from the ../ta-lib-064 worktree.\n");
+        printf("FAILED: no member ta_ref/ta_ref_%s.c\n", version);
+        return TA_REGTEST_BAD_USER_PARAM;
+    }
+    fclose(fp);
+
+    snprintf(serve, sizeof(serve), "./ta_ref_%s_serve", version);
+    argv[0] = serve;
+    argv[1] = NULL;
+    CodegenPipe cp;
+    if( codegen_pipe_open(&cp, argv) != TA_TEST_PASS )
+    {
+        printf("FAILED: cannot start %s. Build it first: scripts/build.py ref --versions=%s\n",
+               serve + 2, version);
         return TA_CODEGEN_ALLOC_FAILED;
     }
-    printf("Oracle: ta_064_serve (pid=%d)\n\n", cp.child_pid);
 
     FuzzContext ctx;
     memset(&ctx, 0, sizeof(ctx));
     ctx.functionFilter = functionFilter;
+    ctx.argv = argv;
     ctx.cp = &cp;
+    ctx.m = &member;
     ctx.reqBuf = malloc(JSON_BUF_SIZE);
     ctx.respBuf = malloc(JSON_BUF_SIZE);
     char *funcList = malloc(JSON_BUF_SIZE);
@@ -7053,14 +6098,35 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
     { free(ctx.reqBuf); free(ctx.respBuf); free(funcList);
         codegen_pipe_close(&cp); return TA_CODEGEN_ALLOC_FAILED; }
 
-    /* Subset gate: cache 0.6.4's supported-function set. Functions added after
-     * 0.6.4 are skipped (no baseline), never failed — see fuzz_one_function. */
+    if( !ref_load(&cp, ctx.reqBuf, ctx.respBuf, version, &member) )
+    { free(ctx.reqBuf); free(ctx.respBuf); free(funcList);
+        codegen_pipe_close(&cp); return TA_CODEGEN_SUBSET_GATE_UNAVAILABLE; }
+    printf("Oracle: %s (pid=%d), libta-lib %s at %.12s\n\n",
+           serve + 2, cp.child_pid, member.libVersion, member.commit);
+
+    /* Subset gate: functions added since the release are skipped (no
+     * baseline). The listed count is pinned by the member, so an over-filtered
+     * list cannot shrink the comparison with it. */
     if( codegen_pipe_call(&cp, "{\"method\":\"list_functions\",\"params\":{}}",
-                          funcList, JSON_BUF_SIZE) == TA_TEST_PASS
-        && strstr(funcList, "\"functions\"") )
-        ctx.funcList = funcList;
-    else
-        printf("  (warning: list_functions failed — subset gate disabled)\n");
+                          funcList, JSON_BUF_SIZE) != TA_TEST_PASS
+        || !strstr(funcList, "\"functions\"") )
+    {
+        printf("FAILED: list_functions failed, so the subset gate has nothing to go on\n");
+        free(ctx.reqBuf); free(ctx.respBuf); free(funcList);
+        codegen_pipe_close(&cp);
+        return TA_CODEGEN_SUBSET_GATE_UNAVAILABLE;
+    }
+    for( q = strstr(funcList, "\"TA_"); q; q = strstr(q + 1, "\"TA_") ) nbListed++;
+    if( nbListed != member.nbFunctions || !ref_names_are_functions(&member, funcList) )
+    {
+        if( nbListed != member.nbFunctions )
+            printf("FAILED: the serve lists %d functions, member %s pins %d\n",
+                   nbListed, version, member.nbFunctions);
+        free(ctx.reqBuf); free(ctx.respBuf); free(funcList);
+        codegen_pipe_close(&cp);
+        return TA_CODEGEN_SUBSET_GATE_UNAVAILABLE;
+    }
+    ctx.funcList = funcList;
 
     g_frozenEnumSkips = 0;
     TA_ForEachFunc(fuzz_one_function, &ctx);
@@ -7070,66 +6136,65 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
 
     printf("\n---------------------------------------------\n");
     printf("comparisons: %lld   matches: %lld   benign(signed-zero): %lld   "
-           "cci-tolerated: %lld   fma-tolerated: %lld   failures: %lld\n",
-           ctx.comparisons, ctx.matches, ctx.benign, ctx.cciTol, ctx.fmaTol, ctx.failures);
-    printf("functions: %d not-in-0.6.4 (skipped), %d with benign-only diffs, %d with real failures\n",
-           ctx.funcsSkipped, ctx.funcsBenign, ctx.funcsWithFailures);
-    if( ctx.skipped98 > 0 )
-        printf("skipped: %lld TRIX/NATR partial-range case(s) — fixed in 0.8.1, issue #98\n",
-               ctx.skipped98);
-    if( ctx.cciTol > 0 )
-        printf("manifest-tolerated: %lld case(s) under an authorized latest->0.6.4 entry "
-               "(CCI #7 near-zero; LINEARREG family + TSF #103 sliding-sum; IMI #112 NaN->50.0; "
-               "ATR/NATR #338 two-coefficient Wilder step)\n", ctx.cciTol);
-#if FMA_TRANSITION_TOLERANCE
-    if( ctx.fmaTol > 0 )
-        printf("fma-rebaseline: %lld case(s) within the 1e-9 relative FMA contract vs 0.6.4 "
-               "(max observed %.3g); one-time transition, re-freeze to hash-exact after the "
-               "FMA-enabled release is tagged (PR #96)\n", ctx.fmaTol, ctx.maxFmaRel);
-#endif
-    if( ctx.stochRsiSkipped > 0 )
-        printf("stochrsi-skipped: %lld STOCHRSI function(s) skipped entirely — intentionally diverges from 0.6.4 (issue #107); pinned by test_stoch.c\n",
-               ctx.stochRsiSkipped);
-    if( ctx.kamaSkipped > 0 )
-        printf("kama-skipped: %lld case(s) where v0.6.4's efficiency ratio is decided by"
-               " accumulator residue rather than by the window -- on a flat window (issue"
-               " #253), or where absorption puts the residue at the scale of the window's"
-               " own sum and v0.6.4's ratio leaves [0,1] (issue #390). KAMA itself, and the"
-               " STOCH/STOCHF vectors that smooth with MAType=KAMA, whose series this gate"
-               " cannot examine. Every other case was compared bit-exact\n",
-               ctx.kamaSkipped);
-    if( ctx.ultoscSkipped > 0 )
-        printf("ultosc-skipped: %lld case(s) where a window has emptied and v0.6.4 divides"
-               " the residue its moving totals are left holding (issue #253). Every other"
-               " case was compared bit-exact\n",
-               ctx.ultoscSkipped);
-    if( ctx.mfiSkipped > 0 )
-        printf("mfi-skipped: %lld MFI case(s) where v0.6.4 reports a non-index (issue #244): its 1.0 guard fired, the window was empty, or a one-sided window left it dividing residue. Every other MFI case was compared bit-exact\n",
-               ctx.mfiSkipped);
+           "tolerated: %lld   waived: %lld   failures: %lld\n",
+           ctx.comparisons, ctx.matches, ctx.benign, ctx.tolerated, ctx.waived, ctx.failures);
+    printf("functions: %d absent from %s, %d excluded, %d with benign-only diffs, "
+           "%d with real failures\n",
+           ctx.funcsAbsent, member.libVersion, ctx.funcsExcluded, ctx.funcsBenign, ctx.funcsWithFailures);
+    for( i = 0; i < member.nbExcluded; i++ )
+        printf("excluded: %s\n", member.excluded[i]);
+    for( i = 0; i < member.nbWaivers; i++ )
+        printf("waived %s: %lld case(s): %s\n",
+               member.waiver[i].id, member.waiver[i].cases, member.waiver[i].why);
+    for( i = 0; i < member.nbTol; i++ )
+        if( member.tol[i].cases > 0 )
+            printf("row %s: %lld case(s), max observed %.3g\n",
+                   member.tol[i].func, member.tol[i].cases, member.tol[i].maxSeen);
     if( g_frozenEnumSkips > 0 )
-        printf("post-freeze enums: %lld MAType value(s) > %d excluded vs v0.6.4 "
-               "(#139, #93, #182, #347, #348; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
-               g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
-    if( ctx.varianceSkipped > 0 )
-        printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #118); every better-conditioned case was compared\n",
-               ctx.varianceSkipped, (double)FUZZ_VAR_MAX_KAPPA);
-    if( ctx.xySkipped > 0 )
-        printf("correl/beta-skipped: %lld CORREL/BETA case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #242); every better-conditioned case was compared\n",
-               ctx.xySkipped, (double)FUZZ_XY_MAX_KAPPA);
+        printf("enums: %lld MAType value(s) above %s's %d excluded\n",
+               g_frozenEnumSkips, member.libVersion, member.maTypeMax);
     if( ctx.serverRestarts )
         printf("oracle restarts (recovered crashes): %d\n", ctx.serverRestarts);
+
+    /* Dead rows and waivers are refused only on a full run: a filter narrows
+     * the functions they apply to. The fuzz is deterministic, so zero is exact. */
+    if( !functionFilter || !*functionFilter )
+    {
+        /* default+50/+51 outruns the shortest series by design, and a function
+         * like T3 multiplies its period; but most must reach output there. */
+        if( ctx.funcsLargeOutput * 2 < ctx.funcsLargeEligible )
+        {
+            printf("FAIL: only %d of %d functions with a period produced output at "
+                   "default+%d\n", ctx.funcsLargeOutput, ctx.funcsLargeEligible, FUZZ_LARGE_OFFSET);
+            ctx.failures++;
+        }
+        for( i = 0; i < member.nbTol; i++ )
+            if( member.tol[i].cases == 0 )
+            {
+                printf("FAIL: member %s's row %s absorbed nothing; delete it\n",
+                       version, member.tol[i].func);
+                ctx.failures++;
+            }
+        for( i = 0; i < member.nbWaivers; i++ )
+            if( member.waiver[i].cases == 0 )
+            {
+                printf("FAIL: member %s's waiver %s waived nothing; delete it\n",
+                       version, member.waiver[i].id);
+                ctx.failures++;
+            }
+    }
     if( ctx.comparisons == 0 )
     {
-        printf("FAIL — zero comparisons (broken ta_064_serve or over-narrow filter?).\n");
+        printf("FAIL: zero comparisons (broken %s or over-narrow filter?)\n", serve + 2);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
     if( ctx.failures == 0 && ctx.error == TA_TEST_PASS )
     {
-        printf("PASS — current library is bit-identical to v0.6.4 at period>=2"
-               " (benign signed-zero and authorized manifest tolerances aside; STOCHRSI excluded, issue #107).\n");
+        printf("PASS: the current library matches %s, apart from signed zeros and the "
+               "member's rows and waivers.\n", member.libVersion);
         return TA_TEST_PASS;
     }
-    printf("FAIL — %lld real divergence(s) across %d function(s).\n",
+    printf("FAIL: %lld failure(s) across %d function(s).\n",
            ctx.failures, ctx.funcsWithFailures);
     return ctx.error != TA_TEST_PASS ? ctx.error : TA_CODEGEN_OUTPUT_MISMATCH;
 }
@@ -7138,10 +6203,10 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  * --xlang-hash: cross-language BITWISE parity gate (issue #113).
  *
  * Proves the generated language servers compute BIT-IDENTICAL outputs to the
- * shipped in-process C library, with NO tolerance (contrast --codegen's
- * CODEGEN_EPSILON_DOUBLE == 1e-9 element-wise gate) — the one carve-out is
- * Java's transcendental calls (below). It closes the two precision losses that
- * make a %.15g cross-language comparison unable to see ~1e-10 FMA drift: (a)
+ * shipped in-process C library, with NO tolerance. The one carve-out is the
+ * transcendental calls of Java and C# (below), the same rule --codegen applies
+ * to its fixed series. It closes the two precision losses that would make a
+ * %.15g cross-language comparison unable to see ~1e-10 FMA drift: (a)
  * inputs cross full-precision — a seed both sides regenerate, or lossless
  * hex-of-IEEE-bits — so no JSON float-parse rounding; (b) outputs are compared
  * by a full-precision FNV-1a hash of the raw bytes — never %.15g-serialized.
@@ -7151,7 +6216,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  *
  * The C library is linked IN-PROCESS in ta_regtest, so there is no JSON-RPC
  * boundary on the C side and no precision to reconcile — it is the GOLDEN
- * reference (exactly as --fuzz-064 uses the in-process current library). Each
+ * reference (exactly as --ref uses the in-process current library). Each
  * language server crosses the boundary and is diffed against it, per its
  * transport (XlangServer.usesSeed):
  *   - Rust: the seed transport (gen_present + fuzz_in_hash self-check), diffed
@@ -7172,9 +6237,8 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
  *     dev box. .NET does not guarantee `Math.*` reaches the platform libm.
  *     Math.FusedMultiplyAdd IS correctly rounded, so the FMA contract is
  *     unaffected — only the transcendentals moved.
- * There is NO 0.6.4 here (current-vs-current), so — unlike --fuzz-064 — there
- * are none of the #98/#107 carve-outs; every case is bitwise except the
- * transcendental calls of Java and C#. See fuzz_data.h and
+ * Current-vs-current, so no release's carve-outs apply: every case is bitwise
+ * except the transcendental calls of Java and C#. See fuzz_data.h and
  * src/tools/ta_regtest/CLAUDE.md.
  * ======================================================================== */
 
@@ -7450,9 +6514,9 @@ int codegen_call_is_transcendental(const TA_FuncHandle *handle,
 
 /* Shared tolerance element-compare (the Java transcendental path). Parallels
  * codegen_hash_compare's retCode/shape gating, then compares each output's
- * elements: reals at `tol` (relative for |v|>1, absolute otherwise; finite-vs-
- * NaN always fails, so the tolerance path is as NaN-discriminating as the
- * bitwise hash of raw bytes), integers exact. Output field keys come from
+ * elements: reals at `tol` (relative for |v|>1, absolute otherwise), integers
+ * exact. A non-finite value must match in kind, any NaN or the same infinity:
+ * a bound scaled by an infinite golden accepts every value. Output field keys come from
  * `codegen_output_field`, which ranks per type. Both gates' output lengths are
  * far under CODEGEN_TOL_MAX_OUT. */
 #define CODEGEN_TOL_MAX_OUT 512
@@ -7505,8 +6569,13 @@ CTolVerdict codegen_compare_tol(const char *resp,
                 double c = gold[j], sv = srv[j];
                 double diff = fabs(c - sv);
                 double t = (fabs(c) > 1.0) ? tol * fabs(c) : tol;
-                int bad = ( tol < 0.0 ) ? memcmp(&c, &sv, sizeof(double)) != 0
-                                        : (isnan(c) != isnan(sv)) || diff > t;
+                int bad;
+                if( tol < 0.0 )
+                    bad = memcmp(&c, &sv, sizeof(double)) != 0;
+                else if( !isfinite(c) || !isfinite(sv) )
+                    bad = !((isnan(c) && isnan(sv)) || c == sv);
+                else
+                    bad = diff > t;
                 if( bad )
                 {
                     detail->output = (int)o; detail->element = j; detail->isInt = 0;
@@ -7957,9 +7026,9 @@ static void xlang_tier_parse(const TA_FuncInfo *fi, const char *resp, LbTierResp
  * transcendental may land on a different libm (Java's fdlibm, .NET's
  * unguaranteed Math.*), the same CODEGEN_TRANSCENDENTAL_TOL
  * server_verify()/--xlang-hash already tolerate there — relative for |v|>1,
- * absolute otherwise. A NaN carries no bit contract either way — two NaNs of
- * any payload are a match, at any `tol`, same as `codegen_compare_tol`'s
- * `isnan(c)==isnan(sv)`. That is a statement about the LIBMS, not about the
+ * absolute otherwise. A NaN carries no bit contract either way: two NaNs of
+ * any payload are a match, at any `tol`, as in `codegen_compare_tol`; an
+ * infinity matches only the same infinity. That is a statement about the LIBMS, not about the
  * wire any more: the transport reproduces a payload exactly since #258, but
  * which payload fdlibm or .NET hands back for the same input was never
  * specified.
@@ -7986,6 +7055,7 @@ static int xlang_tier_data_diff(const TA_FuncInfo *fi, const LbTierResp *a,
                 if( isnan(x) && isnan(y) ) { (*benign)++; continue; }
                 if( isnan(x) != isnan(y) ) return 1;
                 if( x == y ) { (*benign)++; continue; }   /* +0.0 vs -0.0 */
+                if( !isfinite(x) || !isfinite(y) ) return 1;
                 if( tol > 0.0 )
                 {
                     double t = (fabs(x) > 1.0) ? tol * fabs(x) : tol;
@@ -8551,9 +7621,7 @@ static void xlang_tier_gold_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
  * silently pass. If it does not round-trip, ANY comparison built on plain
  * arrays instead of the hash (including the tier-agreement leg above) reads
  * a false divergence that is really the wire format losing precision, not
- * the numerics — the exact trap that once made the frozen v0.6.4 oracle need
- * a shadow-patched serializer of its own, because the ordinary C server's
- * %.15g silently cost ~1 ULP.
+ * the numerics: a %.15g writer silently costs ~1 ULP.
  *
  * Every backend now writes real output arrays as hex-of-IEEE-bits (#257 for
  * C's %.15g, #258 for Java's NaN token, both landing on ONE lossless format
@@ -8929,7 +7997,7 @@ static int xlang_hash_call(XlangCtx *ctx, XlangServer *sv, const TA_FuncInfo *fi
      * hardcodes the right id in its generated handler, so the unstable legs
      * take the hex transport on every server. */
     if( sv->usesSeed && unstPeriod == 0 )
-        fuzz_build_request(ctx->reqBuf, fi, s, e, shape, seed, n, optVals, 0);
+        fuzz_build_request(ctx->reqBuf, fi, s, e, shape, seed, n, optVals, 0, 0);
     else
         xlang_build_hex_request(ctx->reqBuf, fi, hist, n, s, e, optVals, unstPeriod, 1);
 
@@ -8997,7 +8065,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     /* frozenOracle=0: the current-vs-current path, so the sweep also carries the
      * two contract classes flagged in `kind` (issue #148). */
     memset(kind, FUZZ_VEC_NORMAL, sizeof(kind));
-    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow, 0, kind);
+    int nvec = fuzz_build_vectors(funcInfo, vec, &vecOverflow, 0, 0, 0, kind);
     if( vecOverflow > 0 )
     {
         printf("XLANG VECTOR OVERFLOW [TA_%s]: %d parameter value(s) dropped\n",
@@ -9010,11 +8078,9 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     }
 
     /* ---- Unstable-period axis (#116) ----
-     * The parameter sweep above holds the unstable period at 0, so until now
-     * nothing in this gate exercised a non-zero one: that axis was covered only
-     * by the ref differential sweep, i.e. only by the frozen ta_ref_serve, and
-     * would have been lost with it. XLANG_UNST_PERIOD runs FIRST and 0 LAST so
-     * every function leaves the servers at the value the next one expects. */
+     * The parameter sweep above holds the unstable period at 0. XLANG_UNST_PERIOD
+     * runs FIRST and 0 LAST so every function leaves the servers at the value
+     * the next one expects. */
     int unstVals[2] = { 0, 0 };
     int nUnst = 1;
     TA_FuncUnstId unstId = get_unst_id(funcInfo->name);
@@ -9096,7 +8162,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
             xlang_set_opt_params(paramHolder, funcInfo, vec[k]);
 
-            /* subranges: full + two deterministic random windows (as --fuzz-064),
+            /* subranges: full + two deterministic random windows (as --ref),
              * plus -- once per (function, parameter vector) -- every ordered pair
              * drawn from {0,1,2,3}.
              *
@@ -9305,7 +8371,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                      * server — see xlang_hash_call for why abstract_call cannot
                      * carry an unstable period. */
                     if( sv->usesSeed && curUnst == 0 )
-                        fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0);
+                        fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0, 0);
                     else
                     {
                         /* A rejected vector stays on the hash path even on a
@@ -9711,7 +8777,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     {
         printf("PASS — %lld function(s) swept: every server matches the in-process C "
                "library: BIT-IDENTICAL (zero tolerance), Java+C# transcendentals "
-               "within %g (current-vs-current, all shapes, period>=2).\n",
+               "within %g (current-vs-current, all shapes).\n",
                ctx.funcsSwept, CODEGEN_TRANSCENDENTAL_TOL);
         return TA_TEST_PASS;
     }
@@ -9726,8 +8792,8 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
  *
  * A candlestick differential/stream test passes VACUOUSLY when the input data
  * never triggers the pattern: every output is 0, and all-zero == all-zero holds
- * regardless of the implementation. Both the fuzz-064 (current vs frozen v0.6.4)
- * and stream_verify (stream vs batch) gates draw their inputs from fuzz_gen()
+ * regardless of the implementation. Both the frozen-release fuzz (--ref) and
+ * stream_verify (stream vs batch) draw their inputs from fuzz_gen()
  * shapes, so a pattern that fires on NO shape has its bit-exactness asserted
  * against all-zero output — its real decision logic goes unverified.
  *
@@ -9858,7 +8924,7 @@ static void cdl_collect(const TA_FuncInfo *fi, void *opaque)
  * function would report PASS with outputs 3+ never compared, and
  * CodegenRangeTestParam's buffer arrays are sized with it, so the unclamped
  * loops would read past the struct. Fail loudly at startup instead — called
- * from main() ahead of every run mode, because --fuzz-064 and --xlang-hash are
+ * from main() ahead of every run mode, because --ref and --xlang-hash are
  * self-contained early returns that never reach test_codegen(), and their
  * buffers and clamped loops live in this file too. The library must be
  * initialized when this runs (TA_ForEachFunc walks the registered table). */
@@ -9903,7 +8969,7 @@ static ErrorNumber verify_fuzz_candle_nonvacuous(void)
         if( !(f240 && f512) )
         {
             printf("CANDLE VACUOUS: %s fires on no stream-run shape "
-                   "(N=240:%d N=512:%d) — its fuzz-064/stream coverage is "
+                   "(N=240:%d N=512:%d) — its frozen-release/stream coverage is "
                    "all-zero==all-zero. Add a deterministic FUZZ_CANDLE window "
                    "(issue #109) or list it in cdl_pending[].\n",
                    L.nm[i], f240, f512);
@@ -9961,7 +9027,7 @@ static ErrorNumber verify_fuzz_candle_nonvacuous(void)
 
 /* Guard the FUZZ_ZEROSUM data shape (fuzz_data.h) that makes the ACCBANDS
  * degenerate else branch (TA_IS_ZERO(high+low) -> upper=high, lower=low)
- * non-vacuous vs v0.6.4 and in stream_verify. It must (a) actually produce bars
+ * non-vacuous in the frozen-release fuzz and in stream_verify. It must (a) actually produce bars
  * with high+low == 0, and (b) keep ACCBANDS FINITE on them: if the else branch
  * were skipped, 4*(high-low)/(high+low) divides by zero -> inf/nan propagates
  * into every band whose window covers that bar, so the finiteness check BITES
@@ -10112,37 +9178,18 @@ ErrorNumber test_codegen(const TA_History *history,
     if( errNb != TA_TEST_PASS )
         return errNb;
 
-    /* Spawn the reference oracle once; it is the shared baseline for every
-     * language server, including the generated C server (reference-as-server,
-     * task #7). The runner no longer computes the baseline in-process. */
-    CodegenPipe refCp;
-    errNb = codegen_pipe_open(&refCp, argv_cref);
-    if( errNb != TA_TEST_PASS )
-    {
-        printf("\nFAILED: cannot start ta_ref_serve (the reference oracle).\n"
-               "        Build it via scripts/regtest.py (it builds ta_ref_serve\n"
-               "        from the pinned-tag reference worktree into bin/).\n");
-        return errNb;
-    }
-    printf("Reference oracle: ta_ref_serve (pid=%d)\n", refCp.child_pid);
-
     for( unsigned int i = 0; i < NUM_LANGUAGES; i++ )
     {
         if( !language_matches_filter(languageFilter, ALL_LANGUAGES[i].name) )
             continue;
 
         errNb = test_codegen_for_language(&ALL_LANGUAGES[i], (int)i, history,
-                                          functionFilter, &refCp);
+                                          functionFilter);
         if( errNb != TA_TEST_PASS )
-        {
-            codegen_pipe_close(&refCp);
             return errNb;
-        }
 
         langsTested++;
     }
-
-    codegen_pipe_close(&refCp);
 
     if( langsTested == 0 )
     {
@@ -10287,14 +9334,11 @@ ErrorNumber test_codegen(const TA_History *history,
                 }
                 for( fi = 0; fi < sizeof(FLOORED)/sizeof(FLOORED[0]); fi++ )
                 {
-                    /* Success comes from the VALUE comparison, which a filtered
-                     * run — or a corpus of post-cutover functions, which have no
-                     * frozen baseline to compare against — legitimately never
-                     * reaches. The other three come from test_index_range_xlang,
-                     * which runs whatever the filter says, so they are floored
-                     * unconditionally. Found by the synth gate: its nine
-                     * synthetic functions are all post-cutover, so Rust compared
-                     * no values and a blanket floor called that a defect. */
+                    /* Success comes from the VALUE comparison, which a filter
+                     * naming no function legitimately never reaches. The other
+                     * three come from test_index_range_xlang, which runs
+                     * whatever the filter says, so they are floored
+                     * unconditionally. */
                     if( FLOORED[fi] == 0 && g_codegenCompared[li] == 0 )
                         continue;
                     for( b = 0; b < RC_BUCKETS; b++ )
@@ -10400,12 +9444,8 @@ ErrorNumber test_codegen(const TA_History *history,
                 }
                 printf("NO VALUE COMPARISON: %d language server(s) started and ran "
                        "the structural legs, but --function=%s selected no function "
-                       "this sweep can value-compare — every match was skipped (see "
-                       "the skip lines above).\n", langsTested, functionFilter);
-                printf("  This is NOT a pass. Post-cutover functions have no frozen "
-                       "ta_ref_serve baseline here; their cross-language values are "
-                       "gated by:  ta_regtest --xlang-hash --function=%s\n",
-                       functionFilter);
+                       "this sweep can value-compare. This is NOT a pass.\n",
+                       langsTested, functionFilter);
                 printf("=============================================\n");
                 write_timing_report("ta_regtest_timing.jsonl");
                 write_markdown_report("ta_regtest_report.md", languageFilter);
@@ -10505,7 +9545,6 @@ ErrorNumber test_codegen(const TA_History *history,
     /* Print summary chart to stdout */
     {
         int total = g_numTimingResults;
-        double cRefSum = 0; int cRefCount = 0;
         int langPass[NUM_LANGUAGES];
         double langSum[NUM_LANGUAGES];
         int langMeasured[NUM_LANGUAGES];
@@ -10515,7 +9554,6 @@ ErrorNumber test_codegen(const TA_History *history,
 
         for( int ri = 0; ri < g_numTimingResults; ri++ ) {
             FuncTimingResult *r = &g_timingResults[ri];
-            if( r->c_ref_ns > 0 ) { cRefSum += r->c_ref_ns; cRefCount++; }
             for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
                 if( r->langs[li].tested == 1 ) langPass[li]++;
                 if( r->langs[li].tested == 1 && r->langs[li].avg_ns > 0 ) {
@@ -10524,54 +9562,42 @@ ErrorNumber test_codegen(const TA_History *history,
                 }
             }
         }
-        double cRefAvg = cRefCount > 0 ? cRefSum / cRefCount : 0;
 
         printf("\n\xe2\x94\x8c\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
-               "\xe2\x94\xac\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\x90\n");
-        printf("\xe2\x94\x82 %-9s\xe2\x94\x82 %-5s\xe2\x94\x82 %-5s\xe2\x94\x82 %-11s\xe2\x94\x82 %-15s\xe2\x94\x82\n",
-               "Language", "Pass", "Fail", "Avg (ns)", "vs C-ref");
+        printf("\xe2\x94\x82 %-9s\xe2\x94\x82 %-5s\xe2\x94\x82 %-5s\xe2\x94\x82 %-11s\xe2\x94\x82\n",
+               "Language", "Pass", "Fail", "Avg (ns)");
         printf("\xe2\x94\x9c\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
-               "\xe2\x94\xbc\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xa4\n");
 
-        /* C-ref row */
-        {
-            char avg[32]; fmt_ns(avg, sizeof(avg), cRefAvg);
-            printf("\xe2\x94\x82 %-9s\xe2\x94\x82 %-5d\xe2\x94\x82 %-5d\xe2\x94\x82 %-11s\xe2\x94\x82 %-15s\xe2\x94\x82\n",
-                   "C-ref", total, 0, avg, "baseline");
-        }
 
         for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
             if( !language_matches_filter(languageFilter, ALL_LANGUAGES[li].name) )
                 continue;
             double avg = langMeasured[li] > 0 ? langSum[li] / langMeasured[li] : 0;
-            char avgStr[40], vsStr[32];
+            char avgStr[40];
             if( langMeasured[li] < total / 2 ) {
                 char raw[32];
                 fmt_ns(raw, sizeof(raw), avg);
-                snprintf(avgStr, sizeof(avgStr), "~%s*", raw);
-                snprintf(vsStr, sizeof(vsStr), "*%d/%d measured", langMeasured[li], total);
+                snprintf(avgStr, sizeof(avgStr), "~%s", raw);
             } else {
                 fmt_ns(avgStr, sizeof(avgStr), avg);
-                fmt_ratio(vsStr, sizeof(vsStr), avg, cRefAvg);
             }
             int fail = total - langPass[li];
-            printf("\xe2\x94\x82 %-9s\xe2\x94\x82 %-5d\xe2\x94\x82 %-5d\xe2\x94\x82 %-11s\xe2\x94\x82 %-15s\xe2\x94\x82\n",
-                   ALL_LANGUAGES[li].display, langPass[li], fail, avgStr, vsStr);
+            printf("\xe2\x94\x82 %-9s\xe2\x94\x82 %-5d\xe2\x94\x82 %-5d\xe2\x94\x82 %-11s\xe2\x94\x82\n",
+                   ALL_LANGUAGES[li].display, langPass[li], fail, avgStr);
         }
 
         printf("\xe2\x94\x94\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
-               "\xe2\x94\xb4\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80\xe2\x94\x80"
                "\xe2\x94\x98\n");
     }
 

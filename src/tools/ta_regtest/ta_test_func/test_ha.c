@@ -80,9 +80,9 @@
  *     8. The startIdx/endIdx range sweep, TA_STABLE_CONVERGING: HA_open is
  *        recursive and its seed's influence halves every bar.
  *
- *   Cross-language value coverage is server_verify in legs 1, 2 and 7 plus the
- *   --xlang-hash sweep; the frozen ta_ref_serve predates this function, so the
- *   --codegen value comparison cannot run for it.
+ *   Cross-language value coverage comes from server_verify in legs 1, 2 and
+ *   7, --codegen and --xlang-hash. All three compare against this library,
+ *   so none can catch a wrong formula.
  */
 
 /**** Headers ****/

@@ -16,9 +16,6 @@ cd bin && ./ta_bench --language=cref,c --function=RSI,SMA --points=100000 --iter
 cd bin && ./ta_bench --language=cref,c --points=100000 --iters=200
 ```
 
-**Gotcha:** `ta_ref_serve` is statically linked — rebuild when `libta-lib.a`
-changes or benchmarks are invalid. `regtest.py` handles this automatically.
-
 Both hand-written benches report the **spread** of their own repeated passes,
 because a bare median is silent about whether the box was quiet enough for it
 to mean anything — at `--iters=50` the same five functions read 0.57–0.81x, at
@@ -37,8 +34,7 @@ the old ±10% colour band. It now colours only outside `--no-signal` (default
 the output arrays — it only ever reads `timing_ns`. Without it a 100k-point run
 spends ~97% of its wall clock formatting and parsing JSON nobody looks at.
 Anything that needs the values (`--codegen`, `--xlang-hash`, `server_verify`)
-simply omits the flag. `cref` is a frozen binary and predates it, so runs
-including `cref` stay slower than C-only ones.
+simply omits the flag.
 
 ## The same source, six binaries
 
@@ -63,8 +59,11 @@ Which tool measures which:
 - `ta_bench_direct` — C-ref column is `libta-lib.a`, C column is `ta_bench_cg`.
   Its ratio is therefore rows 1 vs 5 above.
 - `ta_bench --language=c` — `ta_codegen_serve_c` (row 3), *not* `ta_bench_cg`.
-- `ta_bench --language=cref` — `ta_ref_serve`, the frozen pre-cutover source.
-  Different code, not just a different build; the only cross-*version* number.
+- `ta_bench --language=cref` — the newest `ta_ref` member's serve, a frozen
+  release (`--cref=X_Y_Z` picks another; `scripts/build.py ref --build-only`
+  builds it). Different code, not just a different build; the only cross-*version*
+  number. The baseline moves when a newer member is added, so read the serve name
+  ta_bench prints at startup before comparing two runs.
 - `ta_bench_stream` — itself, both arms, which is why its speedup column is the
   one ratio here that isn't cross-configuration.
 - `ta_bench_icount` — `libta-lib.a` (row 1), the shipped build. The only
@@ -286,6 +285,6 @@ the byte-for-byte reproduction of the historical seed-42 series, which matters
 more on a timing-only corpus. Every other predicate holds for every shape.
 
 The corpus is timing-only — it is never hashed and is unrelated to
-`fuzz_data.h`, whose `FUZZ_*` shape list is iterated by `--fuzz-064` /
-`--xlang-hash`. Keep it that way: adding a shape there changes what those gates
-compare (see the note at `test_variants.c:148`).
+`fuzz_data.h`, whose `FUZZ_*` shape list is iterated by `ta_regtest --ref`
+(`build.py ref`) and `--xlang-hash`. Keep it that way: adding a shape there
+changes what those gates compare (see the note at `test_variants.c:148`).

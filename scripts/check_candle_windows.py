@@ -16,8 +16,7 @@ Nothing else in the tree can see that, which is why this exists:
     CDL3BLACKCROWS or CDL3WHITESOLDIERS -- three patterns with full MC/DC
     coverage, two of them from the adversarially reviewed foundation -- leaves
     the whole tier green.
-  - The differential gates are only a partial net. `--fuzz-064` catches the
-    crossing in CDLMORNINGSTAR (10 divergences) and misses the other two.
+  - The frozen-release fuzz (`ta_regtest --ref`) is only a partial net.
     Firing rate is why: over 600k bars of gapped random walk, CDLPIERCING fires
     999 times and CDL3BLACKCROWS fires ONCE, so a threshold that moves by one
     bar of window almost never moves a 3-valued output.
@@ -44,8 +43,8 @@ The streaming tier names its bar with a `lagN_` prefix instead of an `i` offset
 the same rule.
 
 Scope: the generated C in src/ta_func, which is the shipped library and the
-golden every differential gate compares against. A generator defect reaches all
-four backends identically -- that is the blindness #219 exists for -- so one
+golden every cross-language gate compares against. A generator defect reaches
+all four backends identically -- that is the blindness #219 exists for -- so one
 backend is enough to catch it. A per-backend emission defect is not covered
 here; that is --xlang-hash's territory.
 

@@ -26,7 +26,7 @@ ErrorNumber test_codegen_unstable_map( void );
 /* Fails with TA_CODEGEN_OUTPUT_ARITY_EXCEEDS_CAP if any registered function
  * has nbOutput > CODEGEN_MAX_OUTPUTS (issue #352). Call with the library
  * initialized, ahead of every run mode — the clamped loops and sized buffers
- * this protects are used by the normal suite, --codegen, --fuzz-064 and
+ * this protects are used by the normal suite, --codegen, --ref and
  * --xlang-hash alike. */
 ErrorNumber codegen_output_arity_within_cap( void );
 
@@ -49,11 +49,11 @@ int codegen_short_filter_token_matches(const char *name, const char *token);
  * --xlang-hash and server_verify; see the comment on the implementation. */
 int codegen_lang_needs_transcendental_tol(const char *lang);
 
-/* Bit-exact differential fuzz of the current in-process library against the
- * frozen released v0.6.4 exposed as bin/ta_064_serve. Opt-in (--fuzz-064),
- * never part of default/nightly runs. functionFilter: CSV substring filter
- * (NULL = all). Returns TA_TEST_PASS iff there is no unwaived divergence. */
-ErrorNumber fuzz_ref064(const char *functionFilter);
+/* Differential fuzz of the current in-process library against the frozen
+ * release `version` ("0_6_4"), served by bin/ta_ref_<version>_serve (--ref).
+ * functionFilter: CSV substring filter (NULL = all). Returns TA_TEST_PASS iff
+ * there is no divergence the release's member does not account for. */
+ErrorNumber fuzz_ref(const char *version, const char *functionFilter);
 
 /* Cross-language BITWISE parity gate (--xlang-hash, issue #113). Diffs each
  * generated language server against the shipped in-process C library on

@@ -83,7 +83,7 @@
 /* CSV list of function names to test (NULL = test all) */
 static const char *functionFilter = NULL;
 static int doCodegenTest = 0;
-static int doFuzz064 = 0;
+static const char *refVersion = NULL;
 static int doXlangHash = 0;
 static const char *codegenLanguageFilter = NULL;
 static unsigned int randSeed = 0;   /* 0 = pick one from the clock */
@@ -197,9 +197,9 @@ static ErrorNumber regtest_main( int argc, char **argv )
          {
             codegenLanguageFilter = argv[i] + 11;
          }
-         else if( strcmp(argv[i], "--fuzz-064") == 0 )
+         else if( strncmp(argv[i], "--ref=", 6) == 0 && argv[i][6] )
          {
-            doFuzz064 = 1;
+            refVersion = argv[i] + 6;
          }
          else if( strcmp(argv[i], "--xlang-hash") == 0 )
          {
@@ -222,7 +222,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
       }
    }
 
-   /* --fuzz-064 and --xlang-hash each run their gate and RETURN, below, before
+   /* --ref and --xlang-hash each run their gate and RETURN, below, before
     * the normal suite. So pairing either with the other or with --codegen runs
     * whichever comes first and silently drops the rest -- `--codegen
     * --xlang-hash` produced the parity gate and ZERO stream_verify legs while
@@ -230,10 +230,10 @@ static ErrorNumber regtest_main( int argc, char **argv )
     * winner: making them additive would put the whole C suite inside the
     * nightly's xlang-hash job, which is not what that job is for.
     */
-   if( (doFuzz064 + doXlangHash + doCodegenTest) > 1 )
+   if( ((refVersion != NULL) + doXlangHash + doCodegenTest) > 1 )
    {
-      printf( "Error: --codegen, --fuzz-064 and --xlang-hash are separate runs.\n" );
-      printf( "       --fuzz-064 and --xlang-hash each return before anything\n" );
+      printf( "Error: --codegen, --ref and --xlang-hash are separate runs.\n" );
+      printf( "       --ref and --xlang-hash each return before anything\n" );
       printf( "       else can run, so combining them silently skips the rest.\n" );
       printf( "       Use one per invocation.\n" );
       return TA_REGTEST_BAD_USER_PARAM;
@@ -249,7 +249,7 @@ static ErrorNumber regtest_main( int argc, char **argv )
 
    /* The output-arity cap must hold before anything sizes or clamps by it
     * (issue #352) — checked here rather than inside test_codegen() because
-    * --fuzz-064 and --xlang-hash below are self-contained early returns that
+    * --ref and --xlang-hash below are self-contained early returns that
     * never reach it, and their buffers clamp at the same cap. */
    {
       ErrorNumber arityRet;
@@ -264,9 +264,9 @@ static ErrorNumber regtest_main( int argc, char **argv )
          return arityRet;
    }
 
-   /* Opt-in bit-exact differential fuzz vs released v0.6.4 (ta_064_serve).
+   /* Differential fuzz vs one frozen release (bin/ta_ref_<X_Y_Z>_serve).
     * Self-contained: init the lib, run the fuzz, done — skips the rest. */
-   if( doFuzz064 )
+   if( refVersion != NULL )
    {
       ErrorNumber fuzzRet;
       if( TA_Initialize() != TA_SUCCESS )
@@ -275,14 +275,14 @@ static ErrorNumber regtest_main( int argc, char **argv )
          return TA_TESTUTIL_INIT_FAILED;
       }
       TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-      fuzzRet = fuzz_ref064( functionFilter );
+      fuzzRet = fuzz_ref( refVersion, functionFilter );
       TA_Shutdown();
       return fuzzRet;
    }
 
    /* Opt-in cross-language BITWISE parity gate (issue #113). Self-contained:
     * init the lib (the in-process C golden), run the gate, done. Must run from
-    * the bin/ directory so the language servers launch (like --fuzz-064). */
+    * the bin/ directory so the language servers launch (like --ref). */
    if( doXlangHash )
    {
       ErrorNumber xlangRet;
@@ -964,11 +964,11 @@ static ErrorNumber testTAFunction_ALL( void )
     * tests succeeded" -- the failure mode that hid the candlestick gap above.
     *
     * Only fail when these groups were the whole job: --codegen, --xlang-hash
-    * and --fuzz-064 filter by REAL function name and legitimately run for names
+    * and --ref filter by REAL function name and legitimately run for names
     * no group tag carries (scripts/synth_gate.py drives --function=SYNTH that
     * way). There, zero groups here is expected, not an error. */
    if( functionFilter != NULL && nbGroupsRun == 0 &&
-       !doCodegenTest && !doXlangHash && !doFuzz064 )
+       !doCodegenTest && !doXlangHash && refVersion == NULL )
    {
       printf( "\nFAILED: --function=%s matched no test group, so nothing ran.\n",
               functionFilter );
@@ -1023,12 +1023,12 @@ static void printUsage(void)
       printf( "       with no tolerance. Honors --function and --language (rust today).\n" );
       printf( "       Run from the bin directory (needs the language servers).\n" );
       printf( "\n" );
-      printf( "    --fuzz-064\n" );
-      printf( "       Bit-exact differential fuzz against the released v0.6.4\n" );
-      printf( "       oracle (bin/ta_064_serve). Honors --function.\n" );
-      printf( "       Run from the bin directory.\n" );
+      printf( "    --ref=X_Y_Z\n" );
+      printf( "       Differential fuzz against the frozen release X.Y.Z\n" );
+      printf( "       (bin/ta_ref_X_Y_Z_serve, member ta_ref/ta_ref_X_Y_Z.c).\n" );
+      printf( "       Honors --function. Run from the bin directory.\n" );
       printf( "\n" );
-      printf( "    --codegen, --fuzz-064 and --xlang-hash are SEPARATE runs and\n" );
+      printf( "    --codegen, --ref and --xlang-hash are SEPARATE runs and\n" );
       printf( "    cannot be combined: the last two return before anything else,\n" );
       printf( "    so a combination would silently skip what it did not reach.\n" );
       printf( "\n" );

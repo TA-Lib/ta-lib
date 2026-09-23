@@ -71,7 +71,7 @@ import java.util.TreeSet;
  * Negative-space coverage: array sizes chosen so that any access the contract
  * forbids is an {@code ArrayIndexOutOfBoundsException} rather than a comment.
  *
- * <p>The value gates ({@code ta_regtest}, {@code --xlang-hash}, {@code --fuzz-064})
+ * <p>The value gates ({@code ta_regtest}, {@code --xlang-hash}, {@code --ref})
  * can only see work that reaches an output. Work a function does and then discards
  * — a read past {@code endIdx}, a write past the count it reported, a leg it
  * touches on a range where it promised to touch nothing — leaves no trace in any

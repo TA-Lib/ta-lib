@@ -121,16 +121,16 @@
  * for all 167 functions, rather than being re-hand-written per function.
  *
  * The nine FUZZ_* shapes are reused verbatim from fuzz_data.h (the same
- * generator --fuzz-064 and --xlang-hash drive), which already covers flat bars
- * (FUZZ_CONSTANT), ties, extreme magnitudes, signed zeros and exact zero-sum
- * bars. Only the zero-volume regime is added here: every fuzz shape emits
- * `v[i] = 1000.0 + t`, so NO existing generator in the tree ever produces a zero
- * or all-zero volume window — which is exactly what the sumVol guards in
+ * generator `ta_regtest --ref` and --xlang-hash drive), which already covers
+ * flat bars (FUZZ_CONSTANT), ties, extreme magnitudes, signed zeros and exact
+ * zero-sum bars. Only the zero-volume regime is added here: every fuzz shape
+ * emits `v[i] = 1000.0 + t`, so NO existing generator in the tree ever produces
+ * a zero or all-zero volume window — which is exactly what the sumVol guards in
  * CMF/VWMA/MFI/AD/ADOSC/OBV/NVI/PVI branch on.
  *
- * Adding zero volume as a tenth FUZZ_* shape was deliberately avoided: the fuzz
- * shape list is iterated by --fuzz-064, whose oracle is a frozen v0.6.4 binary,
- * so a new shape silently changes what that gate compares. This list is local. */
+ * Zero volume stays out of the FUZZ_* shapes: that list is what
+ * `ta_regtest --ref` compares against every frozen release, so a new shape
+ * silently changes the comparison for all of them at once. This list is local. */
 typedef enum
 {
    V_REG_HISTORY = 0,      /* the real 252-bar series (primary; full param sweep) */

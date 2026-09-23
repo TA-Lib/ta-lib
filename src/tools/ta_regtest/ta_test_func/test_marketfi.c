@@ -57,9 +57,8 @@
  *
  *   Test TA_MARKETFI (Bill Williams' Market Facilitation Index).
  *
- *   MARKETFI is not covered by the --codegen sweep: that sweep diffs against
- *   the frozen ta_ref_serve, which predates this function. Coverage comes from
- *   this file plus server_verify / --xlang-hash.
+ *   --codegen, --xlang-hash and server_verify compare every language against
+ *   this library, so none can catch a wrong formula.
  *
  *   Legs:
  *     1. EXTERNAL-ORACLE, relative tolerance. Six samples over the reference

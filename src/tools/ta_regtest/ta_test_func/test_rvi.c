@@ -89,9 +89,9 @@
  *        the leg has zero slack and ASan cannot see a violation of it.
  *     7. The startIdx/endIdx range sweep, in the CONVERGING class.
  *
- *   Cross-language value coverage comes from server_verify in legs 2 and 3 plus
- *   the --xlang-hash sweep; the frozen ta_ref_serve predates this function, so
- *   the --codegen value comparison cannot run for it (same situation as RMA).
+ *   Cross-language value coverage comes from server_verify in legs 2 and 3,
+ *   --codegen and --xlang-hash. All three compare against this library, so
+ *   none can catch a wrong formula.
  */
 
 /**** Headers ****/

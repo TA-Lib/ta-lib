@@ -49,8 +49,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
     check_prerequisites, prereqs_for_languages, backends_for_languages,
 )
-import serve_version
-from utilities import ref_serve
+from utilities import ta_ref
 
 OUR_FLAGS = {
     "--no-build", "--no-generate", "--no-generate-indicators", "--no-generate-servers",
@@ -79,16 +78,6 @@ def get_filter(args, prefix):
 # scripts/build.py enforces the same rule — a machine that can reach
 # `--language=c,rust` here must be able to reach it there too (issue #150).
 
-
-# Reference-as-server: the reference C library is frozen at this immutable tag
-# and checked out in a sibling git worktree, so ta_ref_serve stays a true oracle
-# now that src/ta_func holds the generated code (comparing against an in-process
-# baseline built from the same tree would be circular).
-# ta_ref_serve construction lives in utilities/ref_serve.py: BUILDING the oracle
-# is build.py's job (`build.py ta_ref_serve`), and this module is what both call
-# so the two cannot drift.
-REF_TAG = ref_serve.REF_TAG
-ensure_reference_serve = ref_serve.ensure_reference_serve
 
 
 def main():
@@ -131,12 +120,10 @@ def main():
         "--codegen=",
         "--no-guarded",
     )
-    # --fuzz-064 and --xlang-hash are deliberately NOT accepted. This pipeline
-    # has one ta_regtest invocation and it always carries --codegen; ta_regtest
-    # now rejects that combination outright, and before it did the two modes
-    # returned first, so `regtest.py --xlang-hash` printed the REGTEST banner
-    # and then ran none of it. They are their own runs -- scripts/build.py
-    # xlang-hash / fuzz-064 -- and the report below names them every time.
+    # --ref and --xlang-hash are deliberately NOT accepted. This pipeline has one
+    # ta_regtest invocation and it always carries --codegen, a combination
+    # ta_regtest rejects. They are their own runs -- scripts/build.py xlang-hash
+    # / ref -- and the report below names them every time.
     # --codegen is EXACT, not a prefix: a bare `startswith("--codegen")` accepts
     # any `--codegen<anything>` and forwards the typo to ta_regtest, which is a
     # louder failure than it needs to be and a quieter one than it looks.
@@ -154,8 +141,8 @@ def main():
     # Must follow --language parsing: the prerequisite set depends on it.
     # The ta_codegen `--backend=` value for this run. Derived from --language,
     # but only real backend names survive: ta_bench also accepts "cref" (a frozen
-    # prebuilt binary that is never generated or built here), and forwarding that
-    # verbatim made the generator hard-error on an otherwise valid invocation.
+    # release's serve, never generated), and forwarding that verbatim made the
+    # generator hard-error on an otherwise valid invocation.
     backend_filter = backends_for_languages(lang_filter)
     # Derived from the RESOLVED backend list, not the raw filter, so the tools we
     # demand always match the backends we go on to build. `--language=cref` names
@@ -200,10 +187,6 @@ def main():
                     if os.path.exists(dst):
                         os.remove(dst)
                     shutil.copy2(src, dst)
-
-        # Build ta_ref_serve from the FROZEN pinned-tag reference worktree
-        # (canonical cutover task #7, reference-as-server). See ensure_reference_serve.
-        ensure_reference_serve(root, bin_dir)
 
     # 2. generate indicators
     if not no_gen_ind:
@@ -298,13 +281,20 @@ def main():
         BENCH_FLAGS = ("--points=", "--iters=", "--language=", "--function=",
                        "--period=", "--shape=", "--seed=", "--regime-period=",
                        "--trend-strength=")
-        # Always include cref for comparison, even when --language= filters
+        # Always include cref for comparison, even when --language= filters.
+        # Built here, after generate, so it carries the transport this run speaks.
         bench_args = [a for a in passthrough if a.startswith(BENCH_FLAGS)]
         if lang_filter and "cref" not in lang_filter:
             for i, a in enumerate(bench_args):
                 if a.startswith("--language="):
                     bench_args[i] = a + ",cref"
                     break
+        if not no_build:
+            try:
+                ta_ref.build_serve(root, build_dir, ta_ref.newest(root))
+            except ta_ref.RefError as e:
+                print(f"regtest.py: {e}")
+                sys.exit(1)
         bench_rc = subprocess.run(
             [os.path.join(bin_dir, "ta_bench")] + bench_args,
             cwd=bin_dir,
@@ -347,10 +337,7 @@ def main():
     #
     # CI decomposes the cross-language legs into their own jobs, so this script
     # is not a superset of CI even when every step above passes. A run that says
-    # nothing here reads exactly like one that ran everything and agreed -- the
-    # same failure mode the codegen leg avoids by naming its skips ("no
-    # frozen-reference baseline (post-cutover): ...") instead of omitting them
-    # silently.
+    # nothing here reads exactly like one that ran everything and agreed.
     #
     # Scope: only the legs THIS pipeline can run and didn't. Enumerating every
     # nightly job here would go stale the first time one is added, so point at
@@ -370,9 +357,9 @@ def main():
                 "~3 min, 176 functions",
             ),
             (
-                "--fuzz-064",
-                "differential against the frozen v0.6.4 oracle",
-                "scripts/build.py fuzz-064",
+                "--ref",
+                "differential against each frozen release in ta_ref/",
+                "scripts/build.py ref",
                 "",
             ),
             (

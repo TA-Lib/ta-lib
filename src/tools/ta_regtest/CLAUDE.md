@@ -3,8 +3,8 @@
 Two modes: the shipped **C** indicators linked in and checked against
 hand-written expected values (`ta_test_func/test_*.c`) plus `doRangeTest`
 sweeps, and **codegen verification** (`--codegen`), which drives one generated
-JSON-RPC server per language over pipes and compares each against that same C
-reference.
+JSON-RPC server per language over pipes and compares each against that same
+linked-in library.
 
 ## Output contract
 
@@ -21,14 +21,14 @@ land in.
 | `--function=CSV` | Substring filter matched against the **group tag** in `DO_TEST`, not the function name — a function absent from its group's tag is unreachable by it, which is why the composite groups spell their members out. A tag element ending in `*` is a prefix claim (`CDL*`). Matching no group is `TA_REGTEST_FILTER_MATCHED_NOTHING`, except on the three self-contained legs below, which filter by real function name and legitimately match no group. |
 | `--codegen` | Codegen verification after the C reference tests |
 | `--language=CSV` | Narrow it (`c,rust,java,csharp`) |
-| `--fuzz-064` | Differential vs the frozen v0.6.4 oracle. **Self-contained** |
+| `--ref=X_Y_Z` | Differential fuzz vs one frozen release. **Self-contained** |
 | `--xlang-hash` | Cross-language bitwise parity gate. **Self-contained** |
 
-The last three are **rejected in combination** (`TA_REGTEST_BAD_USER_PARAM`):
-the two self-contained gates `return` from `main()` before the normal suite, so
-a combination runs one and silently drops the rest while reading as if it had
-run both. `scripts/regtest.py` accepts neither — they are their own runs
-(`scripts/build.py xlang-hash` / `fuzz-064`).
+`--codegen`, `--ref` and `--xlang-hash` are **rejected in combination**
+(`TA_REGTEST_BAD_USER_PARAM`): the two self-contained gates `return` from
+`main()` before the normal suite, so a combination runs one and silently drops
+the rest while reading as if it had run both. `scripts/regtest.py` accepts
+neither: they are their own runs (`scripts/build.py xlang-hash` / `ref`).
 
 ## Key Files
 
@@ -92,8 +92,12 @@ copy out the requested `outputNb`.
 One generic callback driven by `TA_ForEachFunc` covers every indicator, building
 requests from ta_abstract metadata with no per-function hand-coding. Real inputs
 are named **positionally** (`inReal`, or `inReal0`/`inReal1`), price inputs by
-OHLCV component per the `TA_InputParameterInfo.flags` bitmask. Real outputs
-compare at `CODEGEN_EPSILON` (1e-6), integer outputs exactly.
+OHLCV component per the `TA_InputParameterInfo.flags` bitmask. Inputs travel as
+IEEE-754 hex bits and the baseline is the in-process library called with the
+same request, so real outputs compare **bitwise**, bar the Java and C# calls
+that reach a transcendental, which take `server_verify`'s 1e-9 rule (below).
+Integer outputs compare exactly. Integer parameters sweep from each one's
+declared minimum.
 
 The sweep **compares values by default** for every function; checking only
 coherency is how the TRIX partial-range mislabeling survived two decades.
@@ -244,8 +248,8 @@ request with an error, which is the exact hole this closes. It tests against
 legitimate zero.
 
 `run_float_leg` must snapshot and restore everything it touches in
-`CodegenRangeTestParam` — `parse_ref_baseline` fields, `optOverride[]`, the
-request-shaping flags, the timing accumulators. Skipping that only appears to
+`CodegenRangeTestParam`: the baseline fields and output buffers, `optOverride[]`,
+the request-shaping flags, the timing accumulators. Skipping that only appears to
 work while it is the last statement of `sweep_run_variant`.
 
 ## Transport
@@ -284,9 +288,9 @@ the C server answers `{"error":"Missing method field"}`. Use
 
 **`fuzz_hash_init()` is `1469598103934665603`, NOT the standard FNV-1a 64-bit
 offset basis** (`14695981039346656037`) despite the comment beside it — the repo
-constant is that value with its last digit lost. Every server and both oracles
-use the repo constant, so a from-scratch reimplementation of the standard basis
-matches nothing. Call `fuzz_hash_init()`; never retype the number.
+constant is that value with its last digit lost. Every server and every
+`ta_ref` serve use the repo constant, so a from-scratch reimplementation of the
+standard basis matches nothing. Call `fuzz_hash_init()`; never retype the number.
 
 Servers launch from `bin/`: `java -cp ta_codegen_java TaCodegenServe` and
 `dotnet ta_codegen_csharp/TaCodegenServe.dll`.
@@ -382,7 +386,7 @@ define — and every gate here compares bits.
 therefore count "different bits, numerically equal" as **benign**:
 `stream_verify` returns it per request, and the driver names each function on a
 `BENIGN TA_x` line. The total is not printed, so a change that starts flipping
-zeros is visible only through those lines. `--fuzz-064` carries the same class —
+zeros is visible only through those lines. `--ref` carries the same class:
 `a == b` with differing bits can only be ±0.
 
 **Same-tier** comparisons stay strictly bitwise: peek vs update, `value()` vs
@@ -418,10 +422,11 @@ window while the hand-written constants carry 2–6 significant digits. That win
 is scale-blind: a third of those values sit below magnitude 10, where it admits
 >0.1% relative error, and on a bounded output (BOP, CORREL) the row is close to
 no assertion. Freezing full-precision values removes transcription as an error
-source. **Why freeze when `--fuzz-064` compares:** that gate needs the `v0.6.4`
-tag, a `../ta-lib-064` worktree and a second CMake build, cannot run from a
-release tarball, and dies if the tag stops being fetchable. Broad-and-transient
-against narrow-and-permanent.
+source. **Why freeze when the frozen-release fuzz compares** (`scripts/build.py
+ref`, member `0_6_4`): that gate builds the release from its pinned commit, so it
+needs the repository history and a second CMake build, cannot run from a release
+tarball, and ends when the member is pruned. Broad-and-transient against
+narrow-and-permanent.
 
 **What it is not.** Not a correctness oracle — v0.6.4 is the same lineage and
 cannot catch a bug it already had. It is a *pin*. Correctness lives in the
@@ -433,10 +438,10 @@ to compare against, so the set grows with each new indicator); STOCHRSI, which
 diverges on purpose and is pinned by `test_stoch.c`; and everything whose value
 depends on **the host libm**.
 
-That last reason is *created* by freezing — `--fuzz-064` compares two binaries on
-one host and never sees it, while a frozen table is read on every host.
-`atan`/`sin`/`cos`/`exp`/`log` are not correctly rounded, so a frozen value for
-the pure passthroughs (ACOS…TANH) asserts "your libm matches the machine that
+That last reason is *created* by freezing: the frozen-release fuzz compares two
+binaries on one host and never sees it, while a frozen table is read on every
+host. `atan`/`sin`/`cos`/`exp`/`log` are not correctly rounded, so a frozen value
+for the pure passthroughs (ACOS…TANH) asserts "your libm matches the machine that
 generated this table" and nothing about TA-Lib; `sqrt`/`ceil`/`floor` are
 correctly rounded and stay in. The Hilbert functions go out with a sharper edge:
 they turn an atan into an **integer** (`period = 360/(atan(Im/Re)*rad2Deg)`, then
@@ -468,12 +473,13 @@ and stay in: both are smooth in it, and MAMA carries the 8-ULP libm floor.
 **Tolerances are measured, not contractual.** Most in-scope functions reproduce
 v0.6.4 bit for bit and carry no row. Each bound that exists is that function's
 largest measured deviation on this series × ~3, absolute — there is only one
-magnitude here, unlike `--fuzz-064`'s 1e-7…1e9 shapes, which need scaled bounds
-and conditioning gates — so the result is orders tighter than the 1e-9 relative
-FMA contract. `LEGACY_TOL` refuses a row for a function outside the freeze and
-refuses a zero or negative bound, so it cannot accumulate dead slack. The one
-exception to "3× measured" is a floor of **8 ULP at the output magnitude** for a
-function reaching a non-correctly-rounded libm routine; only MAMA needs it.
+magnitude here, unlike the frozen-release fuzz's 1e-7…1e9 shapes, which need
+scaled bounds and conditioning waivers — so the result is orders tighter than the
+1e-9 relative FMA contract. `LEGACY_TOL` refuses a row for a function outside
+the freeze and refuses a zero or negative bound, so it cannot accumulate dead
+slack. The one exception to "3× measured" is a floor of **8 ULP at the output
+magnitude** for a function reaching a non-correctly-rounded libm routine; only
+MAMA needs it.
 
 **Sampling, and the rule that was wrong first.** First/middle/last of each
 output, plus — for every INTEGER output — the first, middle and last occurrence
@@ -519,82 +525,68 @@ unstable period and restoring the candle defaults, then putting both back.
 `LEGACY_TOL` row; both divergence causes are specific to v0.6.4. The libm floors
 are the one part that may need to survive.
 
-## `--fuzz-064` — bit-exact differential fuzz vs released v0.6.4
+## `--ref=X_Y_Z`: differential fuzz vs a frozen release
 
-Opt-in, never part of a `--codegen` run, and proves the **current shipped library
-is bit-identical to v0.6.4** function by function. It is the regression oracle a
-class-A optimization is validated against: run it before and after — the
-divergence set must not grow. `scripts/build.py fuzz-064` builds and runs it;
-both CI nightlies gate on it.
+Opt-in, one release per run. Holds the **current shipped library** to what a
+released version computed, function by function: the regression oracle a
+class-A optimization is validated against. Run it before and after; the
+divergence set must not grow. `scripts/build.py ref` builds and runs every
+member (`--versions=` narrows); the nightly runs them all, and
+`.github/workflows/ta-ref.yml` runs chosen versions on demand.
 
-- **Oracle:** `bin/ta_064_serve` — the frozen v0.6.4 `libta-lib.a` from the
-  `../ta-lib-064` worktree at tag `v0.6.4`, behind the current JSON-RPC
-  transport, **shadow-patched at build time** by `scripts/build_064_serve.py` (no
-  committed file changes). The current library is called **in-process**; only
-  0.6.4 crosses the pipe.
+- **Member:** `ta_ref/ta_ref_<X_Y_Z>.c`, one file per release, carrying
+  everything specific to it with its reason: the pinned commit, the release's
+  function count, the integer floor, exclusions, tolerance rows and waivers.
+  `ta_ref/ta_ref.h` is the contract. Deleting the file removes the member
+  everywhere; `ta_regtest` refuses a version whose file is gone even when `bin/`
+  still holds its serve. Which releases are members, and when one is pruned, is
+  a human decision.
+- **Oracle:** `bin/ta_ref_<X_Y_Z>_serve`, the release's `libta-lib.a` behind the
+  current JSON-RPC transport, built with `-DTA_REF_SERVE`. Only values are
+  frozen: its metadata answers are the current generator's, so no metadata gate
+  may be built on a serve. The current library is called **in-process**; only
+  the release crosses the pipe. A serve that dies is reopened and the case
+  retried once.
 - **Inputs by seed:** the request carries only `(gen_shape, gen_seed, gen_n)` and
   both ends run the identical generator in `fuzz_data.h`, so inputs are
   byte-identical by construction. `FP_CONTRACT` is forced off so the generator
   cannot be fused into an FMA on one side only.
 - **Outputs by hash:** a 64-bit FNV of the raw output bytes; on a mismatch the
-  driver re-issues that one case with `"full_output":1` to pinpoint the element.
-- **Coverage:** every function × 7 data shapes × 3 seeds × 3 sizes × parameter
-  vectors (boundary periods, MA-type lists, real-param bounds) × 3 subranges.
+  driver re-issues that one case with `"full_output":1` and holds each element
+  to the function's row, else the member's `*` row (modes in `ta_ref.h`). A diff
+  whose differing elements are all numerically equal (±0) is benign: reported,
+  not failed.
+- **Coverage:** every function the release has × 9 shapes × 3 seeds × 3 sizes ×
+  parameter vectors (integer boundaries from the member's floor, the default's
+  neighbourhood, default+50/+51, every MAType value the release has, real-param
+  bounds) × subranges (full, two random, and `startIdx` at lookback-1, lookback
+  and lookback+1), plus a second pass at unstable period 3 for every function
+  carrying `TA_FUNC_FLG_UNST_PER`. No reject or sentinel vectors: a release
+  certifies numbers, not the current parameter contract.
+- **Subset rule:** functions added after the release are skipped, read off the
+  serve's `list_functions`, whose length the member pins. No other gate may
+  tolerate a subset.
 
-Scope rules (deliberate):
+Asserted:
 
-- **period == 1 is out of scope** — 0.6.4 rejects it or has period-1 OOB bugs —
-  so periods are floored at 2 and period-1 is validated by the non-0.6.4
-  comparisons. At period ≥ 2 there is **no blanket slack**: every exemption is
-  a manifest tolerance or a named skip.
-- **Subset tolerance is 0.6.4-only:** post-0.6.4 functions are skipped via
-  `ta_064_serve`'s `list_functions`. Any non-0.6.4 comparison must instead
-  require an exact function-set match.
-- **Benign class:** a diff where every differing element is numerically equal
-  (±0, from cached-index rewrites) is reported, not failed.
-- **Fixed-bug skips:** TRIX/NATR `startIdx > lookback` cases, and NATR cases with
-  a zero close in the output range. Comparing these would diff the fixes
-  themselves; the fixed behaviour is validated by the value-comparing range
-  tests. Reported as `skipped:`.
-- **NaN-to-neutral (`TOL_NAN_TO`):** where 0.6.4's *successful* call emitted NaN
-  from an unchecked `x/0` and the fix substitutes a defined neutral value. IMI is
-  the instance — an all-flat window made `upsum+downsum == 0` → `100*(0/0)`, and
-  the guard now returns 50.0. The entry tolerates a case **only** when 0.6.4 is
-  NaN *and* current is *exactly* 50.0, so a still-NaN regression still fails.
-  Reported as `manifest-tolerated:`.
-- **MFI per-case skip:** v0.6.4 zeroed MFI whenever a window's money flow summed
-  under a literal `1.0` — a constant compared against a price times a volume —
-  and divided rounding residue by itself on an empty or one-sided window, which
-  is what put its output above 100. Those cases are skipped, gated on
-  `fuzz_mfi_064_blind()`; **every other MFI case is compared bit-exact with no
-  manifest entry**. Categorical rather than graded: 0.6.4 either reports the
-  index or it does not. The new behaviour is pinned separately by `test_mfi.c`
-  against two external oracles plus a bit-identity sweep over power-of-two volume
-  scales. Reported as `mfi-skipped:`.
-- **KAMA per-case skip:** v0.6.4's efficiency ratio is decided by its running
-  sum's residue rather than by the window — on a flat window (#253), and where
-  absorption puts that residue at the scale of the window's own sum, which sends
-  v0.6.4's ratio outside [0,1] (#390). Gated on `fuzz_kama_064_blind()`, whose
-  predicate is computed from the inputs alone; the mechanism is stated there.
-  KAMA has no manifest entry, so every other case is held to the blanket 1e-9
-  FMA re-baseline bound, which is what absorbs the ULP-scale ratio changes the
-  clamp introduces; the skip covers only what leaves that bound. The same skip
-  drops the STOCH/STOCHF vectors that smooth with `MAType=KAMA`, whose
-  Fast-K series this gate cannot examine. Reported as `kama-skipped:`.
-- The oracle is reopened and retried once if it dies, so one latent 0.6.4 crash
-  cannot sink the run.
+- every function compares at least one case, and each waiver stays under its
+  per-function ceiling;
+- unstable period 3 moves the release's lookback, and the lookback-clamp ranges
+  produce output;
+- at least half the functions with an integer period produce output at
+  default+50;
+- on an unfiltered run every row and every waiver absorbs something; a dead one
+  is deleted.
 
 ## `--xlang-hash` — cross-language BITWISE parity gate
 
 Opt-in, proving each **generated language server** computes **bit-identical**
 outputs to the **shipped in-process C library**, zero tolerance apart from the
-transcendental lane. It is the strong form of `--codegen`, which can only compare
-at 1e-6 because its INPUTS cross the JSON-RPC boundary as lossy `%.15g` — the two
-sides compute on subtly different numbers, which no output-side fidelity can
-undo. This gate routes around that both ways: full-precision inputs (a seed both
-sides regenerate, or lossless hex-of-IEEE-bits) and outputs compared by a
-full-precision FNV hash, so a ~1e-10 fusion-site divergence becomes a hard
-failure. `scripts/build.py xlang-hash` builds and runs it; both CI nightlies gate
+transcendental lane. It applies `--codegen`'s rule to the seeded fuzz corpus
+rather than the 252-bar series: full-precision inputs (a seed both sides
+regenerate, or lossless hex-of-IEEE-bits) and outputs compared by a
+full-precision FNV hash, so a ~1e-10 fusion-site divergence is a hard failure.
+`scripts/build.py xlang-hash` builds and runs it; both CI nightlies gate
 on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
 
 - **Golden = the in-process C library**, called directly via `TA_CallFunc` with
@@ -644,8 +636,8 @@ on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
 
 Scope rules (deliberate):
 
-- **No 0.6.4, no waivers; one tolerance and two skips.** Current-vs-current, so
-  none of `--fuzz-064`'s carve-outs apply. A non-tolerated mismatch is a real
+- **No waivers; one tolerance and two skips.** Current against current, so no
+  frozen-release carve-out applies. A non-tolerated mismatch is a real
   fusion-site or codegen divergence to fix.
 - **The choice-list default sentinel, Java only.** Every optional parameter gets
   a `TA_*_DEFAULT` vector that must resolve to the declared default,
@@ -664,9 +656,8 @@ Scope rules (deliberate):
   codegen bug: every non-degenerate shape agrees within 1e-9, and `atan2` of a
   null signal is undefined, so no fixed tolerance could separate it from libm
   noise.
-- **period == 1 is in scope** (no 0.6.4 to trip on it), though
-  `fuzz_build_vectors` floors periods at 2; period-1 parity is covered by the
-  `--codegen` edge sweeps.
+- **Integer periods sweep from each parameter's declared minimum**, period 1
+  included, and reach default+50/+51.
 - Expected GREEN because every backend fuses the identical `a*b+c` sites via the
   shared `backends/fma.rs` detector and builds with `-ffp-contract=off`, and
   `fma`/`mul_add` are IEEE correctly-rounded, hence bit-identical for equal
@@ -691,8 +682,8 @@ server == expected".
   decode hex, else number array"; every other caller is unaffected.
 - **Output by hash.** `want_hash:1`, answered by each server's **per-function**
   handler (`TA_<name>`, not `abstract_call`) with an FNV-1a of the raw GUARDED
-  output bytes. C's per-function handler is `#ifndef TA_REF_SERVE`-guarded, its
-  `fuzz_hash_*` living in `fuzz_data.h`, absent from the frozen `ta_ref_serve`.
+  output bytes. C's `want_hash` block is compiled out under `TA_REF_SERVE`, so
+  no `ta_ref` serve answers it.
 - **Tolerance rule.** Bitwise for C ⇄ Rust (same system libm as the golden). Java
   and C# are bitwise for pure arithmetic and IEEE ops (SQRT/CEIL/FLOOR included)
   and take `CODEGEN_TRANSCENDENTAL_TOL` (1e-9, against measured drift

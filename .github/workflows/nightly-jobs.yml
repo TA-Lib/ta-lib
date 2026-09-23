@@ -431,11 +431,10 @@ jobs:
   # C is the hero: the 'test' job above validates the C library with a C-only
   # toolchain (CMake/autotools never invoke cargo, so ta_regtest needs no Rust
   # toolchain). Only this job adds the Rust/Java/.NET toolchains, builds the
-  # JSON-RPC language servers plus the frozen reference server (ta_ref_serve,
-  # from the pinned reference tag), and runs ta_regtest --codegen:
-  # 161 functions x 4 languages diffed against the reference, including the
-  # non-default-parameter ref differential sweep. POSIX-only (the server
-  # harness uses fork/exec), hence no Windows leg.
+  # JSON-RPC language servers, and runs ta_regtest --codegen: every function x
+  # 4 languages diffed against the in-process library, including the
+  # non-default-parameter sweep. POSIX-only (the server harness uses
+  # fork/exec), hence no Windows leg.
   #
   # --codegen runs the C reference tests in the same process as the codegen
   # sweep, which is what lets server_verify verify the HAND-WRITTEN tests
@@ -443,7 +442,7 @@ jobs:
   # hero 'test' job already ran costs ~6s; that is what buys the hand-written
   # tier a cross-language check.
   cross-language:
-    name: "xlang: all langs vs pre-cutover C"
+    name: "xlang: all langs vs in-process C"
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -456,7 +455,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -514,7 +512,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -620,7 +617,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # ta_ref_serve builds from the pinned reference tag
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -952,11 +948,12 @@ jobs:
             fi
           done
 
-  # Bit-exact regression gate vs the last release (v0.6.4): diff every function
-  # at period>=2, fail on any real divergence. C-only, gated on 'test'.
-  # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
-  fuzz-vs-064:
-    name: C Latest vs released v0.6.4
+  # Regression gate vs every frozen release in ta_ref/: fail on any divergence
+  # its member does not account for. C-only. The member list lives in the tree,
+  # so adding or pruning one touches no YAML. For a single release, dispatch
+  # ta-ref.yml. fetch-depth: 0 so the release tags are available.
+  ta-ref:
+    name: C Latest vs frozen releases
     needs: test
     # Run after 'test' but don't let an unrelated failure (e.g. the Windows leg)
     # silently skip this release gate — it has its own checkout+build.
@@ -971,16 +968,16 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # ta_064_serve builds from the released v0.6.4 tag
+          fetch-depth: 0 # each member builds from its release tag
 
       - name: Install Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
-      - name: Fuzz current library vs frozen v0.6.4
+      - name: Fuzz current library vs each frozen release
         shell: bash
-        run: python3 scripts/build.py fuzz-064
+        run: python3 scripts/build.py ref
 
   # Native arm64 Linux — the ONE platform where both halves of issue #150 are live
   # at once, and the only reason that issue reached a user instead of CI.
@@ -992,7 +989,7 @@ jobs:
   #      flag is inert — no baseline FMA — which is why every job above is blind to
   #      this class. macos-latest is arm64, but it runs only the plain C suite; no
   #      FMA-baseline runner has ever executed an oracle suite.
-  #  (2) GCC. fuzz_data.h — the seeded INPUT generator both sides of --fuzz-064
+  #  (2) GCC. fuzz_data.h — the seeded INPUT generator both sides of --ref
   #      compile — defends itself with `#pragma STDC FP_CONTRACT OFF`, which clang
   #      honours and GCC ignores outright (GCC also contracts ACROSS statements, so
   #      its second defence, splitting multiply from add, goes with it). Only GCC on
@@ -1014,7 +1011,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # both oracles build from pinned tags (v0.6.4, reference-pre-cutover)
+          fetch-depth: 0 # each ta_ref member builds from its release tag
 
       - name: Install Python
         uses: actions/setup-python@v6
@@ -1046,12 +1043,12 @@ jobs:
           python3 scripts/build.py ta_regtest
           cd bin && ./ta_regtest
 
-      # Half (1) and half (2): --fuzz-064 builds the frozen v0.6.4 oracle AND the
-      # 064 transport that compiles fuzz_data.h, so it exercises both the cmake
+      # Half (1) and half (2): each member builds its release library AND a
+      # transport that compiles fuzz_data.h, so this exercises both the cmake
       # sites and the raw-cc site in one run.
-      - name: Fuzz current library vs frozen v0.6.4
+      - name: Fuzz current library vs each frozen release
         shell: bash
-        run: python3 scripts/build.py fuzz-064
+        run: python3 scripts/build.py ref
 
       # build.py grew the same per-language prerequisite narrowing regtest.py has
       # had since #150, so it needs the same live regression test: on this runner
@@ -1062,12 +1059,11 @@ jobs:
         shell: bash
         run: python3 scripts/build.py servers --language=c,rust
 
-      # The ref differential sweep — the suite that silently truncated on arm64
-      # (131 variants/21 functions when it aborted, 613/74 once the oracle stopped
-      # fusing). --language=c,rust is also the invocation that was unreachable
-      # through the CLI until the prerequisite check became per-language, so this
-      # is its live regression test on a runner with no JDK and no .NET.
-      - name: Ref differential sweep (C + Rust)
+      # The codegen sweep for C and Rust: arm64's only Rust value comparison.
+      # --language=c,rust is also the invocation that was unreachable through
+      # the CLI until the prerequisite check became per-language, so this is its
+      # live regression test on a runner with no JDK and no .NET.
+      - name: Codegen sweep (C + Rust)
         shell: bash
         run: python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen --language=c,rust
 

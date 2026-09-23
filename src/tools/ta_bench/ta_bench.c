@@ -1,12 +1,13 @@
 /* ta_bench — Generic performance benchmark for ALL TA-Lib indicators.
  *
  * Uses ta_abstract (TA_ForEachFunc, TA_CallFunc) to iterate all indicators
- * generically. Compares C-ref (direct call) against codegen servers
- * (JSON-RPC with load_data + use_preloaded + server-side iteration).
+ * generically, timing each server (JSON-RPC with load_data + use_preloaded +
+ * server-side iteration). C-ref is a frozen release, bin/ta_ref_<X_Y_Z>_serve:
+ * the newest member of ta_ref/ unless --cref=X_Y_Z picks another.
  *
  * Usage:
  *   ./ta_bench [--points=N] [--iters=N] [--language=c,rust] [--function=RSI,SMA]
- *              [--mode=batch|open|openfill]
+ *              [--mode=batch|open|openfill] [--cref=X_Y_Z]
  *              [--shape=NAME] [--seed=N] [--regime-period=N] [--trend-strength=F]
  *              [--list-shapes] [--verify-corpus]
  *
@@ -37,6 +38,10 @@ static char *win_strcasestr(const char *haystack, const char *needle)
     return NULL;
 }
 #define strcasestr win_strcasestr
+#endif
+
+#if !defined(WIN32) && !defined(_WIN32)
+#include <dirent.h>
 #endif
 
 #include "ta_libc.h"
@@ -104,7 +109,8 @@ typedef struct {
                        (e.g. an opt-in third-party comparison server) */
 } BenchLanguage;
 
-static const char *const argv_cref[]   = {"./ta_ref_serve", NULL};
+static char g_cref_path[64];
+static const char *argv_cref[]         = {g_cref_path, NULL};
 static const char *const argv_c[]      = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_rust[]   = {"./ta_codegen_serve_rust", NULL};
 static const char *const argv_java[]   = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
@@ -150,7 +156,7 @@ static int g_period_override = 0;
      2 = TA_<N>_OpenAndFill -- the warm-up that also fills the history arrays
    The warm-up arms time an Open+Close round trip; the handle must be released
    each iteration, and the free is nanoseconds against a whole-history replay.
-   Note the frozen `cref` server predates the streaming API, so it answers only
+   The cref serve is built with the stream tiers compiled out, so it answers only
    mode 0 -- there is no cross-version reference column for the warm-up. */
 static int g_bench_mode = 0;
 static const char *g_mode_name = "batch";
@@ -284,11 +290,11 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
                 continue;
             int len;
             const char *t = json_find_field(ctx->respBuf, "timing_ns", &len);
-            if( t ) {
+            const char *rc = json_find_field(ctx->respBuf, "retCode", &len);
+            if( t && !(rc && atoi(rc) != 0) ) {
                 long long ns = strtoll(t, NULL, 10);
-                /* Error responses carry timing_ns 0 — not a measurement.
-                 * Without this guard an errored call would show up as a
-                 * (green) 0 ns row instead of ERR. */
+                /* Error responses carry timing_ns 0, and a call the library
+                 * rejected times the rejection: neither is a measurement. */
                 if( ns > 0 ) {
                     if( !has_timing[li] || ns < timings[li] )
                         timings[li] = ns;
@@ -333,6 +339,34 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
 
 /* ---- Main ---- */
 
+/* The newest member of ../ta_ref/ (ta_ref_<X>_<Y>_<Z>.c), as "X_Y_Z" in out;
+ * 0 when there is none to be found. */
+static int newest_ref_member(char *out, int size)
+{
+#if defined(WIN32) || defined(_WIN32)
+    (void)out; (void)size;
+    return 0;
+#else
+    DIR *d = opendir("../ta_ref");
+    struct dirent *e;
+    int best[3] = {-1, -1, -1};
+    if( !d ) return 0;
+    while( (e = readdir(d)) != NULL ) {
+        int v[3], n = 0;
+        if( sscanf(e->d_name, "ta_ref_%d_%d_%d.c%n", &v[0], &v[1], &v[2], &n) == 3
+            && n > 0 && e->d_name[n] == '\0'
+            && (v[0] > best[0] || (v[0] == best[0] && (v[1] > best[1]
+                || (v[1] == best[1] && v[2] > best[2])))) ) {
+            best[0] = v[0]; best[1] = v[1]; best[2] = v[2];
+        }
+    }
+    closedir(d);
+    if( best[0] < 0 ) return 0;
+    snprintf(out, size, "%d_%d_%d", best[0], best[1], best[2]);
+    return 1;
+#endif
+}
+
 int main(int argc, char *argv[]) {
     int n_points = DEFAULT_POINTS;
     int n_iters  = DEFAULT_ITERS;
@@ -346,6 +380,8 @@ int main(int argc, char *argv[]) {
     int seed = BENCH_CORPUS_SEED;
     double trend_strength = BENCH_CORPUS_TREND;
     int regime_period = 0;   /* 0 = derive (see below) */
+    const char *cref_version = NULL;
+    char cref_newest[32];
     int shape;
 
     for( int i = 1; i < argc; i++ ) {
@@ -368,6 +404,7 @@ int main(int argc, char *argv[]) {
         else if( strcmp(argv[i], "--list-shapes") == 0 )  { bench_shape_list(); return 0; }
         else if( strcmp(argv[i], "--verify-corpus") == 0 ) verify_corpus = 1;
         else if( strncmp(argv[i], "--max-spread=", 13) == 0 ) max_spread = atof(argv[i]+13)/100.0;
+        else if( strncmp(argv[i], "--cref=", 7) == 0 )        cref_version = argv[i]+7;
         else {
             /* Reject rather than ignore: a mistyped --shape= would otherwise
              * silently benchmark the default class and report it as the one
@@ -401,6 +438,22 @@ int main(int argc, char *argv[]) {
     if( verify_corpus )
         return bench_corpus_selfcheck(n_points, &corpus) ? 1 : 0;
 
+    /* A member whose file is gone is refused, whatever bin/ still holds. */
+    if( !cref_version && newest_ref_member(cref_newest, sizeof(cref_newest)) )
+        cref_version = cref_newest;
+    if( cref_version ) {
+        char member[96];
+        FILE *mf;
+        snprintf(member, sizeof(member), "../ta_ref/ta_ref_%s.c", cref_version);
+        mf = fopen(member, "r");
+        if( !mf ) {
+            fprintf(stderr, "ta_bench: no member ta_ref/ta_ref_%s.c for --cref\n", cref_version);
+            return 2;
+        }
+        fclose(mf);
+        snprintf(g_cref_path, sizeof(g_cref_path), "./ta_ref_%s_serve", cref_version);
+    }
+
     TA_Initialize();
     generate_price_data(n_points, &corpus);
 
@@ -422,9 +475,19 @@ int main(int argc, char *argv[]) {
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( LANGUAGES[li].optional && !lang_filter ) continue;
         if( !lang_matches(lang_filter, LANGUAGES[li].name) ) continue;
+        if( LANGUAGES[li].argv[0][0] == '\0' ) {
+            printf("  FAILED to start %s server: no member in ../ta_ref (use --cref=X_Y_Z)\n",
+                   LANGUAGES[li].display);
+            continue;
+        }
         if( codegen_pipe_open(&LANGUAGES[li].cp, LANGUAGES[li].argv) == TA_TEST_PASS ) {
             LANGUAGES[li].active = 1;
-            printf("  Started %s server (pid %d)\n", LANGUAGES[li].display, LANGUAGES[li].cp.child_pid);
+            if( strcmp(LANGUAGES[li].name, "cref") == 0 )
+                printf("  Started %s server (%s, pid %d)\n", LANGUAGES[li].display,
+                       g_cref_path + 2, LANGUAGES[li].cp.child_pid);
+            else
+                printf("  Started %s server (pid %d)\n", LANGUAGES[li].display,
+                       LANGUAGES[li].cp.child_pid);
         } else {
             printf("  FAILED to start %s server\n", LANGUAGES[li].display);
         }

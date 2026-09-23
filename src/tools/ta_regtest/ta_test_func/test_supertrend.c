@@ -49,13 +49,12 @@
  *
  *   Test TA_SUPERTREND.
  *
- *   Almost nothing generic covers this function. The --codegen sweep cannot
- *   value-compare it against the frozen ta_ref_serve, which predates it; and
- *   the one leg that would otherwise vary startIdx is switched OFF, because
+ *   The generic startIdx range sweep is switched OFF for this function:
  *   `path_dependent` maps to TA_DO_NOT_COMPARE and thence to TA_STABLE_SKIP.
- *   The seed and the trend latch -- the two things most likely to be wrong --
- *   are exactly what that leg would have probed. Everything below is therefore
- *   load-bearing rather than supplementary.
+ *   The seed and the trend latch, the two things most likely to be wrong, are
+ *   exactly what that sweep would have probed, and the cross-language gates
+ *   compare against this library, so they cannot catch either. Everything
+ *   below is therefore load-bearing rather than supplementary.
  *
  *   Legs:
  *     1. EXTERNAL ORACLE (formula correctness) on the 1000-bar gData corpus,

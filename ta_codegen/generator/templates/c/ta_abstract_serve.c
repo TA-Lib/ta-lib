@@ -18,6 +18,10 @@
 
 #include "ta_abstract.h"
 
+#ifdef TA_REF_SERVE
+#include "ta_ref_serve.c"
+#endif
+
 /* ---- abstract_for_each_func ----
  * Mirrors: TA_ForEachFunc
  * Returns: list of all functions with metadata
@@ -145,12 +149,14 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
     * TA_<name> method hardcodes the correct id and is where unstable-period
     * work belongs. Checked before the ParamHolder is allocated so the early
     * return has nothing to free. */
+#ifndef TA_REF_SERVE
    if( json_find_int(json, "unstablePeriod") != 0 ) {
       snprintf(resp, resp_size,
                "{\"error\":\"abstract_call cannot set an unstable period: this "
                "endpoint carries no per-function id. Use the TA_<name> method.\"}");
       return;
    }
+#endif
 
    TA_ParamHolder *params;
    if( TA_ParamHolderAlloc(handle, &params) != TA_SUCCESS ) {
@@ -163,6 +169,15 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
 
    int startIdx = json_find_int(json, "startIdx");
    int endIdx   = json_find_int(json, "endIdx");
+
+#ifdef TA_REF_SERVE
+   int refGen = ta_ref_gen_inputs(json, handle, fi);
+   if( refGen < 0 ) {
+      TA_ParamHolderFree(params);
+      snprintf(resp, resp_size, "{\"error\":\"gen_n out of range\"}");
+      return;
+   }
+#endif
 
    /* Set inputs based on ta_abstract metadata */
    int totalRealInputs = 0;
@@ -278,6 +293,24 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
       }
    }
 
+#ifdef TA_REF_SERVE
+   int refUnst = 0;
+   if( ta_ref_set_unstable(json, fi->name, &refUnst) != 0 ) {
+      TA_ParamHolderFree(params);
+      snprintf(resp, resp_size, "{\"error\":\"%s has no unstable period\"}", fi->name);
+      return;
+   }
+   if( refGen ) {
+      int waived = ta_ref_waived(json, handle, fi, params, startIdx, endIdx);
+      if( waived >= 0 ) {
+         ta_ref_reset_unstable(fi->name, refUnst);
+         TA_ParamHolderFree(params);
+         snprintf(resp, resp_size, "{\"waived\":%d}", waived);
+         return;
+      }
+   }
+#endif
+
    /* Call the function via ta_abstract */
    int outBegIdx = 0, outNBElement = 0;
    TA_RetCode rc = TA_CallFunc(params, startIdx, endIdx, &outBegIdx, &outNBElement);
@@ -285,6 +318,9 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
    /* Get lookback */
    TA_Integer lookback = 0;
    TA_GetLookback(params, &lookback);
+#ifdef TA_REF_SERVE
+   ta_ref_reset_unstable(fi->name, refUnst);
+#endif
 
    TA_ParamHolderFree(params);
 
@@ -292,6 +328,13 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
    int pos = json_appendf(resp, resp_size, 0,
       "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"lookback\":%d",
       (int)rc, outBegIdx, outNBElement, (int)lookback);
+
+#ifdef TA_REF_SERVE
+   if( refGen && !json_find_int(json, "full_output") ) {
+      ta_ref_append_hash(resp, resp_size, pos, fi, outputIsInteger, rc, outNBElement);
+      return;
+   }
+#endif
 
    /* Serialize outputs. The key is built from the per-type ordinal -- `outReal`,
     * `outReal1`, `outReal2`, ... -- rather than picked from a list, so the naming

@@ -2347,10 +2347,10 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
       }
 
       /* #142 deferred: extend the empty-output (period > input-length) contract
-       * to the language servers. The generic --codegen / --xlang-hash sweeps keep
-       * every lookback < nbBars (compute_large_int clamps to nbBars-5), so this
-       * is the one boundary they never cross-check. Each server must likewise
-       * return TA_SUCCESS with a zero-length output at the same outBegIdx. */
+       * to the language servers. The --codegen sweep keeps every lookback <
+       * nbBars (compute_large_int clamps to nbBars-5), so it never sends such a
+       * period. Each server must likewise return TA_SUCCESS with a zero-length
+       * output at the same outBegIdx. */
       if( server_verify_active() && funcInfo->nbOptInput <= PB_MAX_OPT )
       {
          const TA_Real     *svInputs[PB_MAX_INPUT];

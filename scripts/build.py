@@ -100,9 +100,6 @@ def show_help():
   Building (C, via CMake):
     (default)           Build library + all C tools
     ta_regtest          Build the regression test runner
-    ta_ref_serve        Build the frozen pre-cutover reference oracle from the
-                        pinned-tag worktree. `regtest` and `ta_regtest --codegen`
-                        need it present; neither builds it.
     ta_bench_icount     Build the instruction-count bench dev-nightly's icount job runs
                         (scripts/bench_icount.py). Needs valgrind's headers to
                         measure anything; without them it still builds and only
@@ -159,9 +156,11 @@ def show_help():
                         bars are identical) and the differential gates see only
                         where the data happens to straddle.
     regtest             Full pipeline: servers (cargo) + C tests + codegen verification
-    fuzz-064            Bit-exact differential fuzz of the current library vs the
-                        frozen released v0.6.4 (opt-in; builds ta_064_serve then
-                        runs ta_regtest --fuzz-064). C-only; needs the v0.6.4 tag.
+    ref                 Differential fuzz of the current library vs each frozen
+                        release in ta_ref/ (builds bin/ta_ref_<X_Y_Z>_serve, then
+                        runs ta_regtest --ref=<X_Y_Z> per member). C-only; needs
+                        the release tags. --versions=0_8_1[,...] narrows it;
+                        --build-only stops after the serves.
     xlang-hash          Cross-language BITWISE parity gate (opt-in; issue #113):
                         builds the Rust + Java + C# servers + ta_regtest, then runs
                         ta_regtest --xlang-hash — diffs each language server vs the
@@ -246,22 +245,31 @@ def build_libraries(root_dir: str, lang_filter=None) -> int:
                 f'--backend={",".join(picked)}')
     return 0
 
-def build_fuzz064(root_dir: str, build_dir: str, jobs: int) -> int:
-    """Opt-in bit-exact differential fuzz of the current library vs the frozen
-    released v0.6.4. Builds bin/ta_064_serve (v0.6.4 worktree + shadow-patched
-    transport) and ta_regtest, then runs `ta_regtest --fuzz-064`. C-only — no
-    cargo/JVM/.NET. Returns ta_regtest's exit code (non-zero on real divergence).
-    """
-    # 1. Frozen v0.6.4 oracle server (creates ../ta-lib-064 worktree + its lib).
-    subprocess.run([sys.executable,
-                    os.path.join(root_dir, "scripts", "build_064_serve.py")],
-                   check=True)
-    # 2. The C test runner (staged into bin/).
+def build_ref(root_dir: str, build_dir: str, jobs: int, versions, build_only: bool) -> int:
+    """Builds the serve of every selected member of ta_ref/ (all by default),
+    then runs `ta_regtest --ref=<v>` once per member: one process each, so no
+    driver state carries from one release to the next. C-only."""
+    from utilities import ta_ref
+    try:
+        selected = ta_ref.select(root_dir, versions)
+        for v in selected:
+            ta_ref.build_serve(root_dir, build_dir, v)
+    except ta_ref.RefError as e:
+        print(f"Error: {e}")
+        return 1
+    if build_only:
+        return 0
     cmake_build(build_dir, target='ensure_ta_regtest_in_bin', jobs=jobs)
-    # 3. Run the fuzz (argv is relative "./ta_064_serve", so cwd must be bin/).
-    print("=== Running ta_regtest --fuzz-064 ===")
-    return subprocess.run([os.path.join(root_dir, "bin", "ta_regtest"), "--fuzz-064"],
-                          cwd=os.path.join(root_dir, "bin")).returncode
+    failed = []
+    for v in selected:
+        print(f"=== ta_regtest --ref={v} ===", flush=True)
+        # The serve's argv is relative ("./ta_ref_<v>_serve"): cwd must be bin/.
+        if subprocess.run([os.path.join(root_dir, "bin", "ta_regtest"), f"--ref={v}"],
+                          cwd=os.path.join(root_dir, "bin")).returncode != 0:
+            failed.append(v)
+    print(f"ref: {len(selected) - len(failed)}/{len(selected)} member(s) passed"
+          + (f"; FAILED: {', '.join(failed)}" if failed else ""))
+    return 1 if failed else 0
 
 def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) -> int:
     """Cross-language BITWISE parity gate (issue #113). Diffs each generated
@@ -641,7 +649,7 @@ CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy',
 # compiles the language servers with cargo AND brings bin/ta_regtest — the only
 # thing that ever drives them — up to date, so bin/ is never left holding fresh
 # servers next to a runner built before the function list changed. `xlang-hash`
-# and `fuzz-064` already pair the two the same way. CMake decides whether there
+# and `ref` already pair the two the same way. CMake decides whether there
 # is anything to rebuild, so the added step is a no-op on an unchanged tree, and
 # cmake was already a prerequisite of `servers` for every --language filter.
 SIMPLE_TARGETS = {
@@ -673,14 +681,13 @@ TARGET_PREREQS = {
     # Cargo only, deliberately: the point of this gate is that anyone can run
     # it. It builds nothing C, so cmake is not a prerequisite either.
     'regen-check':  [PREREQS_CARGO],
-    'ta_ref_serve': [PREREQS_CMAKE, PREREQS_GCC, PREREQS_CARGO],
     'format':       PREREQS_BUILD_CODEGEN,
     'format-check': PREREQS_BUILD_CODEGEN,
     'clippy':       PREREQS_BUILD_CODEGEN,
     'servers':      PREREQS_BUILD_SERVERS,
     'test':         PREREQS_BUILD_BASIC,
     'regtest':      PREREQS_BUILD_SERVERS,
-    'fuzz-064':     [PREREQS_CMAKE, PREREQS_GCC],
+    'ref':          [PREREQS_CMAKE, PREREQS_GCC],
     # build_xlanghash builds --backend=rust,java,csharp, so the .NET SDK is as
     # required here as the JDK. Without it the C# server silently never builds.
     'xlang-hash':   PREREQS_BUILD_CODEGEN + [PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
@@ -706,6 +713,10 @@ def main():
     # for the backends it does have. Same tokens as regtest.py / ta_regtest.
     parser.add_argument('--language', default=None,
                         help='c,rust,java,csharp — limit which servers are built')
+    parser.add_argument('--versions', default=None,
+                        help='ref: the ta_ref members to build and run (default: all)')
+    parser.add_argument('--build-only', action='store_true',
+                        help='ref: build the serves, run nothing')
     parser.add_argument('--sanitize', action='store_true',
                         help='Build with AddressSanitizer + UBSan into cmake-build-asan (issue #94)')
     parser.add_argument('--help', '-h', action='store_true')
@@ -740,14 +751,6 @@ def main():
                 pass
         if not removed:
             print("Nothing to clean.")
-        return
-
-    # The frozen pre-cutover oracle. Lives here because this is the tool named
-    # build: ta_regtest and regtest.py CONSUME the oracle, they do not make it.
-    if args.target == 'ta_ref_serve':
-        check_prerequisites([PREREQS_CMAKE, PREREQS_GCC, PREREQS_CARGO])
-        from utilities import ref_serve
-        ref_serve.ensure_reference_serve(root_dir, os.path.join(root_dir, 'bin'))
         return
 
     # Pure text check — no build prerequisites.
@@ -813,10 +816,8 @@ def main():
 
     ensure_configured(root_dir, build_dir, args.build_type, args.cmake_args)
 
-    # Bit-exact differential fuzz vs frozen v0.6.4 (opt-in; C-only composite —
-    # not a single cmake/cargo target). Propagates ta_regtest's exit code.
-    if args.target == 'fuzz-064':
-        sys.exit(build_fuzz064(root_dir, build_dir, args.jobs))
+    if args.target == 'ref':
+        sys.exit(build_ref(root_dir, build_dir, args.jobs, args.versions, args.build_only))
 
     # Cross-language BITWISE parity gate (opt-in; issue #113). Composite: build the
     # Rust server + ta_regtest, then diff each server vs the in-process C golden.

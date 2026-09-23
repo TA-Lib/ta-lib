@@ -70,11 +70,6 @@
  *     5. The startIdx/endIdx range sweep, EPSILON class -- a finite window
  *        carried in a running accumulator, so a different anchor may move the
  *        last ulp but nothing more.
- *
- *   Not covered here, deliberately: --fuzz-064 has nothing frozen to compare
- *   against for a post-cutover function, and --codegen value-compares nothing
- *   for the same reason. --xlang-hash and the server_verify calls below are the
- *   cross-language value gate.
  */
 
 /**** Headers ****/

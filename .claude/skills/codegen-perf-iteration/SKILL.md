@@ -57,9 +57,10 @@ Its ratio is `ta_bench_cg` (single TU, `-flto`) over `libta-lib.a` (separate
 TUs, no LTO) — a build-configuration difference, not an algorithm one. See
 "The same source, six binaries" in the root CLAUDE.md before quoting it.
 
-**Secondary tool: `ta_bench`** — cross-language, and the only way to reach the
-frozen pre-cutover reference (`cref`). Its `timing_ns` is measured *inside* the
-server around the call, so JSON-RPC transport is NOT in the timed region:
+**Secondary tool: `ta_bench`** — cross-language, and the only way to reach `cref`:
+the newest `ta_ref` member's serve, a frozen release (`--cref=X_Y_Z` picks another;
+`scripts/build.py ref --build-only` builds it). Its `timing_ns` is measured *inside*
+the server around the call, so JSON-RPC transport is NOT in the timed region:
 ```bash
 cd bin && ./ta_bench --language=cref,c --function=NAME --points=100000 --iters=500
 ```
@@ -150,22 +151,6 @@ For one-off runs: just invoke `/codegen-perf-iteration` directly.
 5. **Revert failures quickly.** Don't spend 3 cycles saving a bad idea.
 6. **Consult external AI when stuck.** 2+ failed cycles on the same indicator → get a second opinion.
 7. **Log everything.** Each iteration → `.plans/perf-iteration-log.md`: what changed, why, before/after, outcome.
-
-## Rebuilding ta_ref_serve
-
-`scripts/regtest.py` rebuilds `ta_ref_serve` automatically in its cmake step, so the
-normal pipeline handles this. The manual fallback (when cmake rebuilds `libta-lib.a`
-and you need the reference server refreshed by hand) reads from
-`ta_codegen/output/c/tools/ta_codegen_serve.c`:
-```bash
-sed '/#include "ta_[A-Z].*\.c"/d' ta_codegen/output/c/tools/ta_codegen_serve.c > /tmp/ta_ref_serve.c
-sed -i '' '/#include "ta_lib_globals.c"/a\
-extern int TA_Initialize(void);\
-extern int TA_RestoreCandleDefaultSettings(int settingType);
-' /tmp/ta_ref_serve.c
-sed -i '' 's|int main(void) {|int main(void) { TA_Initialize(); TA_RestoreCandleDefaultSettings(11);|' /tmp/ta_ref_serve.c
-cc -O3 -DNDEBUG -Wno-everything -I ta_codegen/output/c -o bin/ta_ref_serve /tmp/ta_ref_serve.c cmake-build/libta-lib.a -lm
-```
 
 ## Current State (historical snapshot, 2026-03-21)
 

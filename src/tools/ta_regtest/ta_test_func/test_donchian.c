@@ -72,9 +72,9 @@
  *     5. In-place aliasing (each output over each input) and the
  *        output-distinctness rejection (two outputs on one buffer).
  *
- *   Cross-language value coverage comes from server_verify below plus the
- *   --xlang-hash sweep; the frozen ta_ref_serve predates this function, so
- *   the --codegen value comparison cannot run for it (same situation as KC).
+ *   Cross-language value coverage comes from server_verify below, --codegen
+ *   and --xlang-hash. All three compare against this library, so none can
+ *   catch a wrong formula.
  */
 
 /**** Headers ****/

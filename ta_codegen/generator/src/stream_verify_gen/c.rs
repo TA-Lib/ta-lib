@@ -3,8 +3,8 @@
 //! per bar (memcmp on doubles), spot-asserts peek == update, and answers flat
 //! JSON (`ok`, per-leg match flags, first divergence as %a on mismatch). See
 //! docs/streaming-api-design.md, Verification. The whole handler is compiled
-//! out under TA_REF_SERVE, frozen reference libraries having no stream
-//! symbols.
+//! out under TA_REF_SERVE: it reads the current tree's private stream structs,
+//! whose layout a frozen release does not share.
 
 use super::{
     collect_pin_ids, sv_input_suffix, sv_range_bit, sv_reject_condition, SvRangeSite,
@@ -42,7 +42,7 @@ fn emit_sv_compare(
 
 /// The fuzz-convention input array for one expanded input name: price
 /// components map to their OHLCV series; generic reals map real0→close,
-/// real1→volume (matches abstract_call/fuzz-064 and the driver).
+/// real1→volume (matches the frozen-release serves' abstract_call and the driver).
 fn sv_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
     match sv_input_suffix(name, generic_idx) {
         "o" => "sv_o",
@@ -1172,7 +1172,7 @@ pub(crate) fn generate_c_stream_verify(
     // Cross-tier compare (stream vs batch, and OpenAndFill's array vs batch).
     // Differing bits that are numerically equal can only be +0.0 vs -0.0, which
     // max/min leave unspecified: counted, never a mismatch — the same benign
-    // class --fuzz-064 carries (issue #147). Same-tier compares (peek vs
+    // class the frozen-release fuzz carries (issue #147). Same-tier compares (peek vs
     // update) keep sv_bitne: one code path has no licence to differ at all.
     s.push_str("static int sv_xtier_ne(double a, double b, int *zsign) {\n");
     s.push_str("    if( !sv_bitne(a, b) ) return 0;\n");
@@ -1751,7 +1751,7 @@ pub(crate) fn generate_c_stream_verify(
     // Unknown / non-streamable function.
     s.push_str("    snprintf(resp, resp_size, \"{\\\"error\\\":\\\"not_streamable\\\"}\");\n");
     s.push_str("}\n");
-    s.push_str("#else /* TA_REF_SERVE: frozen libs have no stream symbols */\n");
+    s.push_str("#else /* TA_REF_SERVE: a frozen release's stream structs are private to it */\n");
     s.push_str("static void handle_stream_verify(const char *json, char *resp, int resp_size) {\n");
     s.push_str("    (void)json;\n");
     s.push_str("    snprintf(resp, resp_size, \"{\\\"error\\\":\\\"not supported\\\"}\");\n");

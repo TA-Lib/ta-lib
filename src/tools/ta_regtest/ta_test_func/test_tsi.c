@@ -86,9 +86,9 @@
  *     7. The startIdx/endIdx range sweep, in the CONVERGING class against
  *        TA_FUNC_UNST_EMA, which TSI consumes twice through ema_lookback.
  *
- *   Cross-language value coverage comes from server_verify in legs 3 and 4
- *   plus the --xlang-hash sweep; the frozen ta_ref_serve predates this
- *   function, so the --codegen value comparison cannot run for it.
+ *   Cross-language value coverage comes from server_verify in legs 3 and 4,
+ *   --codegen and --xlang-hash. All three compare against this library, so
+ *   none can catch a wrong formula.
  */
 
 /**** Headers ****/

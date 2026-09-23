@@ -53,7 +53,7 @@ use super::rust_lang::{collect_sentinel_vars, collect_signed_int_vars, collect_v
 ///
 /// This flag is also the fusion-site enumeration oracle: set it `false`, run
 /// `generate`, and diff the generated code to see every site that fuses (and to
-/// confirm the pre-FMA output is byte-identical to the frozen v0.6.4 reference),
+/// confirm the pre-FMA output is byte-identical to v0.6.4),
 /// then revert. Because all four backends route through this module, one flip
 /// enumerates them all.
 pub const EMIT_FMA: bool = true;

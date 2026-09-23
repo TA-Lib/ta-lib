@@ -76,9 +76,9 @@
  *   CENTRED window test, and no composition over shipped primitives would be
  *   independent of this file's own arithmetic anyway.
  *
- *   Cross-language value coverage comes from server_verify in legs 1-2 plus
- *   the --xlang-hash sweep; the frozen ta_ref_serve predates this function, so
- *   the --codegen value comparison cannot run for it (same situation as VHF).
+ *   Cross-language value coverage comes from server_verify in legs 1-2,
+ *   --codegen and --xlang-hash. All three compare against this library, so
+ *   none can catch a wrong formula.
  */
 
 /**** Headers ****/

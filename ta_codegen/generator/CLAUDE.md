@@ -280,9 +280,6 @@ Strict Clippy pedantic in `src/lib.rs`, with `module_name_repetitions`,
   costs ~10 cycles on ARM.
 - Full parameter validation is required even where it looks redundant: removing
   it changes compiler register allocation.
-- `ta_ref_serve` is statically linked against `libta-lib.a` and MUST be rebuilt
-  when cmake rebuilds the library, or benchmarks compare against stale code.
-  `regtest.py` rebuilds it in the cmake step.
 - Full-suite benchmark runs carry 10-20% variance from icache pressure; use
   `ta_bench --function=NAME --iters=500` for ground truth. A thermal canary (SMA)
   runs between indicators to normalize CPU state.

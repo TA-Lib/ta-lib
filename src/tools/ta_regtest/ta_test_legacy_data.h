@@ -48,9 +48,10 @@
  *   (period = 360/(atan(Im/Re)*rad2Deg), then (int)DCPeriod) so one ULP of libm
  *   difference near a boundary changes the iteration count and the output moves
  *   discontinuously. sqrt/ceil/floor are correctly rounded and stay in scope.
- *   This bites here and not in --fuzz-064 because that gate compares two
- *   binaries on ONE host with ONE libm, while a frozen table is read on every
- *   host; the cross-implementation coverage is --xlang-hash's tolerance lane.
+ *   This bites here and not in the frozen-release fuzz (`build.py ref`)
+ *   because that gate compares two binaries on ONE host with ONE libm, while a
+ *   frozen table is read on every host; the cross-implementation coverage is
+ *   --xlang-hash's tolerance lane.
  *
  * ONE-SIDED CASES. A candlestick pattern that never fires anywhere on this
  *   series is pinned at 0 at every sample, which fails a pattern that STARTS

@@ -49,9 +49,8 @@
  *
  *   Test TA_CMF (Chaikin Money Flow).
  *
- *   CMF is not covered by the --codegen sweep: that sweep diffs against the
- *   frozen ta_ref_serve, which predates this function. Coverage therefore comes
- *   from this file plus server_verify / --xlang-hash.
+ *   --codegen, --xlang-hash and server_verify compare every language against
+ *   this library, so none can catch a wrong formula.
  *
  *   Legs:
  *     1. EXTERNAL ORACLE (formula correctness) at four periods, absolute
@@ -61,8 +60,7 @@
  *     3. Deterministic edges that no fuzz shape reaches.
  *     4. Aliasing of the output over each of the four inputs.
  *     5. The generic start/end range sweep.
- *     6. The single-precision entry point, which no other
- *        test in the tree reaches.
+ *     6. The single-precision entry point, bitwise, over the full period grid.
  */
 
 /**** Headers ****/
@@ -593,10 +591,7 @@ static ErrorNumber test_cmf_range( const TA_History *history )
  * heap CIRCBUF path) and a startIdx > lookback sub-range.
  *
  * TA_S_CMF takes float inputs but must compute in double throughout (PR #33),
- * so on the SAME widened values it must be bit-identical to TA_CMF. Nothing
- * else covers it: test_s_overflow.c is limited to the vector-arithmetic
- * operators, and the --codegen float leg skips any function the frozen
- * ta_ref_serve predates -- which is every function added after the cutover.
+ * so on the SAME widened values it must be bit-identical to TA_CMF.
  * A single-point check here was demonstrably weak: a sabotaged TA_S_CMF that
  * doubled its output on the period>50 branch passed the entire suite. */
 static ErrorNumber test_cmf_single( const TA_History *history )

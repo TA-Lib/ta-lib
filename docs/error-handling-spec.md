@@ -1034,7 +1034,7 @@ closed the divergence in Appendix D item 11.
 **None of this is visible to a cross-language gate.** The JSON-RPC servers bind
 every declared output and floor its length at one, so a backend that went back to
 requiring `outFAMA` — or to rejecting distinct empty buffers — would stay green in
-`--codegen`, `--xlang-hash` and `--fuzz-064` alike. Each backend therefore carries
+`--codegen`, `--xlang-hash` and `--ref` alike. Each backend therefore carries
 its own probe: `testBatchArgumentContract` (C), `tests/nullable_outputs.rs` and
 `tests/stream_open_contract.rs` (Rust), `BatchApiTest` (Java) and `BatchApiTest`
 plus `StreamApiTest` (C#). Each compares a declining call against

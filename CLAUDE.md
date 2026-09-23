@@ -33,9 +33,10 @@ tests a class directory and every machine builds with the same Maven. No
 credentials are involved (signing and the Central upload sit behind the pom's `release` profile);
 only the wrapper's first run needs the network.
 
-The correctness baseline every backend is verified against is the frozen
-pre-cutover reference (tag `reference-pre-cutover`, served as `ta_ref_serve`)
-plus the hardcoded `ta_regtest` expected values.
+Correctness is verified against three baselines: the in-process C library, which
+`ta_regtest --codegen` and `--xlang-hash` diff every language server against; the
+frozen releases in `ta_ref/` (`scripts/build.py ref`); and the hardcoded
+`ta_regtest` expected values.
 
 See `ta_codegen/generator/CLAUDE.md` for generator internals,
 `src/tools/ta_regtest/CLAUDE.md` for the test-runner spec, and
@@ -193,15 +194,13 @@ scripts/build.py libraries      # Build the publishable Java jars + C# library f
 scripts/build.py regen-check    # The PR gate: regenerating must change nothing
                                 # (cargo + Python only; the same command CI runs)
 scripts/build.py test           # C reference tests only (quick)
-scripts/build.py ta_ref_serve   # The frozen pre-cutover oracle, from the pinned-tag worktree
+scripts/build.py ref            # C vs each frozen release in ta_ref/ (C-only);
+                                # --versions=X_Y_Z[,...] narrows it
 scripts/build.py ta_bench_icount # Instruction-count bench (dev-nightly's icount job)
 scripts/bench_icount.py         # Run it under callgrind and compare against the
                                 # committed baseline (needs valgrind; the script
                                 # header says what a count cannot see)
 scripts/build.py regtest        # Servers (cargo) + C tests + cross-language verification.
-                                # Needs bin/ta_ref_serve to already exist; build it with the
-                                # target above. Building the oracle is build.py's job -- nothing
-                                # on a test path repairs what it is about to measure.
 
 # ta_codegen (run from ta_codegen/generator/)
 cargo run -- generate                            # Generate everything, all backends

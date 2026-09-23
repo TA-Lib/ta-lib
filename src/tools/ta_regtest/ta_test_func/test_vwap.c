@@ -50,9 +50,8 @@
  *
  *   Test TA_VWAP (Volume Weighted Average Price).
  *
- *   VWAP is not covered by the --codegen sweep: that sweep diffs against the
- *   frozen ta_ref_serve, which predates this function. Coverage therefore comes
- *   from this file plus server_verify / --xlang-hash.
+ *   --codegen, --xlang-hash and server_verify compare every language against
+ *   this library, so none can catch a wrong formula.
  *
  *   Legs:
  *     1. EXTERNAL ORACLE (formula correctness) against pandas-ta-classic, at a
@@ -64,8 +63,8 @@
  *        identities, none of which any oracle covers or any fuzz shape reaches.
  *     4. Aliasing of the output over each of the four inputs.
  *     5. The generic start/end range sweep.
- *     6. The single-precision entry point, which no other test in the tree
- *        reaches.
+ *     6. The single-precision entry point, over the real history at a startIdx
+ *        past 0.
  */
 
 /**** Headers ****/
@@ -647,11 +646,11 @@ static ErrorNumber test_vwap_edges( void )
 
          /* Cross-language, on the DOCTORED arrays. The guard is generated into
           * all four backends, but every other cross-language leg in this file
-          * feeds the clean 252-bar history, --codegen skips VWAP (no frozen
-          * baseline), and no fuzz shape emits a non-finite bar -- so without
-          * this call the skip has C-only coverage. An emitter that gated
-          * `sumPV +=` and left `sumV += volume` unconditional in one language
-          * would bias every later value there and ship green.
+          * and --codegen feed clean histories, and no fuzz shape emits a
+          * non-finite bar -- so without this call the skip has C-only
+          * coverage. An emitter that gated `sumPV +=` and left
+          * `sumV += volume` unconditional in one language would bias every
+          * later value there and ship green.
           *
           * The inputs travel as hex-of-IEEE-bits, so the NaN and the
           * infinities arrive bit-exact rather than through a %g round-trip. */

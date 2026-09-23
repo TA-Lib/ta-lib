@@ -46,5 +46,4 @@ inside `build.py` / `regtest.py`.
 |---|---|
 | `utilities/` | Versions, package digests, file/archive comparison, Windows `vcvarsall` — imported across the release scripts |
 | `install_tests/` | MSI and Python-wheel install verification — imported by `test-dist.py` |
-| `serve_version.py` | Builds a "serve of another version" oracle from a pinned worktree — imported by `utilities/ref_serve.py` |
-| `build_064_serve.py` | Builds `bin/ta_064_serve` (the frozen v0.6.4 oracle for `ta_regtest --fuzz-064`) — called by `build.py` |
+| `utilities/ta_ref.py` | Builds the serve of each `ta_ref/` member (`bin/ta_ref_<X_Y_Z>_serve`); imported by `build.py ref` and `regtest.py` |

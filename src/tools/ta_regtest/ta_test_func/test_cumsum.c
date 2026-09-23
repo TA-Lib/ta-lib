@@ -79,9 +79,8 @@
  *       series driven until total + x == total, asserting the plain
  *       uncompensated answer.
  *
- *   SERVER_VERIFY: every distinct fixed-vector call. These 40-bar counts are
- *   not in the sweep's corpus, and CUMSUM is post-cutover, so its values reach
- *   no server any other way. A repeat or an overwritten input is skipped.
+ *   SERVER_VERIFY: every distinct fixed-vector call, since these 40-bar counts
+ *   are not in the sweep's corpus. A repeat or an overwritten input is skipped.
  */
 
 /**** Headers ****/

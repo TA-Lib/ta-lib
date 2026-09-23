@@ -1,0 +1,49 @@
+# The frozen-release gate on its own: the current library against one or more
+# members of ta_ref/, without the rest of the nightly (which runs all of them
+# in its ta-ref job).
+
+name: ta-ref
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: "Members to run, e.g. 0_8_1 or 0.6.4,0.8.1. 'all' runs every member of ta_ref/."
+        default: all
+      runner:
+        description: "ubuntu-24.04-arm is the GCC + baseline-FMA platform."
+        type: choice
+        options: [ubuntu-latest, ubuntu-24.04-arm]
+        default: ubuntu-latest
+
+permissions:
+  contents: read
+
+jobs:
+  ta-ref:
+    name: C Latest vs frozen releases (${{ inputs.versions }}, ${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # each member builds from its release tag
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install build tooling
+        if: ${{ inputs.runner == 'ubuntu-24.04-arm' }}
+        uses: ./.github/actions/apt-install
+        with:
+          packages: build-essential cmake
+
+      - name: Fuzz current library vs the selected frozen releases
+        shell: bash
+        env:
+          VERSIONS: ${{ inputs.versions }}
+        run: python3 scripts/build.py ref --versions="$VERSIONS"

@@ -59042,7 +59042,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     }
     snprintf(resp, resp_size, "{\"error\":\"not_streamable\"}");
 }
-#else /* TA_REF_SERVE: frozen libs have no stream symbols */
+#else /* TA_REF_SERVE: a frozen release's stream structs are private to it */
 static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     (void)json;
     snprintf(resp, resp_size, "{\"error\":\"not supported\"}");
@@ -85611,6 +85611,11 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size, "{\"error\":\"Missing method field\"}");
         return;
     }
+
+#ifdef TA_REF_SERVE
+    if( ta_ref_handle(json, method, methodLen, resp, resp_size) )
+        return;
+#endif /* TA_REF_SERVE */
 
     if ( methodLen == 9 && strncmp(method, "load_data", 9) == 0 ) {
         g_refN = json_find_double_array(json, "open",   g_refOpen,   MAX_ARRAY_SIZE);

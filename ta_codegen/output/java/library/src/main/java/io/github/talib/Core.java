@@ -12246,7 +12246,7 @@ public final class Core {
        * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
        * measures closer to the exact recursion than the 1/period-first spelling
        * at nearly every period. The order is a gated contract, not a preference:
-       * swapping it reddens the frozen v0.6.4 comparison, and breaks the
+       * swapping it reddens the frozen-release comparison, and breaks the
        * bit-for-bit identity TA_RMA(TA_TRANGE(h,l,c),n) == TA_ATR(n).
        * The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
        */
@@ -12849,7 +12849,7 @@ public final class Core {
        * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
        * measures closer to the exact recursion than the 1/period-first spelling
        * at nearly every period. The order is a gated contract, not a preference:
-       * swapping it reddens the frozen v0.6.4 comparison, and breaks the
+       * swapping it reddens the frozen-release comparison, and breaks the
        * bit-for-bit identity TA_RMA(TA_TRANGE(h,l,c),n) == TA_ATR(n).
        * The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
        */
@@ -138674,7 +138674,7 @@ public final class Core {
        * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
        * measures closer to the exact recursion than the 1/period-first spelling
        * at nearly every period. The order is a gated contract, not a preference:
-       * swapping it reddens the frozen v0.6.4 comparison.
+       * swapping it reddens the frozen-release comparison.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
@@ -139363,7 +139363,7 @@ public final class Core {
        * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
        * measures closer to the exact recursion than the 1/period-first spelling
        * at nearly every period. The order is a gated contract, not a preference:
-       * swapping it reddens the frozen v0.6.4 comparison.
+       * swapping it reddens the frozen-release comparison.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;

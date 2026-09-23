@@ -199,7 +199,7 @@ static void ride_hex_field(const char *s, const char *key, char out[17])
 static void ride_scan(const char *request, const char *response)
 {
     int ok = ride_int_field(response, "\"ride_ok\":");
-    if( ok < 0 ) return;             /* ta_ref_serve and pre-feature builds */
+    if( ok < 0 ) return;             /* a ta_ref serve and pre-feature builds */
     g_rideVerdicts++;
     g_rideVerdictsEver++;
     /* `ride_rej` is how many streaming entry points AGREED with the batch

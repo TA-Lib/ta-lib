@@ -8,11 +8,10 @@ worktree, regenerates all backends there, and runs the usual gates scoped to
 the SYNTH family:
 
   1. scripts/regtest.py --codegen --function=SYNTH
-       builds the C library + ta_regtest + all four language servers +
-       ta_ref_serve in the worktree, then runs the codegen sweep. SYNTH
-       functions are absent from the frozen oracle (subset gate), but the
-       stream_verify / OpenAndFill legs are current-vs-current and run for
-       them in all four servers, bit-exact batch-vs-stream.
+       builds the C library + ta_regtest + all four language servers in the
+       worktree, then runs the codegen sweep: every server against the
+       in-process library, and stream_verify / OpenAndFill batch-vs-stream,
+       bit-exact, in all four servers.
   2. ta_regtest --xlang-hash --function=SYNTH
        batch output parity: Rust/Java/C# against the in-process C golden,
        bitwise, across the fuzz shapes/seeds/sizes/params.
@@ -281,16 +280,11 @@ def main():
         # Anti-vacuity: prove the SYNTH functions were actually exercised.
         #
         # Read off the per-language tally, one line per server:
-        #   `  Java: 0 passed, 0 failed, 14 skipped`
+        #   `  Java: 14 passed, 0 failed, 0 skipped`
         # Their sum is what the --function filter admitted, so a filter that
         # matched nothing reads 0 and fails here. That matters more than it
         # sounds: a `--function=` naming nothing exits 0 (the filter matches a
         # GROUP TAG as well as a name), so the exit code alone is no evidence.
-        #
-        # `skipped` is expected, not a problem: the SYNTH functions are absent
-        # from the frozen pre-cutover oracle, so their VALUE comparison has no
-        # reference and is skipped by design (the subset gate). The stream and
-        # OpenAndFill legs are current-vs-current and run regardless.
         #
         # This replaces a parse of "Stream verify: N functions, M legs", which
         # `d8af8b5d9` removed when ta_regtest stopped printing its coverage and

@@ -389,7 +389,7 @@ static ErrorNumber test_imi_degenerate_windows( void )
    /* The guard must fire ONLY on the zero-movement window: a window with genuine
     * one-sided movement must NOT collapse to 50.0. All-up (close>open every bar)
     * is upsum>0, downsum==0 -> exactly 100.0; all-down -> exactly 0.0. This keeps
-    * the *default* C suite (not just the opt-in fuzz-064) able to catch a guard
+    * the *default* C suite (not just `ta_regtest --ref`) able to catch a guard
     * that OVER-fires, e.g. `upsum==downsum` instead of `upsum+downsum==0`. */
    errNb = imi_check_uniform( 42.0, 43.0, 100.0, "all-up -> 100" );
    if( errNb != TA_TEST_PASS ) return errNb;

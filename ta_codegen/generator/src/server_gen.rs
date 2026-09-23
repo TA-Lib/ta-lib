@@ -361,7 +361,7 @@ pub fn generate_c_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) ->
     // (docs/streaming-api-design.md, Verification). fuzz_data.h is included
     // HERE — after the indicator code — because its file-scope
     // `#pragma STDC FP_CONTRACT OFF` must not alter indicator contraction.
-    // Absent entirely under TA_REF_SERVE (frozen libs have no stream symbols).
+    // Absent under TA_REF_SERVE, where ta_ref/ta_ref_serve.c includes it.
     s.push_str("#ifndef TA_REF_SERVE\n#include \"fuzz_data.h\"\n#endif\n\n");
     s.push_str(&crate::stream_verify_gen::c::generate_c_stream_verify(funcs, enums));
 
@@ -773,12 +773,11 @@ fn emit_c_warmup_arms(s: &mut String, func: &FuncDef, input_names: &[String]) {
             real_idx += 1;
         }
     }
-    // Compiled out for the frozen reference server, whose library predates the
-    // streaming API and exports no TA_<N>_Open / _Close / _OpenAndFill to link
-    // against -- the same guard every other stream-touching handler here carries.
-    // The `bench_mode != 0` early return above is what keeps that honest: without
-    // it this chain would fall through with rc untouched and report the batch
-    // timing as a warm-up number.
+    // Compiled out of a frozen-release serve, like every other stream-touching
+    // handler here: a release's stream tier is private to it, and a function added
+    // since has only batch stubs to link against. The `bench_mode != 0` early
+    // return above is what keeps that honest: without it this chain would fall
+    // through with rc untouched and report the batch timing as a warm-up number.
     s.push_str("#ifndef TA_REF_SERVE\n");
     s.push_str("        else if( bench_mode == 1 ) {\n");
     s.push_str(&format!("            TA_{n}_Stream *_h = NULL;\n"));
@@ -814,6 +813,11 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     );
     s.push_str("        return;\n");
     s.push_str("    }\n\n");
+
+    s.push_str("#ifdef TA_REF_SERVE\n");
+    s.push_str("    if( ta_ref_handle(json, method, methodLen, resp, resp_size) )\n");
+    s.push_str("        return;\n");
+    s.push_str("#endif /* TA_REF_SERVE */\n\n");
 
     // Handle load_data for perftest pre-loading
     s.push_str("    if ( methodLen == 9 && strncmp(method, \"load_data\", 9) == 0 ) {\n");
@@ -917,10 +921,9 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         // every iteration or a 168-function sweep leaks one per iteration, and
         // the free is nanoseconds against a whole-history replay.
         s.push_str("        int bench_mode = json_find_int(json, \"bench_mode\");\n");
-        // The frozen reference server has no streaming API to warm up, exactly as
-        // the C# backend has none -- so it gives the same answer C# does rather
-        // than timing the batch call and reporting it as a warm-up. ta_bench drops
-        // timing_ns 0 as a non-measurement, so the cref column reads blank.
+        // A frozen-release serve has its stream tier compiled out, so it answers
+        // unsupported rather than timing the batch call and reporting it as a
+        // warm-up. ta_bench drops timing_ns 0 as a non-measurement.
         s.push_str("#ifdef TA_REF_SERVE\n");
         s.push_str("        if( bench_mode != 0 ) {\n");
         s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\");\n");
@@ -1000,9 +1003,8 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         // a full-precision FNV digest of the raw output bytes instead of the arrays
         // themselves, so a same-input C-vs-C build-flag drift is ONE value to
         // compare rather than outNBElement of them.
-        // fuzz_hash_* live in fuzz_data.h, only present when not TA_REF_SERVE; the
-        // frozen reference server never receives want_hash (server_verify drives
-        // the four generated servers, not ta_ref_serve).
+        // Compiled out of a frozen-release serve: server_verify drives only the
+        // four generated servers.
         s.push_str("#ifndef TA_REF_SERVE\n");
         s.push_str("        if( json_find_int(json, \"want_hash\") && !json_find_int(json, \"full_output\") ) {\n");
         s.push_str("            unsigned long long _oh = fuzz_hash_init();\n");
@@ -1047,11 +1049,8 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
 
         // Float-variant leg: with "use_float":1 the call is re-run through the
         // single-precision TA_S_ API (inputs converted to float) and the
-        // response carries the S-variant result instead. The frozen reference
-        // library also exports the guarded TA_S_ functions, so ta_ref_serve
-        // answers this too — giving S-vs-S comparison against the reference.
-        // Mirrors the double flow: guarded first, then (outside ta_ref_serve)
-        // the S variant over the same buffers.
+        // response carries the S-variant result instead. Mirrors the double flow:
+        // guarded first, then the S variant over the same buffers.
         s.push_str("        int usedFloat = 0;\n");
         s.push_str("        if( json_find_int(json, \"use_float\") ) {\n");
         for (j, _name) in input_names.iter().enumerate() {

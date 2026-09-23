@@ -53,10 +53,11 @@
  *   literal 1.0, which any instrument reaches if it is quoted small enough
  *   (a low price, small volumes, or a BTC-quoted pair).
  *
- *   The lineage-bound gates cannot catch that class on their own: ta_ref_serve
- *   is our own frozen pre-cutover source and --fuzz-064 is our own last
- *   release, and BOTH carry the defect. They pin what we did, not what is
- *   correct. So the value legs here are EXTERNAL.
+ *   The lineage-bound gates cannot catch that class on their own: --codegen
+ *   and --xlang-hash compare against this library, and the frozen-release fuzz
+ *   (`ta_regtest --ref`) against our own releases, so a defect we shipped
+ *   passes all of them. They pin what we did, not what is correct. So the
+ *   value legs here are EXTERNAL.
  *
  *   Legs:
  *     1. EXTERNAL ORACLE, two independent implementations (Tulip Indicators in

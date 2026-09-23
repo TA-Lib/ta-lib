@@ -6,7 +6,7 @@
 //! supply every declared output and floor its length at one, and hand every
 //! input the full series, so a backend that went back to requiring `outFAMA`, to
 //! rejecting distinct empty buffers, or to accepting a slice that does not reach
-//! `endIdx`, stays green in `--codegen`, `--xlang-hash` and `--fuzz-064` alike.
+//! `endIdx`, stays green in `--codegen`, `--xlang-hash` and `--ref` alike.
 //! That is what this file is for.
 //!
 //! It is an **integration** test on purpose, where the phantom-I/O sweep is
