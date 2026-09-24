@@ -140726,6 +140726,7 @@ public final class Core {
  *  090426 MF,CC  First version (issue #368).
  *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
+ *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
  */
 
 /* Using percentile_ALT1 for TA_ALT={ALL_API,JAVA} */

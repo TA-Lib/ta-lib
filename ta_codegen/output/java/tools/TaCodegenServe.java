@@ -140396,6 +140396,7 @@ class Core {
      *  090426 MF,CC  First version (issue #368).
      *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
      *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
+     *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
      */
 
     /* Using percentile_ALT1 for TA_ALT={ALL_API,JAVA} */
@@ -186795,7 +186796,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "45df2910a458bf09";
+    static final String SPLICED_GENCODE_DIGEST = "b8ed062dc13e88bc";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

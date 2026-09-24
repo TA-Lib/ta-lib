@@ -54,6 +54,7 @@
  *  090426 MF,CC  First version (issue #368).
  *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
+ *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
  */
 
 // Import types from parent module
@@ -973,8 +974,6 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/* Using percentile_ALT1 for TA_ALT={STREAM,RUST} */
-
 /// Live PERCENTILE stream: one value per closed bar, bit-identical to [`Core::percentile`]
 /// over the same series. Open with [`Core::percentile_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
@@ -1002,8 +1001,26 @@ struct PercentileStreamState {
 struct PercentileStreamScalars {
     optInTimePeriod: i32,
     optInPercentile: f64,
+    loV: f64,
+    hiV: f64,
+    last: f64,
+    pendNew: f64,
+    pendOld: f64,
     lookbackTotal: usize,
     rank: i32,
+    hiRank: usize,
+    loRank: usize,
+    tail: usize,
+    lim: usize,
+    run: i32,
+    dPrev: usize,
+    trend: usize,
+    layout: usize,
+    head: usize,
+    pendPos: usize,
+    pendDel: usize,
+    runLen: usize,
+    saving: usize,
     ring_Idx: usize,
     maxIdx_ring: usize,
     sorted_Idx: usize,
@@ -1023,98 +1040,454 @@ impl Core {
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
+        let mut held: f64 = 0.0_f64;
+        let mut cur: f64 = 0.0_f64;
+        let mut nxt: f64 = 0.0_f64;
+        let mut nx2: f64 = 0.0_f64;
+        let mut ins: f64 = 0.0_f64;
+        let mut in2: f64 = 0.0_f64;
+        let mut res: f64 = 0.0_f64;
+        let mut prv: f64 = 0.0_f64;
         let mut j: usize = 0_usize;
+        let mut k: usize = 0_usize;
+        let mut e: usize = 0_usize;
+        let mut dnStep: usize = 0_usize;
+        let mut same: usize = 0_usize;
+        let mut jh: usize = 0_usize;
+        let mut jl: usize = 0_usize;
+        let mut gain: usize = 0_usize;
+        let mut pp: usize = 0_usize;
+        let mut hiSlot: usize = 0_usize;
+        let mut loSlot: usize = 0_usize;
         let mut pos: usize = 0_usize;
-        let mut lo: usize = 0_usize;
-        let mut hi: usize = 0_usize;
-        let mut mid: usize = 0_usize;
+        let mut del: usize = 0_usize;
+        let mut dp: usize = 0_usize;
+        let mut dq: usize = 0_usize;
+        let mut len: usize = 0_usize;
+        let mut half: usize = 0_usize;
+        let mut o2: usize = 0_usize;
+        let mut o3: usize = 0_usize;
+        let mut t1: usize = 0_usize;
+        let mut t2: usize = 0_usize;
+        let mut t3: usize = 0_usize;
+        let mut u1: usize = 0_usize;
+        let mut u2: usize = 0_usize;
+        let mut u3: usize = 0_usize;
+        let mut freeSlot: usize = 0_usize;
+        let mut maxSlot: usize = 0_usize;
+        let mut nextSlot: usize = 0_usize;
+        let mut bp: usize = 0_usize;
+        let mut bq: usize = 0_usize;
+        let mut q1: usize = 0_usize;
+        let mut q2: usize = 0_usize;
+        let mut q3: usize = 0_usize;
+        let mut p1: usize = 0_usize;
+        let mut p2: usize = 0_usize;
+        let mut p3: usize = 0_usize;
+        let mut sP: usize = 0_usize;
+        let mut sQ: usize = 0_usize;
+        let mut slot: usize = 0_usize;
+        let mut cnt: usize = 0_usize;
+        let mut dn: usize = 0_usize;
+        let mut seg: usize = 0_usize;
+        let mut room: usize = 0_usize;
         newValue = inReal;
         // The full window is the retained values with newValue inserted after
-        // its equals, so its rank-th value is newValue clamped to
-        // [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
-        // sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
-        // selects, not branches: which side wins is a coin flip.
+        // its equals, so its rank-th value is newValue clamped to the retained
+        // values of rank rank-1 (loV) and rank (hiV).
         result = newValue;
         if sp.rank <= ((sp.lookbackTotal) as i32) {
-            result = (if result < cb_sorted[(sp.rank - 1) as usize] { result } else { cb_sorted[(sp.rank - 1) as usize] });
+            result = (if result < sp.hiV { result } else { sp.hiV });
         }
         if sp.rank > 1 {
-            result = (if result < cb_sorted[(sp.rank - 2) as usize] { cb_sorted[(sp.rank - 2) as usize] } else { result });
+            result = (if result < sp.loV { sp.loV } else { result });
         }
         (*outReal) = result;
-        // pos counts the retained values <= newValue and j is the first retained
-        // value >= oldValue. Below 256 values a linear scan beats a binary
-        // search: one mispredicted loop exit costs less than log2(n)
-        // unpredictable halvings. From 64 values the scan steps 4 at a time
-        // first, which is what pays for that step's own mispredicted exit.
-        //
-        // Keep every run of equal values in age order (newValue goes after its
-        // equals): the oldest of a run is then the departing value bit for bit,
-        // which is what keeps -0.0 and 0.0 apart. Inserting before the equals
-        // instead changes no value but flips the sign of some zero outputs.
         cb_ring[sp.ring_Idx] = newValue;
         sp.ring_Idx = sp.ring_Idx + 1;
         if sp.ring_Idx > sp.maxIdx_ring {
             sp.ring_Idx = 0;
         }
         oldValue = cb_ring[sp.ring_Idx];
-        if sp.lookbackTotal < 256 {
-            pos = 0;
-            if sp.lookbackTotal >= 64 {
-                while pos + 4 <= sp.lookbackTotal && cb_sorted[pos + 3] <= newValue {
-                    pos += 4;
+        if sp.lookbackTotal < 32 {
+            if sp.lookbackTotal == 1 {
+                cb_sorted[0] = newValue;
+                sp.hiV = newValue;
+                sp.loV = newValue;
+            } else {
+                // 0/1 arithmetic, not conditional assignments: gcc threads those
+                // into a branch on newValue < last, a coin flip on random data.
+                // run starts at -1 so the first step cannot count twice.
+                dnStep = (if newValue < sp.last { 1 } else { 0 });
+                same = (if dnStep == sp.dPrev { 1 } else { 0 });
+                sp.run = (sp.run + 1) * ((same) as i32);
+                sp.dPrev = dnStep;
+                sp.last = newValue;
+                if sp.run >= ((sp.lim) as i32) {
+                    // The ring is then the sorted order, from its oldest slot on
+                    // a rising run and from its newest on a falling one, which
+                    // must be strict: read newest first, equal values would come
+                    // out in reverse age order. sorted is left stale until the
+                    // run breaks.
+                    sp.run = (sp.lim) as i32;
+                    if dnStep == 0 {
+                        sp.trend = 1;
+                        jh = (((sp.ring_Idx) as i32) + sp.rank) as usize;
+                        if jh >= ((sp.optInTimePeriod) as usize) {
+                            jh -= (sp.optInTimePeriod) as usize;
+                        }
+                        jl = (if jh == 0 { sp.lookbackTotal } else { jh - 1 });
+                    } else {
+                        sp.trend = 2;
+                        jh = (((sp.ring_Idx) as i32) + (sp.optInTimePeriod - sp.rank)) as usize;
+                        if jh >= ((sp.optInTimePeriod) as usize) {
+                            jh -= (sp.optInTimePeriod) as usize;
+                        }
+                        jl = (if jh == sp.lookbackTotal { 0 } else { jh + 1 });
+                    }
+                    if sp.rank <= ((sp.lookbackTotal) as i32) {
+                        sp.hiV = cb_ring[jh];
+                    }
+                    if sp.rank > 1 {
+                        sp.loV = cb_ring[jl];
+                    }
+                } else {
+                    if sp.trend != 0 {
+                        if sp.trend == 1 {
+                            j = sp.ring_Idx;
+                            k = 0;
+                            while k < sp.lookbackTotal {
+                                cb_sorted[k] = cb_ring[j];
+                                j = (if j == sp.lookbackTotal { 0 } else { j + 1 });
+                                k += 1;
+                            }
+                        } else {
+                            j = sp.ring_Idx + sp.lookbackTotal - 1;
+                            if j >= ((sp.optInTimePeriod) as usize) {
+                                j -= (sp.optInTimePeriod) as usize;
+                            }
+                            k = 0;
+                            while k < sp.lookbackTotal {
+                                cb_sorted[k] = cb_ring[j];
+                                j = (if j == 0 { sp.lookbackTotal } else { j - 1 });
+                                k += 1;
+                            }
+                        }
+                        sp.trend = 0;
+                    }
+                    // With D the retained values less oldValue, slot k becomes
+                    // max(D[k-1], min(newValue, D[k])). The spare slot stands in
+                    // for D past the end.
+                    cb_sorted[sp.lookbackTotal] = newValue;
+                    cur = cb_sorted[0];
+                    prv = (if newValue < cur { newValue } else { cur });
+                    k = 0;
+                    loop {
+                        nxt = cb_sorted[k + 1];
+                        nx2 = cb_sorted[k + 2];
+                        ins = (if cur < oldValue { cur } else { nxt });
+                        in2 = (if nxt < oldValue { nxt } else { nx2 });
+                        res = (if newValue < ins { newValue } else { ins });
+                        cb_sorted[k] = (if prv > res { prv } else { res });
+                        res = (if newValue < in2 { newValue } else { in2 });
+                        cb_sorted[k + 1] = (if ins > res { ins } else { res });
+                        prv = in2;
+                        cur = nx2;
+                        k += 2;
+                        if !(k < sp.tail) { break; }
+                    }
+                    cb_sorted[sp.tail] = (if prv > newValue { prv } else { newValue });
+                    if sp.rank <= ((sp.lookbackTotal) as i32) {
+                        sp.hiV = cb_sorted[sp.hiRank];
+                    }
+                    if sp.rank > 1 {
+                        sp.loV = cb_sorted[sp.loRank];
+                    }
                 }
-            }
-            while pos < sp.lookbackTotal && cb_sorted[pos] <= newValue {
-                pos += 1;
-            }
-            j = 0;
-            if sp.lookbackTotal >= 64 {
-                while j + 4 <= sp.lookbackTotal && cb_sorted[j + 3] < oldValue {
-                    j += 4;
-                }
-            }
-            while j < sp.lookbackTotal && cb_sorted[j] < oldValue {
-                j += 1;
             }
         } else {
-            lo = 0;
-            hi = sp.lookbackTotal;
-            while lo < hi {
-                mid = (lo + hi) / 2;
-                if cb_sorted[mid] <= newValue {
-                    lo = mid + 1;
+            if sp.layout != 0 {
+                if sp.layout == 2 {
+                    if sp.pendDel < sp.pendPos {
+                        // for( k = sp.pendDel; k < sp.pendPos - 1; k += 1 )
+                        k = sp.pendDel;
+                        while k < sp.pendPos - 1 {
+                            cb_sorted[k] = cb_sorted[k + 1];
+                            k += 1;
+                        }
+                        cb_sorted[sp.pendPos - 1] = sp.pendNew;
+                    } else {
+                        // for( k = sp.pendDel; k > sp.pendPos; k -= 1 )
+                        k = sp.pendDel;
+                        while k > sp.pendPos {
+                            cb_sorted[k] = cb_sorted[k - 1];
+                            k -= 1;
+                        }
+                        cb_sorted[sp.pendPos] = sp.pendNew;
+                    }
+                    sp.layout = 1;
+                }
+                freeSlot = (if sp.head == 0 { sp.lookbackTotal } else { sp.head - 1 });
+                maxSlot = (if freeSlot == 0 { sp.lookbackTotal } else { freeSlot - 1 });
+                nextSlot = (if maxSlot == 0 { sp.lookbackTotal } else { maxSlot - 1 });
+                // A new value tied with the minimum belongs after it, so only a
+                // strictly smaller one may take the front.
+                if newValue >= cb_sorted[maxSlot] && oldValue <= cb_sorted[sp.head] {
+                    cb_sorted[freeSlot] = newValue;
+                    sp.head = (if sp.head == sp.lookbackTotal { 0 } else { sp.head + 1 });
+                } else if newValue < cb_sorted[sp.head] && oldValue > cb_sorted[nextSlot] {
+                    cb_sorted[freeSlot] = newValue;
+                    sp.head = freeSlot;
+                } else if sp.saving > 0 || sp.lookbackTotal >= 2048 {
+                    // pos = retained values <= newValue, del = retained values <
+                    // oldValue, both searched from the free slot as rank -1.
+                    bp = freeSlot;
+                    bq = bp;
+                    len = (sp.optInTimePeriod) as usize;
+                    while len > 2 {
+                        half = (len + 3) / 4;
+                        o3 = len - half;
+                        o2 = half + half;
+                        q1 = (if bp < ((sp.optInTimePeriod) as usize) - half { bp + half } else { bp + half - ((sp.optInTimePeriod) as usize) });
+                        q2 = (if bp < ((sp.optInTimePeriod) as usize) - o2 { bp + o2 } else { bp + o2 - ((sp.optInTimePeriod) as usize) });
+                        q3 = (if bp < ((sp.optInTimePeriod) as usize) - o3 { bp + o3 } else { bp + o3 - ((sp.optInTimePeriod) as usize) });
+                        p1 = (if bq < ((sp.optInTimePeriod) as usize) - half { bq + half } else { bq + half - ((sp.optInTimePeriod) as usize) });
+                        p2 = (if bq < ((sp.optInTimePeriod) as usize) - o2 { bq + o2 } else { bq + o2 - ((sp.optInTimePeriod) as usize) });
+                        p3 = (if bq < ((sp.optInTimePeriod) as usize) - o3 { bq + o3 } else { bq + o3 - ((sp.optInTimePeriod) as usize) });
+                        bp = (if cb_sorted[q1] <= newValue { q1 } else { bp });
+                        bp = (if cb_sorted[q2] <= newValue { q2 } else { bp });
+                        bp = (if cb_sorted[q3] <= newValue { q3 } else { bp });
+                        bq = (if cb_sorted[p1] < oldValue { p1 } else { bq });
+                        bq = (if cb_sorted[p2] < oldValue { p2 } else { bq });
+                        bq = (if cb_sorted[p3] < oldValue { p3 } else { bq });
+                        len = half;
+                    }
+                    if len > 1 {
+                        sP = (if bp < sp.lookbackTotal { bp + 1 } else { 0 });
+                        sQ = (if bq < sp.lookbackTotal { bq + 1 } else { 0 });
+                        bp = (if cb_sorted[sP] <= newValue { sP } else { bp });
+                        bq = (if cb_sorted[sQ] < oldValue { sQ } else { bq });
+                    }
+                    pos = (if bp >= freeSlot { bp - freeSlot } else { bp + ((sp.optInTimePeriod) as usize) - freeSlot });
+                    del = (if bq >= freeSlot { bq - freeSlot } else { bq + ((sp.optInTimePeriod) as usize) - freeSlot });
+                    gain = (if del < pos { pos - 1 - del } else { del - pos });
+                    seg = sp.lookbackTotal + sp.lookbackTotal / 4 * 3;
+                    sp.saving = (if sp.saving + gain + gain > seg { sp.saving + gain + gain - seg } else { 0 });
+                    sp.saving = (if sp.saving < sp.lookbackTotal * 16 { sp.saving } else { sp.lookbackTotal * 16 });
+                    // The hole left by oldValue travels to newValue's place the
+                    // shorter way round; going through the free slot moves head
+                    // by one.
+                    slot = sp.head + del;
+                    if slot >= ((sp.optInTimePeriod) as usize) {
+                        slot -= (sp.optInTimePeriod) as usize;
+                    }
+                    if del < pos {
+                        cnt = pos - 1 - del;
+                        dn = 1;
+                    } else {
+                        cnt = del - pos;
+                        dn = 0;
+                    }
+                    if cnt + cnt > sp.lookbackTotal {
+                        cnt = sp.lookbackTotal - cnt;
+                        dn = 1 - dn;
+                        if dn == 1 {
+                            sp.head = freeSlot;
+                        } else {
+                            sp.head = (if sp.head == sp.lookbackTotal { 0 } else { sp.head + 1 });
+                        }
+                    }
+                    if dn == 1 {
+                        room = sp.lookbackTotal - slot;
+                        if cnt <= room {
+                            e = slot + cnt;
+                            // for( k = slot; k < e; k += 1 )
+                            k = slot;
+                            while k < e {
+                                cb_sorted[k] = cb_sorted[k + 1];
+                                k += 1;
+                            }
+                            slot = e;
+                        } else {
+                            // for( k = slot; k < sp.lookbackTotal; k += 1 )
+                            k = slot;
+                            while k < sp.lookbackTotal {
+                                cb_sorted[k] = cb_sorted[k + 1];
+                                k += 1;
+                            }
+                            cb_sorted[sp.lookbackTotal] = cb_sorted[0];
+                            e = cnt - room - 1;
+                            // for( k = 0; k < e; k += 1 )
+                            k = 0;
+                            while k < e {
+                                cb_sorted[k] = cb_sorted[k + 1];
+                                k += 1;
+                            }
+                            slot = e;
+                        }
+                    } else if cnt <= slot {
+                        e = slot - cnt;
+                        // for( k = slot; k > e; k -= 1 )
+                        k = slot;
+                        while k > e {
+                            cb_sorted[k] = cb_sorted[k - 1];
+                            k -= 1;
+                        }
+                        slot = e;
+                    } else {
+                        // for( k = slot; k > 0; k -= 1 )
+                        k = slot;
+                        while k > 0 {
+                            cb_sorted[k] = cb_sorted[k - 1];
+                            k -= 1;
+                        }
+                        cb_sorted[0] = cb_sorted[sp.lookbackTotal];
+                        e = sp.lookbackTotal - (cnt - slot - 1);
+                        // for( k = sp.lookbackTotal; k > e; k -= 1 )
+                        k = sp.lookbackTotal;
+                        while k > e {
+                            cb_sorted[k] = cb_sorted[k - 1];
+                            k -= 1;
+                        }
+                        slot = e;
+                    }
+                    cb_sorted[slot] = newValue;
                 } else {
-                    hi = mid;
+                    // Back to layout 0: rotate head to slot 0 by three
+                    // reversals, then carry an empty pending update.
+                    if sp.head != 0 {
+                        k = 0;
+                        e = sp.head - 1;
+                        while k < e {
+                            held = cb_sorted[k];
+                            cb_sorted[k] = cb_sorted[e];
+                            cb_sorted[e] = held;
+                            k += 1;
+                            e -= 1;
+                        }
+                        k = sp.head;
+                        e = sp.lookbackTotal;
+                        while k < e {
+                            held = cb_sorted[k];
+                            cb_sorted[k] = cb_sorted[e];
+                            cb_sorted[e] = held;
+                            k += 1;
+                            e -= 1;
+                        }
+                        k = 0;
+                        e = sp.lookbackTotal;
+                        while k < e {
+                            held = cb_sorted[k];
+                            cb_sorted[k] = cb_sorted[e];
+                            cb_sorted[e] = held;
+                            k += 1;
+                            e -= 1;
+                        }
+                        sp.head = 0;
+                    }
+                    sp.pendNew = cb_sorted[0];
+                    sp.pendOld = sp.pendNew;
+                    sp.pendDel = 0;
+                    sp.pendPos = 1;
+                    cb_sorted[sp.lookbackTotal] = sp.pendNew;
+                    sp.layout = 0;
+                    sp.runLen = 0;
                 }
             }
-            pos = lo;
-            lo = 0;
-            hi = sp.lookbackTotal;
-            while lo < hi {
-                mid = (lo + hi) / 2;
-                if cb_sorted[mid] < oldValue {
-                    lo = mid + 1;
+            if sp.layout == 0 {
+                // Branchless four-way search of the lagging array, no wrap.
+                pos = 0;
+                del = 0;
+                len = (sp.optInTimePeriod) as usize;
+                while len > 2 {
+                    half = (len + 3) / 4;
+                    o3 = len - half;
+                    o2 = half + half;
+                    t1 = pos + half;
+                    t2 = pos + o2;
+                    t3 = pos + o3;
+                    u1 = del + half;
+                    u2 = del + o2;
+                    u3 = del + o3;
+                    pos = (if cb_sorted[t1 - 1] <= newValue { t1 } else { pos });
+                    pos = (if cb_sorted[t2 - 1] <= newValue { t2 } else { pos });
+                    pos = (if cb_sorted[t3 - 1] <= newValue { t3 } else { pos });
+                    del = (if cb_sorted[u1 - 1] < oldValue { u1 } else { del });
+                    del = (if cb_sorted[u2 - 1] < oldValue { u2 } else { del });
+                    del = (if cb_sorted[u3 - 1] < oldValue { u3 } else { del });
+                    len = half;
+                }
+                // Increments, not selects: gcc turns the select into a jump.
+                if len > 1 {
+                    pos += (if cb_sorted[pos] <= newValue { 1 } else { 0 });
+                    del += (if cb_sorted[del] < oldValue { 1 } else { 0 });
+                }
+                pos += (if sp.pendNew <= newValue { 1 } else { 0 });
+                del += (if sp.pendNew < oldValue { 1 } else { 0 });
+                dp = (if sp.pendOld <= newValue { 1 } else { 0 });
+                dq = (if sp.pendOld < oldValue { 1 } else { 0 });
+                // Clamped although exact for finite input: a NaN makes the counts
+                // disagree with the corrections, and they index the shift below.
+                pos = (if pos > dp { pos - dp } else { 0 });
+                del = (if del > dq { del - dq } else { 0 });
+                pos = (if pos < sp.lookbackTotal { pos } else { sp.lookbackTotal });
+                del = (if del < sp.lookbackTotal { del } else { sp.lookbackTotal });
+                if sp.pendDel < sp.pendPos {
+                    // for( k = sp.pendDel; k < sp.pendPos - 1; k += 1 )
+                    k = sp.pendDel;
+                    while k < sp.pendPos - 1 {
+                        cb_sorted[k] = cb_sorted[k + 1];
+                        k += 1;
+                    }
+                    cb_sorted[sp.pendPos - 1] = sp.pendNew;
                 } else {
-                    hi = mid;
+                    // for( k = sp.pendDel; k > sp.pendPos; k -= 1 )
+                    k = sp.pendDel;
+                    while k > sp.pendPos {
+                        cb_sorted[k] = cb_sorted[k - 1];
+                        k -= 1;
+                    }
+                    cb_sorted[sp.pendPos] = sp.pendNew;
+                }
+                cb_sorted[sp.lookbackTotal] = newValue;
+                sp.pendPos = pos;
+                sp.pendDel = del;
+                sp.pendNew = newValue;
+                sp.pendOld = oldValue;
+                // Leave for the ring after four bars that each add a new extreme
+                // as the opposite one departs, or, from 300 values, while the
+                // shift the ring would save keeps exceeding 3/4 of the window.
+                sp.runLen = (if pos == del + sp.lookbackTotal || del == pos + sp.lookbackTotal - 1 { sp.runLen + 1 } else { 0 });
+                if sp.lookbackTotal >= 300 {
+                    gain = (if del < pos { pos - 1 - del } else { del - pos });
+                    seg = sp.lookbackTotal + sp.lookbackTotal / 4 * 3;
+                    sp.saving = (if sp.saving + gain + gain > seg { sp.saving + gain + gain - seg } else { 0 });
+                }
+                if sp.runLen >= 4 || sp.saving > sp.lookbackTotal * 8 {
+                    sp.layout = 2;
                 }
             }
-            j = lo;
-        }
-        // Evict oldValue and place newValue with one shift of the slots between
-        // them.
-        if j < pos {
-            while j < pos - 1 {
-                cb_sorted[j] = cb_sorted[j + 1];
-                j += 1;
+            if sp.layout != 1 {
+                pp = (if sp.pendDel < sp.pendPos { sp.pendPos - 1 } else { sp.pendPos });
+                hiSlot = (if sp.hiRank > pp { sp.hiRank - 1 } else { sp.hiRank });
+                hiSlot += (if hiSlot >= sp.pendDel { 1 } else { 0 });
+                hiSlot = (if sp.hiRank == pp { sp.lookbackTotal } else { hiSlot });
+                loSlot = (if sp.loRank > pp { sp.loRank - 1 } else { sp.loRank });
+                loSlot += (if loSlot >= sp.pendDel { 1 } else { 0 });
+                loSlot = (if sp.loRank == pp { sp.lookbackTotal } else { loSlot });
+            } else {
+                hiSlot = sp.head + sp.hiRank;
+                if hiSlot >= ((sp.optInTimePeriod) as usize) {
+                    hiSlot -= (sp.optInTimePeriod) as usize;
+                }
+                loSlot = (if hiSlot == 0 { sp.lookbackTotal } else { hiSlot - 1 });
             }
-            cb_sorted[pos - 1] = newValue;
-        } else {
-            while j > pos {
-                cb_sorted[j] = cb_sorted[j - 1];
-                j -= 1;
+            if sp.rank <= ((sp.lookbackTotal) as i32) {
+                sp.hiV = cb_sorted[hiSlot];
             }
-            cb_sorted[pos] = newValue;
+            if sp.rank > 1 {
+                sp.loV = cb_sorted[loSlot];
+            }
         }
         sp.cur_outReal = (*outReal);
     }
@@ -1153,16 +1526,88 @@ impl Core {
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
+        let mut loV: f64 = 0.0_f64;
+        let mut hiV: f64 = 0.0_f64;
+        let mut last: f64 = 0.0_f64;
+        let mut pendNew: f64 = 0.0_f64;
+        let mut pendOld: f64 = 0.0_f64;
+        let mut held: f64 = 0.0_f64;
+        let mut cur: f64 = 0.0_f64;
+        let mut nxt: f64 = 0.0_f64;
+        let mut nx2: f64 = 0.0_f64;
+        let mut ins: f64 = 0.0_f64;
+        let mut in2: f64 = 0.0_f64;
+        let mut res: f64 = 0.0_f64;
+        let mut prv: f64 = 0.0_f64;
         let mut lookbackTotal: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut j: usize = 0_usize;
-        let mut pos: usize = 0_usize;
+        let mut k: usize = 0_usize;
+        let mut e: usize = 0_usize;
         let mut nbSorted: usize = 0_usize;
         let mut rank: i32 = 0_i32;
+        let mut hiRank: usize = 0_usize;
+        let mut loRank: usize = 0_usize;
+        let mut s: usize = 0_usize;
+        let mut t: usize = 0_usize;
+        let mut w: usize = 0_usize;
         let mut lo: usize = 0_usize;
-        let mut hi: usize = 0_usize;
         let mut mid: usize = 0_usize;
+        let mut hi: usize = 0_usize;
+        let mut a: usize = 0_usize;
+        let mut b: usize = 0_usize;
+        let mut tail: usize = 0_usize;
+        let mut lim: usize = 0_usize;
+        let mut run: i32 = 0_i32;
+        let mut dnStep: usize = 0_usize;
+        let mut same: usize = 0_usize;
+        let mut dPrev: usize = 0_usize;
+        let mut trend: usize = 0_usize;
+        let mut jh: usize = 0_usize;
+        let mut jl: usize = 0_usize;
+        let mut layout: usize = 0_usize;
+        let mut head: usize = 0_usize;
+        let mut pendPos: usize = 0_usize;
+        let mut pendDel: usize = 0_usize;
+        let mut runLen: usize = 0_usize;
+        let mut saving: usize = 0_usize;
+        let mut gain: usize = 0_usize;
+        let mut pp: usize = 0_usize;
+        let mut hiSlot: usize = 0_usize;
+        let mut loSlot: usize = 0_usize;
+        let mut pos: usize = 0_usize;
+        let mut del: usize = 0_usize;
+        let mut dp: usize = 0_usize;
+        let mut dq: usize = 0_usize;
+        let mut len: usize = 0_usize;
+        let mut half: usize = 0_usize;
+        let mut o2: usize = 0_usize;
+        let mut o3: usize = 0_usize;
+        let mut t1: usize = 0_usize;
+        let mut t2: usize = 0_usize;
+        let mut t3: usize = 0_usize;
+        let mut u1: usize = 0_usize;
+        let mut u2: usize = 0_usize;
+        let mut u3: usize = 0_usize;
+        let mut freeSlot: usize = 0_usize;
+        let mut maxSlot: usize = 0_usize;
+        let mut nextSlot: usize = 0_usize;
+        let mut bp: usize = 0_usize;
+        let mut bq: usize = 0_usize;
+        let mut q1: usize = 0_usize;
+        let mut q2: usize = 0_usize;
+        let mut q3: usize = 0_usize;
+        let mut p1: usize = 0_usize;
+        let mut p2: usize = 0_usize;
+        let mut p3: usize = 0_usize;
+        let mut sP: usize = 0_usize;
+        let mut sQ: usize = 0_usize;
+        let mut slot: usize = 0_usize;
+        let mut cnt: usize = 0_usize;
+        let mut dn: usize = 0_usize;
+        let mut seg: usize = 0_usize;
+        let mut room: usize = 0_usize;
         let mut ring: Vec<f64> = Vec::new();
         let mut ring_Idx: usize = 0;
         let mut maxIdx_ring: usize = 29;
@@ -1187,7 +1632,8 @@ impl Core {
         sorted = vec![0.0_f64; (optInTimePeriod) as usize];
         maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
         sorted_Idx = 0;
-        // Never read: set so two handles opened over the same bars hold the same
+        // Never read as a value, but from 2048 values it is the first free slot and
+        // travels with the ring: set so two handles over the same bars hold the same
         // state.
         sorted[lookbackTotal] = 0.0;
         // Keep the multiply left of the divide. (P*n)/100 reproduces exact integer
@@ -1201,116 +1647,586 @@ impl Core {
         if rank > optInTimePeriod {
             rank = optInTimePeriod;
         }
-        nbSorted = 0;
+        hiRank = (rank - 1) as usize;
+        loRank = (if hiRank > 0 { hiRank - 1 } else { 0 });
+        // The retained values are sorted ascending with every run of equal values
+        // in age order: the departing value is then the first of its run bit for
+        // bit, and a new value goes after its equals. Only the sign of a zero can
+        // observe that order, and it does.
         i = startIdx - lookbackTotal;
-        while i < startIdx {
-            newValue = inReal[i];
-            j = nbSorted;
-            while j > 0 && sorted[j - 1] > newValue {
-                sorted[j] = sorted[j - 1];
-                j -= 1;
+        if lookbackTotal < 100 {
+            nbSorted = 0;
+            while i < startIdx {
+                newValue = inReal[i];
+                j = nbSorted;
+                while j > 0 && sorted[j - 1] > newValue {
+                    sorted[j] = sorted[j - 1];
+                    j -= 1;
+                }
+                sorted[j] = newValue;
+                nbSorted += 1;
+                ring[ring_Idx] = newValue;
+                i += 1;
+                ring_Idx += 1;
+                if ring_Idx > maxIdx_ring { ring_Idx = 0; }
             }
-            sorted[j] = newValue;
-            nbSorted += 1;
-            ring[ring_Idx] = newValue;
-            i += 1;
-            ring_Idx += 1;
-            if ring_Idx > maxIdx_ring { ring_Idx = 0; }
+        } else {
+            // Bottom-up merge sort, stable, with ring as the other half until it
+            // is filled by age below.
+            sorted[0] = inReal[i];
+            j = 1;
+            while j < lookbackTotal && inReal[i + j - 1] <= inReal[i + j] {
+                sorted[j] = inReal[i + j];
+                j += 1;
+            }
+            if j < lookbackTotal {
+                s = 0;
+                while s < lookbackTotal {
+                    e = s + 16;
+                    if e > lookbackTotal {
+                        e = lookbackTotal;
+                    }
+                    t = s;
+                    while t < e {
+                        newValue = inReal[i + t];
+                        j = t;
+                        while j > s && sorted[j - 1] > newValue {
+                            sorted[j] = sorted[j - 1];
+                            j -= 1;
+                        }
+                        sorted[j] = newValue;
+                        t += 1;
+                    }
+                    s = e;
+                }
+                w = 16;
+                while w < lookbackTotal {
+                    lo = 0;
+                    while lo < lookbackTotal {
+                        mid = lo + w;
+                        if mid > lookbackTotal {
+                            mid = lookbackTotal;
+                        }
+                        hi = mid + w;
+                        if hi > lookbackTotal {
+                            hi = lookbackTotal;
+                        }
+                        a = lo;
+                        b = mid;
+                        t = lo;
+                        if mid < hi && sorted[mid - 1] > sorted[mid] {
+                            while a < mid && b < hi {
+                                if sorted[b] < sorted[a] {
+                                    ring[t] = sorted[b];
+                                    b += 1;
+                                } else {
+                                    ring[t] = sorted[a];
+                                    a += 1;
+                                }
+                                t += 1;
+                            }
+                        }
+                        while a < mid {
+                            ring[t] = sorted[a];
+                            a += 1;
+                            t += 1;
+                        }
+                        while b < hi {
+                            ring[t] = sorted[b];
+                            b += 1;
+                            t += 1;
+                        }
+                        lo = hi;
+                    }
+                    w += w;
+                    if w < lookbackTotal {
+                        lo = 0;
+                        while lo < lookbackTotal {
+                            mid = lo + w;
+                            if mid > lookbackTotal {
+                                mid = lookbackTotal;
+                            }
+                            hi = mid + w;
+                            if hi > lookbackTotal {
+                                hi = lookbackTotal;
+                            }
+                            a = lo;
+                            b = mid;
+                            t = lo;
+                            if mid < hi && ring[mid - 1] > ring[mid] {
+                                while a < mid && b < hi {
+                                    if ring[b] < ring[a] {
+                                        sorted[t] = ring[b];
+                                        b += 1;
+                                    } else {
+                                        sorted[t] = ring[a];
+                                        a += 1;
+                                    }
+                                    t += 1;
+                                }
+                            }
+                            while a < mid {
+                                sorted[t] = ring[a];
+                                a += 1;
+                                t += 1;
+                            }
+                            while b < hi {
+                                sorted[t] = ring[b];
+                                b += 1;
+                                t += 1;
+                            }
+                            lo = hi;
+                        }
+                        w += w;
+                    } else {
+                        t = 0;
+                        while t < lookbackTotal {
+                            sorted[t] = ring[t];
+                            t += 1;
+                        }
+                    }
+                }
+            }
+            t = 0;
+            while t < lookbackTotal {
+                ring[t] = inReal[i + t];
+                t += 1;
+            }
+            ring_Idx = lookbackTotal;
+            i = startIdx;
         }
+        // Below 32 values: every bar rewrites the whole window with no
+        // data-dependent branch, or, after a long enough run in one direction,
+        // reads the two ranks it needs straight off the ring.
+        tail = lookbackTotal - lookbackTotal % 2;
+        lim = (if lookbackTotal > 13 { lookbackTotal - 2 } else { 11 });
+        run = 0 - 1;
+        dPrev = 0;
+        trend = 0;
+        last = inReal[startIdx - 1];
+        // From m = 32 retained values, layout 0 keeps slots 0..m-1 ONE BAR BEHIND:
+        // the previous bar's update (remove rank pendDel, insert pendNew at pendPos
+        // counted before the removal) is still pending and the spare slot m holds
+        // pendNew. A bar searches that array and corrects its counts by two
+        // compares, so its search does not wait on the previous bar's shift.
+        // Layout 1 is a ring of all m+1 slots, rank r at slot head+r and the free
+        // slot just before head; layout 2 is layout 1 with the pending update still
+        // to apply. The ring pays for itself on a trending window, where a new
+        // extreme arrives as the opposite one departs, and from 2048 values, where
+        // moving the shorter way round halves the shift.
+        layout = (if lookbackTotal >= 2048 { 1 } else { 0 });
+        head = 0;
+        runLen = 0;
+        saving = 0;
+        pendNew = sorted[0];
+        pendOld = pendNew;
+        pendDel = 0;
+        pendPos = 1;
+        hiV = (if rank <= ((lookbackTotal) as i32) { sorted[hiRank] } else { 0.0 });
+        loV = (if rank > 1 { sorted[loRank] } else { 0.0 });
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
         //
-        // Every buffer store sits BELOW the output store: deriving the whole answer
-        // read-only above it is what lets the streaming peek frame drop the state
-        // update.
+        // Every store to state sits BELOW the output store: the streaming peek
+        // frame is this loop cut there.
         outIdx = 0;
         loop {
             newValue = inReal[i];
             // The full window is the retained values with newValue inserted after
-            // its equals, so its rank-th value is newValue clamped to
-            // [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
-            // sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
-            // selects, not branches: which side wins is a coin flip.
+            // its equals, so its rank-th value is newValue clamped to the retained
+            // values of rank rank-1 (loV) and rank (hiV).
             result = newValue;
             if rank <= ((lookbackTotal) as i32) {
-                result = (if result < sorted[(rank - 1) as usize] { result } else { sorted[(rank - 1) as usize] });
+                result = (if result < hiV { result } else { hiV });
             }
             if rank > 1 {
-                result = (if result < sorted[(rank - 2) as usize] { sorted[(rank - 2) as usize] } else { result });
+                result = (if result < loV { loV } else { result });
             }
             outReal[(outIdx * outStride) as usize] = result;
             outIdx += 1;
-            // pos counts the retained values <= newValue and j is the first retained
-            // value >= oldValue. Below 256 values a linear scan beats a binary
-            // search: one mispredicted loop exit costs less than log2(n)
-            // unpredictable halvings. From 64 values the scan steps 4 at a time
-            // first, which is what pays for that step's own mispredicted exit.
-            //
-            // Keep every run of equal values in age order (newValue goes after its
-            // equals): the oldest of a run is then the departing value bit for bit,
-            // which is what keeps -0.0 and 0.0 apart. Inserting before the equals
-            // instead changes no value but flips the sign of some zero outputs.
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
             if ring_Idx > maxIdx_ring { ring_Idx = 0; }
             oldValue = ring[ring_Idx];
-            if lookbackTotal < 256 {
-                pos = 0;
-                if lookbackTotal >= 64 {
-                    while pos + 4 <= lookbackTotal && sorted[pos + 3] <= newValue {
-                        pos += 4;
+            if lookbackTotal < 32 {
+                if lookbackTotal == 1 {
+                    sorted[0] = newValue;
+                    hiV = newValue;
+                    loV = newValue;
+                } else {
+                    // 0/1 arithmetic, not conditional assignments: gcc threads those
+                    // into a branch on newValue < last, a coin flip on random data.
+                    // run starts at -1 so the first step cannot count twice.
+                    dnStep = (if newValue < last { 1 } else { 0 });
+                    same = (if dnStep == dPrev { 1 } else { 0 });
+                    run = (run + 1) * ((same) as i32);
+                    dPrev = dnStep;
+                    last = newValue;
+                    if run >= ((lim) as i32) {
+                        // The ring is then the sorted order, from its oldest slot on
+                        // a rising run and from its newest on a falling one, which
+                        // must be strict: read newest first, equal values would come
+                        // out in reverse age order. sorted is left stale until the
+                        // run breaks.
+                        run = (lim) as i32;
+                        if dnStep == 0 {
+                            trend = 1;
+                            jh = (((ring_Idx) as i32) + rank) as usize;
+                            if jh >= ((optInTimePeriod) as usize) {
+                                jh -= (optInTimePeriod) as usize;
+                            }
+                            jl = (if jh == 0 { lookbackTotal } else { jh - 1 });
+                        } else {
+                            trend = 2;
+                            jh = (((ring_Idx) as i32) + (optInTimePeriod - rank)) as usize;
+                            if jh >= ((optInTimePeriod) as usize) {
+                                jh -= (optInTimePeriod) as usize;
+                            }
+                            jl = (if jh == lookbackTotal { 0 } else { jh + 1 });
+                        }
+                        if rank <= ((lookbackTotal) as i32) {
+                            hiV = ring[jh];
+                        }
+                        if rank > 1 {
+                            loV = ring[jl];
+                        }
+                    } else {
+                        if trend != 0 {
+                            if trend == 1 {
+                                j = ring_Idx;
+                                k = 0;
+                                while k < lookbackTotal {
+                                    sorted[k] = ring[j];
+                                    j = (if j == lookbackTotal { 0 } else { j + 1 });
+                                    k += 1;
+                                }
+                            } else {
+                                j = ring_Idx + lookbackTotal - 1;
+                                if j >= ((optInTimePeriod) as usize) {
+                                    j -= (optInTimePeriod) as usize;
+                                }
+                                k = 0;
+                                while k < lookbackTotal {
+                                    sorted[k] = ring[j];
+                                    j = (if j == 0 { lookbackTotal } else { j - 1 });
+                                    k += 1;
+                                }
+                            }
+                            trend = 0;
+                        }
+                        // With D the retained values less oldValue, slot k becomes
+                        // max(D[k-1], min(newValue, D[k])). The spare slot stands in
+                        // for D past the end.
+                        sorted[lookbackTotal] = newValue;
+                        cur = sorted[0];
+                        prv = (if newValue < cur { newValue } else { cur });
+                        k = 0;
+                        loop {
+                            nxt = sorted[k + 1];
+                            nx2 = sorted[k + 2];
+                            ins = (if cur < oldValue { cur } else { nxt });
+                            in2 = (if nxt < oldValue { nxt } else { nx2 });
+                            res = (if newValue < ins { newValue } else { ins });
+                            sorted[k] = (if prv > res { prv } else { res });
+                            res = (if newValue < in2 { newValue } else { in2 });
+                            sorted[k + 1] = (if ins > res { ins } else { res });
+                            prv = in2;
+                            cur = nx2;
+                            k += 2;
+                            if !(k < tail) { break; }
+                        }
+                        sorted[tail] = (if prv > newValue { prv } else { newValue });
+                        if rank <= ((lookbackTotal) as i32) {
+                            hiV = sorted[hiRank];
+                        }
+                        if rank > 1 {
+                            loV = sorted[loRank];
+                        }
                     }
-                }
-                while pos < lookbackTotal && sorted[pos] <= newValue {
-                    pos += 1;
-                }
-                j = 0;
-                if lookbackTotal >= 64 {
-                    while j + 4 <= lookbackTotal && sorted[j + 3] < oldValue {
-                        j += 4;
-                    }
-                }
-                while j < lookbackTotal && sorted[j] < oldValue {
-                    j += 1;
                 }
             } else {
-                lo = 0;
-                hi = lookbackTotal;
-                while lo < hi {
-                    mid = (lo + hi) / 2;
-                    if sorted[mid] <= newValue {
-                        lo = mid + 1;
+                if layout != 0 {
+                    if layout == 2 {
+                        if pendDel < pendPos {
+                            // for( k = pendDel; k < pendPos - 1; k += 1 )
+                            k = pendDel;
+                            while k < pendPos - 1 {
+                                sorted[k] = sorted[k + 1];
+                                k += 1;
+                            }
+                            sorted[pendPos - 1] = pendNew;
+                        } else {
+                            // for( k = pendDel; k > pendPos; k -= 1 )
+                            k = pendDel;
+                            while k > pendPos {
+                                sorted[k] = sorted[k - 1];
+                                k -= 1;
+                            }
+                            sorted[pendPos] = pendNew;
+                        }
+                        layout = 1;
+                    }
+                    freeSlot = (if head == 0 { lookbackTotal } else { head - 1 });
+                    maxSlot = (if freeSlot == 0 { lookbackTotal } else { freeSlot - 1 });
+                    nextSlot = (if maxSlot == 0 { lookbackTotal } else { maxSlot - 1 });
+                    // A new value tied with the minimum belongs after it, so only a
+                    // strictly smaller one may take the front.
+                    if newValue >= sorted[maxSlot] && oldValue <= sorted[head] {
+                        sorted[freeSlot] = newValue;
+                        head = (if head == lookbackTotal { 0 } else { head + 1 });
+                    } else if newValue < sorted[head] && oldValue > sorted[nextSlot] {
+                        sorted[freeSlot] = newValue;
+                        head = freeSlot;
+                    } else if saving > 0 || lookbackTotal >= 2048 {
+                        // pos = retained values <= newValue, del = retained values <
+                        // oldValue, both searched from the free slot as rank -1.
+                        bp = freeSlot;
+                        bq = bp;
+                        len = (optInTimePeriod) as usize;
+                        while len > 2 {
+                            half = (len + 3) / 4;
+                            o3 = len - half;
+                            o2 = half + half;
+                            q1 = (if bp < ((optInTimePeriod) as usize) - half { bp + half } else { bp + half - ((optInTimePeriod) as usize) });
+                            q2 = (if bp < ((optInTimePeriod) as usize) - o2 { bp + o2 } else { bp + o2 - ((optInTimePeriod) as usize) });
+                            q3 = (if bp < ((optInTimePeriod) as usize) - o3 { bp + o3 } else { bp + o3 - ((optInTimePeriod) as usize) });
+                            p1 = (if bq < ((optInTimePeriod) as usize) - half { bq + half } else { bq + half - ((optInTimePeriod) as usize) });
+                            p2 = (if bq < ((optInTimePeriod) as usize) - o2 { bq + o2 } else { bq + o2 - ((optInTimePeriod) as usize) });
+                            p3 = (if bq < ((optInTimePeriod) as usize) - o3 { bq + o3 } else { bq + o3 - ((optInTimePeriod) as usize) });
+                            bp = (if sorted[q1] <= newValue { q1 } else { bp });
+                            bp = (if sorted[q2] <= newValue { q2 } else { bp });
+                            bp = (if sorted[q3] <= newValue { q3 } else { bp });
+                            bq = (if sorted[p1] < oldValue { p1 } else { bq });
+                            bq = (if sorted[p2] < oldValue { p2 } else { bq });
+                            bq = (if sorted[p3] < oldValue { p3 } else { bq });
+                            len = half;
+                        }
+                        if len > 1 {
+                            sP = (if bp < lookbackTotal { bp + 1 } else { 0 });
+                            sQ = (if bq < lookbackTotal { bq + 1 } else { 0 });
+                            bp = (if sorted[sP] <= newValue { sP } else { bp });
+                            bq = (if sorted[sQ] < oldValue { sQ } else { bq });
+                        }
+                        pos = (if bp >= freeSlot { bp - freeSlot } else { bp + ((optInTimePeriod) as usize) - freeSlot });
+                        del = (if bq >= freeSlot { bq - freeSlot } else { bq + ((optInTimePeriod) as usize) - freeSlot });
+                        gain = (if del < pos { pos - 1 - del } else { del - pos });
+                        seg = lookbackTotal + lookbackTotal / 4 * 3;
+                        saving = (if saving + gain + gain > seg { saving + gain + gain - seg } else { 0 });
+                        saving = (if saving < lookbackTotal * 16 { saving } else { lookbackTotal * 16 });
+                        // The hole left by oldValue travels to newValue's place the
+                        // shorter way round; going through the free slot moves head
+                        // by one.
+                        slot = head + del;
+                        if slot >= ((optInTimePeriod) as usize) {
+                            slot -= (optInTimePeriod) as usize;
+                        }
+                        if del < pos {
+                            cnt = pos - 1 - del;
+                            dn = 1;
+                        } else {
+                            cnt = del - pos;
+                            dn = 0;
+                        }
+                        if cnt + cnt > lookbackTotal {
+                            cnt = lookbackTotal - cnt;
+                            dn = 1 - dn;
+                            if dn == 1 {
+                                head = freeSlot;
+                            } else {
+                                head = (if head == lookbackTotal { 0 } else { head + 1 });
+                            }
+                        }
+                        if dn == 1 {
+                            room = lookbackTotal - slot;
+                            if cnt <= room {
+                                e = slot + cnt;
+                                // for( k = slot; k < e; k += 1 )
+                                k = slot;
+                                while k < e {
+                                    sorted[k] = sorted[k + 1];
+                                    k += 1;
+                                }
+                                slot = e;
+                            } else {
+                                // for( k = slot; k < lookbackTotal; k += 1 )
+                                k = slot;
+                                while k < lookbackTotal {
+                                    sorted[k] = sorted[k + 1];
+                                    k += 1;
+                                }
+                                sorted[lookbackTotal] = sorted[0];
+                                e = cnt - room - 1;
+                                // for( k = 0; k < e; k += 1 )
+                                k = 0;
+                                while k < e {
+                                    sorted[k] = sorted[k + 1];
+                                    k += 1;
+                                }
+                                slot = e;
+                            }
+                        } else if cnt <= slot {
+                            e = slot - cnt;
+                            // for( k = slot; k > e; k -= 1 )
+                            k = slot;
+                            while k > e {
+                                sorted[k] = sorted[k - 1];
+                                k -= 1;
+                            }
+                            slot = e;
+                        } else {
+                            // for( k = slot; k > 0; k -= 1 )
+                            k = slot;
+                            while k > 0 {
+                                sorted[k] = sorted[k - 1];
+                                k -= 1;
+                            }
+                            sorted[0] = sorted[lookbackTotal];
+                            e = lookbackTotal - (cnt - slot - 1);
+                            // for( k = lookbackTotal; k > e; k -= 1 )
+                            k = lookbackTotal;
+                            while k > e {
+                                sorted[k] = sorted[k - 1];
+                                k -= 1;
+                            }
+                            slot = e;
+                        }
+                        sorted[slot] = newValue;
                     } else {
-                        hi = mid;
+                        // Back to layout 0: rotate head to slot 0 by three
+                        // reversals, then carry an empty pending update.
+                        if head != 0 {
+                            k = 0;
+                            e = head - 1;
+                            while k < e {
+                                held = sorted[k];
+                                sorted[k] = sorted[e];
+                                sorted[e] = held;
+                                k += 1;
+                                e -= 1;
+                            }
+                            k = head;
+                            e = lookbackTotal;
+                            while k < e {
+                                held = sorted[k];
+                                sorted[k] = sorted[e];
+                                sorted[e] = held;
+                                k += 1;
+                                e -= 1;
+                            }
+                            k = 0;
+                            e = lookbackTotal;
+                            while k < e {
+                                held = sorted[k];
+                                sorted[k] = sorted[e];
+                                sorted[e] = held;
+                                k += 1;
+                                e -= 1;
+                            }
+                            head = 0;
+                        }
+                        pendNew = sorted[0];
+                        pendOld = pendNew;
+                        pendDel = 0;
+                        pendPos = 1;
+                        sorted[lookbackTotal] = pendNew;
+                        layout = 0;
+                        runLen = 0;
                     }
                 }
-                pos = lo;
-                lo = 0;
-                hi = lookbackTotal;
-                while lo < hi {
-                    mid = (lo + hi) / 2;
-                    if sorted[mid] < oldValue {
-                        lo = mid + 1;
+                if layout == 0 {
+                    // Branchless four-way search of the lagging array, no wrap.
+                    pos = 0;
+                    del = 0;
+                    len = (optInTimePeriod) as usize;
+                    while len > 2 {
+                        half = (len + 3) / 4;
+                        o3 = len - half;
+                        o2 = half + half;
+                        t1 = pos + half;
+                        t2 = pos + o2;
+                        t3 = pos + o3;
+                        u1 = del + half;
+                        u2 = del + o2;
+                        u3 = del + o3;
+                        pos = (if sorted[t1 - 1] <= newValue { t1 } else { pos });
+                        pos = (if sorted[t2 - 1] <= newValue { t2 } else { pos });
+                        pos = (if sorted[t3 - 1] <= newValue { t3 } else { pos });
+                        del = (if sorted[u1 - 1] < oldValue { u1 } else { del });
+                        del = (if sorted[u2 - 1] < oldValue { u2 } else { del });
+                        del = (if sorted[u3 - 1] < oldValue { u3 } else { del });
+                        len = half;
+                    }
+                    // Increments, not selects: gcc turns the select into a jump.
+                    if len > 1 {
+                        pos += (if sorted[pos] <= newValue { 1 } else { 0 });
+                        del += (if sorted[del] < oldValue { 1 } else { 0 });
+                    }
+                    pos += (if pendNew <= newValue { 1 } else { 0 });
+                    del += (if pendNew < oldValue { 1 } else { 0 });
+                    dp = (if pendOld <= newValue { 1 } else { 0 });
+                    dq = (if pendOld < oldValue { 1 } else { 0 });
+                    // Clamped although exact for finite input: a NaN makes the counts
+                    // disagree with the corrections, and they index the shift below.
+                    pos = (if pos > dp { pos - dp } else { 0 });
+                    del = (if del > dq { del - dq } else { 0 });
+                    pos = (if pos < lookbackTotal { pos } else { lookbackTotal });
+                    del = (if del < lookbackTotal { del } else { lookbackTotal });
+                    if pendDel < pendPos {
+                        // for( k = pendDel; k < pendPos - 1; k += 1 )
+                        k = pendDel;
+                        while k < pendPos - 1 {
+                            sorted[k] = sorted[k + 1];
+                            k += 1;
+                        }
+                        sorted[pendPos - 1] = pendNew;
                     } else {
-                        hi = mid;
+                        // for( k = pendDel; k > pendPos; k -= 1 )
+                        k = pendDel;
+                        while k > pendPos {
+                            sorted[k] = sorted[k - 1];
+                            k -= 1;
+                        }
+                        sorted[pendPos] = pendNew;
+                    }
+                    sorted[lookbackTotal] = newValue;
+                    pendPos = pos;
+                    pendDel = del;
+                    pendNew = newValue;
+                    pendOld = oldValue;
+                    // Leave for the ring after four bars that each add a new extreme
+                    // as the opposite one departs, or, from 300 values, while the
+                    // shift the ring would save keeps exceeding 3/4 of the window.
+                    runLen = (if pos == del + lookbackTotal || del == pos + lookbackTotal - 1 { runLen + 1 } else { 0 });
+                    if lookbackTotal >= 300 {
+                        gain = (if del < pos { pos - 1 - del } else { del - pos });
+                        seg = lookbackTotal + lookbackTotal / 4 * 3;
+                        saving = (if saving + gain + gain > seg { saving + gain + gain - seg } else { 0 });
+                    }
+                    if runLen >= 4 || saving > lookbackTotal * 8 {
+                        layout = 2;
                     }
                 }
-                j = lo;
-            }
-            // Evict oldValue and place newValue with one shift of the slots between
-            // them.
-            if j < pos {
-                while j < pos - 1 {
-                    sorted[j] = sorted[j + 1];
-                    j += 1;
+                if layout != 1 {
+                    pp = (if pendDel < pendPos { pendPos - 1 } else { pendPos });
+                    hiSlot = (if hiRank > pp { hiRank - 1 } else { hiRank });
+                    hiSlot += (if hiSlot >= pendDel { 1 } else { 0 });
+                    hiSlot = (if hiRank == pp { lookbackTotal } else { hiSlot });
+                    loSlot = (if loRank > pp { loRank - 1 } else { loRank });
+                    loSlot += (if loSlot >= pendDel { 1 } else { 0 });
+                    loSlot = (if loRank == pp { lookbackTotal } else { loSlot });
+                } else {
+                    hiSlot = head + hiRank;
+                    if hiSlot >= ((optInTimePeriod) as usize) {
+                        hiSlot -= (optInTimePeriod) as usize;
+                    }
+                    loSlot = (if hiSlot == 0 { lookbackTotal } else { hiSlot - 1 });
                 }
-                sorted[pos - 1] = newValue;
-            } else {
-                while j > pos {
-                    sorted[j] = sorted[j - 1];
-                    j -= 1;
+                if rank <= ((lookbackTotal) as i32) {
+                    hiV = sorted[hiSlot];
                 }
-                sorted[pos] = newValue;
+                if rank > 1 {
+                    loV = sorted[loSlot];
+                }
             }
             i += 1;
             if !(i <= endIdx) { break; }
@@ -1331,8 +2247,26 @@ impl Core {
             scalars: PercentileStreamScalars {
                 optInTimePeriod,
                 optInPercentile,
+                loV,
+                hiV,
+                last,
+                pendNew,
+                pendOld,
                 lookbackTotal,
                 rank,
+                hiRank,
+                loRank,
+                tail,
+                lim,
+                run,
+                dPrev,
+                trend,
+                layout,
+                head,
+                pendPos,
+                pendDel,
+                runLen,
+                saving,
                 ring_Idx,
                 maxIdx_ring,
                 sorted_Idx,
@@ -1509,22 +2443,19 @@ impl PercentileStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let sp = &self.state.scalars;
-            let cb_sorted = &self.state.cb_sorted;
             let outReal = &mut outReal;
             let mut newValue: f64 = 0.0_f64;
             let mut result: f64 = 0.0_f64;
             newValue = inReal;
             // The full window is the retained values with newValue inserted after
-            // its equals, so its rank-th value is newValue clamped to
-            // [sorted[rank-2], sorted[rank-1]]: a tie with the upper bound yields
-            // sorted[rank-1], a tie with the lower bound yields newValue. Spelled as
-            // selects, not branches: which side wins is a coin flip.
+            // its equals, so its rank-th value is newValue clamped to the retained
+            // values of rank rank-1 (loV) and rank (hiV).
             result = newValue;
             if sp.rank <= ((sp.lookbackTotal) as i32) {
-                result = (if result < cb_sorted[(sp.rank - 1) as usize] { result } else { cb_sorted[(sp.rank - 1) as usize] });
+                result = (if result < sp.hiV { result } else { sp.hiV });
             }
             if sp.rank > 1 {
-                result = (if result < cb_sorted[(sp.rank - 2) as usize] { cb_sorted[(sp.rank - 2) as usize] } else { result });
+                result = (if result < sp.loV { sp.loV } else { result });
             }
             (*outReal) = result;
         }

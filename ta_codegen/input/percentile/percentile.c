@@ -12,6 +12,7 @@
  *  090426 MF,CC  First version (issue #368).
  *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
+ *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
  */
 
 int percentile_lookback(int optInTimePeriod, double optInPercentile)
@@ -733,14 +734,11 @@ TA_RetCode percentile(int startIdx, int endIdx,
 }
 
 /* Same outputs with a search per value and one shift per bar. The JITs turn the
- * selects above into branches, which mispredict on every bar, and the Rust
- * stream step has too many state accesses for LLVM to prove its buffers do not
- * overlap the state, so it reloads them after every store. Keep this body
+ * selects above into branches, which mispredict on every bar. Keep this body
  * small: C# compiles the same loop slower inside a larger method.
  */
 /* PRAGMA TA_ALT={ALL_API,JAVA} */
 /* PRAGMA TA_ALT={ALL_API,CSHARP} */
-/* PRAGMA TA_ALT={STREAM,RUST} */
 TA_RetCode percentile_ALT1(int startIdx, int endIdx,
    const double inReal[],
    int optInTimePeriod,
