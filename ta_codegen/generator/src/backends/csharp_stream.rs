@@ -84,9 +84,8 @@ pub const SECTION_MARKER: &str = "/**** Streaming API *****/";
 /// Whether a C# stream section is emitted for this function.
 ///
 /// Resolves `PRAGMA TA_ALT` here rather than at the caller, exactly as the Rust
-/// and Java twins do: six functions carry an `_ALT1` body claiming the STREAM
-/// tier, and analyzing `func.body` would silently analyze the batch-only block
-/// scan instead.
+/// and Java twins do: where an `_ALT<n>` body claims the STREAM tier, analyzing
+/// `func.body` would silently analyze the wrong body.
 pub fn emits_stream(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> bool {
     if !func.streaming {
         return false;
@@ -417,9 +416,8 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    // Resolve `PRAGMA TA_ALT` here too — `generate` has direct callers, and six
-    // functions carry an `_ALT1` body claiming the STREAM tier. Nothing below
-    // may read `func.body`.
+    // Resolve `PRAGMA TA_ALT` here too: `generate` has direct callers. Nothing
+    // below may read `func.body`.
     let resolved = func.resolved_for(crate::ir::Lang::CSharp);
     let func: &FuncDef = &resolved;
     assert!(

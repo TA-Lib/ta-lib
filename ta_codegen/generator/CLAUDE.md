@@ -140,9 +140,9 @@ keeps reading `body` / `stream_source()` and needs to know nothing. Teaching the
 scattered selection sites about the language instead would make *missing one*
 silent: it would quietly render the base. `resolved_for` pins **both** tiers even
 where the base wins one, because `stream_source()` falls back to `body` and
-`body` is about to become the batch winner — SYNTH6 is the only shape where an
-alternate claims BATCH, so a resolver leaking the batch body into the stream
-fails there and nowhere else.
+`body` is about to become the batch winner; SYNTH6, whose alternate claims BATCH
+alone, is the shape where a resolver leaking the batch body into the stream
+fails.
 
 **Nothing but the emitted code can prove which body won.** An alternate is
 generator input, not a symbol, so every value-comparison gate passes whichever

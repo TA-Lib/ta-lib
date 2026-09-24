@@ -10,7 +10,7 @@ outInteger[i] = ((int)(x(i - period + 1) + x(i))) mod 1024
 
 ## Notes
 
-- Covers `PRAGMA TA_ALT={BATCH,ALL_LANGUAGES}`. Verified against `ta_codegen/input/`: all six shipped pragmas claim STREAM, so this orientation is reached nowhere else — and it is the only shape in which a resolver that leaked the batch body into the stream tier fails.
+- Covers `PRAGMA TA_ALT={BATCH,ALL_LANGUAGES}`, an alternate claiming the batch tier alone: the shape in which a resolver that leaked the batch body into the stream tier fails.
 - Named by `tests/alt_suite.rs` together with SYNTH5, the same algorithm with the tiers swapped.
 - Coverage trap: the base must stay the streamable trailing-cursor walk and the alternate the window-start form, because the test tells the tiers apart by the indexing each carries. Swap them and this silently becomes a second copy of SYNTH5.
 - Coverage trap: both bodies add the same two bars in the same order, so they are bit-identical rather than merely equal.

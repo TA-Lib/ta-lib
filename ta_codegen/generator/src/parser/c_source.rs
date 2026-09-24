@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use crate::ir::{
-    AltDef, ApiClaim, BinOp, CircBuf, CircBufLayout, Expr, HelperDef, HelperParam, LangClaim,
-    Statement, VarType,
+    AltClaim, AltDef, ApiClaim, BinOp, CircBuf, CircBufLayout, Expr, HelperDef, HelperParam,
+    LangClaim, Statement, VarType,
 };
 
 // --- Public API ---
@@ -181,17 +181,26 @@ fn classify_functions(func_def: &crate::ir::FuncDef, parsed: &ParsedCSource) -> 
             func_def.name,
             f.name
         );
-        let claims: Vec<&Pragma> = f.pragmas.iter().filter(|p| p.name == "TA_ALT").collect();
+        let claims: Vec<AltClaim> = f
+            .pragmas
+            .iter()
+            .filter(|p| p.name == "TA_ALT")
+            .map(|p| {
+                let (api, lang) = parse_ta_alt_claim(
+                    p.value.as_deref().unwrap_or_default(),
+                    p.line,
+                    Some(&func_def.name),
+                );
+                AltClaim { api, lang }
+            })
+            .collect();
         assert!(
-            claims.len() == 1,
-            "{}: `{}` carries {} `PRAGMA TA_ALT=` decorations; exactly one is required",
+            !claims.is_empty(),
+            "{}: `{}` carries 0 `PRAGMA TA_ALT=` decorations; at least one is required",
             func_def.name,
-            f.name,
-            claims.len()
+            f.name
         );
-        let value = claims[0].value.as_deref().unwrap_or_default();
-        let (api, lang) = parse_ta_alt_claim(value, claims[0].line, Some(&func_def.name));
-        alts.push(AltDef { name: f.name.clone(), index, api, lang, body: f.body.clone() });
+        alts.push(AltDef { name: f.name.clone(), index, claims, body: f.body.clone() });
     }
 
     assert!(
@@ -217,8 +226,8 @@ fn classify_functions(func_def: &crate::ir::FuncDef, parsed: &ParsedCSource) -> 
     alts
 }
 
-/// Whole-set checks over a function's alternates: numbering, and the two ways a
-/// body can end up winning no cell at all.
+/// Whole-set checks over a function's alternates: numbering, and the ways a body
+/// or one of its claims can end up deciding no cell at all.
 fn check_alt_set(alts: &[AltDef], func_def: &crate::ir::FuncDef, base_name: &str) {
     // The `<n>` restates the override order that file position already decides,
     // so a diff that reorders two alternates fails here instead of silently
@@ -240,25 +249,34 @@ fn check_alt_set(alts: &[AltDef], func_def: &crate::ir::FuncDef, base_name: &str
     // an alternate can be shadowed by the UNION of two later ones without any
     // single one covering it (`{ALL_API,C}` under `{BATCH,C}` + `{STREAM,C}`),
     // and the same sweep answers the base's liveness for free.
+    //
+    // One level down, a decoration decides a cell only where it is the winner's
+    // sole claim on it: a duplicate, or a claim a sibling subsumes, is as dead as
+    // an overridden one.
     let mut wins = vec![false; alts.len()];
+    let mut decides: Vec<Vec<bool>> = alts.iter().map(|a| vec![false; a.claims.len()]).collect();
     let mut base_wins = false;
     for &t in &crate::ir::ALL_TIERS {
         for &l in &crate::ir::ALL_LANGS {
-            match alts.iter().rposition(|a| a.api.covers(t) && a.lang.covers(l)) {
-                Some(i) => wins[i] = true,
-                None => base_wins = true,
+            let Some(i) = alts.iter().rposition(|a| a.covers(t, l)) else {
+                base_wins = true;
+                continue;
+            };
+            wins[i] = true;
+            let mut covering = alts[i].claims.iter().enumerate().filter(|(_, c)| c.covers(t, l));
+            if let (Some((j, _)), None) = (covering.next(), covering.next()) {
+                decides[i][j] = true;
             }
         }
     }
     for (a, won) in alts.iter().zip(&wins) {
         assert!(
             *won,
-            "{}: `{}` claims {{{},{}}} but later alternates cover every one of those cells — \
+            "{}: `{}` claims {} but later alternates cover every one of those cells — \
              it would never be used",
             func_def.name,
             a.name,
-            a.api.as_str(),
-            a.lang.as_str()
+            a.claims.iter().map(ToString::to_string).collect::<Vec<_>>().join(" + ")
         );
     }
     assert!(
@@ -267,6 +285,18 @@ fn check_alt_set(alts: &[AltDef], func_def: &crate::ir::FuncDef, base_name: &str
          never be used — an alternate is a specialization of the base, not a replacement",
         func_def.name
     );
+    for (a, claim_decides) in alts.iter().zip(&decides) {
+        for (c, decided) in a.claims.iter().zip(claim_decides) {
+            assert!(
+                *decided,
+                "{}: `PRAGMA TA_ALT={c}` on `{}` decides no cell: each cell it claims is \
+                 claimed again on `{}` or overridden by a later alternate",
+                func_def.name,
+                a.name,
+                a.name
+            );
+        }
+    }
 }
 
 /// The base function's parameter list, for the same-signature check.
@@ -646,6 +676,13 @@ fn parse_pragma(lines: &[String], line: u32, file: Option<&str>) -> Option<Pragm
         let close = v
             .find('}')
             .unwrap_or_else(|| panic!("{loc}PRAGMA {name}: unterminated `{{`"));
+        // Read as free text, a second value on the same line would be dropped.
+        let rest = v[close + 1..].trim_start();
+        assert!(
+            !rest.starts_with(',') && !rest.starts_with('{') && !rest.contains(&format!("{name}=")),
+            "{loc}PRAGMA {name}: one value per decoration; give the next its own \
+             `PRAGMA {name}=` line"
+        );
         &v[..=close]
     } else {
         let end = v.find(char::is_whitespace).unwrap_or(v.len());

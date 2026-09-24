@@ -193,7 +193,8 @@ in C#.
 ## Alternate implementations — `PRAGMA TA_ALT`
 
 Alongside `<name>`, a file may declare `<name>_ALT1`, `<name>_ALT2`, … — whole
-alternative bodies for the same function, each under a **single-line** decoration:
+alternative bodies for the same function, each under one or more **single-line**
+decorations:
 
 ```c
 /* PRAGMA TA_ALT={<api>,<lang>} free text after the brace is ignored */
@@ -203,13 +204,17 @@ TA_RetCode <name>_ALT<n>( /* the same parameters as <name> */ )
 <lang> ::= C | RUST | JAVA | CSHARP | ALL_LANGUAGES
 ```
 
-**Later declarations override earlier ones for every cell they claim**, with the
-base as the implicit first entry claiming `{ALL_API,ALL_LANGUAGES}` — so "everyone
-but C" is `ALL_LANGUAGES` followed by `C`, and there is no specificity table to
-learn. An alternate that ends up winning no cell is a hard error, as is a claim
-with no `=`, an unrecognized directive name, a `PRAGMA TA_ALT` on the base, an
-`_ALT<n>` with no decoration, numbering that is not ascending and contiguous from
-1 in file order, and a signature that differs from the base's.
+An alternate claims the union of its decorations, so `{ALL_API,JAVA}` plus
+`{ALL_API,CSHARP}` is one body for both managed languages; their order decides
+nothing. **Later declarations override earlier ones for every cell they claim**,
+with the base as the implicit first entry claiming `{ALL_API,ALL_LANGUAGES}` — so
+"everyone but C" is `ALL_LANGUAGES` followed by `C`, and there is no specificity
+table to learn. An alternate that ends up winning no cell is a hard error, as is a
+decoration that decides none (a duplicate, one its alternate's other decorations
+already cover, or one a later alternate overrides), a second claim on one line, a
+claim with no `=`, an unrecognized directive name, a `PRAGMA TA_ALT` on the base,
+an `_ALT<n>` with no decoration, numbering that is not ascending and contiguous
+from 1 in file order, and a signature that differs from the base's.
 
 An alternate must be **strictly functionally identical** to the base (some may
 differ within `TA_STABLE_EPSILON`; none may compute something else), and the

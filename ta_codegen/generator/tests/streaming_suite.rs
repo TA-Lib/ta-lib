@@ -175,8 +175,10 @@ fn rolling_extremum_streams_from_its_stream_alternate() {
         assert_eq!(f.alternates.len(), 1, "{name}: one alternate");
         let alt = &f.alternates[0];
         assert_eq!(alt.name, format!("{name}_ALT1"));
-        assert_eq!(alt.api, ir::ApiClaim::Stream);
-        assert_eq!(alt.lang, ir::LangClaim::AllLanguages);
+        assert_eq!(
+            alt.claims,
+            [ir::AltClaim { api: ir::ApiClaim::Stream, lang: ir::LangClaim::AllLanguages }]
+        );
 
         for lang in ir::ALL_LANGS {
             let resolved = f.resolved_for(lang);

@@ -2810,8 +2810,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
 
     // The stream-verification section: the bit-compare helpers, the fuzz input
     // generator, one sv_<NAME> per streaming function, and the dispatcher.
-    // `funcs` is already Lang::CSharp-resolved by the caller, which matters —
-    // six functions carry a PRAGMA TA_ALT body claiming the STREAM tier.
+    // `funcs` is already Lang::CSharp-resolved by the caller, which matters
+    // wherever a PRAGMA TA_ALT body claims the STREAM tier.
     s.push_str(&crate::stream_verify_gen::csharp::generate_csharp_stream_verify(funcs, enums));
     s.push_str(&crate::ride_gen::csharp::generate_csharp_ridealong(funcs));
 

@@ -215,9 +215,29 @@ impl LangClaim {
     }
 }
 
+/// One `PRAGMA TA_ALT={<api>,<lang>}` decoration.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AltClaim {
+    pub api: ApiClaim,
+    pub lang: LangClaim,
+}
+
+impl AltClaim {
+    #[must_use]
+    pub fn covers(self, tier: Tier, lang: Lang) -> bool {
+        self.api.covers(tier) && self.lang.covers(lang)
+    }
+}
+
+impl std::fmt::Display for AltClaim {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{{},{}}}", self.api.as_str(), self.lang.as_str())
+    }
+}
+
 /// An alternate implementation: a whole second body for the same function,
-/// declared in the input `.c` as `<name>_ALT<n>` under a
-/// `/* PRAGMA TA_ALT={<api>,<lang>} */` decoration.
+/// declared in the input `.c` as `<name>_ALT<n>` under one or more
+/// `/* PRAGMA TA_ALT={<api>,<lang>} */` decorations.
 ///
 /// An alternate is **generator input only** — it never becomes a symbol in any
 /// backend. There is still exactly one `TA_MIN`, one `TA_MIN_Open`, and a
@@ -233,9 +253,16 @@ pub struct AltDef {
     /// so a diff that reorders two alternates fails the gate rather than
     /// silently changing which one wins.
     pub index: u32,
-    pub api: ApiClaim,
-    pub lang: LangClaim,
+    /// The alternate claims their union; their order decides no cell.
+    pub claims: Vec<AltClaim>,
     pub body: Vec<Statement>,
+}
+
+impl AltDef {
+    #[must_use]
+    pub fn covers(&self, tier: Tier, lang: Lang) -> bool {
+        self.claims.iter().any(|c| c.covers(tier, lang))
+    }
 }
 
 impl FuncDef {
@@ -251,7 +278,7 @@ impl FuncDef {
         self.alternates
             .iter()
             .rev()
-            .find(|a| a.api.covers(tier) && a.lang.covers(lang))
+            .find(|a| a.covers(tier, lang))
     }
 
     /// The body the batch emitters render for `lang`.
@@ -294,12 +321,12 @@ impl FuncDef {
     #[must_use]
     pub fn alt_marker(&self, tier: Tier, lang: Lang) -> Option<String> {
         self.resolve_alt(tier, lang).map(|a| {
-            format!(
-                "Using {} for TA_ALT={{{},{}}}",
-                a.name,
-                a.api.as_str(),
-                a.lang.as_str()
-            )
+            let claim = a
+                .claims
+                .iter()
+                .find(|c| c.covers(tier, lang))
+                .expect("the winner covers the cell");
+            format!("Using {} for TA_ALT={claim}", a.name)
         })
     }
 

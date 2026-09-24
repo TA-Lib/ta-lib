@@ -1,23 +1,22 @@
 //! `PRAGMA TA_ALT` — alternate implementations (issue #190).
 //!
 //! An alternate is a whole second body for the same function, declared in the
-//! input `.c` as `<name>_ALT<n>` under a one-line `PRAGMA` decoration, and
+//! input `.c` as `<name>_ALT<n>` under one-line `PRAGMA` decorations, and
 //! selected per `(API tier, language)`. It is **generator input only** — no
 //! backend gains a symbol for it — so nothing but the *content* of the emitted
 //! code can show which body won. That is what most of this file checks.
 //!
 //! The two synthetic fixtures are the point of the emission tests. SYNTH5
-//! claims STREAM (the orientation the six rolling-extremum functions ship) and
-//! SYNTH6 claims BATCH (the orientation nothing ships), so a resolver that
-//! always returned the base — or always returned the alternate — fails one of
-//! the two rather than passing both.
+//! claims STREAM and SYNTH6 claims BATCH alone, so a resolver that always
+//! returned the base, or always returned the alternate, fails one of the two
+//! rather than passing both.
 
 use std::collections::HashMap;
 use std::path::Path;
 
 use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
-use ta_codegen_lib::ir::{self, ApiClaim, LangClaim, Lang, Tier};
+use ta_codegen_lib::ir::{self, AltClaim, ApiClaim, LangClaim, Lang, Tier};
 use ta_codegen_lib::parser;
 use ta_codegen_lib::registry::Registry;
 
@@ -80,8 +79,7 @@ fn claim_is_parsed_off_the_pragma() {
     let a = &f.alternates[0];
     assert_eq!(a.name, "synth5_ALT1");
     assert_eq!(a.index, 1);
-    assert_eq!(a.api, ApiClaim::Stream);
-    assert_eq!(a.lang, LangClaim::AllLanguages);
+    assert_eq!(a.claims, [AltClaim { api: ApiClaim::Stream, lang: LangClaim::AllLanguages }]);
 }
 
 /// The whole rule: later declarations override earlier ones for every cell they
@@ -119,7 +117,7 @@ fn later_declarations_win_the_cells_they_claim() {
 fn a_language_scoped_claim_reaches_only_that_language() {
     let f = wire_source(SRC_LANG_SCOPED());
     assert_eq!(f.alternates.len(), 1);
-    assert_eq!(f.alternates[0].lang, LangClaim::Rust);
+    assert_eq!(f.alternates[0].claims, [AltClaim { api: ApiClaim::Batch, lang: LangClaim::Rust }]);
     assert!(f.resolve_alt(Tier::Batch, Lang::Rust).is_some());
     for other in [Lang::C, Lang::Java, Lang::CSharp] {
         assert!(
@@ -156,6 +154,83 @@ fn a_narrower_claim_below_a_broad_one_carves_it_out() {
             "[{}] keeps the broad claim",
             other.as_str()
         );
+    }
+}
+
+/// Every cell `lang` resolves, as the winning alternate's name per tier.
+fn winners(f: &ir::FuncDef, lang: Lang) -> [Option<&str>; 2] {
+    ir::ALL_TIERS.map(|t| f.resolve_alt(t, lang).map(|a| a.name.as_str()))
+}
+
+#[test]
+fn an_alternate_takes_the_union_of_its_claims() {
+    let f = wire_source(SRC_TWO_CLAIMS());
+    assert_eq!(f.alternates.len(), 1);
+    assert_eq!(
+        f.alternates[0].claims,
+        [
+            AltClaim { api: ApiClaim::AllApi, lang: LangClaim::Java },
+            AltClaim { api: ApiClaim::AllApi, lang: LangClaim::CSharp },
+        ]
+    );
+    for lang in [Lang::Java, Lang::CSharp] {
+        assert_eq!(winners(&f, lang), [Some("sma_ALT1"); 2], "[{}]", lang.as_str());
+    }
+    for lang in [Lang::C, Lang::Rust] {
+        assert_eq!(winners(&f, lang), [None; 2], "[{}] keeps the base", lang.as_str());
+    }
+    // The marker names the claim that won that language's cell.
+    assert_eq!(
+        f.alt_marker(Tier::Batch, Lang::Java).as_deref(),
+        Some("Using sma_ALT1 for TA_ALT={ALL_API,JAVA}")
+    );
+    assert_eq!(
+        f.alt_marker(Tier::Stream, Lang::CSharp).as_deref(),
+        Some("Using sma_ALT1 for TA_ALT={ALL_API,CSHARP}")
+    );
+    assert_eq!(f.alt_marker(Tier::Batch, Lang::C), None);
+}
+
+/// The union of an alternate's claims is still one entry in the file-order
+/// cascade, in both directions.
+#[test]
+fn file_order_still_decides_between_alternates_with_several_claims() {
+    // A later single claim carves one cell out of an earlier two-claim alternate.
+    let f = wire_source(SRC_TWO_CLAIMS_THEN_ONE());
+    assert_eq!(winners(&f, Lang::Java), [Some("sma_ALT1"); 2]);
+    assert_eq!(winners(&f, Lang::CSharp), [Some("sma_ALT2"), Some("sma_ALT1")]);
+    for lang in [Lang::C, Lang::Rust] {
+        assert_eq!(winners(&f, lang), [None; 2], "[{}]", lang.as_str());
+    }
+
+    // A later two-claim alternate overrides both of its cells in an earlier one.
+    let g = wire_source(SRC_ONE_THEN_TWO_CLAIMS());
+    for lang in [Lang::Java, Lang::CSharp] {
+        assert_eq!(winners(&g, lang), [Some("sma_ALT2"), None], "[{}]", lang.as_str());
+    }
+    for lang in [Lang::C, Lang::Rust] {
+        assert_eq!(winners(&g, lang), [Some("sma_ALT1"), None], "[{}]", lang.as_str());
+    }
+}
+
+/// Resolution is only half of it: the managed backends must emit the
+/// alternate's body and the other two the base's.
+#[test]
+fn a_two_claim_alternate_reaches_both_languages_and_no_other() {
+    let mut f = wire_source(SRC_TWO_CLAIMS());
+    f.streaming = false;
+    let registry = Registry::from_dir(&input_dir());
+    let (e, h) = (enums(), HelperRegistry::empty());
+    for (lang, text, alt) in [
+        ("C", backends::c::generate(&f, &e, &registry, &h), false),
+        ("Rust", backends::rust_lang::generate(&f, &e, &registry, &h), false),
+        ("Java", backends::java::generate(&f, &e, &registry, &h), true),
+        ("C#", backends::csharp::generate(&f, &e, &registry, &h), true),
+    ] {
+        let (want, not) = if alt { ("7002", "7001") } else { ("7001", "7002") };
+        assert!(text.contains(want), "{lang}: the {want} body is missing");
+        assert!(!text.contains(not), "{lang}: the {not} body leaked in");
+        assert_eq!(text.contains("Using sma_ALT1"), alt, "{lang}: marker");
     }
 }
 
@@ -214,6 +289,30 @@ rejects!(
     rejects_an_alternate_shadowed_by_the_union_of_later_claims,
     SRC_UNION_SHADOWED(),
     "later alternates cover every one of those cells"
+);
+rejects!(
+    rejects_a_multi_claim_alternate_shadowed_by_a_later_one,
+    SRC_TWO_CLAIMS_SHADOWED(),
+    "claims {BATCH,JAVA} + {BATCH,CSHARP} but later alternates cover every one of those cells"
+);
+rejects!(rejects_a_duplicate_claim, SRC_DUPLICATE_CLAIM(), "decides no cell");
+rejects!(rejects_two_claims_on_one_line, SRC_TWO_CLAIMS_ONE_LINE(), "one value per decoration");
+rejects!(rejects_two_claims_one_space_apart, SRC_TWO_CLAIMS_SPACED(), "one value per decoration");
+rejects!(rejects_two_decorations_on_one_line, SRC_TWO_PRAGMAS_ONE_LINE(), "one value per decoration");
+rejects!(
+    rejects_a_claim_its_sibling_already_covers,
+    SRC_SUBSUMED_CLAIM(),
+    "`PRAGMA TA_ALT={BATCH,JAVA}` on `sma_ALT1` decides no cell"
+);
+rejects!(
+    rejects_a_claim_a_later_alternate_overrides,
+    SRC_CLAIM_OVERRIDDEN(),
+    "`PRAGMA TA_ALT={ALL_API,JAVA}` on `sma_ALT1` decides no cell"
+);
+rejects!(
+    rejects_one_alternate_whose_claims_shadow_the_base,
+    SRC_BASE_SHADOWED_BY_ONE(),
+    "would never be used — an alternate is a specialization of the base"
 );
 rejects!(
     rejects_alternates_that_shadow_the_base,
@@ -421,6 +520,79 @@ src_const!(SRC_BROAD_THEN_NARROW, src(&[
     &body("sma_ALT1", 2),
     "/* PRAGMA TA_ALT={BATCH,C} */",
     &body("sma_ALT2", 3),
+]));
+src_const!(SRC_TWO_CLAIMS, src(&[
+    &body("sma", 7001),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} */",
+    "/* PRAGMA TA_ALT={ALL_API,CSHARP} */",
+    &body("sma_ALT1", 7002),
+]));
+src_const!(SRC_TWO_CLAIMS_THEN_ONE, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} */",
+    "/* PRAGMA TA_ALT={ALL_API,CSHARP} */",
+    &body("sma_ALT1", 2),
+    "/* PRAGMA TA_ALT={BATCH,CSHARP} */",
+    &body("sma_ALT2", 3),
+]));
+src_const!(SRC_ONE_THEN_TWO_CLAIMS, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={BATCH,ALL_LANGUAGES} */",
+    &body("sma_ALT1", 2),
+    "/* PRAGMA TA_ALT={BATCH,JAVA} */",
+    "/* PRAGMA TA_ALT={BATCH,CSHARP} */",
+    &body("sma_ALT2", 3),
+]));
+src_const!(SRC_TWO_CLAIMS_SHADOWED, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={BATCH,JAVA} */",
+    "/* PRAGMA TA_ALT={BATCH,CSHARP} */",
+    &body("sma_ALT1", 2),
+    "/* PRAGMA TA_ALT={BATCH,ALL_LANGUAGES} */",
+    &body("sma_ALT2", 3),
+]));
+src_const!(SRC_TWO_CLAIMS_ONE_LINE, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA},{ALL_API,CSHARP} */",
+    &body("sma_ALT1", 2),
+]));
+src_const!(SRC_TWO_CLAIMS_SPACED, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} {ALL_API,CSHARP} */",
+    &body("sma_ALT1", 2),
+]));
+src_const!(SRC_TWO_PRAGMAS_ONE_LINE, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} TA_ALT={ALL_API,CSHARP} */",
+    &body("sma_ALT1", 2),
+]));
+src_const!(SRC_DUPLICATE_CLAIM, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} */",
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} */",
+    &body("sma_ALT1", 2),
+]));
+src_const!(SRC_SUBSUMED_CLAIM, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} */",
+    "/* PRAGMA TA_ALT={BATCH,JAVA} */",
+    &body("sma_ALT1", 2),
+]));
+// ALT1 still wins its C# cells, so only the per-claim check can see that its
+// JAVA claim is dead.
+src_const!(SRC_CLAIM_OVERRIDDEN, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} */",
+    "/* PRAGMA TA_ALT={ALL_API,CSHARP} */",
+    &body("sma_ALT1", 2),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} */",
+    &body("sma_ALT2", 3),
+]));
+src_const!(SRC_BASE_SHADOWED_BY_ONE, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={BATCH,ALL_LANGUAGES} */",
+    "/* PRAGMA TA_ALT={STREAM,ALL_LANGUAGES} */",
+    &body("sma_ALT1", 2),
 ]));
 src_const!(SRC_UNKNOWN_DIRECTIVE, src(&[
     &body("sma", 1),

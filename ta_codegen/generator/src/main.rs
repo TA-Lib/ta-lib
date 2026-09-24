@@ -542,8 +542,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // rewrite that breaks stream analyzability fails HERE, not at release.
         // Run it once per language: a `PRAGMA TA_ALT={STREAM,<lang>}` claim can
         // hand one backend a different body, so "streamable" is a per-language
-        // property even though today every function resolves the same way for
-        // all four.
+        // property.
         if func_def.streaming {
             for lang in ir::ALL_LANGS {
                 let resolved = func_def.resolved_for(lang);
