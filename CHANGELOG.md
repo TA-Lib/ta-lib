@@ -33,6 +33,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - PERCENTILE and PERCENTRANK accept periods up to 10000, down from 100000. Both do work
   proportional to the period on every bar, so a 100000-bar window costs ten times as much
   per bar as a 10000-bar one. A longer period is now rejected.
+- The i386 `.deb` computes with SSE2 instead of x87, so it needs a CPU with SSE2 (every 64-bit
+  x86 has it). Under x87, streaming differed from batch in some functions, and values differed
+  from amd64 by up to ~1e-8 of the output's scale (LINEARREG_ANGLE at large price levels). Both
+  now match, except that functions calling libm (exp, log, sin, atan...) can still differ from
+  amd64 by up to ~3e-14 of the output's scale (HT_SINE). A source build on 32-bit x86 needs
+  `-msse2 -mfpmath=sse` for the same result. (#443)
 
 ### Fixed
 - (#434) VAR, STDDEV, BBANDS, CORREL, RVI and RVIR no longer return stale values, or rebuild

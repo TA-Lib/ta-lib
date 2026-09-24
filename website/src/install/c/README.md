@@ -123,7 +123,7 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
     |------------------------|--|
     | Intel/AMD 64-bits | [ta-lib_0.8.1_amd64.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib_0.8.1_amd64.deb) |
     | ARM64 (e.g. Raspberry Pi)| [ta-lib_0.8.1_arm64.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib_0.8.1_arm64.deb) |
-    | Intel/AMD 32-bits| [ta-lib_0.8.1_i386.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib_0.8.1_i386.deb) |
+    | Intel/AMD 32-bits (SSE2)| [ta-lib_0.8.1_i386.deb](https://github.com/ta-lib/ta-lib/releases/download/v0.8.1/ta-lib_0.8.1_i386.deb) |
 
 2. **Install or Update**:
    ```bash
@@ -158,6 +158,8 @@ Recommended for all debian-based distributions (e.g. Ubuntu, Mint...)
    ```
 
     If you cloned the repository instead of downloading the tarball, the `configure` script is not included; generate it first with `./autogen.sh` (requires the `autoconf`, `automake` and `libtool` packages).
+
+    On 32-bit x86, configure with `./configure CFLAGS="-O2 -msse2 -mfpmath=sse"` (with CMake, `-DCMAKE_C_FLAGS="-msse2 -mfpmath=sse"`). gcc's default there is x87 math, whose extra precision changes results and fails `ta_regtest`.
 
     Follow the same procedure for an update (the older version is overwritten, no need to uninstall).
 
