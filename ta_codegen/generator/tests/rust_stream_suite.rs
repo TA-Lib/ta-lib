@@ -98,8 +98,8 @@ fn test_rust_sma_ring_stream_section() {
     assert!(s.contains("struct SmaStreamState {"));
     assert!(s.contains("ring_trailingIdx_inReal: Vec<f64>,"));
     assert!(s.contains("ringPos_trailingIdx: usize,"));
-    // Rust's peek copies the handle; no backend carries a mirror or a routing
-    // flag any more, so these hold everywhere rather than marking a difference.
+    // No backend carries a peek mirror or a routing flag, so these hold
+    // everywhere rather than marking a difference.
     assert!(!s.contains("Mirror"), "no peek mirrors in the Rust tier");
     assert!(!s.contains("peekMode"), "no peekMode in the Rust tier");
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");
@@ -159,7 +159,7 @@ fn test_rust_macd_three_output_tuple() {
 #[test]
 fn test_rust_cdldoji_candle_settings_and_int_output() {
     let s = rust_stream_section("cdldoji");
-    // Candle settings read through the handle's immutable Core snapshot.
+    // The opener reads the settings off the `Core` it runs on.
     assert!(s.contains("self.candle_settings"));
     // Integer output end to end.
     assert!(s.contains("pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {"));
@@ -497,6 +497,111 @@ fn rust_accumulator_fields(section: &str) -> BTreeSet<String> {
         .collect()
 }
 
+/// The `Vec<f64>` / `Vec<i32>` fields a struct body declares, `(name, element)`.
+fn heap_buffer_fields(body: &str) -> Vec<(String, String)> {
+    body.lines()
+        .filter_map(|l| l.trim().strip_suffix(',')?.split_once(": "))
+        .filter_map(|(n, t)| {
+            let elem = t.strip_prefix("Vec<")?.strip_suffix('>')?;
+            matches!(elem, "f64" | "i32").then(|| (n.to_string(), elem.to_string()))
+        })
+        .collect()
+}
+
+/// Every `loop`/`while`/`for` block in `body`, brace-balanced.
+fn loop_blocks(body: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut at = 0;
+    for line in body.split_inclusive('\n') {
+        let t = line.trim_start();
+        if (t.starts_with("while ") || t.starts_with("loop {") || t.starts_with("for "))
+            && t.trim_end().ends_with('{')
+        {
+            let open = at + line.rfind('{').expect("block opens on its line");
+            let mut depth = 0usize;
+            for (k, c) in body[open..].char_indices() {
+                match c {
+                    '{' => depth += 1,
+                    '}' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            out.push(&body[open..=open + k]);
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        at += line.len();
+    }
+    out
+}
+
+/// A state is split exactly when its step stores into a heap buffer inside a
+/// loop; a split state hands every buffer to the step as its own slice and none
+/// to the handle, where an inlined `update` would touch two objects instead of
+/// one — swept over the whole corpus. Every direction compiles and answers
+/// bit-identically, so no value gate sees a regression.
+#[test]
+fn only_a_step_storing_a_buffer_in_a_loop_splits_its_state() {
+    let (mut split, mut flat) = (0usize, 0usize);
+    let mut offenders: Vec<String> = Vec::new();
+    for name in streaming_indicators() {
+        let s = rust_stream_section(&name);
+        let at = s.find("pub struct ").expect("a handle struct") + "pub struct ".len();
+        let handle_ty = &s[at..at + s[at..].find(' ').expect("handle name end")];
+        let handle = body_of(&s, &format!("pub struct {handle_ty} {{"));
+        let state = body_of(&s, &format!("struct {handle_ty}State {{"));
+        let at = s.find("_step_impl(sp: &mut ").expect("a step") + "_step_impl(sp: &mut ".len();
+        let sig = &s[at..at + s[at..].find('\n').expect("signature end")];
+        let sp_ty = &sig[..sig.find(',').expect("sp is not the only parameter")];
+        let sp = body_of(&s, &format!("struct {sp_ty} {{"));
+        let step = body_of(&s, "_step_impl(sp: &mut ");
+
+        let bufs = [heap_buffer_fields(&state), heap_buffer_fields(&sp)].concat();
+        let looped: Vec<&str> = bufs
+            .iter()
+            .map(|(b, _)| b.as_str())
+            .filter(|b| {
+                loop_blocks(&step).iter().any(|l| {
+                    l.lines().any(|x| {
+                        let x = x.trim_start();
+                        x.starts_with(&format!("{b}[")) || x.starts_with(&format!("sp.{b}["))
+                    })
+                })
+            })
+            .collect();
+        for (b, _) in heap_buffer_fields(&handle) {
+            offenders.push(format!("{name}: {b} sits on the handle, outside the state"));
+        }
+        if looped.is_empty() {
+            flat += 1;
+            if sp_ty != format!("{handle_ty}State") || sig.contains(": &mut [") {
+                offenders.push(format!("{name}: split, with no buffer stored in a loop"));
+            }
+            continue;
+        }
+        split += 1;
+        for (b, _) in heap_buffer_fields(&sp) {
+            offenders.push(format!("{name}: the step reaches {b} through `sp: &mut {sp_ty}`"));
+        }
+        let own = heap_buffer_fields(&state);
+        for (b, t) in &own {
+            if !sig.contains(&format!(", {b}: &mut [{t}]")) {
+                offenders.push(format!("{name}: {b} is not a step parameter"));
+            }
+        }
+        // Outputs are `&mut f64` / `&mut i32`, so a slice parameter is a buffer:
+        // the signature and the struct, read apart, must agree on the count.
+        if sig.matches(": &mut [").count() != own.len() {
+            offenders.push(format!("{name}: {} buffer field(s), signature `{sig}`", own.len()));
+        }
+    }
+    assert!(split > 0 && flat > 0, "{split} split / {flat} flat state(s) swept");
+    assert!(offenders.is_empty(), "{}", offenders.join("\n"));
+}
+
 /// No tier copies a handle to peek it — swept over the whole corpus.
 ///
 /// The property is structural, not a value one: a peek that copied and then
@@ -521,10 +626,25 @@ fn no_rust_peek_copies_the_handle() {
         let end = s[at..].find("\n    }").map_or(s.len(), |k| at + k);
         let peek = &s[at..end];
         swept += 1;
-        if peek.contains("let sp = &self.state;") {
-            frames += 1;
-        } else if peek.contains("self.state") {
+        // `sp` onto the state or its scalars, and each buffer as a shared borrow
+        // of itself. Anything else that reaches the state could be a copy.
+        let at = s.find("pub struct ").expect("a handle struct") + "pub struct ".len();
+        let handle_ty = &s[at..at + s[at..].find(' ').expect("handle name end")];
+        let split = s.contains(&format!("struct {handle_ty}Scalars {{"));
+        let bufs = if split {
+            heap_buffer_fields(&body_of(&s, &format!("struct {handle_ty}State {{")))
+        } else {
+            Vec::new()
+        };
+        let sp_bind = if split { "let sp = &self.state.scalars;" } else { "let sp = &self.state;" };
+        let is_binding = |l: &str| {
+            let t = l.trim();
+            t == sp_bind || bufs.iter().any(|(b, _)| t == format!("let {b} = &self.state.{b};"))
+        };
+        if peek.lines().any(|l| l.contains("self.state") && !is_binding(l)) {
             offenders.push(format!("{name}: reaches the state without the shared `&` binding"));
+        } else if peek.contains("self.state") {
+            frames += 1;
         } else {
             // Computes from its bar arguments alone, so there is no handle to
             // bind — the one shape that legitimately runs a frame without `sp`.

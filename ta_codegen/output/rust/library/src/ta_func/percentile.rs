@@ -992,6 +992,14 @@ pub struct PercentileStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct PercentileStreamState {
+    scalars: PercentileStreamScalars,
+    cb_ring: Vec<f64>,
+    cb_sorted: Vec<f64>,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct PercentileStreamScalars {
     optInTimePeriod: i32,
     optInPercentile: f64,
     lookbackTotal: usize,
@@ -1001,9 +1009,7 @@ struct PercentileStreamState {
     sorted_Idx: usize,
     maxIdx_sorted: usize,
     cbSize_ring: usize,
-    cb_ring: Vec<f64>,
     cbSize_sorted: usize,
-    cb_sorted: Vec<f64>,
     cur_outReal: f64,
 }
 
@@ -1013,7 +1019,7 @@ struct PercentileStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn percentile_step_impl(sp: &mut PercentileStreamState, inReal: f64, outReal: &mut f64) {
+    fn percentile_step_impl(sp: &mut PercentileStreamScalars, cb_ring: &mut [f64], cb_sorted: &mut [f64], inReal: f64, outReal: &mut f64) {
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
@@ -1030,10 +1036,10 @@ impl Core {
         // selects, not branches: which side wins is a coin flip.
         result = newValue;
         if sp.rank <= ((sp.lookbackTotal) as i32) {
-            result = (if result < sp.cb_sorted[(sp.rank - 1) as usize] { result } else { sp.cb_sorted[(sp.rank - 1) as usize] });
+            result = (if result < cb_sorted[(sp.rank - 1) as usize] { result } else { cb_sorted[(sp.rank - 1) as usize] });
         }
         if sp.rank > 1 {
-            result = (if result < sp.cb_sorted[(sp.rank - 2) as usize] { sp.cb_sorted[(sp.rank - 2) as usize] } else { result });
+            result = (if result < cb_sorted[(sp.rank - 2) as usize] { cb_sorted[(sp.rank - 2) as usize] } else { result });
         }
         (*outReal) = result;
         // pos counts the retained values <= newValue and j is the first retained
@@ -1046,29 +1052,29 @@ impl Core {
         // equals): the oldest of a run is then the departing value bit for bit,
         // which is what keeps -0.0 and 0.0 apart. Inserting before the equals
         // instead changes no value but flips the sign of some zero outputs.
-        sp.cb_ring[sp.ring_Idx] = newValue;
+        cb_ring[sp.ring_Idx] = newValue;
         sp.ring_Idx = sp.ring_Idx + 1;
         if sp.ring_Idx > sp.maxIdx_ring {
             sp.ring_Idx = 0;
         }
-        oldValue = sp.cb_ring[sp.ring_Idx];
+        oldValue = cb_ring[sp.ring_Idx];
         if sp.lookbackTotal < 256 {
             pos = 0;
             if sp.lookbackTotal >= 64 {
-                while pos + 4 <= sp.lookbackTotal && sp.cb_sorted[pos + 3] <= newValue {
+                while pos + 4 <= sp.lookbackTotal && cb_sorted[pos + 3] <= newValue {
                     pos += 4;
                 }
             }
-            while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
+            while pos < sp.lookbackTotal && cb_sorted[pos] <= newValue {
                 pos += 1;
             }
             j = 0;
             if sp.lookbackTotal >= 64 {
-                while j + 4 <= sp.lookbackTotal && sp.cb_sorted[j + 3] < oldValue {
+                while j + 4 <= sp.lookbackTotal && cb_sorted[j + 3] < oldValue {
                     j += 4;
                 }
             }
-            while j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue {
+            while j < sp.lookbackTotal && cb_sorted[j] < oldValue {
                 j += 1;
             }
         } else {
@@ -1076,7 +1082,7 @@ impl Core {
             hi = sp.lookbackTotal;
             while lo < hi {
                 mid = (lo + hi) / 2;
-                if sp.cb_sorted[mid] <= newValue {
+                if cb_sorted[mid] <= newValue {
                     lo = mid + 1;
                 } else {
                     hi = mid;
@@ -1087,7 +1093,7 @@ impl Core {
             hi = sp.lookbackTotal;
             while lo < hi {
                 mid = (lo + hi) / 2;
-                if sp.cb_sorted[mid] < oldValue {
+                if cb_sorted[mid] < oldValue {
                     lo = mid + 1;
                 } else {
                     hi = mid;
@@ -1099,16 +1105,16 @@ impl Core {
         // them.
         if j < pos {
             while j < pos - 1 {
-                sp.cb_sorted[j] = sp.cb_sorted[j + 1];
+                cb_sorted[j] = cb_sorted[j + 1];
                 j += 1;
             }
-            sp.cb_sorted[pos - 1] = newValue;
+            cb_sorted[pos - 1] = newValue;
         } else {
             while j > pos {
-                sp.cb_sorted[j] = sp.cb_sorted[j - 1];
+                cb_sorted[j] = cb_sorted[j - 1];
                 j -= 1;
             }
-            sp.cb_sorted[pos] = newValue;
+            cb_sorted[pos] = newValue;
         }
         sp.cur_outReal = (*outReal);
     }
@@ -1322,18 +1328,20 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = PercentileStreamState {
-            optInTimePeriod,
-            optInPercentile,
-            lookbackTotal,
-            rank,
-            ring_Idx,
-            maxIdx_ring,
-            sorted_Idx,
-            maxIdx_sorted,
-            cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_ring: cbSize_ring,
+            scalars: PercentileStreamScalars {
+                optInTimePeriod,
+                optInPercentile,
+                lookbackTotal,
+                rank,
+                ring_Idx,
+                maxIdx_ring,
+                sorted_Idx,
+                maxIdx_sorted,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
+                cbSize_ring: cbSize_ring,
+                cbSize_sorted: cbSize_sorted,
+            },
             cb_ring: ring,
-            cbSize_sorted: cbSize_sorted,
             cb_sorted: sorted,
         };
         Ok(PercentileStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -1475,7 +1483,7 @@ impl PercentileStream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::percentile_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::percentile_step_impl(&mut self.state.scalars, &mut self.state.cb_ring, &mut self.state.cb_sorted, inReal, &mut outReal);
         self.out.count += 1;
         Ok(outReal)
     }
@@ -1500,7 +1508,8 @@ impl PercentileStream {
         }
         let mut outReal: f64 = 0.0_f64;
         {
-            let sp = &self.state;
+            let sp = &self.state.scalars;
+            let cb_sorted = &self.state.cb_sorted;
             let outReal = &mut outReal;
             let mut newValue: f64 = 0.0_f64;
             let mut result: f64 = 0.0_f64;
@@ -1512,10 +1521,10 @@ impl PercentileStream {
             // selects, not branches: which side wins is a coin flip.
             result = newValue;
             if sp.rank <= ((sp.lookbackTotal) as i32) {
-                result = (if result < sp.cb_sorted[(sp.rank - 1) as usize] { result } else { sp.cb_sorted[(sp.rank - 1) as usize] });
+                result = (if result < cb_sorted[(sp.rank - 1) as usize] { result } else { cb_sorted[(sp.rank - 1) as usize] });
             }
             if sp.rank > 1 {
-                result = (if result < sp.cb_sorted[(sp.rank - 2) as usize] { sp.cb_sorted[(sp.rank - 2) as usize] } else { result });
+                result = (if result < cb_sorted[(sp.rank - 2) as usize] { cb_sorted[(sp.rank - 2) as usize] } else { result });
             }
             (*outReal) = result;
         }
@@ -1532,7 +1541,7 @@ impl PercentileStream {
     #[must_use]
     #[doc(alias = "TA_PERCENTILE_Value")]
     pub fn value(&self) -> f64 {
-        self.state.cur_outReal
+        self.state.scalars.cur_outReal
     }
 
     /// The bars this stream has an output for, in the input series'

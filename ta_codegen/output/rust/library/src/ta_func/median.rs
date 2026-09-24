@@ -442,6 +442,14 @@ pub struct MedianStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MedianStreamState {
+    scalars: MedianStreamScalars,
+    cb_ring: Vec<f64>,
+    cb_sorted: Vec<f64>,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct MedianStreamScalars {
     optInTimePeriod: i32,
     lookbackTotal: usize,
     lowerIdx: usize,
@@ -451,9 +459,7 @@ struct MedianStreamState {
     sorted_Idx: usize,
     maxIdx_sorted: usize,
     cbSize_ring: usize,
-    cb_ring: Vec<f64>,
     cbSize_sorted: usize,
-    cb_sorted: Vec<f64>,
     cur_outReal: f64,
 }
 
@@ -463,7 +469,7 @@ struct MedianStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn median_step_impl(sp: &mut MedianStreamState, inReal: f64, outReal: &mut f64) {
+    fn median_step_impl(sp: &mut MedianStreamScalars, cb_ring: &mut [f64], cb_sorted: &mut [f64], inReal: f64, outReal: &mut f64) {
         let mut newValue: f64 = 0.0_f64;
         let mut oldValue: f64 = 0.0_f64;
         let mut result: f64 = 0.0_f64;
@@ -479,7 +485,7 @@ impl Core {
         // sorted[0..pos-1], newValue, sorted[pos..].
         if sp.lookbackTotal < 128 {
             pos = 0;
-            while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
+            while pos < sp.lookbackTotal && cb_sorted[pos] <= newValue {
                 pos += 1;
             }
         } else {
@@ -487,7 +493,7 @@ impl Core {
             hi = sp.lookbackTotal;
             while lo < hi {
                 mid = (lo + hi) / 2;
-                if sp.cb_sorted[mid] <= newValue {
+                if cb_sorted[mid] <= newValue {
                     lo = mid + 1;
                 } else {
                     hi = mid;
@@ -496,18 +502,18 @@ impl Core {
             pos = lo;
         }
         if sp.lowerIdx < pos {
-            lower = sp.cb_sorted[sp.lowerIdx];
+            lower = cb_sorted[sp.lowerIdx];
         } else if sp.lowerIdx == pos {
             lower = newValue;
         } else {
-            lower = sp.cb_sorted[sp.lowerIdx - 1];
+            lower = cb_sorted[sp.lowerIdx - 1];
         }
         if sp.upperIdx < pos {
-            upper = sp.cb_sorted[sp.upperIdx];
+            upper = cb_sorted[sp.upperIdx];
         } else if sp.upperIdx == pos {
             upper = newValue;
         } else {
-            upper = sp.cb_sorted[sp.upperIdx - 1];
+            upper = cb_sorted[sp.upperIdx - 1];
         }
         // At odd n both reads are one value; averaging it would overflow above
         // DBL_MAX/2.
@@ -517,12 +523,12 @@ impl Core {
             result = (lower + upper) / 2.0;
         }
         (*outReal) = result;
-        sp.cb_ring[sp.ring_Idx] = newValue;
+        cb_ring[sp.ring_Idx] = newValue;
         sp.ring_Idx = sp.ring_Idx + 1;
         if sp.ring_Idx > sp.maxIdx_ring {
             sp.ring_Idx = 0;
         }
-        oldValue = sp.cb_ring[sp.ring_Idx];
+        oldValue = cb_ring[sp.ring_Idx];
         // j is the first retained value >= oldValue. Keep every run of equal
         // values in age order (newValue goes after its equals, as above): the
         // oldest of a run is then the departing value bit for bit, which is what
@@ -530,7 +536,7 @@ impl Core {
         // no value but flips the sign of some zero outputs.
         if sp.lookbackTotal < 128 {
             j = 0;
-            while j < sp.lookbackTotal && sp.cb_sorted[j] < oldValue {
+            while j < sp.lookbackTotal && cb_sorted[j] < oldValue {
                 j += 1;
             }
         } else {
@@ -538,7 +544,7 @@ impl Core {
             hi = sp.lookbackTotal;
             while lo < hi {
                 mid = (lo + hi) / 2;
-                if sp.cb_sorted[mid] < oldValue {
+                if cb_sorted[mid] < oldValue {
                     lo = mid + 1;
                 } else {
                     hi = mid;
@@ -550,16 +556,16 @@ impl Core {
         // them.
         if j < pos {
             while j < pos - 1 {
-                sp.cb_sorted[j] = sp.cb_sorted[j + 1];
+                cb_sorted[j] = cb_sorted[j + 1];
                 j += 1;
             }
-            sp.cb_sorted[pos - 1] = newValue;
+            cb_sorted[pos - 1] = newValue;
         } else {
             while j > pos {
-                sp.cb_sorted[j] = sp.cb_sorted[j - 1];
+                cb_sorted[j] = cb_sorted[j - 1];
                 j -= 1;
             }
-            sp.cb_sorted[pos] = newValue;
+            cb_sorted[pos] = newValue;
         }
         sp.cur_outReal = (*outReal);
     }
@@ -783,18 +789,20 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let state = MedianStreamState {
-            optInTimePeriod,
-            lookbackTotal,
-            lowerIdx,
-            upperIdx,
-            ring_Idx,
-            maxIdx_ring,
-            sorted_Idx,
-            maxIdx_sorted,
-            cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cbSize_ring: cbSize_ring,
+            scalars: MedianStreamScalars {
+                optInTimePeriod,
+                lookbackTotal,
+                lowerIdx,
+                upperIdx,
+                ring_Idx,
+                maxIdx_ring,
+                sorted_Idx,
+                maxIdx_sorted,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
+                cbSize_ring: cbSize_ring,
+                cbSize_sorted: cbSize_sorted,
+            },
             cb_ring: ring,
-            cbSize_sorted: cbSize_sorted,
             cb_sorted: sorted,
         };
         Ok(MedianStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -936,7 +944,7 @@ impl MedianStream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::median_step_impl(&mut self.state, inReal, &mut outReal);
+        Core::median_step_impl(&mut self.state.scalars, &mut self.state.cb_ring, &mut self.state.cb_sorted, inReal, &mut outReal);
         self.out.count += 1;
         Ok(outReal)
     }
@@ -961,7 +969,8 @@ impl MedianStream {
         }
         let mut outReal: f64 = 0.0_f64;
         {
-            let sp = &self.state;
+            let sp = &self.state.scalars;
+            let cb_sorted = &self.state.cb_sorted;
             let outReal = &mut outReal;
             let mut newValue: f64 = 0.0_f64;
             let mut result: f64 = 0.0_f64;
@@ -976,7 +985,7 @@ impl MedianStream {
             // sorted[0..pos-1], newValue, sorted[pos..].
             if sp.lookbackTotal < 128 {
                 pos = 0;
-                while pos < sp.lookbackTotal && sp.cb_sorted[pos] <= newValue {
+                while pos < sp.lookbackTotal && cb_sorted[pos] <= newValue {
                     pos += 1;
                 }
             } else {
@@ -984,7 +993,7 @@ impl MedianStream {
                 hi = sp.lookbackTotal;
                 while lo < hi {
                     mid = (lo + hi) / 2;
-                    if sp.cb_sorted[mid] <= newValue {
+                    if cb_sorted[mid] <= newValue {
                         lo = mid + 1;
                     } else {
                         hi = mid;
@@ -993,18 +1002,18 @@ impl MedianStream {
                 pos = lo;
             }
             if sp.lowerIdx < pos {
-                lower = sp.cb_sorted[sp.lowerIdx];
+                lower = cb_sorted[sp.lowerIdx];
             } else if sp.lowerIdx == pos {
                 lower = newValue;
             } else {
-                lower = sp.cb_sorted[sp.lowerIdx - 1];
+                lower = cb_sorted[sp.lowerIdx - 1];
             }
             if sp.upperIdx < pos {
-                upper = sp.cb_sorted[sp.upperIdx];
+                upper = cb_sorted[sp.upperIdx];
             } else if sp.upperIdx == pos {
                 upper = newValue;
             } else {
-                upper = sp.cb_sorted[sp.upperIdx - 1];
+                upper = cb_sorted[sp.upperIdx - 1];
             }
             // At odd n both reads are one value; averaging it would overflow above
             // DBL_MAX/2.
@@ -1028,7 +1037,7 @@ impl MedianStream {
     #[must_use]
     #[doc(alias = "TA_MEDIAN_Value")]
     pub fn value(&self) -> f64 {
-        self.state.cur_outReal
+        self.state.scalars.cur_outReal
     }
 
     /// The bars this stream has an output for, in the input series'

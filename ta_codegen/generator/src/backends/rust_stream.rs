@@ -2,11 +2,9 @@
 //!
 //! For every YAML-declared streamable function this appends a
 //! `/**** Streaming API *****/` section to the generated per-function Rust
-//! file: an opaque `#[derive(Clone)]` handle (`<Name>Stream { core, state }`),
-//! a private state struct mirroring the C stream struct field-for-field, a
-//! `<name>_step_impl` transition method on `Core` (so batch rendering
-//! conventions — `self.candle_settings`, lookback calls — work verbatim), a
-//! `pub(crate) <name>_open_internal(.., startIdx, ..)`
+//! file: an opaque `#[derive(Clone)]` handle, a private state struct carrying
+//! the C stream struct's fields, a `<name>_step_impl` transition function on
+//! `Core`, a `pub(crate) <name>_open_internal(.., startIdx, ..)`
 //! composition seam, the public `<name>_open` / `<name>_open_and_fill`
 //! constructors, and `update`/`peek` on the handle.
 //!
@@ -135,7 +133,21 @@ fn extra_param_rust_type(c_type: &str) -> &'static str {
 // `(*out)` writes against `&mut` step params.
 // ---------------------------------------------------------------------------
 
-struct RustStreamNames;
+struct RustStreamNames {
+    /// The state is split (see [`StateSplit`]): each heap buffer is a step
+    /// parameter, named bare.
+    bare_bufs: bool,
+}
+
+/// A heap buffer as the step names it: its own parameter when the state is
+/// split, a field of `sp` otherwise.
+fn buf_name(bare: bool, name: String) -> String {
+    if bare {
+        name
+    } else {
+        format!("sp.{name}")
+    }
+}
 
 impl streaming::NameMap for RustStreamNames {
     fn state(&self, name: &str) -> String {
@@ -148,7 +160,7 @@ impl streaming::NameMap for RustStreamNames {
         Expr::PointerDeref(name.to_string())
     }
     fn ring_buf(&self, var: &str, array: &str) -> String {
-        format!("sp.ring_{var}_{array}")
+        buf_name(self.bare_bufs, format!("ring_{var}_{array}"))
     }
     fn ring_pos(&self, var: &str) -> String {
         format!("sp.ringPos_{var}")
@@ -160,7 +172,7 @@ impl streaming::NameMap for RustStreamNames {
         format!("sp.ringCap_{var}")
     }
     fn win_buf(&self, var: &str, array: &str) -> String {
-        format!("sp.win_{var}_{array}")
+        buf_name(self.bare_bufs, format!("win_{var}_{array}"))
     }
     fn win_pos(&self, var: &str) -> String {
         format!("sp.winPos_{var}")
@@ -169,10 +181,10 @@ impl streaming::NameMap for RustStreamNames {
         format!("sp.winCap_{var}")
     }
     fn circ_buf(&self, storage: &str) -> String {
-        format!("sp.cb_{storage}")
+        buf_name(self.bare_bufs, format!("cb_{storage}"))
     }
     fn extrema_buf(&self, array: &str) -> String {
-        format!("sp.x_{array}")
+        buf_name(self.bare_bufs, format!("x_{array}"))
     }
     fn extrema_mask(&self) -> String {
         "sp.xMask".to_string()
@@ -507,11 +519,14 @@ fn emit_loop(
     counter: &Cell<usize>,
 ) {
     let typing = build_typing(func, model);
-    emit_handle_and_state_structs(o, func, model, &typing);
+    let fields = state_fields(func, model, &typing);
+    let split = StateSplit::of(func, &fields, &[model]);
+    emit_handle_struct(o, func);
+    emit_state_struct_from(o, func, &fields, &split);
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
-    emit_step(o, func, model, &typing, enums, registry, helpers, counter);
-    emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter);
+    emit_step(o, func, model, &typing, &split, enums, registry, helpers, counter);
+    emit_open_internal(o, func, model, &typing, &split, model.body, enums, registry, helpers, counter);
     emit_open_internal_wrapper(o, func, model, enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
@@ -519,8 +534,8 @@ fn emit_loop(
     let _ = writeln!(o, "}}\n");
 
     let ctx = build_step_ctx(func, &[model], &typing);
-    let frame = build_peek_frame(func, model, &typing, &ctx, enums, registry, helpers, counter);
-    emit_update_and_peek(o, func, false, frame.as_deref());
+    let frame = build_peek_frame(func, model, &typing, &split, &ctx, enums, registry, helpers, counter);
+    emit_update_and_peek(o, func, &split, false, frame.as_deref());
     emit_trait_pin(o, func);
 }
 
@@ -794,7 +809,7 @@ fn cs_step_params(settings: &BTreeSet<String>) -> String {
 }
 
 /// `&self.cs_near, …` — the step call's settings arguments, as a handle reads
-/// them. Distinct field places, so they borrow alongside `&mut self.state`.
+/// them. Distinct field places, so they borrow alongside the state's.
 fn cs_step_args(settings: &BTreeSet<String>) -> String {
     let mut s = String::new();
     for setting in settings {
@@ -821,16 +836,6 @@ fn cs_ctor_fields(func: &FuncDef) -> String {
 // ---------------------------------------------------------------------------
 // Structs
 // ---------------------------------------------------------------------------
-
-fn emit_handle_and_state_structs(
-    o: &mut String,
-    func: &FuncDef,
-    model: &StreamModel,
-    typing: &Typing,
-) {
-    emit_handle_struct(o, func);
-    emit_state_struct_from(o, func, &state_fields(func, model, typing));
-}
 
 /// The public opaque handle struct (identical for every tier).
 fn emit_handle_struct(o: &mut String, func: &FuncDef) {
@@ -869,51 +874,47 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
 
 
 
-/// `cur_<output>` initializer pairs at their zero default, for a state literal
+/// `cur_<output>` initializers at their zero default, for a state literal
 /// built somewhere the produced value is not in scope. Every such site is
 /// followed by a seed from the opener's own last value; the default only has to
 /// make the literal total.
-fn cur_ctor_defaults(func: &FuncDef, sep: &str) -> String {
-    let mut t = String::new();
-    // A multi-line literal is rendered one field per line at the struct's own
-    // indent; an inline one is spliced between braces and takes no indent.
-    let pad = if sep == "\n" { "            " } else { "" };
-    for (name, _, d) in cur_state_fields(func) {
-        let _ = write!(t, "{pad}{name}: {d},{sep}");
-    }
-    t
+fn cur_ctor_defaults(func: &FuncDef) -> Vec<String> {
+    cur_state_fields(func).into_iter().map(|(name, _, d)| format!("{name}: {d}")).collect()
 }
 /// The `cur_<output>` initializer lines for a capture literal: the value(s) the
 /// opener just produced, so `value()` is right the instant the handle exists.
-fn cur_capture_fields(func: &FuncDef, typing: &Typing) -> String {
+fn cur_capture_fields(func: &FuncDef, typing: &Typing) -> Vec<String> {
     let nullable = super::common::nullable_output_names(func);
-    let mut t = String::new();
-    for out in &func.outputs {
-        let name = &out.name;
-        if nullable.contains(name) {
-            // No slot to read: a declinable output's array may be absent.
-            // `lastCur_<name>` is the transcribed open loop's own shadow of
-            // the guarded store (`nullable_shadow`), computed every
-            // iteration regardless of decline — matching what an Update
-            // recomputes, so `Open(P)+updates` and `Open(n)` agree.
-            let _ = writeln!(t, "            cur_{name}: lastCur_{name},");
-        } else if typing.ctx.vec_vars.contains(&format!("sc_{name}")) {
-            // A composed producer holds the caller's slice through the stride
-            // alias, so the output name itself is mutably borrowed here.
-            let _ = writeln!(t, "            cur_{name}: sc_{name}[*outNBElement - 1],");
-        } else {
-            let _ = writeln!(
-                t,
-                "            cur_{name}: {name}[(*outNBElement - 1) * outStride],"
-            );
-        }
-    }
-    t
+    func.outputs
+        .iter()
+        .map(|out| {
+            let name = &out.name;
+            if nullable.contains(name) {
+                // No slot to read: a declinable output's array may be absent.
+                // `lastCur_<name>` is the transcribed open loop's own shadow of
+                // the guarded store (`nullable_shadow`), computed every
+                // iteration regardless of decline — matching what an Update
+                // recomputes, so `Open(P)+updates` and `Open(n)` agree.
+                format!("cur_{name}: lastCur_{name}")
+            } else if typing.ctx.vec_vars.contains(&format!("sc_{name}")) {
+                // A composed producer holds the caller's slice through the stride
+                // alias, so the output name itself is mutably borrowed here.
+                format!("cur_{name}: sc_{name}[*outNBElement - 1]")
+            } else {
+                format!("cur_{name}: {name}[(*outNBElement - 1) * outStride]")
+            }
+        })
+        .collect()
 }
 
 /// The private state struct from a prebuilt (name, rust_type, default) list.
-fn emit_state_struct_from(o: &mut String, func: &FuncDef, fields: &[(String, String, String)]) {
-    emit_state_struct_decl(o, func, &state_type_name(func), fields, &[]);
+fn emit_state_struct_from(
+    o: &mut String,
+    func: &FuncDef,
+    fields: &[(String, String, String)],
+    split: &StateSplit,
+) {
+    emit_state_struct_decl(o, func, &state_type_name(func), fields, split, &[]);
 }
 
 /// The `cur_<output>` field list — the value(s) at the last bar the stream
@@ -933,8 +934,8 @@ fn cur_state_fields(func: &FuncDef) -> Vec<(String, String, String)> {
         .collect()
 }
 
-/// `struct <State> { .. }` from a field list, with an optional comment line
-/// before named fields.
+/// `struct <State> { .. }` from a field list, split per [`StateSplit`], with an
+/// optional comment line before named fields.
 ///
 /// Every tier declares its state through here, so the two that build their
 /// field list by hand (dispatch, period bank) render it the same way as the
@@ -944,21 +945,205 @@ fn emit_state_struct_decl(
     func: &FuncDef,
     state: &str,
     fields: &[(String, String, String)],
+    split: &StateSplit,
     comments: &[(&str, String)],
 ) {
     let owned: Vec<(String, String, String)> =
         fields.iter().cloned().chain(cur_state_fields(func)).collect();
     let fields = &owned[..];
-    let _ = writeln!(o, "#[derive(Debug, Clone)]\n#[allow(non_snake_case, dead_code)]\nstruct {state} {{");
-    for (name, rty, _) in fields {
+    let decl = |o: &mut String, name: &str, rty: &str| {
         for (field, text) in comments {
-            if field == name {
+            if *field == name {
                 let _ = writeln!(o, "    // {text}");
             }
         }
         let _ = writeln!(o, "    {name}: {rty},");
+    };
+    let head = "#[derive(Debug, Clone)]\n#[allow(non_snake_case, dead_code)]\nstruct";
+    let _ = writeln!(o, "{head} {state} {{");
+    if split.is_split() {
+        let _ = writeln!(o, "    scalars: {},", split.sp_ty);
+        for (name, rty, _) in fields.iter().filter(|f| split.is_buffer(&f.0)) {
+            decl(o, name, rty);
+        }
+        let _ = writeln!(o, "}}\n");
+        let _ = writeln!(o, "{head} {} {{", split.sp_ty);
+    }
+    for (name, rty, _) in fields.iter().filter(|f| !split.is_buffer(&f.0)) {
+        decl(o, name, rty);
     }
     let _ = writeln!(o, "}}\n");
+}
+
+/// A split state's heap buffers, `(field, element type)`, and the type the
+/// step takes as `sp`.
+///
+/// A state whose step stores into a buffer inside a loop is split: its other
+/// fields move into a nested `<N>StreamScalars`, which becomes `sp`, and each
+/// buffer reaches the step as its own `&mut [T]`. Read through `sp`, a buffer's
+/// base is a pointer loaded out of the state, and LLVM proves a store through it
+/// leaves the state alone only by walking every use of `sp`. Past 100 uses it
+/// gives up, and the loop then reloads every bound and base per element. Two
+/// `&mut` parameters are `noalias` without that walk. A store outside a loop
+/// costs a few reloads per bar, less than loading every base and length at
+/// entry does, so every other state stays whole.
+struct StateSplit {
+    sp_ty: String,
+    bufs: Vec<(String, String)>,
+}
+
+impl StateSplit {
+    fn of(func: &FuncDef, fields: &[(String, String, String)], models: &[&StreamModel]) -> Self {
+        let bufs: Vec<(String, String)> = if stores_buffer_in_loop(models) {
+            fields
+                .iter()
+                .filter_map(|(name, rty, _)| {
+                    let elem = rty.strip_prefix("Vec<")?.strip_suffix('>')?;
+                    matches!(elem, "f64" | "i32").then(|| (name.clone(), elem.to_string()))
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
+        let sp_ty = if bufs.is_empty() {
+            state_type_name(func)
+        } else {
+            format!("{}StreamScalars", common::pascal_words(&func.name))
+        };
+        StateSplit { sp_ty, bufs }
+    }
+
+    fn is_split(&self) -> bool {
+        !self.bufs.is_empty()
+    }
+
+    fn is_buffer(&self, field: &str) -> bool {
+        self.bufs.iter().any(|(b, _)| b == field)
+    }
+
+    fn names(&self) -> RustStreamNames {
+        RustStreamNames { bare_bufs: self.is_split() }
+    }
+
+    /// The place the scalars sit at under a state place.
+    fn scalars(&self, state: &str) -> String {
+        if self.is_split() {
+            format!("{state}.scalars")
+        } else {
+            state.to_string()
+        }
+    }
+
+    /// `, ring_x_inReal: &mut [f64], …` after the step's `sp` parameter.
+    fn step_params(&self) -> String {
+        let mut s = String::new();
+        for (b, t) in &self.bufs {
+            let _ = write!(s, ", {b}: &mut [{t}]");
+        }
+        s
+    }
+
+    /// The step call's leading arguments, off a handle's `self.state`.
+    fn step_args(&self) -> String {
+        let mut s = format!("&mut {}", self.scalars("self.state"));
+        for (b, _) in &self.bufs {
+            let _ = write!(s, ", &mut self.state.{b}");
+        }
+        s
+    }
+
+    /// A peek frame's view of the handle: `sp` when `body` reads a scalar, and
+    /// each buffer it mentions under the step's own parameter name.
+    ///
+    /// A buffer binds as its `Vec`, not as the slice the step takes. A frame
+    /// writes no buffer, so it needs no alias proof, and a slice bound at entry
+    /// loads every base and length there, which lets LLVM speculate each
+    /// shadowed read into extra selects.
+    fn peek_bindings(&self, body: &str) -> String {
+        let mut s = String::new();
+        if body.contains("sp.") {
+            let _ = writeln!(s, "            let sp = &{};", self.scalars("self.state"));
+        }
+        for (b, _) in self.bufs.iter().filter(|(b, _)| mentions(body, b)) {
+            let _ = writeln!(s, "            let {b} = &self.state.{b};");
+        }
+        s
+    }
+
+    /// Panics on a step local named like a buffer: a fixed-size array local
+    /// would compile, and index itself instead of the handle's buffer.
+    fn assert_unshadowed<'a>(&self, func: &FuncDef, locals: impl IntoIterator<Item = &'a String>) {
+        for local in locals {
+            assert!(
+                !self.is_buffer(local),
+                "{}: step local `{local}` shadows the buffer parameter of that name",
+                func.name
+            );
+        }
+    }
+
+    /// `{pad}{lhs} = <State> { .. };` from field initialisers (`name` or
+    /// `name: expr`), the scalars nested when the state is split.
+    fn literal(&self, func: &FuncDef, pad: &str, lhs: &str, inits: &[String]) -> String {
+        let field = |init: &String| init.split(':').next().unwrap_or("").trim().to_string();
+        let mut s = format!("{pad}{lhs} = {} {{\n", state_type_name(func));
+        let inner = if self.is_split() {
+            let _ = writeln!(s, "{pad}    scalars: {} {{", self.sp_ty);
+            format!("{pad}        ")
+        } else {
+            format!("{pad}    ")
+        };
+        for init in inits.iter().filter(|i| !self.is_buffer(&field(i))) {
+            let _ = writeln!(s, "{inner}{init},");
+        }
+        if self.is_split() {
+            let _ = writeln!(s, "{pad}    }},");
+            for init in inits.iter().filter(|i| self.is_buffer(&field(i))) {
+                let _ = writeln!(s, "{pad}    {init},");
+            }
+        }
+        let _ = writeln!(s, "{pad}}};");
+        s
+    }
+}
+
+/// Whether a model's step stores into one of its heap buffers inside a loop.
+fn stores_buffer_in_loop(models: &[&StreamModel]) -> bool {
+    fn walk(stmts: &[Statement], bufs: &[String], in_loop: bool) -> bool {
+        stmts.iter().any(|st| match st {
+            Statement::Assign { target: Expr::ArrayAccess(n, _), .. } => in_loop && bufs.contains(n),
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::For { body, .. }
+            | Statement::ForC { body, .. } => walk(body, bufs, true),
+            Statement::If { then_body, else_body, .. } => {
+                walk(then_body, bufs, in_loop) || walk(else_body, bufs, in_loop)
+            }
+            Statement::Switch { cases, default, .. } => {
+                cases.iter().any(|(_, b)| walk(b, bufs, in_loop)) || walk(default, bufs, in_loop)
+            }
+            Statement::Block { body } => walk(body, bufs, in_loop),
+            _ => false,
+        })
+    }
+    let names = RustStreamNames { bare_bufs: true };
+    models.iter().any(|m| {
+        let bufs: Vec<String> =
+            streaming::transition_buffers(m, &names).into_iter().map(|(b, _)| b).collect();
+        let transition = streaming::build_transition(m, &names)
+            .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+        walk(&transition, &bufs, false)
+    })
+}
+
+/// Whether `ident` occurs in `text` as a whole identifier, not as a field.
+fn mentions(text: &str, ident: &str) -> bool {
+    let is_ident = |c: char| c.is_ascii_alphanumeric() || c == '_';
+    text.match_indices(ident).any(|(at, _)| {
+        let before = text[..at].chars().next_back();
+        let after = text[at + ident.len()..].chars().next();
+        !before.is_some_and(|c| is_ident(c) || c == '.') && !after.is_some_and(is_ident)
+    })
 }
 
 
@@ -1370,12 +1555,10 @@ fn peek_frame_arm(
 ///
 /// `body` is the rest of the frame, already rendered: a stateless one reads
 /// nothing out of the handle, and binding it anyway is an unused local.
-fn peek_frame_head(func: &FuncDef, body: &str) -> String {
+fn peek_frame_head(func: &FuncDef, split: &StateSplit, body: &str) -> String {
     let mut out = String::new();
     let _ = writeln!(out, "        {{");
-    if body.contains("sp.") {
-        let _ = writeln!(out, "            let sp = &self.state;");
-    }
+    out.push_str(&split.peek_bindings(body));
     // Rebinding each output as `&mut` keeps the body's `(*out) = …` spelling,
     // and with it every cast the step renders.
     for o in &func.outputs {
@@ -1390,14 +1573,15 @@ fn build_peek_frame(
     func: &FuncDef,
     model: &StreamModel,
     typing: &Typing,
+    split: &StateSplit,
     ctx: &RustRenderCtx,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) -> Option<String> {
-    let arm = peek_frame_arm(func, model, &RustStreamNames, typing, ctx, enums, registry, helpers, counter, 12)?;
-    let mut out = peek_frame_head(func, &arm);
+    let arm = peek_frame_arm(func, model, &split.names(), typing, ctx, enums, registry, helpers, counter, 12)?;
+    let mut out = peek_frame_head(func, split, &arm);
     out.push_str(&arm);
     let _ = writeln!(out, "        }}");
     Some(out)
@@ -1411,6 +1595,7 @@ fn build_peek_frame_dual(
     func: &FuncDef,
     dmp: &streaming::DualModePlan,
     typing: &Typing,
+    split: &StateSplit,
     ctx: &RustRenderCtx,
     opt_real_params: &[String],
     enums: &HashMap<String, EnumDef>,
@@ -1419,12 +1604,13 @@ fn build_peek_frame_dual(
     counter: &Cell<usize>,
 ) -> Option<String> {
     let (ma, mb) = (&dmp.mode_a, &dmp.mode_b);
-    let a = peek_frame_arm(func, ma, &RustStreamNames, typing, ctx, enums, registry, helpers, counter, 16)?;
-    let b = peek_frame_arm(func, mb, &RustStreamNames, typing, ctx, enums, registry, helpers, counter, 16)?;
+    let names = split.names();
+    let a = peek_frame_arm(func, ma, &names, typing, ctx, enums, registry, helpers, counter, 16)?;
+    let b = peek_frame_arm(func, mb, &names, typing, ctx, enums, registry, helpers, counter, 16)?;
     let mut rest = String::new();
     // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
     // in the batch and in Open: it is a property of the function, not of a mode.
-    if let Some(st) = streaming::identity_peek_branch(ma, &RustStreamNames) {
+    if let Some(st) = streaming::identity_peek_branch(ma, &names) {
         let st = answer_bare_returns_rust(func, std::slice::from_ref(&st));
         let var_inits: HashMap<String, &Expr> = HashMap::new();
         let output_names: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
@@ -1443,34 +1629,37 @@ fn build_peek_frame_dual(
     rest.push_str(&b);
     let _ = writeln!(rest, "            }}");
     let _ = writeln!(rest, "        }}");
-    let mut out = peek_frame_head(func, &rest);
+    let mut out = peek_frame_head(func, split, &rest);
     out.push_str(&rest);
     Some(out)
 }
 
-/// `fn <NAME>_step_impl(&self, sp: &mut State, <bars>, <&mut outs>)`.
+/// `fn <name>_step_impl(sp, <buffers>, <settings>, <bars>, <&mut outs>)`.
 #[allow(clippy::too_many_arguments)]
 fn emit_step(
     o: &mut String,
     func: &FuncDef,
     model: &StreamModel,
     typing: &Typing,
+    split: &StateSplit,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_step_sig(o, func, false);
+    emit_step_sig(o, func, split, false);
+    split.assert_unshadowed(func, model.temps.iter().map(|(n, _)| n));
     let ctx = build_step_ctx(func, &[model], typing);
-    emit_step_body(o, func, model, typing, &ctx, enums, registry, helpers, counter, 8);
+    emit_step_body(o, func, model, typing, &split.names(), &ctx, enums, registry, helpers, counter, 8);
     emit_step_end(o, false);
 }
 
 /// The step signature line, shared by every tier (dispatch/period-bank steps
 /// hand-roll their bodies but keep the identical surface).
-fn emit_step_sig(o: &mut String, func: &FuncDef, fallible: bool) {
+fn emit_step_sig(o: &mut String, func: &FuncDef, split: &StateSplit, fallible: bool) {
     let sn = snake(func);
-    let state = state_type_name(func);
+    let sp_ty = &split.sp_ty;
+    let bufs = split.step_params();
     // No `&self`: a step reads nothing from `Core` but the candlestick settings
     // it names, and those arrive as parameters from the handle (issue #274).
     let cs_params = cs_step_params(&handle_candle_settings(func));
@@ -1489,7 +1678,7 @@ fn emit_step_sig(o: &mut String, func: &FuncDef, fallible: bool) {
     let ret = if fallible { " -> Result<(), RetCode>" } else { "" };
     let _ = writeln!(
         o,
-        "    fn {sn}_step_impl(sp: &mut {state}{cs_params}{params}){ret} {{"
+        "    fn {sn}_step_impl(sp: &mut {sp_ty}{bufs}{cs_params}{params}){ret} {{"
     );
 }
 
@@ -1511,6 +1700,7 @@ fn emit_step_body(
     func: &FuncDef,
     model: &StreamModel,
     typing: &Typing,
+    names: &RustStreamNames,
     ctx: &RustRenderCtx,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -1524,7 +1714,7 @@ fn emit_step_body(
         o.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
     }
 
-    let transition = streaming::build_transition(model, &RustStreamNames)
+    let transition = streaming::build_transition(model, names)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     // C's `*outReal = 0;` must type as f64: float integer literals written to
     // a REAL output become float literals (the renderer's ArrayAccess-target
@@ -1587,6 +1777,7 @@ fn emit_step_body(
 fn emit_identity_step_branch(
     o: &mut String,
     model: &StreamModel,
+    names: &RustStreamNames,
     ctx: &RustRenderCtx,
     opt_real_params: &[String],
     enums: &HashMap<String, EnumDef>,
@@ -1595,7 +1786,7 @@ fn emit_identity_step_branch(
     counter: &Cell<usize>,
     indent: usize,
 ) {
-    if let Some(s) = streaming::identity_step_branch(model, &RustStreamNames) {
+    if let Some(s) = streaming::identity_step_branch(model, names) {
         let output_names: Vec<String> =
             model.func.outputs.iter().map(|out| out.name.clone()).collect();
         let var_inits: HashMap<String, &Expr> = HashMap::new();
@@ -1729,6 +1920,7 @@ fn emit_open_internal(
     func: &FuncDef,
     model: &StreamModel,
     typing: &Typing,
+    split: &StateSplit,
     body: &[Statement],
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -1740,7 +1932,7 @@ fn emit_open_internal(
     emit_open_inits(o, func, &model.outputs, typing, registry, helpers);
 
     let fields = state_fields(func, model, typing);
-    emit_identity_fast_path(o, func, model, &fields, typing, registry, helpers, counter);
+    emit_identity_fast_path(o, func, model, &fields, typing, split, registry, helpers, counter);
 
     // --- transcribed batch body --------------------------------------------
     let open_body = build_open_body_rust(model, body);
@@ -1749,7 +1941,7 @@ fn emit_open_internal(
     );
 
     emit_capture_and_publish(
-        o, func, model, &model.state, typing, registry, helpers, counter, "",
+        o, func, model, &model.state, typing, split, registry, helpers, counter, &[],
     );
     let _ = writeln!(o, "    }}\n");
 }
@@ -1997,15 +2189,16 @@ fn emit_capture_and_publish(
     model: &StreamModel,
     scalars: &[(String, VarType)],
     typing: &Typing,
+    split: &StateSplit,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-    extra_fields: &str,
+    extra_fields: &[String],
 ) {
     let handle = stream_type_name(func);
     let _ = writeln!(o, "\n        // Capture the live batch state into the handle.");
     let cs_ctor = cs_ctor_fields(func);
-    emit_capture(o, func, model, scalars, typing, registry, helpers, counter, extra_fields);
+    emit_capture(o, func, model, scalars, typing, split, registry, helpers, counter, extra_fields);
     // The core publishes only the handle; the scalar wrapper reads its sink.
     let _ = writeln!(o, "        Ok({handle} {{ {cs_ctor}state, out: OutRange {{ beg_idx: *outBegIdx, count: *outNBElement }} }})");
 }
@@ -2159,6 +2352,7 @@ fn emit_identity_fast_path(
     model: &StreamModel,
     fields: &[(String, String, String)],
     typing: &Typing,
+    split: &StateSplit,
     registry: &Registry,
     helpers: &HelperRegistry,
     _counter: &Cell<usize>,
@@ -2166,7 +2360,6 @@ fn emit_identity_fast_path(
     let Some(idp) = &model.identity else { return };
     let handle = stream_type_name(func);
     let cs_ctor = cs_ctor_fields(func);
-    let state = state_type_name(func);
     let opt_real_params: Vec<String> = func
         .optional_inputs
         .iter()
@@ -2189,17 +2382,16 @@ fn emit_identity_fast_path(
     );
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
-    let _ = writeln!(o, "            let state = {state} {{");
     // The identity path produces its input verbatim, so the value at the last
     // committed bar is the last history bar — the same expression the stride-0
     // fill below writes.
-    for (out, inp) in &idp.pairs {
-        let _ = writeln!(o, "                cur_{out}: {inp}[historyLen - 1],");
-    }
-    for (name, _, default) in fields {
-        let _ = writeln!(o, "                {name}: {default},");
-    }
-    let _ = writeln!(o, "            }};");
+    let inits: Vec<String> = idp
+        .pairs
+        .iter()
+        .map(|(out, inp)| format!("cur_{out}: {inp}[historyLen - 1]"))
+        .chain(fields.iter().map(|(name, _, default)| format!("{name}: {default}")))
+        .collect();
+    o.push_str(&split.literal(func, "            ", "let state", &inits));
     // Fill the whole identity range: at stride 1 this is batch(0, len-1) for the
     // identity param. Stride 0 short-circuits to the last bar — letting the loop
     // run would be CORRECT (every iteration rewrites slot 0, the last one leaves
@@ -2265,12 +2457,12 @@ fn emit_capture(
     model: &StreamModel,
     scalars: &[(String, VarType)],
     typing: &Typing,
+    split: &StateSplit,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-    extra_fields: &str,
+    extra_fields: &[String],
 ) {
-    let state = state_type_name(func);
     let _ = counter;
 
     let opt_real_params_cap: Vec<String> = func
@@ -2436,84 +2628,80 @@ fn emit_capture(
     }
 
     // --- the state literal ---------------------------------------------------
-    let _ = writeln!(o, "        let state = {state} {{");
+    let mut f: Vec<String> = Vec::new();
     for p in &func.optional_inputs {
-        let _ = writeln!(o, "            {},", p.name);
+        f.push(p.name.clone());
     }
     for (name, _) in &func.private_extra_params {
-        let _ = writeln!(o, "            {name},");
+        f.push(name.clone());
     }
     for (name, _ty) in scalars {
         if model.parity.as_ref().is_some_and(|p| &p.field == name) {
             // Synthetic parity field: seeded to the NEXT bar's parity.
-            let _ = writeln!(o, "            {name}: historyLen % 2,");
+            f.push(format!("{name}: historyLen % 2"));
         } else if typing.extrema_i32.contains(name) {
-            let _ = writeln!(o, "            {name}: ({name}) as i32,");
+            f.push(format!("{name}: ({name}) as i32"));
         } else {
-            let _ = writeln!(o, "            {name},");
+            f.push(name.clone());
         }
     }
     for name in &model.out_feedback {
         // At stride 0 this resolves to slot 0 — the scalar sink — so the one
         // expression serves both entry points.
-        let _ = writeln!(
-            o,
-            "            lastOut_{name}: {name}[(*outNBElement - 1) * outStride],"
-        );
+        f.push(format!("lastOut_{name}: {name}[(*outNBElement - 1) * outStride]"));
     }
     // Seed the value accessor from the same slot: an Open that succeeded
     // produced at least one value, so `value()` is total on a live handle. A
     // DECLINABLE output has no slot to read, so it takes the body's own
     // variable — the same one the step retains from.
-    o.push_str(&cur_capture_fields(func, typing));
+    f.extend(cur_capture_fields(func, typing));
     for lag in &model.lags {
         for k in 1..=lag.depth {
-            let _ = writeln!(
-                o,
-                "            {}: {}[historyLen - {k}],",
+            f.push(format!(
+                "{}: {}[historyLen - {k}]",
                 StreamModel::lag_field(&lag.array, k),
                 lag.array
-            );
+            ));
         }
     }
     for ring in model.rings() {
         let v = &ring.var;
         if ring.back > 0 {
-            let _ = writeln!(o, "            ringPos_{v}: historyLen % cap_{v} as usize,");
-            let _ = writeln!(o, "            ringCap_{v}: cap_{v} as usize,");
-            let _ = writeln!(o, "            ringLag_{v}: capLag_{v} as usize,");
+            f.push(format!("ringPos_{v}: historyLen % cap_{v} as usize"));
+            f.push(format!("ringCap_{v}: cap_{v} as usize"));
+            f.push(format!("ringLag_{v}: capLag_{v} as usize"));
         } else {
-            let _ = writeln!(o, "            ringPos_{v}: 0_usize,");
-            let _ = writeln!(o, "            ringCap_{v}: cap_{v} as usize,");
+            f.push(format!("ringPos_{v}: 0_usize"));
+            f.push(format!("ringCap_{v}: cap_{v} as usize"));
         }
         for arr in &ring.arrays {
-            let _ = writeln!(o, "            ring_{v}_{arr},");
+            f.push(format!("ring_{v}_{arr}"));
         }
     }
     for win in model.windows() {
         let v = &win.var;
-        let _ = writeln!(o, "            winPos_{v}: 0_usize,");
-        let _ = writeln!(o, "            winCap_{v}: cap_{v} as usize,");
+        f.push(format!("winPos_{v}: 0_usize"));
+        f.push(format!("winCap_{v}: cap_{v} as usize"));
         for arr in &win.arrays {
-            let _ = writeln!(o, "            win_{v}_{arr},");
+            f.push(format!("win_{v}_{arr}"));
         }
     }
     for circ in model.circs() {
-        let _ = writeln!(o, "            cbSize_{0}: cbSize_{0},", circ.id);
+        f.push(format!("cbSize_{0}: cbSize_{0}", circ.id));
         for (storage, _) in streaming::circ_storages(circ) {
             // MOVE the live batch buffer (contents AND rotation phase).
-            let _ = writeln!(o, "            cb_{storage}: {storage},");
+            f.push(format!("cb_{storage}: {storage}"));
         }
     }
     if let Some(ex) = model.extrema() {
-        let _ = writeln!(o, "            xMask: (physX - 1) as i32,");
+        f.push("xMask: (physX - 1) as i32".to_string());
         for arr in &ex.arrays {
-            let _ = writeln!(o, "            x_{arr},");
+            f.push(format!("x_{arr}"));
         }
     }
     // Composed tier: sub handles + lag-ring fields join the same literal.
-    o.push_str(extra_fields);
-    let _ = writeln!(o, "        }};");
+    f.extend_from_slice(extra_fields);
+    o.push_str(&split.literal(func, "        ", "let state", &f));
 }
 
 // ---------------------------------------------------------------------------
@@ -2799,6 +2987,7 @@ fn open_and_fill_doctest(
 fn emit_update_and_peek(
     o: &mut String,
     func: &FuncDef,
+    split: &StateSplit,
     step_fallible: bool,
     peek_frame: Option<&str>,
 ) {
@@ -2877,14 +3066,15 @@ fn emit_update_and_peek(
         let mut t = String::new();
         for out in &func.outputs {
             let nm = &out.name;
-            let _ = writeln!(t, "        self.state.cur_{nm} = {nm};");
+            let _ = writeln!(t, "        {}.cur_{nm} = {nm};", split.scalars("self.state"));
         }
         t
     };
     o.push_str(&out_decls);
     let _ = writeln!(
         o,
-        "        Core::{sn}_step_impl(&mut self.state, {cs_args}{fwd_bars}{out_refs}){step_try};"
+        "        Core::{sn}_step_impl({}, {cs_args}{fwd_bars}{out_refs}){step_try};",
+        split.step_args()
     );
     o.push_str(&cur_retain());
     // After the step: a sub-stream rejecting through `?` must not count the bar.
@@ -2930,7 +3120,7 @@ fn emit_update_and_peek(
         let parts: Vec<String> = func
             .outputs
             .iter()
-            .map(|o| format!("self.state.cur_{}", o.name))
+            .map(|o| format!("{}.cur_{}", split.scalars("self.state"), o.name))
             .collect();
         if parts.len() == 1 {
             parts[0].clone()
@@ -3102,22 +3292,20 @@ fn dual_union_fields(
     fields
 }
 
-/// Struct-literal lines for the fields of `other` missing from `own` (by
+/// Struct-literal initializers for the fields of `other` missing from `own` (by
 /// name): the OTHER mode's non-scalar state, initialized to its type default
 /// in this arm's capture literal — buffers a mode-fixed stream never touches
 /// (C memsets instead; clone-Peek and Drop handle empty Vecs fine).
 fn dual_complement_literal(
     own: &[(String, String, String)],
     other: &[(String, String, String)],
-) -> String {
+) -> Vec<String> {
     let own_names: HashSet<&String> = own.iter().map(|(n, _, _)| n).collect();
-    let mut s = String::new();
-    for (name, _, default) in other {
-        if !own_names.contains(name) {
-            let _ = writeln!(s, "            {name}: {default},");
-        }
-    }
-    s
+    other
+        .iter()
+        .filter(|(name, _, _)| !own_names.contains(name))
+        .map(|(name, _, default)| format!("{name}: {default}"))
+        .collect()
 }
 
 /// Emit the full dual-mode stream section: ONE union state struct, one
@@ -3154,9 +3342,10 @@ fn emit_dual_mode(
     let fields_a = state_fields_from(func, ma, &typing, &union_scalars);
     let fields_b = state_fields_from(func, mb, &typing, &union_scalars);
     let union_fields = dual_union_fields(func, &fields_a, &fields_b);
+    let split = StateSplit::of(func, &union_fields, &[ma, mb]);
 
     emit_handle_struct(o, func);
-    emit_state_struct_from(o, func, &union_fields);
+    emit_state_struct_from(o, func, &union_fields, &split);
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
@@ -3167,21 +3356,23 @@ fn emit_dual_mode(
         .filter(|p| p.param_type == ParamType::Real)
         .map(|p| p.name.clone())
         .collect();
-    emit_step_sig(o, func, false);
+    emit_step_sig(o, func, &split, false);
+    split.assert_unshadowed(func, ma.temps.iter().chain(&mb.temps).map(|(n, _)| n));
     let ctx = build_step_ctx(func, &[ma, mb], &typing);
     // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
     // in the batch and in Open: it is a property of the function, not of a mode.
-    emit_identity_step_branch(o, ma, &ctx, &opt_real_params, enums, registry, helpers, counter, 8);
+    let names = split.names();
+    emit_identity_step_branch(o, ma, &names, &ctx, &opt_real_params, enums, registry, helpers, counter, 8);
     let pred_sp = params_on_state(func, &dmp.predicate);
     let pred_sp = render_expr(&pred_sp, &ctx, &opt_real_params, registry, helpers);
     let _ = writeln!(o, "        if {pred_sp} {{");
-    emit_step_body(o, func, ma, &typing, &ctx, enums, registry, helpers, counter, 12);
+    emit_step_body(o, func, ma, &typing, &names, &ctx, enums, registry, helpers, counter, 12);
     let _ = writeln!(o, "        }} else {{");
-    emit_step_body(o, func, mb, &typing, &ctx, enums, registry, helpers, counter, 12);
+    emit_step_body(o, func, mb, &typing, &names, &ctx, enums, registry, helpers, counter, 12);
     let _ = writeln!(o, "        }}");
     emit_step_end(o, false);
 
-    emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter);
+    emit_dual_open(o, func, dmp, &typing, &split, &union_scalars, enums, registry, helpers, counter);
     emit_open_internal_wrapper(o, func, ma, enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
@@ -3189,9 +3380,9 @@ fn emit_dual_mode(
     let _ = writeln!(o, "}}\n");
 
     let frame = build_peek_frame_dual(
-        func, dmp, &typing, &ctx, &opt_real_params, enums, registry, helpers, counter,
+        func, dmp, &typing, &split, &ctx, &opt_real_params, enums, registry, helpers, counter,
     );
-    emit_update_and_peek(o, func, false, frame.as_deref());
+    emit_update_and_peek(o, func, &split, false, frame.as_deref());
     emit_trait_pin(o, func);
 }
 
@@ -3205,6 +3396,7 @@ fn emit_dual_open(
     func: &FuncDef,
     dmp: &streaming::DualModePlan,
     typing: &Typing,
+    split: &StateSplit,
     union_scalars: &[(String, VarType)],
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -3234,7 +3426,7 @@ fn emit_dual_open(
     // ABOVE the mode predicate, so which arm the predicate would have picked is
     // moot.
     let union_fields = dual_union_fields(func, &fields_a, &fields_b);
-    emit_identity_fast_path(o, func, ma, &union_fields, typing, registry, helpers, counter);
+    emit_identity_fast_path(o, func, ma, &union_fields, typing, split, registry, helpers, counter);
     let _ = writeln!(o, "        if {pred} {{");
     for (k, arm) in [ma, mb].into_iter().enumerate() {
         if k == 1 {
@@ -3254,7 +3446,7 @@ fn emit_dual_open(
         emit_open_region(&mut s, func, arm, typing, &open_body, enums, registry, helpers, counter, &[]);
         let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
         let complement = dual_complement_literal(own, other);
-        emit_capture_and_publish(&mut s, func, arm, union_scalars, typing, registry, helpers, counter, &complement);
+        emit_capture_and_publish(&mut s, func, arm, union_scalars, typing, split, registry, helpers, counter, &complement);
         o.push_str(&indent_block(&s, 4));
     }
     let _ = writeln!(o, "        }}");
@@ -3378,7 +3570,8 @@ fn emit_dispatch(
         "Sub-stream, tagged by {}; `{sub_enum}::Identity` on the identity path.",
         dp.param
     );
-    emit_state_struct_decl(o, func, &state, &state_fields, &[("sub", sub_note)]);
+    let split = StateSplit::of(func, &state_fields, &[]);
+    emit_state_struct_decl(o, func, &state, &state_fields, &split, &[("sub", sub_note)]);
     let _ = writeln!(o, "#[derive(Debug, Clone)]\nenum {sub_enum} {{");
     if dp.identity.is_some() {
         let _ = writeln!(o, "    Identity,");
@@ -3395,7 +3588,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
     // --- step ---------------------------------------------------------------
-    emit_step_sig(o, func, true);
+    emit_step_sig(o, func, &split, true);
     if let Some(idp) = &dp.identity {
         let cond = params_on_state(func, &idp.condition);
         let cond = render_expr(&cond, &ctx, &[], registry, helpers);
@@ -3743,7 +3936,7 @@ fn emit_dispatch(
     }
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, true, dispatch_frame.as_deref());
+    emit_update_and_peek(o, func, &split, true, dispatch_frame.as_deref());
     emit_trait_pin(o, func);
 }
 
@@ -3821,12 +4014,13 @@ fn emit_period_bank(
         "One sub-{} stream per period in [{min}, {max}], advanced in lockstep.",
         callee.to_uppercase()
     );
-    emit_state_struct_decl(o, func, &state, &state_fields, &[("bank", bank_note)]);
+    let split = StateSplit::of(func, &state_fields, &[]);
+    emit_state_struct_decl(o, func, &state, &state_fields, &split, &[("bank", bank_note)]);
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
-    emit_step_sig(o, func, true);
+    emit_step_sig(o, func, &split, true);
     let _ = writeln!(o, "        let mut cp: i32 = {period} as i32;");
     let _ = writeln!(o, "        if cp < sp.{min} {{");
     let _ = writeln!(o, "            cp = sp.{min};");
@@ -3951,7 +4145,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, true, Some(&bank_frame));
+    emit_update_and_peek(o, func, &split, true, Some(&bank_frame));
     emit_trait_pin(o, func);
 }
 
@@ -4183,14 +4377,14 @@ fn composed_step_ctx(
 
 /// The composed StepImpl: producer transition (writing `cur_<series>`),
 /// then the batch-tail pipeline through the owned sub handles, combine maps
-/// per bar, lag-ring pushes, and the output writes. No peek flag: peek is the
-/// universal clone-of-the-whole-tree.
+/// per bar, lag-ring pushes, and the output writes.
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_composed_step(
     o: &mut String,
     func: &FuncDef,
     cp: &streaming::ComposedPlan,
     typing: &Typing,
+    split: &StateSplit,
     inputs: &[String],
     outputs: &[String],
     enums: &HashMap<String, EnumDef>,
@@ -4206,7 +4400,9 @@ fn emit_composed_step(
     let mut sink = String::new();
     let o: &mut String = if frame { &mut sink } else { o };
     if !frame {
-        emit_step_sig(o, func, true);
+        emit_step_sig(o, func, split, true);
+        let producer_temps = cp.producer.iter().flat_map(|m| &m.temps);
+        split.assert_unshadowed(func, producer_temps.chain(&cp.map_temps).map(|(n, _)| n));
     }
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
     let ctx = composed_step_ctx(func, cp, typing, &cur_scalars);
@@ -4427,6 +4623,7 @@ fn emit_composed_open(
     func: &FuncDef,
     cp: &streaming::ComposedPlan,
     typing: &Typing,
+    split: &StateSplit,
     outputs: &[String],
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -4436,7 +4633,6 @@ fn emit_composed_open(
     // The composed fill/scratch path hardcodes f64 Vecs (mirrors C's assert).
     let handle = stream_type_name(func);
     let cs_ctor = cs_ctor_fields(func);
-    let state = state_type_name(func);
     let sn = snake(func);
     let opt_real_params: Vec<String> = func
         .optional_inputs
@@ -4609,34 +4805,29 @@ fn emit_composed_open(
         let _ = writeln!(o, "        }}");
     }
     // Extra state-literal fields: sub handles + lag rings.
-    let mut extra = String::new();
+    let mut extra: Vec<String> = Vec::new();
     for (si, _) in cp.subs.iter().enumerate() {
-        let _ = writeln!(extra, "            sub{si},");
+        extra.push(format!("sub{si}"));
     }
     for ring in &cp.sub_lag_rings {
         let sr = &ring.series;
-        let _ = writeln!(extra, "            lagRingPos_{sr}: 0_usize,");
-        let _ = writeln!(extra, "            lagRingCap_{sr}: lagCap_{sr},");
-        let _ = writeln!(extra, "            lagRing_{sr},");
+        extra.push(format!("lagRingPos_{sr}: 0_usize"));
+        extra.push(format!("lagRingCap_{sr}: lagCap_{sr}"));
+        extra.push(format!("lagRing_{sr}"));
     }
     if let Some(model) = &cp.producer {
         emit_capture(
-            o, func, model, &model.state, typing, registry, helpers, counter, &extra,
+            o, func, model, &model.state, typing, split, registry, helpers, counter, &extra,
         );
     } else {
         // Loopless pipeline: params + extras + subs/rings only. The value(s)
         // are not produced until the sub-streams have filled below, so `cur_`
         // starts at its default and is seeded once the fill has run.
-        let _ = writeln!(o, "        let mut state = {state} {{");
-        o.push_str(&cur_ctor_defaults(func, "\n"));
-        for p in &func.optional_inputs {
-            let _ = writeln!(o, "            {},", p.name);
-        }
-        for (name, _) in &func.private_extra_params {
-            let _ = writeln!(o, "            {name},");
-        }
-        o.push_str(&extra);
-        let _ = writeln!(o, "        }};");
+        let mut f = cur_ctor_defaults(func);
+        f.extend(func.optional_inputs.iter().map(|p| p.name.clone()));
+        f.extend(func.private_extra_params.iter().map(|(name, _)| name.clone()));
+        f.extend(extra);
+        o.push_str(&split.literal(func, "        ", "let mut state", &f));
     }
     {
         // Both modes compute into `sc_*`; only the hand-back differs, and it is
@@ -4648,7 +4839,7 @@ fn emit_composed_open(
             // after the copy-out would hold that borrow across the write.
             if cp.producer.is_none() {
                 for out in outputs {
-                    let _ = writeln!(o, "        state.cur_{out} = sc_{out}[*outNBElement - 1];");
+                    let _ = writeln!(o, "        {}.cur_{out} = sc_{out}[*outNBElement - 1];", split.scalars("state"));
                 }
             }
             for out in outputs {
@@ -4878,15 +5069,23 @@ fn emit_composed(
         fields.push((format!("lagRingCap_{sr}"), "usize".into(), String::new()));
         fields.push((format!("lagRing_{sr}"), "Vec<f64>".into(), String::new()));
     }
-    emit_state_struct_from(o, func, &fields);
+    let models: Vec<&StreamModel> = cp.producer.iter().collect();
+    let split = StateSplit::of(func, &fields, &models);
+    assert!(
+        !split.is_split(),
+        "{}: the Rust composed emitters do not split a state; a producer that stores into a \
+         buffer inside a loop needs them to, and a SYNTH fixture to prove it",
+        func.name
+    );
+    emit_state_struct_from(o, func, &fields, &split);
 
     // --- impl Core ----------------------------------------------------------
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_composed_step(
-        o, func, cp, &typing, &inputs, &outputs, enums, registry, helpers, counter, false,
+        o, func, cp, &typing, &split, &inputs, &outputs, enums, registry, helpers, counter, false,
     );
     emit_composed_open(
-        o, func, cp, &typing, &outputs, enums, registry, helpers, counter,
+        o, func, cp, &typing, &split, &outputs, enums, registry, helpers, counter,
     );
     emit_open_internal_wrapper_named(o, func, &outputs, enums);
     emit_open_wrapper(o, func, enums);
@@ -4897,16 +5096,16 @@ fn emit_composed(
     let frame = {
         let mut sink = String::new();
         emit_composed_step(
-            &mut sink, func, cp, &typing, &inputs, &outputs, enums, registry, helpers, counter,
-            true,
+            &mut sink, func, cp, &typing, &split, &inputs, &outputs, enums, registry, helpers,
+            counter, true,
         )
         .map(|body| {
-            let mut f = peek_frame_head(func, &body);
+            let mut f = peek_frame_head(func, &split, &body);
             f.push_str(&body);
             let _ = writeln!(f, "        }}");
             f
         })
     };
-    emit_update_and_peek(o, func, true, frame.as_deref());
+    emit_update_and_peek(o, func, &split, true, frame.as_deref());
     emit_trait_pin(o, func);
 }
