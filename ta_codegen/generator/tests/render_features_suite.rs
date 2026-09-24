@@ -953,6 +953,132 @@ fn backends_render_max_min_fmax_fmin_abs() {
     );
 }
 
+/// C# renders each C select whose bits an `FpSelect.cs` helper reproduces as
+/// that helper, except on a loop-carried arithmetic recurrence, counts under a
+/// floating-point compare with a SETcc, and leaves every near miss a ternary or
+/// an `if`.
+#[test]
+fn csharp_renders_exact_fp_selects_as_helpers() {
+    let source = r#"
+int max_lookback( int optInTimePeriod )
+{
+   return (optInTimePeriod-1);
+}
+
+TA_RetCode max( int    startIdx,
+                int    endIdx,
+                const double inReal[],
+                int    optInTimePeriod,
+                int   *outBegIdx,
+                int   *outNBElement,
+                double outReal[] )
+{
+   int outIdx, today, count, lo;
+   double x, y, peak, trough, v, v1, v2, v3, v4, sum, t, m, prev, acc, q, w, d, hi;
+
+   outIdx = 0;
+   count = 0;
+   lo = 0;
+   peak = 0.0;
+   trough = 0.0;
+   sum = 0.0;
+   prev = 0.0;
+   acc = 0.0;
+   w = 1.0;
+   d = 1.0;
+   hi = 0.0;
+   today = startIdx;
+   while( today <= endIdx )
+   {
+      x = inReal[today];
+      y = inReal[today-1];
+      v1 = x > y ? x : y;
+      v2 = x < y ? y : x;
+      v3 = x > y ? y : x;
+      v4 = x < y ? x : y;
+      v = x - y > 0.0 ? x : 0.0;
+      v = x < 0.0 ? 0.0 : y;
+      v = max( x, y ) + min( x, y );
+      if( x > peak ) peak = x;
+      if( trough > x ) trough = x;
+      t = x - y;
+      m = t > 0.0 ? x : 0.0;
+      t = prev - prev*0.1;
+      prev = t + m;
+      prev = t > prev ? t : prev;
+      acc = acc*0.5 + x;
+      if( y > acc ) acc = y;
+      q = w / y;
+      if( q > 1.0 ) q = 1.0;
+      if( y > 2.0 ) { q = 0.0; q += x; w = q * 0.5; }
+      w = w + x;
+      d = d*0.9 > x ? d*0.9 : x;
+      if( x > hi )
+      {
+         /* lead */
+         hi = x;
+         /* trail */
+      }
+      if( inReal[today-2] < x ) count++;
+      if( x == y ) count--;
+      if( inReal[count++] < x ) count++;
+      v = x >= y ? x : y;
+      v = x <= y ? x : y;
+      v = (int)x > y ? x : y;
+      v = x > y ? x : inReal[today++];
+      v = x > 0.0 ? inReal[today-2] : 0.0;
+      if( x < y ) count += 2;
+      if( x < y ) sum += 1;
+      if( lo < today ) lo = today;
+      outReal[outIdx++] = v + v1 + v2 + v3 + v4 + peak + trough + sum + count + lo + prev + acc + q + d + hi;
+      today++;
+   }
+
+   *outBegIdx = startIdx;
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
+    let (func, enums) = load_indicator_with_source("max", source);
+    let cs = backends::csharp::generate(&func, &enums, &make_registry(), &make_helpers());
+    for needle in [
+        "v1 = MaxGt(x, y);",
+        "v2 = MaxGt(y, x);",
+        "v3 = MinLt(y, x);",
+        "v4 = MinLt(x, y);",
+        "v = KeepIfGt(x - y, 0.0, x);",
+        "v = ZeroIfLt(x, 0.0, y);",
+        "v = MaxGt(x, y) + MinLt(x, y);",
+        "peak = MaxGt(x, peak);",
+        "trough = MinLt(x, trough);",
+        "m = KeepIfGt(t, 0.0, x);",
+        // `q` is set afresh before it feeds `w`, so its clamp is a leaf.
+        "q = MinLt(1.0, q);",
+        "count += (inReal[today - 2] < x) ? 1 : 0;",
+        // Near misses, each left a ternary or an `if`. The last three carry
+        // their result into the next pass through arithmetic.
+        "v = (x >= y) ? x : y;",
+        "v = (x <= y) ? x : y;",
+        "v = ((int)x > y) ? x : y;",
+        "v = (x > y) ? x : inReal[today++];",
+        "v = (x > 0.0) ? inReal[today - 2] : 0.0;",
+        "if( x == y ) {",
+        "if( inReal[count++] < x ) {",
+        "count += 2;",
+        "sum += 1;",
+        "if( lo < today ) {",
+        "prev = (t > prev) ? t : prev;",
+        "if( y > acc ) {",
+        "d = (d * 0.9 > x) ? d * 0.9 : x;",
+    ] {
+        assert!(cs.contains(needle), "C# output missing `{needle}`:\n{cs}");
+    }
+    assert!(!cs.contains("Math.Max") && !cs.contains("Math.Min"), "{cs}");
+    // A folded `if` keeps its body's comments where the source had them.
+    let at = |n: &str| cs.find(n).unwrap_or_else(|| panic!("C# output missing `{n}`:\n{cs}"));
+    assert!(at("/* lead */") < at("hi = MaxGt(x, hi);") && at("hi = MaxGt(x, hi);") < at("/* trail */"), "{cs}");
+}
+
 #[test]
 fn backends_render_math_functions_idiomatically() {
     let (func, enums) = load_indicator("ht_trendmode");
