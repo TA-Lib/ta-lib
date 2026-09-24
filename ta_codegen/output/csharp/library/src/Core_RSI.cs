@@ -175,7 +175,7 @@ public partial class Core
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -222,7 +222,7 @@ public partial class Core
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -240,7 +240,7 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= invPeriod;
@@ -324,7 +324,7 @@ public partial class Core
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -346,7 +346,7 @@ public partial class Core
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -361,7 +361,7 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= invPeriod;
@@ -645,7 +645,7 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(sp.optInTimePeriod - 1);
          prevGain *= (double)(sp.optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= sp.invPeriod;
@@ -690,7 +690,7 @@ public partial class Core
       sp.prevValue = tempValue1;
       sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
       sp.prevGain *= (double)(sp.optInTimePeriod - 1);
-      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      gainDelta = MaxGt(tempValue2, 0.0);
       sp.prevGain += gainDelta;
       sp.prevLoss += gainDelta - tempValue2;
       sp.prevLoss *= sp.invPeriod;
@@ -790,7 +790,7 @@ public partial class Core
          today = today + 1;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -837,7 +837,7 @@ public partial class Core
             prevValue = tempValue1;
             prevLoss *= (double)(optInTimePeriod - 1);
             prevGain *= (double)(optInTimePeriod - 1);
-            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta;
             prevLoss += gainDelta - tempValue2;
             prevLoss *= invPeriod;
@@ -855,7 +855,7 @@ public partial class Core
          prevValue = tempValue1;
          prevLoss *= (double)(optInTimePeriod - 1);
          prevGain *= (double)(optInTimePeriod - 1);
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
          prevLoss *= invPeriod;

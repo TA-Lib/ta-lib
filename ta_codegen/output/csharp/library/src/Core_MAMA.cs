@@ -457,15 +457,11 @@ public partial class Core
          /* Put Delta Phase into tempReal */
          tempReal = prevPhase - tempReal2;
          prevPhase = tempReal2;
-         if( tempReal < 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MaxGt(1.0, tempReal);
          /* Put Alpha into tempReal */
          if( tempReal > 1.0 ) {
             tempReal = optInFastLimit / tempReal;
-            if( tempReal < optInSlowLimit ) {
-               tempReal = optInSlowLimit;
-            }
+            tempReal = MaxGt(optInSlowLimit, tempReal);
          } else {
             tempReal = optInFastLimit;
          }
@@ -805,14 +801,10 @@ public partial class Core
          }
          tempReal = prevPhase - tempReal2;
          prevPhase = tempReal2;
-         if( tempReal < 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MaxGt(1.0, tempReal);
          if( tempReal > 1.0 ) {
             tempReal = optInFastLimit / tempReal;
-            if( tempReal < optInSlowLimit ) {
-               tempReal = optInSlowLimit;
-            }
+            tempReal = MaxGt(optInSlowLimit, tempReal);
          } else {
             tempReal = optInFastLimit;
          }
@@ -1369,15 +1361,11 @@ public partial class Core
          /* Put Delta Phase into tempReal */
          tempReal = prevPhase - tempReal2;
          prevPhase = tempReal2;
-         if( tempReal < 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MaxGt(1.0, tempReal);
          /* Put Alpha into tempReal */
          if( tempReal > 1.0 ) {
             tempReal = sp.optInFastLimit / tempReal;
-            if( tempReal < sp.optInSlowLimit ) {
-               tempReal = sp.optInSlowLimit;
-            }
+            tempReal = MaxGt(sp.optInSlowLimit, tempReal);
          } else {
             tempReal = sp.optInFastLimit;
          }
@@ -1550,15 +1538,11 @@ public partial class Core
       /* Put Delta Phase into tempReal */
       tempReal = sp.prevPhase - tempReal2;
       sp.prevPhase = tempReal2;
-      if( tempReal < 1.0 ) {
-         tempReal = 1.0;
-      }
+      tempReal = MaxGt(1.0, tempReal);
       /* Put Alpha into tempReal */
       if( tempReal > 1.0 ) {
          tempReal = sp.optInFastLimit / tempReal;
-         if( tempReal < sp.optInSlowLimit ) {
-            tempReal = sp.optInSlowLimit;
-         }
+         tempReal = MaxGt(sp.optInSlowLimit, tempReal);
       } else {
          tempReal = sp.optInFastLimit;
       }
@@ -1944,15 +1928,11 @@ public partial class Core
          /* Put Delta Phase into tempReal */
          tempReal = prevPhase - tempReal2;
          prevPhase = tempReal2;
-         if( tempReal < 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MaxGt(1.0, tempReal);
          /* Put Alpha into tempReal */
          if( tempReal > 1.0 ) {
             tempReal = optInFastLimit / tempReal;
-            if( tempReal < optInSlowLimit ) {
-               tempReal = optInSlowLimit;
-            }
+            tempReal = MaxGt(optInSlowLimit, tempReal);
          } else {
             tempReal = optInFastLimit;
          }

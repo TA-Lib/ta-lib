@@ -201,13 +201,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          periodTotal += greatest;
          today += 1;
       }
@@ -222,13 +218,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
@@ -248,13 +240,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          outReal[outIdx++] = prevATR;
          today += 1;
@@ -324,13 +312,9 @@ public partial class Core
          tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          periodTotal += greatest;
          today += 1;
       }
@@ -342,13 +326,9 @@ public partial class Core
          tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
@@ -362,13 +342,9 @@ public partial class Core
          tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          outReal[outIdx++] = prevATR;
          today += 1;
@@ -660,13 +636,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(sp.wBeta, prevATR, sp.wAlpha * greatest);
          cur_outReal = prevATR;
          return cur_outReal;
@@ -704,13 +676,9 @@ public partial class Core
       greatest = tempHT - tempLT;
       /* val1 */
       val2 = Math.Abs(tempCY - tempHT);
-      if( val2 > greatest ) {
-         greatest = val2;
-      }
+      greatest = MaxGt(val2, greatest);
       val3 = Math.Abs(tempCY - tempLT);
-      if( val3 > greatest ) {
-         greatest = val3;
-      }
+      greatest = MaxGt(val3, greatest);
       sp.prevATR = Math.FusedMultiplyAdd(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
       sp.cur_outReal = sp.prevATR;
       sp.lag1_inClose = inClose;
@@ -823,13 +791,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          periodTotal += greatest;
          today += 1;
       }
@@ -844,13 +808,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
@@ -870,13 +830,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          outReal[outIdx++ * outStride] = prevATR;
          today += 1;

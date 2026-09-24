@@ -179,7 +179,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          /* Remove the trailing value (prepares the next window). */
@@ -242,9 +242,7 @@ public partial class Core
              * square-root it unconditionally (#243). A negative variance always
              * gets here: the peak is never negative, so the trigger fires on it.
              */
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             /* Re-remove the trailing value under the new shift so the carried state
              * matches the non-reseed path.
              */
@@ -335,7 +333,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = (double)inReal[trailingIdx] - shift;
@@ -376,9 +374,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = (double)inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -699,7 +695,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * sp.invPeriod;
          variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
          /* Remove the trailing value (prepares the next window). */
@@ -762,9 +758,7 @@ public partial class Core
              * square-root it unconditionally (#243). A negative variance always
              * gets here: the peak is never negative, so the trigger fires on it.
              */
-            if( variance < 0.000000000001 * (periodTotal2 * sp.invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * sp.invPeriod), variance);
             /* Re-remove the trailing value under the new shift so the carried state
              * matches the non-reseed path.
              */
@@ -805,7 +799,7 @@ public partial class Core
       sp.periodTotal1 += tempReal;
       tempReal *= tempReal;
       sp.periodTotal2 += tempReal;
-      sp.peakTotal2 = (sp.periodTotal2 > sp.peakTotal2) ? sp.periodTotal2 : sp.peakTotal2;
+      sp.peakTotal2 = MaxGt(sp.periodTotal2, sp.peakTotal2);
       meanValue1 = sp.periodTotal1 * sp.invPeriod;
       variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
       /* Remove the trailing value (prepares the next window). */
@@ -868,9 +862,7 @@ public partial class Core
           * square-root it unconditionally (#243). A negative variance always
           * gets here: the peak is never negative, so the trigger fires on it.
           */
-         if( variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
-            variance = 0.0;
-         }
+         variance = ZeroIfLt(variance, 0.000000000001 * (sp.periodTotal2 * sp.invPeriod), variance);
          /* Re-remove the trailing value under the new shift so the carried state
           * matches the non-reseed path.
           */
@@ -969,7 +961,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          /* Remove the trailing value (prepares the next window). */
@@ -1032,9 +1024,7 @@ public partial class Core
              * square-root it unconditionally (#243). A negative variance always
              * gets here: the peak is never negative, so the trigger fires on it.
              */
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             /* Re-remove the trailing value under the new shift so the carried state
              * matches the non-reseed path.
              */

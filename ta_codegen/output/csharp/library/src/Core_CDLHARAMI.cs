@@ -75,7 +75,7 @@ public partial class Core
       int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
       int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
       double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
+      return MaxGt(BodyShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
    internal RetCode CdlharamiImpl( int startIdx,
@@ -164,13 +164,13 @@ public partial class Core
             if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 2nd: short */
             {
                /* 2nd is engulfed by 1st */
-               if( Math.Max(inClose[i], inOpen[i]) < Math.Max(inClose[i - 1], inOpen[i - 1]) && Math.Min(inClose[i], inOpen[i]) > Math.Min(inClose[i - 1], inOpen[i - 1]) ) {
+               if( MaxGt(inClose[i], inOpen[i]) < MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) > MinLt(inClose[i - 1], inOpen[i - 1]) ) {
                   outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
                   /* 2nd is engulfed by 1st
                    * (one end of real body can match;
                    * engulfing guaranteed by "long" and "short")
                    */
-               } else if( Math.Max(inClose[i], inOpen[i]) <= Math.Max(inClose[i - 1], inOpen[i - 1]) && Math.Min(inClose[i], inOpen[i]) >= Math.Min(inClose[i - 1], inOpen[i - 1]) ) {
+               } else if( MaxGt(inClose[i], inOpen[i]) <= MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) >= MinLt(inClose[i - 1], inOpen[i - 1]) ) {
                   outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
                } else {
                   outInteger[outIdx++] = 0;
@@ -257,9 +257,9 @@ public partial class Core
       do {
          if( Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
             if( Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i] - (double)inOpen[i])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i] - (double)inLow[i]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i] - ((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inClose[i]) : ((double)inOpen[i]))) + (((((double)inClose[i]) >= ((double)inOpen[i])) ? ((double)inOpen[i]) : ((double)inClose[i])) - (double)inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
-               if( Math.Max((double)inClose[i], (double)inOpen[i]) < Math.Max((double)inClose[i - 1], (double)inOpen[i - 1]) && Math.Min((double)inClose[i], (double)inOpen[i]) > Math.Min((double)inClose[i - 1], (double)inOpen[i - 1]) ) {
+               if( MaxGt((double)inClose[i], (double)inOpen[i]) < MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) && MinLt((double)inClose[i], (double)inOpen[i]) > MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) ) {
                   outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
-               } else if( Math.Max((double)inClose[i], (double)inOpen[i]) <= Math.Max((double)inClose[i - 1], (double)inOpen[i - 1]) && Math.Min((double)inClose[i], (double)inOpen[i]) >= Math.Min((double)inClose[i - 1], (double)inOpen[i - 1]) ) {
+               } else if( MaxGt((double)inClose[i], (double)inOpen[i]) <= MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) && MinLt((double)inClose[i], (double)inOpen[i]) >= MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) ) {
                   outInteger[outIdx++] = (0 - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
                } else {
                   outInteger[outIdx++] = 0;
@@ -602,13 +602,13 @@ public partial class Core
             if( Math.Abs(inClose - inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 2nd: short */
             {
                /* 2nd is engulfed by 1st */
-               if( Math.Max(inClose, inOpen) < Math.Max(sp.lag1_inClose, sp.lag1_inOpen) && Math.Min(inClose, inOpen) > Math.Min(sp.lag1_inClose, sp.lag1_inOpen) ) {
+               if( MaxGt(inClose, inOpen) < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) > MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
                   cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 100;
                   /* 2nd is engulfed by 1st
                    * (one end of real body can match;
                    * engulfing guaranteed by "long" and "short")
                    */
-               } else if( Math.Max(inClose, inOpen) <= Math.Max(sp.lag1_inClose, sp.lag1_inOpen) && Math.Min(inClose, inOpen) >= Math.Min(sp.lag1_inClose, sp.lag1_inOpen) ) {
+               } else if( MaxGt(inClose, inOpen) <= MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) >= MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
                   cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 80;
                } else {
                   cur_outInteger = 0;
@@ -658,13 +658,13 @@ public partial class Core
          if( Math.Abs(inClose - inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 2nd: short */
          {
             /* 2nd is engulfed by 1st */
-            if( Math.Max(inClose, inOpen) < Math.Max(sp.lag1_inClose, sp.lag1_inOpen) && Math.Min(inClose, inOpen) > Math.Min(sp.lag1_inClose, sp.lag1_inOpen) ) {
+            if( MaxGt(inClose, inOpen) < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) > MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
                sp.cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 100;
                /* 2nd is engulfed by 1st
                 * (one end of real body can match;
                 * engulfing guaranteed by "long" and "short")
                 */
-            } else if( Math.Max(inClose, inOpen) <= Math.Max(sp.lag1_inClose, sp.lag1_inOpen) && Math.Min(inClose, inOpen) >= Math.Min(sp.lag1_inClose, sp.lag1_inOpen) ) {
+            } else if( MaxGt(inClose, inOpen) <= MaxGt(sp.lag1_inClose, sp.lag1_inOpen) && MinLt(inClose, inOpen) >= MinLt(sp.lag1_inClose, sp.lag1_inOpen) ) {
                sp.cur_outInteger = (0 - ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1)) * 80;
             } else {
                sp.cur_outInteger = 0;
@@ -781,13 +781,13 @@ public partial class Core
             if( Math.Abs(inClose[i] - inOpen[i]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 2nd: short */
             {
                /* 2nd is engulfed by 1st */
-               if( Math.Max(inClose[i], inOpen[i]) < Math.Max(inClose[i - 1], inOpen[i - 1]) && Math.Min(inClose[i], inOpen[i]) > Math.Min(inClose[i - 1], inOpen[i - 1]) ) {
+               if( MaxGt(inClose[i], inOpen[i]) < MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) > MinLt(inClose[i - 1], inOpen[i - 1]) ) {
                   outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
                   /* 2nd is engulfed by 1st
                    * (one end of real body can match;
                    * engulfing guaranteed by "long" and "short")
                    */
-               } else if( Math.Max(inClose[i], inOpen[i]) <= Math.Max(inClose[i - 1], inOpen[i - 1]) && Math.Min(inClose[i], inOpen[i]) >= Math.Min(inClose[i - 1], inOpen[i - 1]) ) {
+               } else if( MaxGt(inClose[i], inOpen[i]) <= MaxGt(inClose[i - 1], inOpen[i - 1]) && MinLt(inClose[i], inOpen[i]) >= MinLt(inClose[i - 1], inOpen[i - 1]) ) {
                   outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
                } else {
                   outInteger[outIdx++ * outStride] = 0;

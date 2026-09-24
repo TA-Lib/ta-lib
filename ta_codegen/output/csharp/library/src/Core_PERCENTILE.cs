@@ -205,10 +205,10 @@ public partial class Core
           */
          result = newValue;
          if( rank <= lookbackTotal ) {
-            result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
+            result = MinLt(result, sorted[rank - 1]);
          }
          if( rank > 1 ) {
-            result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
+            result = MaxGt(sorted[rank - 2], result);
          }
          outReal[outIdx] = result;
          outIdx += 1;
@@ -387,10 +387,10 @@ public partial class Core
          newValue = (double)inReal[i];
          result = newValue;
          if( rank <= lookbackTotal ) {
-            result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
+            result = MinLt(result, sorted[rank - 1]);
          }
          if( rank > 1 ) {
-            result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
+            result = MaxGt(sorted[rank - 2], result);
          }
          outReal[outIdx] = result;
          outIdx += 1;
@@ -764,10 +764,10 @@ public partial class Core
           */
          result = newValue;
          if( sp.rank <= sp.lookbackTotal ) {
-            result = (result < sp.cb_sorted[sp.rank - 1]) ? result : sp.cb_sorted[sp.rank - 1];
+            result = MinLt(result, sp.cb_sorted[sp.rank - 1]);
          }
          if( sp.rank > 1 ) {
-            result = (result < sp.cb_sorted[sp.rank - 2]) ? sp.cb_sorted[sp.rank - 2] : result;
+            result = MaxGt(sp.cb_sorted[sp.rank - 2], result);
          }
          cur_outReal = result;
          return cur_outReal;
@@ -809,10 +809,10 @@ public partial class Core
        */
       result = newValue;
       if( sp.rank <= sp.lookbackTotal ) {
-         result = (result < sp.cb_sorted[sp.rank - 1]) ? result : sp.cb_sorted[sp.rank - 1];
+         result = MinLt(result, sp.cb_sorted[sp.rank - 1]);
       }
       if( sp.rank > 1 ) {
-         result = (result < sp.cb_sorted[sp.rank - 2]) ? sp.cb_sorted[sp.rank - 2] : result;
+         result = MaxGt(sp.cb_sorted[sp.rank - 2], result);
       }
       sp.cur_outReal = result;
       /* pos counts the retained values <= newValue and j is the first retained
@@ -1007,10 +1007,10 @@ public partial class Core
           */
          result = newValue;
          if( rank <= lookbackTotal ) {
-            result = (result < sorted[rank - 1]) ? result : sorted[rank - 1];
+            result = MinLt(result, sorted[rank - 1]);
          }
          if( rank > 1 ) {
-            result = (result < sorted[rank - 2]) ? sorted[rank - 2] : result;
+            result = MaxGt(sorted[rank - 2], result);
          }
          outReal[outIdx * outStride] = result;
          outIdx += 1;

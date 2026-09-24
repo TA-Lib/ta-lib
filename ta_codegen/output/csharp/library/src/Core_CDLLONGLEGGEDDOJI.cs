@@ -73,7 +73,7 @@ public partial class Core
       int ShadowLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowLong].rangeType;
       int ShadowLong_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowLong].avgPeriod;
       double ShadowLong_factor = this.candleSettings[(int)CandleSettingType.ShadowLong].factor;
-      return Math.Max(BodyDoji_avgPeriod, ShadowLong_avgPeriod) ;
+      return MaxGt(BodyDoji_avgPeriod, ShadowLong_avgPeriod) ;
 
    }
    internal RetCode CdllongleggeddojiImpl( int startIdx,

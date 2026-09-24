@@ -197,7 +197,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = inReal[trailingIdx] - shift;
@@ -238,9 +238,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -264,7 +262,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = inReal[trailingIdx] - shift;
@@ -305,9 +303,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -340,7 +336,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = inReal[trailingIdx] - shift;
@@ -381,9 +377,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -501,7 +495,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = (double)inReal[trailingIdx] - shift;
@@ -542,9 +536,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = (double)inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -567,7 +559,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = (double)inReal[trailingIdx] - shift;
@@ -608,9 +600,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = (double)inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -638,7 +628,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = (double)inReal[trailingIdx] - shift;
@@ -679,9 +669,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = (double)inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -1044,7 +1032,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * sp.invPeriod;
          variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
          tempReal = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0) - shift;
@@ -1085,9 +1073,7 @@ public partial class Core
                variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * sp.invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * sp.invPeriod), variance);
             tempReal = (((windowStart & sp.xMask) != pkSlot0) ? sp.x_inReal[windowStart & sp.xMask] : pkVal0) - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -1141,7 +1127,7 @@ public partial class Core
       sp.periodTotal1 += tempReal;
       tempReal *= tempReal;
       sp.periodTotal2 += tempReal;
-      sp.peakTotal2 = (sp.periodTotal2 > sp.peakTotal2) ? sp.periodTotal2 : sp.peakTotal2;
+      sp.peakTotal2 = MaxGt(sp.periodTotal2, sp.peakTotal2);
       meanValue1 = sp.periodTotal1 * sp.invPeriod;
       variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
       tempReal = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
@@ -1182,9 +1168,7 @@ public partial class Core
             variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
          }
          sp.peakTotal2 = sp.periodTotal2;
-         if( variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
-            variance = 0.0;
-         }
+         variance = ZeroIfLt(variance, 0.000000000001 * (sp.periodTotal2 * sp.invPeriod), variance);
          tempReal = sp.x_inReal[sp.windowStart & sp.xMask] - sp.shift;
          sp.periodTotal1 -= tempReal;
          tempReal *= tempReal;
@@ -1312,7 +1296,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = inReal[trailingIdx] - shift;
@@ -1353,9 +1337,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -1379,7 +1361,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = inReal[trailingIdx] - shift;
@@ -1420,9 +1402,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;
@@ -1455,7 +1435,7 @@ public partial class Core
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
-         peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+         peakTotal2 = MaxGt(periodTotal2, peakTotal2);
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
          tempReal = inReal[trailingIdx] - shift;
@@ -1496,9 +1476,7 @@ public partial class Core
                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
             }
             peakTotal2 = periodTotal2;
-            if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
-               variance = 0.0;
-            }
+            variance = ZeroIfLt(variance, 0.000000000001 * (periodTotal2 * invPeriod), variance);
             tempReal = inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;

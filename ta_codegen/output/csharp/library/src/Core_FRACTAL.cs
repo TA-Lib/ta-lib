@@ -160,12 +160,8 @@ public partial class Core
                otherHigh = tempHigh;
                otherLow = tempLow;
             } else {
-               if( tempHigh > otherHigh ) {
-                  otherHigh = tempHigh;
-               }
-               if( tempLow < otherLow ) {
-                  otherLow = tempLow;
-               }
+               otherHigh = MaxGt(tempHigh, otherHigh);
+               otherLow = MinLt(tempLow, otherLow);
             }
          }
          if( pivotHigh > otherHigh ) {
@@ -256,12 +252,8 @@ public partial class Core
                otherHigh = tempHigh;
                otherLow = tempLow;
             } else {
-               if( tempHigh > otherHigh ) {
-                  otherHigh = tempHigh;
-               }
-               if( tempLow < otherLow ) {
-                  otherLow = tempLow;
-               }
+               otherHigh = MaxGt(tempHigh, otherHigh);
+               otherLow = MinLt(tempLow, otherLow);
             }
          }
          if( pivotHigh > otherHigh ) {
@@ -640,12 +632,8 @@ public partial class Core
                otherHigh = tempHigh;
                otherLow = tempLow;
             } else {
-               if( tempHigh > otherHigh ) {
-                  otherHigh = tempHigh;
-               }
-               if( tempLow < otherLow ) {
-                  otherLow = tempLow;
-               }
+               otherHigh = MaxGt(tempHigh, otherHigh);
+               otherLow = MinLt(tempLow, otherLow);
             }
          }
          if( pivotHigh > otherHigh ) {
@@ -706,12 +694,8 @@ public partial class Core
             otherHigh = tempHigh;
             otherLow = tempLow;
          } else {
-            if( tempHigh > otherHigh ) {
-               otherHigh = tempHigh;
-            }
-            if( tempLow < otherLow ) {
-               otherLow = tempLow;
-            }
+            otherHigh = MaxGt(tempHigh, otherHigh);
+            otherLow = MinLt(tempLow, otherLow);
          }
       }
       if( pivotHigh > otherHigh ) {
@@ -800,12 +784,8 @@ public partial class Core
                otherHigh = tempHigh;
                otherLow = tempLow;
             } else {
-               if( tempHigh > otherHigh ) {
-                  otherHigh = tempHigh;
-               }
-               if( tempLow < otherLow ) {
-                  otherLow = tempLow;
-               }
+               otherHigh = MaxGt(tempHigh, otherHigh);
+               otherLow = MinLt(tempLow, otherLow);
             }
          }
          if( pivotHigh > otherHigh ) {

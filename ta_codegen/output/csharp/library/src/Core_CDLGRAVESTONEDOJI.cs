@@ -73,7 +73,7 @@ public partial class Core
       int ShadowVeryShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowVeryShort].rangeType;
       int ShadowVeryShort_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowVeryShort].avgPeriod;
       double ShadowVeryShort_factor = this.candleSettings[(int)CandleSettingType.ShadowVeryShort].factor;
-      return Math.Max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod) ;
+      return MaxGt(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
    internal RetCode CdlgravestonedojiImpl( int startIdx,

@@ -100,7 +100,7 @@ public partial class Core
       /* Lookback for the Ultimate Oscillator is the lookback of the SMA with the longest
        * time period, plus 1 for the True Range.
        */
-      maxPeriod = Math.Max(Math.Max(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
+      maxPeriod = MaxGt(MaxGt(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
       return SmaLookback(maxPeriod) + 1 ;
 
    }
@@ -253,17 +253,13 @@ public partial class Core
          tempLT = inLow[i];
          tempHT = inHigh[i];
          tempCY = inClose[i - 1];
-         trueLow = Math.Min(tempLT, tempCY);
+         trueLow = MinLt(tempLT, tempCY);
          closeMinusTrueLow = inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
@@ -304,17 +300,13 @@ public partial class Core
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
-         trueLow = Math.Min(tempLT, tempCY);
+         trueLow = MinLt(tempLT, tempCY);
          closeMinusTrueLow = inClose[today] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
          term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
@@ -511,17 +503,13 @@ public partial class Core
          tempLT = (double)inLow[i];
          tempHT = (double)inHigh[i];
          tempCY = (double)inClose[i - 1];
-         trueLow = Math.Min(tempLT, tempCY);
+         trueLow = MinLt(tempLT, tempCY);
          closeMinusTrueLow = (double)inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
@@ -556,17 +544,13 @@ public partial class Core
          tempLT = (double)inLow[today];
          tempHT = (double)inHigh[today];
          tempCY = (double)inClose[today - 1];
-         trueLow = Math.Min(tempLT, tempCY);
+         trueLow = MinLt(tempLT, tempCY);
          closeMinusTrueLow = (double)inClose[today] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
          term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;
@@ -972,17 +956,13 @@ public partial class Core
          tempLT = inLow;
          tempHT = inHigh;
          tempCY = sp.lag1_inClose;
-         trueLow = Math.Min(tempLT, tempCY);
+         trueLow = MinLt(tempLT, tempCY);
          closeMinusTrueLow = inClose - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          pkSlot0 = term_Idx;
          pkVal0 = closeMinusTrueLow;
          pkSlot1 = term_Idx;
@@ -1093,17 +1073,13 @@ public partial class Core
       tempLT = inLow;
       tempHT = inHigh;
       tempCY = sp.lag1_inClose;
-      trueLow = Math.Min(tempLT, tempCY);
+      trueLow = MinLt(tempLT, tempCY);
       closeMinusTrueLow = inClose - trueLow;
       trueRange = tempHT - tempLT;
       tempDouble = Math.Abs(tempCY - tempHT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
+      trueRange = MaxGt(tempDouble, trueRange);
       tempDouble = Math.Abs(tempCY - tempLT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
+      trueRange = MaxGt(tempDouble, trueRange);
       sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow;
       sp.cb_term_trueRange[sp.term_Idx] = trueRange;
       sp.a1Total += closeMinusTrueLow;
@@ -1328,17 +1304,13 @@ public partial class Core
          tempLT = inLow[i];
          tempHT = inHigh[i];
          tempCY = inClose[i - 1];
-         trueLow = Math.Min(tempLT, tempCY);
+         trueLow = MinLt(tempLT, tempCY);
          closeMinusTrueLow = inClose[i] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
          term_trueRange[term_Idx] = trueRange;
          term_Idx++;
@@ -1379,17 +1351,13 @@ public partial class Core
          tempLT = inLow[today];
          tempHT = inHigh[today];
          tempCY = inClose[today - 1];
-         trueLow = Math.Min(tempLT, tempCY);
+         trueLow = MinLt(tempLT, tempCY);
          closeMinusTrueLow = inClose[today] - trueLow;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
          term_trueRange[term_Idx] = trueRange;
          a1Total += closeMinusTrueLow;

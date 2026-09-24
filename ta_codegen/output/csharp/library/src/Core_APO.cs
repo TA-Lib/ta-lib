@@ -98,7 +98,7 @@ public partial class Core
          return -1;
       }
       /* The slow MA is the key factor determining the lookback period. */
-      return MaLookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
+      return MaLookback(MaxGt(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
    internal RetCode ApoImpl( int startIdx,
@@ -156,7 +156,7 @@ public partial class Core
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
        */
-      if( MaLookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+      if( MaLookback(MaxGt(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
@@ -236,7 +236,7 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
          return RetCode.BadParam ;
       }
-      if( MaLookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+      if( MaLookback(MaxGt(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.Success ;
@@ -631,7 +631,7 @@ public partial class Core
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
        */
-      if( MaLookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+      if( MaLookback(MaxGt(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory ;

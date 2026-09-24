@@ -171,13 +171,9 @@ public partial class Core
          tempCY = inClose[i - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.Abs(inLow[i] - inHigh[i - 1]);
@@ -197,13 +193,9 @@ public partial class Core
          tempCY = inClose[today - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.Abs(inLow[today] - inHigh[today - 1]);
@@ -239,13 +231,9 @@ public partial class Core
          tempCY = inClose[trailingIdx - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR -= trueRange;
          sVMP -= Math.Abs(inHigh[trailingIdx] - inLow[trailingIdx - 1]);
          sVMM -= Math.Abs(inLow[trailingIdx] - inHigh[trailingIdx - 1]);
@@ -350,13 +338,9 @@ public partial class Core
          tempCY = (double)inClose[i - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR += trueRange;
          sVMP += Math.Abs((double)inHigh[i] - (double)inLow[i - 1]);
          sVMM += Math.Abs((double)inLow[i] - (double)inHigh[i - 1]);
@@ -375,13 +359,9 @@ public partial class Core
          tempCY = (double)inClose[today - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR += trueRange;
          sVMP += Math.Abs((double)inHigh[today] - (double)inLow[today - 1]);
          sVMM += Math.Abs((double)inLow[today] - (double)inHigh[today - 1]);
@@ -402,13 +382,9 @@ public partial class Core
          tempCY = (double)inClose[trailingIdx - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR -= trueRange;
          sVMP -= Math.Abs((double)inHigh[trailingIdx] - (double)inLow[trailingIdx - 1]);
          sVMM -= Math.Abs((double)inLow[trailingIdx] - (double)inHigh[trailingIdx - 1]);
@@ -787,13 +763,9 @@ public partial class Core
          tempCY = sp.lag1_inClose;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR += trueRange;
          sVMP += Math.Abs(inHigh - sp.lag1_inLow);
          sVMM += Math.Abs(inLow - sp.lag1_inHigh);
@@ -829,13 +801,9 @@ public partial class Core
          tempCY = ((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx != pkSlot2) ? sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx] : pkVal2;
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR -= trueRange;
          sVMP -= Math.Abs((((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] : pkVal0) - (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx] : pkVal1));
          sVMM -= Math.Abs((((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] : pkVal1) - (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx] : pkVal0));
@@ -905,13 +873,9 @@ public partial class Core
       tempCY = sp.lag1_inClose;
       trueRange = tempHT - tempLT;
       tempDouble = Math.Abs(tempCY - tempHT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
+      trueRange = MaxGt(tempDouble, trueRange);
       tempDouble = Math.Abs(tempCY - tempLT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
+      trueRange = MaxGt(tempDouble, trueRange);
       sp.sTR += trueRange;
       sp.sVMP += Math.Abs(inHigh - sp.lag1_inLow);
       sp.sVMM += Math.Abs(inLow - sp.lag1_inHigh);
@@ -947,13 +911,9 @@ public partial class Core
       tempCY = sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx];
       trueRange = tempHT - tempLT;
       tempDouble = Math.Abs(tempCY - tempHT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
+      trueRange = MaxGt(tempDouble, trueRange);
       tempDouble = Math.Abs(tempCY - tempLT);
-      if( tempDouble > trueRange ) {
-         trueRange = tempDouble;
-      }
+      trueRange = MaxGt(tempDouble, trueRange);
       sp.sTR -= trueRange;
       sp.sVMP -= Math.Abs(sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] - sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx]);
       sp.sVMM -= Math.Abs(sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] - sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx]);
@@ -1078,13 +1038,9 @@ public partial class Core
          tempCY = inClose[i - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[i] - inLow[i - 1]);
          sVMM += Math.Abs(inLow[i] - inHigh[i - 1]);
@@ -1104,13 +1060,9 @@ public partial class Core
          tempCY = inClose[today - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR += trueRange;
          sVMP += Math.Abs(inHigh[today] - inLow[today - 1]);
          sVMM += Math.Abs(inLow[today] - inHigh[today - 1]);
@@ -1146,13 +1098,9 @@ public partial class Core
          tempCY = inClose[trailingIdx - 1];
          trueRange = tempHT - tempLT;
          tempDouble = Math.Abs(tempCY - tempHT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          tempDouble = Math.Abs(tempCY - tempLT);
-         if( tempDouble > trueRange ) {
-            trueRange = tempDouble;
-         }
+         trueRange = MaxGt(tempDouble, trueRange);
          sTR -= trueRange;
          sVMP -= Math.Abs(inHigh[trailingIdx] - inLow[trailingIdx - 1]);
          sVMM -= Math.Abs(inLow[trailingIdx] - inHigh[trailingIdx - 1]);

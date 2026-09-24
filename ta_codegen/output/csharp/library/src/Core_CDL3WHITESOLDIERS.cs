@@ -79,7 +79,7 @@ public partial class Core
       int ShadowVeryShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowVeryShort].rangeType;
       int ShadowVeryShort_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowVeryShort].avgPeriod;
       double ShadowVeryShort_factor = this.candleSettings[(int)CandleSettingType.ShadowVeryShort].factor;
-      return Math.Max(Math.Max(ShadowVeryShort_avgPeriod, BodyShort_avgPeriod), Math.Max(Far_avgPeriod, Near_avgPeriod)) + 2 ;
+      return MaxGt(MaxGt(ShadowVeryShort_avgPeriod, BodyShort_avgPeriod), MaxGt(Far_avgPeriod, Near_avgPeriod)) + 2 ;
 
    }
    internal RetCode Cdl3whitesoldiersImpl( int startIdx,

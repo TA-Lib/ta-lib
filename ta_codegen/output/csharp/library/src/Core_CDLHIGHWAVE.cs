@@ -73,7 +73,7 @@ public partial class Core
       int ShadowVeryLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowVeryLong].rangeType;
       int ShadowVeryLong_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowVeryLong].avgPeriod;
       double ShadowVeryLong_factor = this.candleSettings[(int)CandleSettingType.ShadowVeryLong].factor;
-      return Math.Max(BodyShort_avgPeriod, ShadowVeryLong_avgPeriod) ;
+      return MaxGt(BodyShort_avgPeriod, ShadowVeryLong_avgPeriod) ;
 
    }
    internal RetCode CdlhighwaveImpl( int startIdx,

@@ -302,16 +302,12 @@ public partial class Core
          optInAccelerationInitLong = optInAccelerationMaxLong;
          afLong = optInAccelerationInitLong;
       }
-      if( optInAccelerationLong > optInAccelerationMaxLong ) {
-         optInAccelerationLong = optInAccelerationMaxLong;
-      }
+      optInAccelerationLong = MinLt(optInAccelerationMaxLong, optInAccelerationLong);
       if( afShort > optInAccelerationMaxShort ) {
          optInAccelerationInitShort = optInAccelerationMaxShort;
          afShort = optInAccelerationInitShort;
       }
-      if( optInAccelerationShort > optInAccelerationMaxShort ) {
-         optInAccelerationShort = optInAccelerationMaxShort;
-      }
+      optInAccelerationShort = MinLt(optInAccelerationMaxShort, optInAccelerationShort);
       /* Initialise SAR calculations */
       if( optInStartValue == 0 ) {
          /* Default action */
@@ -584,16 +580,12 @@ public partial class Core
          optInAccelerationInitLong = optInAccelerationMaxLong;
          afLong = optInAccelerationInitLong;
       }
-      if( optInAccelerationLong > optInAccelerationMaxLong ) {
-         optInAccelerationLong = optInAccelerationMaxLong;
-      }
+      optInAccelerationLong = MinLt(optInAccelerationMaxLong, optInAccelerationLong);
       if( afShort > optInAccelerationMaxShort ) {
          optInAccelerationInitShort = optInAccelerationMaxShort;
          afShort = optInAccelerationInitShort;
       }
-      if( optInAccelerationShort > optInAccelerationMaxShort ) {
-         optInAccelerationShort = optInAccelerationMaxShort;
-      }
+      optInAccelerationShort = MinLt(optInAccelerationMaxShort, optInAccelerationShort);
       if( optInStartValue == 0 ) {
          OutRange _xr0 = MinusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
          tempInt = _xr0.BegIdx;
@@ -1480,16 +1472,12 @@ public partial class Core
          optInAccelerationInitLong = optInAccelerationMaxLong;
          afLong = optInAccelerationInitLong;
       }
-      if( optInAccelerationLong > optInAccelerationMaxLong ) {
-         optInAccelerationLong = optInAccelerationMaxLong;
-      }
+      optInAccelerationLong = MinLt(optInAccelerationMaxLong, optInAccelerationLong);
       if( afShort > optInAccelerationMaxShort ) {
          optInAccelerationInitShort = optInAccelerationMaxShort;
          afShort = optInAccelerationInitShort;
       }
-      if( optInAccelerationShort > optInAccelerationMaxShort ) {
-         optInAccelerationShort = optInAccelerationMaxShort;
-      }
+      optInAccelerationShort = MinLt(optInAccelerationMaxShort, optInAccelerationShort);
       /* Initialise SAR calculations */
       if( optInStartValue == 0 ) {
          /* Default action */

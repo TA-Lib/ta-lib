@@ -136,12 +136,8 @@ public partial class Core
             tempReal = inReal[today - i];
             if( i < optInTimePeriod ) {
                sumChange += Math.Abs(tempReal - prev);
-               if( tempReal > highest ) {
-                  highest = tempReal;
-               }
-               if( tempReal < lowest ) {
-                  lowest = tempReal;
-               }
+               highest = MaxGt(tempReal, highest);
+               lowest = MinLt(tempReal, lowest);
             }
             prev = tempReal;
          }
@@ -215,12 +211,8 @@ public partial class Core
             tempReal = (double)inReal[today - i];
             if( i < optInTimePeriod ) {
                sumChange += Math.Abs(tempReal - prev);
-               if( tempReal > highest ) {
-                  highest = tempReal;
-               }
-               if( tempReal < lowest ) {
-                  lowest = tempReal;
-               }
+               highest = MaxGt(tempReal, highest);
+               lowest = MinLt(tempReal, lowest);
             }
             prev = tempReal;
          }
@@ -529,12 +521,8 @@ public partial class Core
             tempReal = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
             if( i < sp.optInTimePeriod ) {
                sumChange += Math.Abs(tempReal - prev);
-               if( tempReal > highest ) {
-                  highest = tempReal;
-               }
-               if( tempReal < lowest ) {
-                  lowest = tempReal;
-               }
+               highest = MaxGt(tempReal, highest);
+               lowest = MinLt(tempReal, lowest);
             }
             prev = tempReal;
          }
@@ -590,12 +578,8 @@ public partial class Core
          tempReal = sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
          if( i < sp.optInTimePeriod ) {
             sumChange += Math.Abs(tempReal - prev);
-            if( tempReal > highest ) {
-               highest = tempReal;
-            }
-            if( tempReal < lowest ) {
-               lowest = tempReal;
-            }
+            highest = MaxGt(tempReal, highest);
+            lowest = MinLt(tempReal, lowest);
          }
          prev = tempReal;
       }
@@ -672,12 +656,8 @@ public partial class Core
             tempReal = inReal[today - i];
             if( i < optInTimePeriod ) {
                sumChange += Math.Abs(tempReal - prev);
-               if( tempReal > highest ) {
-                  highest = tempReal;
-               }
-               if( tempReal < lowest ) {
-                  lowest = tempReal;
-               }
+               highest = MaxGt(tempReal, highest);
+               lowest = MinLt(tempReal, lowest);
             }
             prev = tempReal;
          }

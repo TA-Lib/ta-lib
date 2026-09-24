@@ -1231,6 +1231,7 @@ fn stream_ctx<'a>(
         inline_counter: counter,
         fma: Some(fma_sets),
         matype_map: HashMap::new(),
+        plain_selects: Cell::new(false),
     }
 }
 
@@ -2089,6 +2090,7 @@ fn emit_open_region(
         inline_counter: counter,
         fma: Some(stream_fma),
         matype_map: HashMap::new(),
+        plain_selects: Cell::new(false),
     };
 
     // VarDecl initializations (mirrors gen_func_inner).
@@ -4250,6 +4252,7 @@ fn emit_composed_open(
         inline_counter: counter,
         fma: Some(stream_fma),
         matype_map: HashMap::new(),
+        plain_selects: Cell::new(false),
     };
     let region_len = region_stmts.len();
     // Own inputs are exactly `historyLen` long — `emit_open_validation` above

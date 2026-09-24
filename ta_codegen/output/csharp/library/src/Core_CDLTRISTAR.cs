@@ -143,13 +143,13 @@ public partial class Core
              Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: doji */
          {
             outInteger[outIdx] = 0;
-            if( (Math.Min(inOpen[i - 1], inClose[i - 1]) > Math.Max(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
-                Math.Max(inOpen[i], inClose[i]) < Math.Max(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
+            if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
+                MaxGt(inOpen[i], inClose[i]) < MaxGt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
             {
                outInteger[outIdx] = 0 - 100;
             }
-            if( (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
-                Math.Min(inOpen[i], inClose[i]) > Math.Min(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
+            if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
+                MinLt(inOpen[i], inClose[i]) > MinLt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
             {
                outInteger[outIdx] = 100;
             }
@@ -219,10 +219,10 @@ public partial class Core
       do {
          if( Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i] - (double)inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx] = 0;
-            if( (Math.Min((double)inOpen[i - 1], (double)inClose[i - 1]) > Math.Max((double)inOpen[i - 2], (double)inClose[i - 2])) && Math.Max((double)inOpen[i], (double)inClose[i]) < Math.Max((double)inOpen[i - 1], (double)inClose[i - 1]) ) {
+            if( (MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > MaxGt((double)inOpen[i - 2], (double)inClose[i - 2])) && MaxGt((double)inOpen[i], (double)inClose[i]) < MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) ) {
                outInteger[outIdx] = 0 - 100;
             }
-            if( (Math.Max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.Min((double)inOpen[i - 2], (double)inClose[i - 2])) && Math.Min((double)inOpen[i], (double)inClose[i]) > Math.Min((double)inOpen[i - 1], (double)inClose[i - 1]) ) {
+            if( (MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) < MinLt((double)inOpen[i - 2], (double)inClose[i - 2])) && MinLt((double)inOpen[i], (double)inClose[i]) > MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) ) {
                outInteger[outIdx] = 100;
             }
             outIdx += 1;
@@ -547,13 +547,13 @@ public partial class Core
              Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: doji */
          {
             cur_outInteger = 0;
-            if( (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
-                Math.Max(inOpen, inClose) < Math.Max(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
+            if( (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
+                MaxGt(inOpen, inClose) < MaxGt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
             {
                cur_outInteger = 0 - 100;
             }
-            if( (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
-                Math.Min(inOpen, inClose) > Math.Min(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
+            if( (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
+                MinLt(inOpen, inClose) > MinLt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
             {
                cur_outInteger = 100;
             }
@@ -593,13 +593,13 @@ public partial class Core
           Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: doji */
       {
          sp.cur_outInteger = 0;
-         if( (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
-             Math.Max(inOpen, inClose) < Math.Max(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
+         if( (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
+             MaxGt(inOpen, inClose) < MaxGt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
          {
             sp.cur_outInteger = 0 - 100;
          }
-         if( (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
-             Math.Min(inOpen, inClose) > Math.Min(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
+         if( (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
+             MinLt(inOpen, inClose) > MinLt(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
          {
             sp.cur_outInteger = 100;
          }
@@ -693,13 +693,13 @@ public partial class Core
              Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: doji */
          {
             outInteger[outIdx * outStride] = 0;
-            if( (Math.Min(inOpen[i - 1], inClose[i - 1]) > Math.Max(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
-                Math.Max(inOpen[i], inClose[i]) < Math.Max(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
+            if( (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
+                MaxGt(inOpen[i], inClose[i]) < MaxGt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
             {
                outInteger[outIdx * outStride] = 0 - 100;
             }
-            if( (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
-                Math.Min(inOpen[i], inClose[i]) > Math.Min(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
+            if( (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
+                MinLt(inOpen[i], inClose[i]) > MinLt(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
             {
                outInteger[outIdx * outStride] = 100;
             }

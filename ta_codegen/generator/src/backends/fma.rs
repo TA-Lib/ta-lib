@@ -85,6 +85,9 @@ pub struct FmaVarSets {
     pub real_array_vars: HashSet<String>,
     pub int_output_names: HashSet<String>,
     pub sentinel_vars: HashSet<String>,
+    /// Read by the C# renderer only: [`super::select_chain::recurrent_select_targets`]
+    /// of the same body.
+    pub recurrent_select_targets: HashSet<String>,
 }
 
 impl FmaVarSets {
@@ -142,6 +145,7 @@ pub fn build_fma_var_sets(
         real_array_vars,
         int_output_names,
         sentinel_vars,
+        recurrent_select_targets: super::select_chain::recurrent_select_targets(body),
     }
 }
 
@@ -152,7 +156,7 @@ pub fn build_fma_var_sets(
 /// operand is misclassified non-float and the site is silently left unfused,
 /// diverging ~1 ULP from the fused batch — e.g. BBANDS's `cur_tempBuffer2 *
 /// sp->optInNbDevUp` with unequal deviations). A no-op for batch names.
-fn stream_base(name: &str) -> &str {
+pub(crate) fn stream_base(name: &str) -> &str {
     let n = name
         .strip_prefix("sp->")
         .or_else(|| name.strip_prefix("sp.")) // Rust/Java stream state prefix

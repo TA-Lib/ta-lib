@@ -179,9 +179,7 @@ public partial class Core
          while( i > blockStart ) {
             i -= 1;
             tmp = inReal[i];
-            if( tmp > highest ) {
-               highest = tmp;
-            }
+            highest = MaxGt(tmp, highest);
             sufHighest[i - blockStart] = highest;
          }
          highest = sufHighest[0];
@@ -203,9 +201,7 @@ public partial class Core
             i = 1;
             while( i < nAvail ) {
                tmp = inReal[blockStart + optInTimePeriod + i];
-               if( tmp > highest ) {
-                  highest = tmp;
-               }
+               highest = MaxGt(tmp, highest);
                preHighest[i] = highest;
                i += 1;
             }
@@ -215,9 +211,7 @@ public partial class Core
             m = 1;
             while( m <= nAvail ) {
                highest = sufHighest[m];
-               if( preHighest[m - 1] > highest ) {
-                  highest = preHighest[m - 1];
-               }
+               highest = MaxGt(preHighest[m - 1], highest);
                outReal[outIdx++] = highest;
                m += 1;
             }
@@ -301,9 +295,7 @@ public partial class Core
          while( i > blockStart ) {
             i -= 1;
             tmp = (double)inReal[i];
-            if( tmp > highest ) {
-               highest = tmp;
-            }
+            highest = MaxGt(tmp, highest);
             sufHighest[i - blockStart] = highest;
          }
          highest = sufHighest[0];
@@ -322,18 +314,14 @@ public partial class Core
             i = 1;
             while( i < nAvail ) {
                tmp = (double)inReal[blockStart + optInTimePeriod + i];
-               if( tmp > highest ) {
-                  highest = tmp;
-               }
+               highest = MaxGt(tmp, highest);
                preHighest[i] = highest;
                i += 1;
             }
             m = 1;
             while( m <= nAvail ) {
                highest = sufHighest[m];
-               if( preHighest[m - 1] > highest ) {
-                  highest = preHighest[m - 1];
-               }
+               highest = MaxGt(preHighest[m - 1], highest);
                outReal[outIdx++] = highest;
                m += 1;
             }

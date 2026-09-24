@@ -198,12 +198,8 @@ public partial class Core
          while( i > blockStart ) {
             i -= 1;
             tmpHigh = inReal[i];
-            if( tmpHigh > highest ) {
-               highest = tmpHigh;
-            }
-            if( tmpHigh < lowest ) {
-               lowest = tmpHigh;
-            }
+            highest = MaxGt(tmpHigh, highest);
+            lowest = MinLt(tmpHigh, lowest);
             sufHighest[i - blockStart] = highest;
             sufLowest[i - blockStart] = lowest;
          }
@@ -230,12 +226,8 @@ public partial class Core
             i = 1;
             while( i < nAvail ) {
                tmpHigh = inReal[blockNext + i];
-               if( tmpHigh > highest ) {
-                  highest = tmpHigh;
-               }
-               if( tmpHigh < lowest ) {
-                  lowest = tmpHigh;
-               }
+               highest = MaxGt(tmpHigh, highest);
+               lowest = MinLt(tmpHigh, lowest);
                preHighest[i] = highest;
                preLowest[i] = lowest;
                i += 1;
@@ -246,13 +238,9 @@ public partial class Core
             m = 1;
             while( m <= nAvail ) {
                highest = sufHighest[m];
-               if( preHighest[m - 1] > highest ) {
-                  highest = preHighest[m - 1];
-               }
+               highest = MaxGt(preHighest[m - 1], highest);
                lowest = sufLowest[m];
-               if( preLowest[m - 1] < lowest ) {
-                  lowest = preLowest[m - 1];
-               }
+               lowest = MinLt(preLowest[m - 1], lowest);
                outMax[outIdx] = highest;
                outMin[outIdx] = lowest;
                outIdx += 1;
@@ -360,12 +348,8 @@ public partial class Core
          while( i > blockStart ) {
             i -= 1;
             tmpHigh = (double)inReal[i];
-            if( tmpHigh > highest ) {
-               highest = tmpHigh;
-            }
-            if( tmpHigh < lowest ) {
-               lowest = tmpHigh;
-            }
+            highest = MaxGt(tmpHigh, highest);
+            lowest = MinLt(tmpHigh, lowest);
             sufHighest[i - blockStart] = highest;
             sufLowest[i - blockStart] = lowest;
          }
@@ -389,12 +373,8 @@ public partial class Core
             i = 1;
             while( i < nAvail ) {
                tmpHigh = (double)inReal[blockNext + i];
-               if( tmpHigh > highest ) {
-                  highest = tmpHigh;
-               }
-               if( tmpHigh < lowest ) {
-                  lowest = tmpHigh;
-               }
+               highest = MaxGt(tmpHigh, highest);
+               lowest = MinLt(tmpHigh, lowest);
                preHighest[i] = highest;
                preLowest[i] = lowest;
                i += 1;
@@ -402,13 +382,9 @@ public partial class Core
             m = 1;
             while( m <= nAvail ) {
                highest = sufHighest[m];
-               if( preHighest[m - 1] > highest ) {
-                  highest = preHighest[m - 1];
-               }
+               highest = MaxGt(preHighest[m - 1], highest);
                lowest = sufLowest[m];
-               if( preLowest[m - 1] < lowest ) {
-                  lowest = preLowest[m - 1];
-               }
+               lowest = MinLt(preLowest[m - 1], lowest);
                outMax[outIdx] = highest;
                outMin[outIdx] = lowest;
                outIdx += 1;

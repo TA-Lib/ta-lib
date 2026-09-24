@@ -289,22 +289,18 @@ public partial class Core
           * directly, or testing the sign first, lets gcc thread the selects back into
           * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
           */
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          double _true_range_0 = 0;
          double range_0 = prevHigh - prevLow;
          double tmp_0 = Math.Abs(prevHigh - prevClose);
-         if( tmp_0 > range_0 ) {
-            range_0 = tmp_0;
-         }
+         range_0 = MaxGt(tmp_0, range_0);
          tmp_0 = Math.Abs(prevLow - prevClose);
-         if( tmp_0 > range_0 ) {
-            range_0 = tmp_0;
-         }
+         range_0 = MaxGt(tmp_0, range_0);
          _true_range_0 = range_0;
          tempReal = _true_range_0;
          prevTR += tempReal;
@@ -327,23 +323,19 @@ public partial class Core
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_1 = 0;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.Abs(prevHigh - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          tmp_1 = Math.Abs(prevLow - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          _true_range_1 = range_1;
          tempReal = _true_range_1;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -386,23 +378,19 @@ public partial class Core
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_2 = 0;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.Abs(prevHigh - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          tmp_2 = Math.Abs(prevLow - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          _true_range_2 = range_2;
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -505,22 +493,18 @@ public partial class Core
          tempReal = (double)inLow[today];
          diffM = prevLow - tempReal;
          prevLow = tempReal;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          double _true_range_0 = 0;
          double range_0 = prevHigh - prevLow;
          double tmp_0 = Math.Abs(prevHigh - prevClose);
-         if( tmp_0 > range_0 ) {
-            range_0 = tmp_0;
-         }
+         range_0 = MaxGt(tmp_0, range_0);
          tmp_0 = Math.Abs(prevLow - prevClose);
-         if( tmp_0 > range_0 ) {
-            range_0 = tmp_0;
-         }
+         range_0 = MaxGt(tmp_0, range_0);
          _true_range_0 = range_0;
          tempReal = _true_range_0;
          prevTR += tempReal;
@@ -537,22 +521,18 @@ public partial class Core
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          double _true_range_1 = 0;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.Abs(prevHigh - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          tmp_1 = Math.Abs(prevLow - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          _true_range_1 = range_1;
          tempReal = _true_range_1;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -581,22 +561,18 @@ public partial class Core
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          double _true_range_2 = 0;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.Abs(prevHigh - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          tmp_2 = Math.Abs(prevLow - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          _true_range_2 = range_2;
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -931,23 +907,19 @@ public partial class Core
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * sp.invPeriod;
          prevPlusDM -= prevPlusDM * sp.invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_0 = 0;
          double range_0 = prevHigh - prevLow;
          double tmp_0 = Math.Abs(prevHigh - prevClose);
-         if( tmp_0 > range_0 ) {
-            range_0 = tmp_0;
-         }
+         range_0 = MaxGt(tmp_0, range_0);
          tmp_0 = Math.Abs(prevLow - prevClose);
-         if( tmp_0 > range_0 ) {
-            range_0 = tmp_0;
-         }
+         range_0 = MaxGt(tmp_0, range_0);
          _true_range_0 = range_0;
          tempReal = _true_range_0;
          prevTR = prevTR - prevTR * sp.invPeriod + tempReal;
@@ -1008,23 +980,19 @@ public partial class Core
       sp.prevLow = tempReal;
       sp.prevMinusDM -= sp.prevMinusDM * sp.invPeriod;
       sp.prevPlusDM -= sp.prevPlusDM * sp.invPeriod;
-      minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-      plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-      minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-      plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+      minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+      plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+      minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+      plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
       sp.prevMinusDM += minusDM1;
       sp.prevPlusDM += plusDM1;
       /* Calculate the prevTR */
       double _true_range_1 = 0;
       double range_1 = sp.prevHigh - sp.prevLow;
       double tmp_1 = Math.Abs(sp.prevHigh - sp.prevClose);
-      if( tmp_1 > range_1 ) {
-         range_1 = tmp_1;
-      }
+      range_1 = MaxGt(tmp_1, range_1);
       tmp_1 = Math.Abs(sp.prevLow - sp.prevClose);
-      if( tmp_1 > range_1 ) {
-         range_1 = tmp_1;
-      }
+      range_1 = MaxGt(tmp_1, range_1);
       _true_range_1 = range_1;
       tempReal = _true_range_1;
       sp.prevTR = sp.prevTR - sp.prevTR * sp.invPeriod + tempReal;
@@ -1240,22 +1208,18 @@ public partial class Core
           * directly, or testing the sign first, lets gcc thread the selects back into
           * branches. a-b > 0.0 is exactly a > b for any in-domain difference.
           */
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          double _true_range_2 = 0;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.Abs(prevHigh - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          tmp_2 = Math.Abs(prevLow - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          _true_range_2 = range_2;
          tempReal = _true_range_2;
          prevTR += tempReal;
@@ -1278,23 +1242,19 @@ public partial class Core
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_3 = 0;
          double range_3 = prevHigh - prevLow;
          double tmp_3 = Math.Abs(prevHigh - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          tmp_3 = Math.Abs(prevLow - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          _true_range_3 = range_3;
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -1337,23 +1297,19 @@ public partial class Core
          prevLow = tempReal;
          prevMinusDM -= prevMinusDM * invPeriod;
          prevPlusDM -= prevPlusDM * invPeriod;
-         minusSel = (diffM - diffP > 0.0) ? diffM : 0.0;
-         plusSel = (diffP - diffM > 0.0) ? diffP : 0.0;
-         minusDM1 = (diffM > 0.0) ? minusSel : 0.0;
-         plusDM1 = (diffP > 0.0) ? plusSel : 0.0;
+         minusSel = KeepIfGt(diffM - diffP, 0.0, diffM);
+         plusSel = KeepIfGt(diffP - diffM, 0.0, diffP);
+         minusDM1 = KeepIfGt(diffM, 0.0, minusSel);
+         plusDM1 = KeepIfGt(diffP, 0.0, plusSel);
          prevMinusDM += minusDM1;
          prevPlusDM += plusDM1;
          /* Calculate the prevTR */
          double _true_range_4 = 0;
          double range_4 = prevHigh - prevLow;
          double tmp_4 = Math.Abs(prevHigh - prevClose);
-         if( tmp_4 > range_4 ) {
-            range_4 = tmp_4;
-         }
+         range_4 = MaxGt(tmp_4, range_4);
          tmp_4 = Math.Abs(prevLow - prevClose);
-         if( tmp_4 > range_4 ) {
-            range_4 = tmp_4;
-         }
+         range_4 = MaxGt(tmp_4, range_4);
          _true_range_4 = range_4;
          tempReal = _true_range_4;
          prevTR = prevTR - prevTR * invPeriod + tempReal;

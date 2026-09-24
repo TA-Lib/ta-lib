@@ -146,15 +146,11 @@ public partial class Core
          close = inClose[i];
          if( close > prevClose ) {
             trueExtreme = inLow[i];
-            if( prevClose < trueExtreme ) {
-               trueExtreme = prevClose;
-            }
+            trueExtreme = MinLt(prevClose, trueExtreme);
             sum += close - trueExtreme;
          } else if( close < prevClose ) {
             trueExtreme = inHigh[i];
-            if( prevClose > trueExtreme ) {
-               trueExtreme = prevClose;
-            }
+            trueExtreme = MaxGt(prevClose, trueExtreme);
             sum += close - trueExtreme;
          }
          outReal[outIdx] = sum;
@@ -198,15 +194,11 @@ public partial class Core
          close = (double)inClose[i];
          if( close > prevClose ) {
             trueExtreme = (double)inLow[i];
-            if( prevClose < trueExtreme ) {
-               trueExtreme = prevClose;
-            }
+            trueExtreme = MinLt(prevClose, trueExtreme);
             sum += close - trueExtreme;
          } else if( close < prevClose ) {
             trueExtreme = (double)inHigh[i];
-            if( prevClose > trueExtreme ) {
-               trueExtreme = prevClose;
-            }
+            trueExtreme = MaxGt(prevClose, trueExtreme);
             sum += close - trueExtreme;
          }
          outReal[outIdx] = sum;
@@ -504,15 +496,11 @@ public partial class Core
          close = inClose;
          if( close > sp.prevClose ) {
             trueExtreme = inLow;
-            if( sp.prevClose < trueExtreme ) {
-               trueExtreme = sp.prevClose;
-            }
+            trueExtreme = MinLt(sp.prevClose, trueExtreme);
             sum += close - trueExtreme;
          } else if( close < sp.prevClose ) {
             trueExtreme = inHigh;
-            if( sp.prevClose > trueExtreme ) {
-               trueExtreme = sp.prevClose;
-            }
+            trueExtreme = MaxGt(sp.prevClose, trueExtreme);
             sum += close - trueExtreme;
          }
          cur_outReal = sum;
@@ -543,15 +531,11 @@ public partial class Core
       close = inClose;
       if( close > sp.prevClose ) {
          trueExtreme = inLow;
-         if( sp.prevClose < trueExtreme ) {
-            trueExtreme = sp.prevClose;
-         }
+         trueExtreme = MinLt(sp.prevClose, trueExtreme);
          sp.sum += close - trueExtreme;
       } else if( close < sp.prevClose ) {
          trueExtreme = inHigh;
-         if( sp.prevClose > trueExtreme ) {
-            trueExtreme = sp.prevClose;
-         }
+         trueExtreme = MaxGt(sp.prevClose, trueExtreme);
          sp.sum += close - trueExtreme;
       }
       sp.cur_outReal = sp.sum;
@@ -629,15 +613,11 @@ public partial class Core
          close = inClose[i];
          if( close > prevClose ) {
             trueExtreme = inLow[i];
-            if( prevClose < trueExtreme ) {
-               trueExtreme = prevClose;
-            }
+            trueExtreme = MinLt(prevClose, trueExtreme);
             sum += close - trueExtreme;
          } else if( close < prevClose ) {
             trueExtreme = inHigh[i];
-            if( prevClose > trueExtreme ) {
-               trueExtreme = prevClose;
-            }
+            trueExtreme = MaxGt(prevClose, trueExtreme);
             sum += close - trueExtreme;
          }
          outReal[outIdx * outStride] = sum;

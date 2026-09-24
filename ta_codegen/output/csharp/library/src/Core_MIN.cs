@@ -178,9 +178,7 @@ public partial class Core
          while( i > blockStart ) {
             i -= 1;
             tmp = inReal[i];
-            if( tmp < lowest ) {
-               lowest = tmp;
-            }
+            lowest = MinLt(tmp, lowest);
             sufLowest[i - blockStart] = lowest;
          }
          lowest = sufLowest[0];
@@ -202,9 +200,7 @@ public partial class Core
             i = 1;
             while( i < nAvail ) {
                tmp = inReal[blockStart + optInTimePeriod + i];
-               if( tmp < lowest ) {
-                  lowest = tmp;
-               }
+               lowest = MinLt(tmp, lowest);
                preLowest[i] = lowest;
                i += 1;
             }
@@ -214,9 +210,7 @@ public partial class Core
             m = 1;
             while( m <= nAvail ) {
                lowest = sufLowest[m];
-               if( preLowest[m - 1] < lowest ) {
-                  lowest = preLowest[m - 1];
-               }
+               lowest = MinLt(preLowest[m - 1], lowest);
                outReal[outIdx++] = lowest;
                m += 1;
             }
@@ -300,9 +294,7 @@ public partial class Core
          while( i > blockStart ) {
             i -= 1;
             tmp = (double)inReal[i];
-            if( tmp < lowest ) {
-               lowest = tmp;
-            }
+            lowest = MinLt(tmp, lowest);
             sufLowest[i - blockStart] = lowest;
          }
          lowest = sufLowest[0];
@@ -321,18 +313,14 @@ public partial class Core
             i = 1;
             while( i < nAvail ) {
                tmp = (double)inReal[blockStart + optInTimePeriod + i];
-               if( tmp < lowest ) {
-                  lowest = tmp;
-               }
+               lowest = MinLt(tmp, lowest);
                preLowest[i] = lowest;
                i += 1;
             }
             m = 1;
             while( m <= nAvail ) {
                lowest = sufLowest[m];
-               if( preLowest[m - 1] < lowest ) {
-                  lowest = preLowest[m - 1];
-               }
+               lowest = MinLt(preLowest[m - 1], lowest);
                outReal[outIdx++] = lowest;
                m += 1;
             }

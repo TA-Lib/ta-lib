@@ -73,7 +73,7 @@ public partial class Core
       int ShadowVeryShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowVeryShort].rangeType;
       int ShadowVeryShort_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowVeryShort].avgPeriod;
       double ShadowVeryShort_factor = this.candleSettings[(int)CandleSettingType.ShadowVeryShort].factor;
-      return Math.Max(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
+      return MaxGt(BodyLong_avgPeriod, ShadowVeryShort_avgPeriod) ;
 
    }
    internal RetCode CdlmarubozuImpl( int startIdx,

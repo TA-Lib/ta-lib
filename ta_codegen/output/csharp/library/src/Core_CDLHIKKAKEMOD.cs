@@ -76,7 +76,7 @@ public partial class Core
       int Near_rangeType = (int)this.candleSettings[(int)CandleSettingType.Near].rangeType;
       int Near_avgPeriod = this.candleSettings[(int)CandleSettingType.Near].avgPeriod;
       double Near_factor = this.candleSettings[(int)CandleSettingType.Near].factor;
-      return Math.Max(1, Near_avgPeriod) + 5 ;
+      return MaxGt(1, Near_avgPeriod) + 5 ;
 
    }
    internal RetCode CdlhikkakemodImpl( int startIdx,

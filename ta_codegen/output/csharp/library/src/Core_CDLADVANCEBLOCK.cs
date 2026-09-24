@@ -82,7 +82,7 @@ public partial class Core
       int ShadowShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowShort].rangeType;
       int ShadowShort_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowShort].avgPeriod;
       double ShadowShort_factor = this.candleSettings[(int)CandleSettingType.ShadowShort].factor;
-      return Math.Max(Math.Max(Math.Max(ShadowLong_avgPeriod, ShadowShort_avgPeriod), Math.Max(Far_avgPeriod, Near_avgPeriod)), BodyLong_avgPeriod) + 2 ;
+      return MaxGt(MaxGt(MaxGt(ShadowLong_avgPeriod, ShadowShort_avgPeriod), MaxGt(Far_avgPeriod, Near_avgPeriod)), BodyLong_avgPeriod) + 2 ;
 
    }
    internal RetCode CdladvanceblockImpl( int startIdx,

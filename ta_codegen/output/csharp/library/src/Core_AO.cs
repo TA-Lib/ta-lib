@@ -85,7 +85,7 @@ public partial class Core
        * of that window's SMA. There is no swap of an inverted pair, so the max is
        * taken over the periods exactly as the caller gave them.
        */
-      return SmaLookback(Math.Max(optInFastPeriod, optInSlowPeriod)) ;
+      return SmaLookback(MaxGt(optInFastPeriod, optInSlowPeriod)) ;
 
    }
    internal RetCode AoImpl( int startIdx,

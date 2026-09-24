@@ -127,14 +127,14 @@ public partial class Core
       do {
          if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen[i] < Math.Max(inClose[i - 1], inOpen[i - 1]) &&       /* 3rd opens within 2nd rb */
-             inOpen[i] > Math.Min(inClose[i - 1], inOpen[i - 1]) &&
-             inClose[i] < Math.Max(inClose[i - 2], inOpen[i - 2]) &&      /* 3rd closes within 1st rb */
-             inClose[i] > Math.Min(inClose[i - 2], inOpen[i - 2]) &&
+             inOpen[i] < MaxGt(inClose[i - 1], inOpen[i - 1]) &&          /* 3rd opens within 2nd rb */
+             inOpen[i] > MinLt(inClose[i - 1], inOpen[i - 1]) &&
+             inClose[i] < MaxGt(inClose[i - 2], inOpen[i - 2]) &&         /* 3rd closes within 1st rb */
+             inClose[i] > MinLt(inClose[i - 2], inOpen[i - 2]) &&
              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
-               (Math.Min(inOpen[i - 1], inClose[i - 1]) > Math.Max(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
+               (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
               ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
-               (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
+               (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
          {
             outInteger[outIdx++] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
          } else {
@@ -186,7 +186,7 @@ public partial class Core
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && (double)inOpen[i] < Math.Max((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inOpen[i] > Math.Min((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inClose[i] < Math.Max((double)inClose[i - 2], (double)inOpen[i - 2]) && (double)inClose[i] > Math.Min((double)inClose[i - 2], (double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (Math.Min((double)inOpen[i - 1], (double)inClose[i - 1]) > Math.Max((double)inOpen[i - 2], (double)inClose[i - 2])) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (Math.Max((double)inOpen[i - 1], (double)inClose[i - 1]) < Math.Min((double)inOpen[i - 2], (double)inClose[i - 2]))) ) {
+         if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && (double)inOpen[i] < MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inOpen[i] > MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) && (double)inClose[i] < MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) && (double)inClose[i] > MinLt((double)inClose[i - 2], (double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > MaxGt((double)inOpen[i - 2], (double)inClose[i - 2])) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (MaxGt((double)inOpen[i - 1], (double)inClose[i - 1]) < MinLt((double)inOpen[i - 2], (double)inClose[i - 2]))) ) {
             outInteger[outIdx++] = (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -482,14 +482,14 @@ public partial class Core
          int cur_outInteger = 0;
          if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen < Math.Max(sp.lag1_inClose, sp.lag1_inOpen) &&          /* 3rd opens within 2nd rb */
-             inOpen > Math.Min(sp.lag1_inClose, sp.lag1_inOpen) &&
-             inClose < Math.Max(sp.lag2_inClose, sp.lag2_inOpen) &&         /* 3rd closes within 1st rb */
-             inClose > Math.Min(sp.lag2_inClose, sp.lag2_inOpen) &&
+             inOpen < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) &&             /* 3rd opens within 2nd rb */
+             inOpen > MinLt(sp.lag1_inClose, sp.lag1_inOpen) &&
+             inClose < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&            /* 3rd closes within 1st rb */
+             inClose > MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&
              (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
-               (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
+               (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
               ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
-               (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
+               (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
          {
             cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) * 100;
          } else {
@@ -519,14 +519,14 @@ public partial class Core
    {
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
-          inOpen < Math.Max(sp.lag1_inClose, sp.lag1_inOpen) &&          /* 3rd opens within 2nd rb */
-          inOpen > Math.Min(sp.lag1_inClose, sp.lag1_inOpen) &&
-          inClose < Math.Max(sp.lag2_inClose, sp.lag2_inOpen) &&         /* 3rd closes within 1st rb */
-          inClose > Math.Min(sp.lag2_inClose, sp.lag2_inOpen) &&
+          inOpen < MaxGt(sp.lag1_inClose, sp.lag1_inOpen) &&             /* 3rd opens within 2nd rb */
+          inOpen > MinLt(sp.lag1_inClose, sp.lag1_inOpen) &&
+          inClose < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) &&            /* 3rd closes within 1st rb */
+          inClose > MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&
           (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
-            (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
+            (MinLt(sp.lag1_inOpen, sp.lag1_inClose) > MaxGt(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
            ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
-            (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
+            (MaxGt(sp.lag1_inOpen, sp.lag1_inClose) < MinLt(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
       {
          sp.cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) * 100;
       } else {
@@ -597,14 +597,14 @@ public partial class Core
       do {
          if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen[i] < Math.Max(inClose[i - 1], inOpen[i - 1]) &&       /* 3rd opens within 2nd rb */
-             inOpen[i] > Math.Min(inClose[i - 1], inOpen[i - 1]) &&
-             inClose[i] < Math.Max(inClose[i - 2], inOpen[i - 2]) &&      /* 3rd closes within 1st rb */
-             inClose[i] > Math.Min(inClose[i - 2], inOpen[i - 2]) &&
+             inOpen[i] < MaxGt(inClose[i - 1], inOpen[i - 1]) &&          /* 3rd opens within 2nd rb */
+             inOpen[i] > MinLt(inClose[i - 1], inOpen[i - 1]) &&
+             inClose[i] < MaxGt(inClose[i - 2], inOpen[i - 2]) &&         /* 3rd closes within 1st rb */
+             inClose[i] > MinLt(inClose[i - 2], inOpen[i - 2]) &&
              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
-               (Math.Min(inOpen[i - 1], inClose[i - 1]) > Math.Max(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
+               (MinLt(inOpen[i - 1], inClose[i - 1]) > MaxGt(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
               ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
-               (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
+               (MaxGt(inOpen[i - 1], inClose[i - 1]) < MinLt(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
          {
             outInteger[outIdx++ * outStride] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
          } else {

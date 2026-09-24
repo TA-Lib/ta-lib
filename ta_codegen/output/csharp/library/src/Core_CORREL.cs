@@ -202,8 +202,8 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
-         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
+         peakX2 = MaxGt(sumX2, peakX2);
+         peakY2 = MaxGt(sumY2, peakY2);
          ssX = sumX2 - sumX * sumX * invPeriod;
          ssY = sumY2 - sumY * sumY * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
@@ -301,12 +301,8 @@ public partial class Core
              * can rely on both being >= 0 and needs no sign test of its own.
              * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
              */
-            if( ssX < 0.0 ) {
-               ssX = 0.0;
-            }
-            if( ssY < 0.0 ) {
-               ssY = 0.0;
-            }
+            ssX = MaxGt(0.0, ssX);
+            ssY = MaxGt(0.0, ssY);
          }
          /* Save the trailing values before writing the output, since the input
           * and output might be the same array.
@@ -351,8 +347,8 @@ public partial class Core
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -460,8 +456,8 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
-         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
+         peakX2 = MaxGt(sumX2, peakX2);
+         peakY2 = MaxGt(sumY2, peakY2);
          ssX = sumX2 - sumX * sumX * invPeriod;
          ssY = sumY2 - sumY * sumY * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
@@ -521,12 +517,8 @@ public partial class Core
             }
             peakX2 = sumX2;
             peakY2 = sumY2;
-            if( ssX < 0.0 ) {
-               ssX = 0.0;
-            }
-            if( ssY < 0.0 ) {
-               ssY = 0.0;
-            }
+            ssX = MaxGt(0.0, ssX);
+            ssY = MaxGt(0.0, ssY);
          }
          trailingX = (double)inReal0[trailingIdx] - shiftX;
          trailingY = (double)inReal1[trailingIdx] - shiftY;
@@ -535,8 +527,8 @@ public partial class Core
             tempReal = spXY / Math.Sqrt(ssX * ssY);
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -886,8 +878,8 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
-         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
+         peakX2 = MaxGt(sumX2, peakX2);
+         peakY2 = MaxGt(sumY2, peakY2);
          ssX = sumX2 - sumX * sumX * sp.invPeriod;
          ssY = sumY2 - sumY * sumY * sp.invPeriod;
          spXY = sumXY - sumX * sumY * sp.invPeriod;
@@ -985,12 +977,8 @@ public partial class Core
              * can rely on both being >= 0 and needs no sign test of its own.
              * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
              */
-            if( ssX < 0.0 ) {
-               ssX = 0.0;
-            }
-            if( ssY < 0.0 ) {
-               ssY = 0.0;
-            }
+            ssX = MaxGt(0.0, ssX);
+            ssY = MaxGt(0.0, ssY);
          }
          trailingIdx += 1;
          /* Output the new coefficient.
@@ -1030,8 +1018,8 @@ public partial class Core
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             cur_outReal = tempReal;
          } else {
@@ -1078,8 +1066,8 @@ public partial class Core
       sp.sumXY += x * y;
       sp.sumY += y;
       sp.sumY2 += y * y;
-      sp.peakX2 = (sp.sumX2 > sp.peakX2) ? sp.sumX2 : sp.peakX2;
-      sp.peakY2 = (sp.sumY2 > sp.peakY2) ? sp.sumY2 : sp.peakY2;
+      sp.peakX2 = MaxGt(sp.sumX2, sp.peakX2);
+      sp.peakY2 = MaxGt(sp.sumY2, sp.peakY2);
       ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
       ssY = sp.sumY2 - sp.sumY * sp.sumY * sp.invPeriod;
       spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
@@ -1177,12 +1165,8 @@ public partial class Core
           * can rely on both being >= 0 and needs no sign test of its own.
           * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
           */
-         if( ssX < 0.0 ) {
-            ssX = 0.0;
-         }
-         if( ssY < 0.0 ) {
-            ssY = 0.0;
-         }
+         ssX = MaxGt(0.0, ssX);
+         ssY = MaxGt(0.0, ssY);
       }
       /* Save the trailing values before writing the output, since the input
        * and output might be the same array.
@@ -1227,8 +1211,8 @@ public partial class Core
           */
          if( tempReal > 1.0 ) {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 ) {
-            tempReal = 0 - 1.0;
+         } else {
+            tempReal = MaxGt(0 - 1.0, tempReal);
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -1357,8 +1341,8 @@ public partial class Core
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
-         peakY2 = (sumY2 > peakY2) ? sumY2 : peakY2;
+         peakX2 = MaxGt(sumX2, peakX2);
+         peakY2 = MaxGt(sumY2, peakY2);
          ssX = sumX2 - sumX * sumX * invPeriod;
          ssY = sumY2 - sumY * sumY * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
@@ -1456,12 +1440,8 @@ public partial class Core
              * can rely on both being >= 0 and needs no sign test of its own.
              * CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
              */
-            if( ssX < 0.0 ) {
-               ssX = 0.0;
-            }
-            if( ssY < 0.0 ) {
-               ssY = 0.0;
-            }
+            ssX = MaxGt(0.0, ssX);
+            ssY = MaxGt(0.0, ssY);
          }
          /* Save the trailing values before writing the output, since the input
           * and output might be the same array.
@@ -1506,8 +1486,8 @@ public partial class Core
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

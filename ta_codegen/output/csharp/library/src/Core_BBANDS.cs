@@ -275,7 +275,7 @@ public partial class Core
             varTotal1 += _tempReal;
             _tempReal *= _tempReal;
             varTotal2 += _tempReal;
-            _peakTotal2 = (varTotal2 > _peakTotal2) ? varTotal2 : _peakTotal2;
+            _peakTotal2 = MaxGt(varTotal2, _peakTotal2);
             meanValue1 = varTotal1 * _invPeriod;
             variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
             tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
@@ -321,9 +321,7 @@ public partial class Core
                /* The floor from var.c, verbatim: it owns the sign, so the
                 * square root below can be unconditional.
                 */
-               if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
-                  variance = 0.0;
-               }
+               variance = ZeroIfLt(variance, 0.000000000001 * (varTotal2 * _invPeriod), variance);
                _tempReal = inReal[_windowStart] - shift;
                varTotal1 -= _tempReal;
                _tempReal *= _tempReal;
@@ -557,7 +555,7 @@ public partial class Core
             varTotal1 += _tempReal;
             _tempReal *= _tempReal;
             varTotal2 += _tempReal;
-            _peakTotal2 = (varTotal2 > _peakTotal2) ? varTotal2 : _peakTotal2;
+            _peakTotal2 = MaxGt(varTotal2, _peakTotal2);
             meanValue1 = varTotal1 * _invPeriod;
             variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
             tempBuffer1[_outIdx] = maTotal / optInTimePeriod;
@@ -600,9 +598,7 @@ public partial class Core
                   variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                }
                _peakTotal2 = varTotal2;
-               if( variance < 0.000000000001 * (varTotal2 * _invPeriod) ) {
-                  variance = 0.0;
-               }
+               variance = ZeroIfLt(variance, 0.000000000001 * (varTotal2 * _invPeriod), variance);
                _tempReal = (double)inReal[_windowStart] - shift;
                varTotal1 -= _tempReal;
                _tempReal *= _tempReal;

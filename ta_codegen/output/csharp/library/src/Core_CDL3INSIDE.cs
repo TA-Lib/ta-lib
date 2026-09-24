@@ -73,7 +73,7 @@ public partial class Core
       int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
       int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
       double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
+      return MaxGt(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
    internal RetCode Cdl3insideImpl( int startIdx,
@@ -155,8 +155,8 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( Math.Max(inClose[i - 1], inOpen[i - 1]) < Math.Max(inClose[i - 2], inOpen[i - 2]) && /* engulfed by 1st */
-             Math.Min(inClose[i - 1], inOpen[i - 1]) > Math.Min(inClose[i - 2], inOpen[i - 2]) &&
+         if( MaxGt(inClose[i - 1], inOpen[i - 1]) < MaxGt(inClose[i - 2], inOpen[i - 2]) && /* engulfed by 1st */
+             MinLt(inClose[i - 1], inOpen[i - 1]) > MinLt(inClose[i - 2], inOpen[i - 2]) &&
              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&
                ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
                inClose[i] < inOpen[i - 2] ||                              /* 3rd: opposite to 1st and closing out */
@@ -244,7 +244,7 @@ public partial class Core
       i = startIdx;
       outIdx = 0;
       do {
-         if( Math.Max((double)inClose[i - 1], (double)inOpen[i - 1]) < Math.Max((double)inClose[i - 2], (double)inOpen[i - 2]) && Math.Min((double)inClose[i - 1], (double)inOpen[i - 1]) > Math.Min((double)inClose[i - 2], (double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] < (double)inOpen[i - 2] || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i] > (double)inOpen[i - 2]) && Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) < MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) && MinLt((double)inClose[i - 1], (double)inOpen[i - 1]) > MinLt((double)inClose[i - 2], (double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (double)inClose[i] < (double)inOpen[i - 2] || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && (double)inClose[i] > (double)inOpen[i - 2]) && Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = (0 - (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1)) * 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -588,8 +588,8 @@ public partial class Core
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
          int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
          double BodyShort_factor = sp.cs_BodyShort_factor;
-         if( Math.Max(sp.lag1_inClose, sp.lag1_inOpen) < Math.Max(sp.lag2_inClose, sp.lag2_inOpen) && /* engulfed by 1st */
-             Math.Min(sp.lag1_inClose, sp.lag1_inOpen) > Math.Min(sp.lag2_inClose, sp.lag2_inOpen) &&
+         if( MaxGt(sp.lag1_inClose, sp.lag1_inOpen) < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) && /* engulfed by 1st */
+             MinLt(sp.lag1_inClose, sp.lag1_inOpen) > MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&
              (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&
                ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
                inClose < sp.lag2_inOpen ||                                  /* 3rd: opposite to 1st and closing out */
@@ -637,8 +637,8 @@ public partial class Core
       if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
          sp.ring_BodyShortTrailingIdx_derived[0] = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       }
-      if( Math.Max(sp.lag1_inClose, sp.lag1_inOpen) < Math.Max(sp.lag2_inClose, sp.lag2_inOpen) && /* engulfed by 1st */
-          Math.Min(sp.lag1_inClose, sp.lag1_inOpen) > Math.Min(sp.lag2_inClose, sp.lag2_inOpen) &&
+      if( MaxGt(sp.lag1_inClose, sp.lag1_inOpen) < MaxGt(sp.lag2_inClose, sp.lag2_inOpen) && /* engulfed by 1st */
+          MinLt(sp.lag1_inClose, sp.lag1_inOpen) > MinLt(sp.lag2_inClose, sp.lag2_inOpen) &&
           (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&
             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
             inClose < sp.lag2_inOpen ||                                  /* 3rd: opposite to 1st and closing out */
@@ -755,8 +755,8 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( Math.Max(inClose[i - 1], inOpen[i - 1]) < Math.Max(inClose[i - 2], inOpen[i - 2]) && /* engulfed by 1st */
-             Math.Min(inClose[i - 1], inOpen[i - 1]) > Math.Min(inClose[i - 2], inOpen[i - 2]) &&
+         if( MaxGt(inClose[i - 1], inOpen[i - 1]) < MaxGt(inClose[i - 2], inOpen[i - 2]) && /* engulfed by 1st */
+             MinLt(inClose[i - 1], inOpen[i - 1]) > MinLt(inClose[i - 2], inOpen[i - 2]) &&
              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&
                ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
                inClose[i] < inOpen[i - 2] ||                              /* 3rd: opposite to 1st and closing out */

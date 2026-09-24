@@ -193,9 +193,7 @@ public partial class Core
          outReal[0] = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
          outReal[0] = tempReal;
       }
       outIdx = 1;
@@ -229,9 +227,7 @@ public partial class Core
             outReal[outIdx++] = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
             outReal[outIdx++] = tempReal;
          }
          today += 1;
@@ -307,9 +303,7 @@ public partial class Core
          outReal[0] = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
          outReal[0] = tempReal;
       }
       outIdx = 1;
@@ -334,9 +328,7 @@ public partial class Core
             outReal[outIdx++] = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
             outReal[outIdx++] = tempReal;
          }
          today += 1;
@@ -661,9 +653,7 @@ public partial class Core
             cur_outReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
             cur_outReal = tempReal;
          }
          return cur_outReal;
@@ -722,9 +712,7 @@ public partial class Core
          sp.cur_outReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sp.sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
          sp.cur_outReal = tempReal;
       }
       sp.lag1_inReal = inReal;
@@ -848,9 +836,7 @@ public partial class Core
          outReal[0 * outStride] = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
          outReal[0 * outStride] = tempReal;
       }
       outIdx = 1;
@@ -884,9 +870,7 @@ public partial class Core
             outReal[outIdx++ * outStride] = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
             outReal[outIdx++ * outStride] = tempReal;
          }
          today += 1;

@@ -396,9 +396,7 @@ public partial class Core
              * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
              * divide below can rely on it being >= 0.
              */
-            if( denom < 0.0 ) {
-               denom = 0.0;
-            }
+            denom = MaxGt(0.0, denom);
          }
          /* Always read the trailing before writing the output because the input and output
           * buffer can be the same.
@@ -632,9 +630,7 @@ public partial class Core
             }
             denom_scale = n * S_xx;
             denom = denom_scale - S_x * S_x;
-            if( denom < 0.0 ) {
-               denom = 0.0;
-            }
+            denom = MaxGt(0.0, denom);
          }
          tmp_real = (double)inReal0[trailingIdx];
          if( trailing_last_price_x != 0.0 ) {
@@ -1131,9 +1127,7 @@ public partial class Core
              * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
              * divide below can rely on it being >= 0.
              */
-            if( denom < 0.0 ) {
-               denom = 0.0;
-            }
+            denom = MaxGt(0.0, denom);
          }
          /* Always read the trailing before writing the output because the input and output
           * buffer can be the same.
@@ -1327,9 +1321,7 @@ public partial class Core
           * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
           * divide below can rely on it being >= 0.
           */
-         if( denom < 0.0 ) {
-            denom = 0.0;
-         }
+         denom = MaxGt(0.0, denom);
       }
       /* Always read the trailing before writing the output because the input and output
        * buffer can be the same.
@@ -1680,9 +1672,7 @@ public partial class Core
              * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
              * divide below can rely on it being >= 0.
              */
-            if( denom < 0.0 ) {
-               denom = 0.0;
-            }
+            denom = MaxGt(0.0, denom);
          }
          /* Always read the trailing before writing the output because the input and output
           * buffer can be the same.

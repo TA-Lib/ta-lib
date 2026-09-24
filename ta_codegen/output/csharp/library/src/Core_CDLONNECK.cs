@@ -73,7 +73,7 @@ public partial class Core
       int Equal_rangeType = (int)this.candleSettings[(int)CandleSettingType.Equal].rangeType;
       int Equal_avgPeriod = this.candleSettings[(int)CandleSettingType.Equal].avgPeriod;
       double Equal_factor = this.candleSettings[(int)CandleSettingType.Equal].factor;
-      return Math.Max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
+      return MaxGt(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
    internal RetCode CdlonneckImpl( int startIdx,

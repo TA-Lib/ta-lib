@@ -227,8 +227,8 @@ public partial class Core
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
-            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            minusDM1 = MaxGt(diffM, 0.0);
+            minusDM1 = KeepIfLt(diffP, diffM, minusDM1);
             outReal[outIdx++] = minusDM1;
          }
          outNBElement = outIdx;
@@ -258,7 +258,7 @@ public partial class Core
           * select, not the max, ends the step.
           */
          tempReal = diffM - diffP;
-         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
          tempReal = prevMinusDM + minusDM1;
          prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
       }
@@ -276,7 +276,7 @@ public partial class Core
          /* Minus Delta */
          prevLow = tempReal;
          tempReal = diffM - diffP;
-         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
          tempReal = prevMinusDM - prevMinusDM * invPeriod;
          prevMinusDM = tempReal + minusDM1;
          prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
@@ -297,7 +297,7 @@ public partial class Core
          /* Minus Delta */
          prevLow = tempReal;
          tempReal = diffM - diffP;
-         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
          tempReal = prevMinusDM - prevMinusDM * invPeriod;
          prevMinusDM = tempReal + minusDM1;
          prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
@@ -370,8 +370,8 @@ public partial class Core
             tempReal = (double)inLow[today];
             diffM = prevLow - tempReal;
             prevLow = tempReal;
-            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
-            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            minusDM1 = MaxGt(diffM, 0.0);
+            minusDM1 = KeepIfLt(diffP, diffM, minusDM1);
             outReal[outIdx++] = minusDM1;
          }
          outNBElement = outIdx;
@@ -393,7 +393,7 @@ public partial class Core
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          tempReal = diffM - diffP;
-         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
          tempReal = prevMinusDM + minusDM1;
          prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
       }
@@ -407,7 +407,7 @@ public partial class Core
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          tempReal = diffM - diffP;
-         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
          tempReal = prevMinusDM - prevMinusDM * invPeriod;
          prevMinusDM = tempReal + minusDM1;
          prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
@@ -423,7 +423,7 @@ public partial class Core
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          tempReal = diffM - diffP;
-         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
          tempReal = prevMinusDM - prevMinusDM * invPeriod;
          prevMinusDM = tempReal + minusDM1;
          prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
@@ -708,8 +708,8 @@ public partial class Core
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
-            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            minusDM1 = MaxGt(diffM, 0.0);
+            minusDM1 = KeepIfLt(diffP, diffM, minusDM1);
             cur_outReal = minusDM1;
          } else {
             double tempReal = 0.0;
@@ -728,7 +728,7 @@ public partial class Core
             /* Minus Delta */
             prevLow = tempReal;
             tempReal = diffM - diffP;
-            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
             tempReal = prevMinusDM - prevMinusDM * sp.invPeriod;
             prevMinusDM = tempReal + minusDM1;
             prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
@@ -769,8 +769,8 @@ public partial class Core
          diffM = sp.prevLow - tempReal;
          /* Minus Delta */
          sp.prevLow = tempReal;
-         minusDM1 = (diffM > 0.0) ? diffM : 0.0;
-         minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+         minusDM1 = MaxGt(diffM, 0.0);
+         minusDM1 = KeepIfLt(diffP, diffM, minusDM1);
          sp.cur_outReal = minusDM1;
       } else {
          double tempReal = 0.0;
@@ -786,7 +786,7 @@ public partial class Core
          /* Minus Delta */
          sp.prevLow = tempReal;
          tempReal = diffM - diffP;
-         minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+         minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
          tempReal = sp.prevMinusDM - sp.prevMinusDM * sp.invPeriod;
          sp.prevMinusDM = tempReal + minusDM1;
          sp.prevMinusDM = (tempReal > sp.prevMinusDM) ? tempReal : sp.prevMinusDM;
@@ -929,8 +929,8 @@ public partial class Core
             diffM = prevLow - tempReal;
             /* Minus Delta */
             prevLow = tempReal;
-            minusDM1 = (diffM > 0.0) ? diffM : 0.0;
-            minusDM1 = (diffP < diffM) ? minusDM1 : 0.0;
+            minusDM1 = MaxGt(diffM, 0.0);
+            minusDM1 = KeepIfLt(diffP, diffM, minusDM1);
             outReal[outIdx++ * outStride] = minusDM1;
          }
          outNBElement = outIdx;
@@ -1064,7 +1064,7 @@ public partial class Core
              * select, not the max, ends the step.
              */
             tempReal = diffM - diffP;
-            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
             tempReal = prevMinusDM + minusDM1;
             prevMinusDM = (prevMinusDM > tempReal) ? prevMinusDM : tempReal;
          }
@@ -1082,7 +1082,7 @@ public partial class Core
             /* Minus Delta */
             prevLow = tempReal;
             tempReal = diffM - diffP;
-            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
             tempReal = prevMinusDM - prevMinusDM * invPeriod;
             prevMinusDM = tempReal + minusDM1;
             prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;
@@ -1103,7 +1103,7 @@ public partial class Core
             /* Minus Delta */
             prevLow = tempReal;
             tempReal = diffM - diffP;
-            minusDM1 = (tempReal > 0.0) ? diffM : 0.0;
+            minusDM1 = KeepIfGt(tempReal, 0.0, diffM);
             tempReal = prevMinusDM - prevMinusDM * invPeriod;
             prevMinusDM = tempReal + minusDM1;
             prevMinusDM = (tempReal > prevMinusDM) ? tempReal : prevMinusDM;

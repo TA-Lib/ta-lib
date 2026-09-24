@@ -73,7 +73,7 @@ public partial class Core
       int ShadowShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowShort].rangeType;
       int ShadowShort_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowShort].avgPeriod;
       double ShadowShort_factor = this.candleSettings[(int)CandleSettingType.ShadowShort].factor;
-      return Math.Max(BodyLong_avgPeriod, ShadowShort_avgPeriod) ;
+      return MaxGt(BodyLong_avgPeriod, ShadowShort_avgPeriod) ;
 
    }
    internal RetCode CdllonglineImpl( int startIdx,

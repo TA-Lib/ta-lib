@@ -153,19 +153,11 @@ public partial class Core
        * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
        */
       haHigh = tempHigh;
-      if( haOpen > haHigh ) {
-         haHigh = haOpen;
-      }
-      if( haClose > haHigh ) {
-         haHigh = haClose;
-      }
+      haHigh = MaxGt(haOpen, haHigh);
+      haHigh = MaxGt(haClose, haHigh);
       haLow = tempLow;
-      if( haOpen < haLow ) {
-         haLow = haOpen;
-      }
-      if( haClose < haLow ) {
-         haLow = haClose;
-      }
+      haLow = MinLt(haOpen, haLow);
+      haLow = MinLt(haClose, haLow);
       outHAOpen[0] = haOpen;
       outHAHigh[0] = haHigh;
       outHALow[0] = haLow;
@@ -183,19 +175,11 @@ public partial class Core
          haOpen = (haOpen + haClose) / 2.0;
          haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
          haHigh = tempHigh;
-         if( haOpen > haHigh ) {
-            haHigh = haOpen;
-         }
-         if( haClose > haHigh ) {
-            haHigh = haClose;
-         }
+         haHigh = MaxGt(haOpen, haHigh);
+         haHigh = MaxGt(haClose, haHigh);
          haLow = tempLow;
-         if( haOpen < haLow ) {
-            haLow = haOpen;
-         }
-         if( haClose < haLow ) {
-            haLow = haClose;
-         }
+         haLow = MinLt(haOpen, haLow);
+         haLow = MinLt(haClose, haLow);
          outHAOpen[outIdx] = haOpen;
          outHAHigh[outIdx] = haHigh;
          outHALow[outIdx] = haLow;
@@ -269,19 +253,11 @@ public partial class Core
       tempHigh = (double)inHigh[startIdx];
       tempLow = (double)inLow[startIdx];
       haHigh = tempHigh;
-      if( haOpen > haHigh ) {
-         haHigh = haOpen;
-      }
-      if( haClose > haHigh ) {
-         haHigh = haClose;
-      }
+      haHigh = MaxGt(haOpen, haHigh);
+      haHigh = MaxGt(haClose, haHigh);
       haLow = tempLow;
-      if( haOpen < haLow ) {
-         haLow = haOpen;
-      }
-      if( haClose < haLow ) {
-         haLow = haClose;
-      }
+      haLow = MinLt(haOpen, haLow);
+      haLow = MinLt(haClose, haLow);
       outHAOpen[0] = haOpen;
       outHAHigh[0] = haHigh;
       outHALow[0] = haLow;
@@ -295,19 +271,11 @@ public partial class Core
          haOpen = (haOpen + haClose) / 2.0;
          haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
          haHigh = tempHigh;
-         if( haOpen > haHigh ) {
-            haHigh = haOpen;
-         }
-         if( haClose > haHigh ) {
-            haHigh = haClose;
-         }
+         haHigh = MaxGt(haOpen, haHigh);
+         haHigh = MaxGt(haClose, haHigh);
          haLow = tempLow;
-         if( haOpen < haLow ) {
-            haLow = haOpen;
-         }
-         if( haClose < haLow ) {
-            haLow = haClose;
-         }
+         haLow = MinLt(haOpen, haLow);
+         haLow = MinLt(haClose, haLow);
          outHAOpen[outIdx] = haOpen;
          outHAHigh[outIdx] = haHigh;
          outHALow[outIdx] = haLow;
@@ -675,19 +643,11 @@ public partial class Core
          haOpen = (haOpen + haClose) / 2.0;
          haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
          haHigh = tempHigh;
-         if( haOpen > haHigh ) {
-            haHigh = haOpen;
-         }
-         if( haClose > haHigh ) {
-            haHigh = haClose;
-         }
+         haHigh = MaxGt(haOpen, haHigh);
+         haHigh = MaxGt(haClose, haHigh);
          haLow = tempLow;
-         if( haOpen < haLow ) {
-            haLow = haOpen;
-         }
-         if( haClose < haLow ) {
-            haLow = haClose;
-         }
+         haLow = MinLt(haOpen, haLow);
+         haLow = MinLt(haClose, haLow);
          cur_outHAOpen = haOpen;
          cur_outHAHigh = haHigh;
          cur_outHALow = haLow;
@@ -731,19 +691,11 @@ public partial class Core
       sp.haOpen = (sp.haOpen + sp.haClose) / 2.0;
       sp.haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
       haHigh = tempHigh;
-      if( sp.haOpen > haHigh ) {
-         haHigh = sp.haOpen;
-      }
-      if( sp.haClose > haHigh ) {
-         haHigh = sp.haClose;
-      }
+      haHigh = MaxGt(sp.haOpen, haHigh);
+      haHigh = MaxGt(sp.haClose, haHigh);
       haLow = tempLow;
-      if( sp.haOpen < haLow ) {
-         haLow = sp.haOpen;
-      }
-      if( sp.haClose < haLow ) {
-         haLow = sp.haClose;
-      }
+      haLow = MinLt(sp.haOpen, haLow);
+      haLow = MinLt(sp.haClose, haLow);
       sp.cur_outHAOpen = sp.haOpen;
       sp.cur_outHAHigh = haHigh;
       sp.cur_outHALow = haLow;
@@ -822,19 +774,11 @@ public partial class Core
        * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
        */
       haHigh = tempHigh;
-      if( haOpen > haHigh ) {
-         haHigh = haOpen;
-      }
-      if( haClose > haHigh ) {
-         haHigh = haClose;
-      }
+      haHigh = MaxGt(haOpen, haHigh);
+      haHigh = MaxGt(haClose, haHigh);
       haLow = tempLow;
-      if( haOpen < haLow ) {
-         haLow = haOpen;
-      }
-      if( haClose < haLow ) {
-         haLow = haClose;
-      }
+      haLow = MinLt(haOpen, haLow);
+      haLow = MinLt(haClose, haLow);
       outHAOpen[0 * outStride] = haOpen;
       outHAHigh[0 * outStride] = haHigh;
       outHALow[0 * outStride] = haLow;
@@ -852,19 +796,11 @@ public partial class Core
          haOpen = (haOpen + haClose) / 2.0;
          haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
          haHigh = tempHigh;
-         if( haOpen > haHigh ) {
-            haHigh = haOpen;
-         }
-         if( haClose > haHigh ) {
-            haHigh = haClose;
-         }
+         haHigh = MaxGt(haOpen, haHigh);
+         haHigh = MaxGt(haClose, haHigh);
          haLow = tempLow;
-         if( haOpen < haLow ) {
-            haLow = haOpen;
-         }
-         if( haClose < haLow ) {
-            haLow = haClose;
-         }
+         haLow = MinLt(haOpen, haLow);
+         haLow = MinLt(haClose, haLow);
          outHAOpen[outIdx * outStride] = haOpen;
          outHAHigh[outIdx * outStride] = haHigh;
          outHALow[outIdx * outStride] = haLow;

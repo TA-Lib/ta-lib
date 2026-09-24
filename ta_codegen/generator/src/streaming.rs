@@ -3101,10 +3101,9 @@ fn nb_difference(value: &Expr, known: &[RecvVar]) -> Option<(RecvVar, RecvVar)> 
     }
 }
 
-/// Structural expression equality: used to confirm two sub-calls share an endIdx
-/// argument, or that a sub-call's endIdx argument is its source's last index.
-/// BinOp has no `PartialEq`, so operators compare by discriminant.
-fn exprs_equal(a: &Expr, b: &Expr) -> bool {
+/// Structural equality, float literals by bits; a variant not listed below
+/// compares unequal.
+pub(crate) fn exprs_equal(a: &Expr, b: &Expr) -> bool {
     match (a, b) {
         (Expr::Var(x), Expr::Var(y))
         | (Expr::PointerDeref(x), Expr::PointerDeref(y)) => x == y,
@@ -7894,7 +7893,7 @@ fn writes_out_of_band(s: &Statement) -> bool {
 
 /// The statement lists nested inside `s`, and whether entering them crosses a
 /// loop back edge.
-fn nested_bodies(s: &Statement) -> (Vec<&[Statement]>, bool) {
+pub(crate) fn nested_bodies(s: &Statement) -> (Vec<&[Statement]>, bool) {
     match s {
         Statement::While { body, .. } | Statement::DoWhile { body, .. } | Statement::For { body, .. } => {
             (vec![body.as_slice()], true)
@@ -8289,7 +8288,7 @@ fn drop_stores_no_load_reaches(
 
 /// Whether removing `e` would remove an effect: an increment, or a call `pure`
 /// does not vouch for — this layer cannot tell on its own.
-fn expr_effect(e: &Expr, pure: &dyn Fn(&str) -> bool) -> bool {
+pub(crate) fn expr_effect(e: &Expr, pure: &dyn Fn(&str) -> bool) -> bool {
     let mut found = false;
     walk_expr(e, &mut |x| {
         found |= match x {

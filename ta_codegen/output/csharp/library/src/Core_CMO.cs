@@ -173,7 +173,7 @@ public partial class Core
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -217,7 +217,7 @@ public partial class Core
             tempValue1 = inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta * invPeriod - prevGain * invPeriod;
             prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
@@ -230,7 +230,7 @@ public partial class Core
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta * invPeriod - prevGain * invPeriod;
          prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
@@ -309,7 +309,7 @@ public partial class Core
          tempValue1 = (double)inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -327,7 +327,7 @@ public partial class Core
             tempValue1 = (double)inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta * invPeriod - prevGain * invPeriod;
             prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
@@ -337,7 +337,7 @@ public partial class Core
          tempValue1 = (double)inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta * invPeriod - prevGain * invPeriod;
          prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;
@@ -625,7 +625,7 @@ public partial class Core
          tempValue1 = inReal;
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta * sp.invPeriod - prevGain * sp.invPeriod;
          prevLoss += (gainDelta - tempValue2) * sp.invPeriod - prevLoss * sp.invPeriod;
          tempValue1 = prevGain + prevLoss;
@@ -666,7 +666,7 @@ public partial class Core
       tempValue1 = inReal;
       tempValue2 = tempValue1 - sp.prevValue;
       sp.prevValue = tempValue1;
-      gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+      gainDelta = MaxGt(tempValue2, 0.0);
       sp.prevGain += gainDelta * sp.invPeriod - sp.prevGain * sp.invPeriod;
       sp.prevLoss += (gainDelta - tempValue2) * sp.invPeriod - sp.prevLoss * sp.invPeriod;
       tempValue1 = sp.prevGain + sp.prevLoss;
@@ -764,7 +764,7 @@ public partial class Core
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta;
          prevLoss += gainDelta - tempValue2;
       }
@@ -808,7 +808,7 @@ public partial class Core
             tempValue1 = inReal[today];
             tempValue2 = tempValue1 - prevValue;
             prevValue = tempValue1;
-            gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+            gainDelta = MaxGt(tempValue2, 0.0);
             prevGain += gainDelta * invPeriod - prevGain * invPeriod;
             prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
             today += 1;
@@ -821,7 +821,7 @@ public partial class Core
          tempValue1 = inReal[today++];
          tempValue2 = tempValue1 - prevValue;
          prevValue = tempValue1;
-         gainDelta = (tempValue2 > 0.0) ? tempValue2 : 0.0;
+         gainDelta = MaxGt(tempValue2, 0.0);
          prevGain += gainDelta * invPeriod - prevGain * invPeriod;
          prevLoss += (gainDelta - tempValue2) * invPeriod - prevLoss * invPeriod;
          tempValue1 = prevGain + prevLoss;

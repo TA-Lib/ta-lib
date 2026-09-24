@@ -90,8 +90,8 @@ public partial class Core
       }
       int retValue = 0;
       retValue = RsiLookback(optInTimePeriod);
-      retValue = Math.Max(retValue, RsiLookback(optInStreakPeriod) + 1);
-      retValue = Math.Max(retValue, PercentrankLookback(optInRankPeriod) + RocpLookback(1));
+      retValue = MaxGt(retValue, RsiLookback(optInStreakPeriod) + 1);
+      retValue = MaxGt(retValue, PercentrankLookback(optInRankPeriod) + RocpLookback(1));
       return retValue ;
 
    }

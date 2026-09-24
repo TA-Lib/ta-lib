@@ -123,9 +123,7 @@ public partial class Core
          current = inReal[today];
          count = 0;
          for( i = optInTimePeriod; i >= 1; i -= 1 ) {
-            if( inReal[today - i] < current ) {
-               count += 1;
-            }
+            count += (inReal[today - i] < current) ? 1 : 0;
          }
          /* Divide, then scale. (count/N)*100 and 100*count/N are different
           * doubles and the reference implementations round the first way.
@@ -183,9 +181,7 @@ public partial class Core
          current = (double)inReal[today];
          count = 0;
          for( i = optInTimePeriod; i >= 1; i -= 1 ) {
-            if( (double)inReal[today - i] < current ) {
-               count += 1;
-            }
+            count += ((double)inReal[today - i] < current) ? 1 : 0;
          }
          outReal[outIdx] = (double)count / (double)optInTimePeriod * 100.0;
          outIdx += 1;
@@ -485,9 +481,7 @@ public partial class Core
          current = inReal;
          count = 0;
          for( i = sp.optInTimePeriod; i >= 1; i -= 1 ) {
-            if( ((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0) < current ) {
-               count += 1;
-            }
+            count += (((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0) < current) ? 1 : 0;
          }
          /* Divide, then scale. (count/N)*100 and 100*count/N are different
           * doubles and the reference implementations round the first way.
@@ -522,9 +516,7 @@ public partial class Core
       current = inReal;
       count = 0;
       for( i = sp.optInTimePeriod; i >= 1; i -= 1 ) {
-         if( sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] < current ) {
-            count += 1;
-         }
+         count += (sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] < current) ? 1 : 0;
       }
       /* Divide, then scale. (count/N)*100 and 100*count/N are different
        * doubles and the reference implementations round the first way.
@@ -580,9 +572,7 @@ public partial class Core
          current = inReal[today];
          count = 0;
          for( i = optInTimePeriod; i >= 1; i -= 1 ) {
-            if( inReal[today - i] < current ) {
-               count += 1;
-            }
+            count += (inReal[today - i] < current) ? 1 : 0;
          }
          /* Divide, then scale. (count/N)*100 and 100*count/N are different
           * doubles and the reference implementations round the first way.

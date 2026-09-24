@@ -275,13 +275,9 @@ public partial class Core
                double _true_range_0 = 0;
                double range_0 = prevHigh - prevLow;
                double tmp_0 = Math.Abs(prevHigh - prevClose);
-               if( tmp_0 > range_0 ) {
-                  range_0 = tmp_0;
-               }
+               range_0 = MaxGt(tmp_0, range_0);
                tmp_0 = Math.Abs(prevLow - prevClose);
-               if( tmp_0 > range_0 ) {
-                  range_0 = tmp_0;
-               }
+               range_0 = MaxGt(tmp_0, range_0);
                _true_range_0 = range_0;
                tempReal = _true_range_0;
                if( tempReal <= 0.0 ) {
@@ -329,19 +325,15 @@ public partial class Core
           * select, not the max, ends the step.
           */
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
          tempReal = prevPlusDM + plusDM1;
          prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
          double _true_range_1 = 0;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.Abs(prevHigh - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          tmp_1 = Math.Abs(prevLow - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          _true_range_1 = range_1;
          tempReal = _true_range_1;
          prevTR += tempReal;
@@ -364,7 +356,7 @@ public partial class Core
          /* Minus Delta */
          prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
          tempReal = prevPlusDM - prevPlusDM * invPeriod;
          prevPlusDM = tempReal + plusDM1;
          prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -372,13 +364,9 @@ public partial class Core
          double _true_range_2 = 0;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.Abs(prevHigh - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          tmp_2 = Math.Abs(prevLow - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          _true_range_2 = range_2;
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -412,7 +400,7 @@ public partial class Core
          /* Minus Delta */
          prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
          tempReal = prevPlusDM - prevPlusDM * invPeriod;
          prevPlusDM = tempReal + plusDM1;
          prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -420,13 +408,9 @@ public partial class Core
          double _true_range_3 = 0;
          double range_3 = prevHigh - prevLow;
          double tmp_3 = Math.Abs(prevHigh - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          tmp_3 = Math.Abs(prevLow - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          _true_range_3 = range_3;
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -513,13 +497,9 @@ public partial class Core
                double _true_range_0 = 0;
                double range_0 = prevHigh - prevLow;
                double tmp_0 = Math.Abs(prevHigh - prevClose);
-               if( tmp_0 > range_0 ) {
-                  range_0 = tmp_0;
-               }
+               range_0 = MaxGt(tmp_0, range_0);
                tmp_0 = Math.Abs(prevLow - prevClose);
-               if( tmp_0 > range_0 ) {
-                  range_0 = tmp_0;
-               }
+               range_0 = MaxGt(tmp_0, range_0);
                _true_range_0 = range_0;
                tempReal = _true_range_0;
                if( tempReal <= 0.0 ) {
@@ -554,19 +534,15 @@ public partial class Core
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
          tempReal = prevPlusDM + plusDM1;
          prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
          double _true_range_1 = 0;
          double range_1 = prevHigh - prevLow;
          double tmp_1 = Math.Abs(prevHigh - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          tmp_1 = Math.Abs(prevLow - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
-         }
+         range_1 = MaxGt(tmp_1, range_1);
          _true_range_1 = range_1;
          tempReal = _true_range_1;
          prevTR += tempReal;
@@ -582,20 +558,16 @@ public partial class Core
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
          tempReal = prevPlusDM - prevPlusDM * invPeriod;
          prevPlusDM = tempReal + plusDM1;
          prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          double _true_range_2 = 0;
          double range_2 = prevHigh - prevLow;
          double tmp_2 = Math.Abs(prevHigh - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          tmp_2 = Math.Abs(prevLow - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
-         }
+         range_2 = MaxGt(tmp_2, range_2);
          _true_range_2 = range_2;
          tempReal = _true_range_2;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -616,20 +588,16 @@ public partial class Core
          diffM = prevLow - tempReal;
          prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
          tempReal = prevPlusDM - prevPlusDM * invPeriod;
          prevPlusDM = tempReal + plusDM1;
          prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
          double _true_range_3 = 0;
          double range_3 = prevHigh - prevLow;
          double tmp_3 = Math.Abs(prevHigh - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          tmp_3 = Math.Abs(prevLow - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          _true_range_3 = range_3;
          tempReal = _true_range_3;
          prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -943,13 +911,9 @@ public partial class Core
                double _true_range_0 = 0;
                double range_0 = prevHigh - prevLow;
                double tmp_0 = Math.Abs(prevHigh - sp.prevClose);
-               if( tmp_0 > range_0 ) {
-                  range_0 = tmp_0;
-               }
+               range_0 = MaxGt(tmp_0, range_0);
                tmp_0 = Math.Abs(prevLow - sp.prevClose);
-               if( tmp_0 > range_0 ) {
-                  range_0 = tmp_0;
-               }
+               range_0 = MaxGt(tmp_0, range_0);
                _true_range_0 = range_0;
                tempReal = _true_range_0;
                if( tempReal <= 0.0 ) {
@@ -980,7 +944,7 @@ public partial class Core
             /* Minus Delta */
             prevLow = tempReal;
             tempReal = diffP - diffM;
-            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
             tempReal = prevPlusDM - prevPlusDM * sp.invPeriod;
             prevPlusDM = tempReal + plusDM1;
             prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -988,13 +952,9 @@ public partial class Core
             double _true_range_1 = 0;
             double range_1 = prevHigh - prevLow;
             double tmp_1 = Math.Abs(prevHigh - prevClose);
-            if( tmp_1 > range_1 ) {
-               range_1 = tmp_1;
-            }
+            range_1 = MaxGt(tmp_1, range_1);
             tmp_1 = Math.Abs(prevLow - prevClose);
-            if( tmp_1 > range_1 ) {
-               range_1 = tmp_1;
-            }
+            range_1 = MaxGt(tmp_1, range_1);
             _true_range_1 = range_1;
             tempReal = _true_range_1;
             prevTR = prevTR - prevTR * sp.invPeriod + tempReal;
@@ -1045,13 +1005,9 @@ public partial class Core
             double _true_range_2 = 0;
             double range_2 = sp.prevHigh - sp.prevLow;
             double tmp_2 = Math.Abs(sp.prevHigh - sp.prevClose);
-            if( tmp_2 > range_2 ) {
-               range_2 = tmp_2;
-            }
+            range_2 = MaxGt(tmp_2, range_2);
             tmp_2 = Math.Abs(sp.prevLow - sp.prevClose);
-            if( tmp_2 > range_2 ) {
-               range_2 = tmp_2;
-            }
+            range_2 = MaxGt(tmp_2, range_2);
             _true_range_2 = range_2;
             tempReal = _true_range_2;
             if( tempReal <= 0.0 ) {
@@ -1078,7 +1034,7 @@ public partial class Core
          /* Minus Delta */
          sp.prevLow = tempReal;
          tempReal = diffP - diffM;
-         plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+         plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
          tempReal = sp.prevPlusDM - sp.prevPlusDM * sp.invPeriod;
          sp.prevPlusDM = tempReal + plusDM1;
          sp.prevPlusDM = (tempReal > sp.prevPlusDM) ? tempReal : sp.prevPlusDM;
@@ -1086,13 +1042,9 @@ public partial class Core
          double _true_range_3 = 0;
          double range_3 = sp.prevHigh - sp.prevLow;
          double tmp_3 = Math.Abs(sp.prevHigh - sp.prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          tmp_3 = Math.Abs(sp.prevLow - sp.prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
-         }
+         range_3 = MaxGt(tmp_3, range_3);
          _true_range_3 = range_3;
          tempReal = _true_range_3;
          sp.prevTR = sp.prevTR - sp.prevTR * sp.invPeriod + tempReal;
@@ -1279,13 +1231,9 @@ public partial class Core
                double _true_range_4 = 0;
                double range_4 = prevHigh - prevLow;
                double tmp_4 = Math.Abs(prevHigh - prevClose);
-               if( tmp_4 > range_4 ) {
-                  range_4 = tmp_4;
-               }
+               range_4 = MaxGt(tmp_4, range_4);
                tmp_4 = Math.Abs(prevLow - prevClose);
-               if( tmp_4 > range_4 ) {
-                  range_4 = tmp_4;
-               }
+               range_4 = MaxGt(tmp_4, range_4);
                _true_range_4 = range_4;
                tempReal = _true_range_4;
                if( tempReal <= 0.0 ) {
@@ -1468,19 +1416,15 @@ public partial class Core
              * select, not the max, ends the step.
              */
             tempReal = diffP - diffM;
-            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
             tempReal = prevPlusDM + plusDM1;
             prevPlusDM = (prevPlusDM > tempReal) ? prevPlusDM : tempReal;
             double _true_range_5 = 0;
             double range_5 = prevHigh - prevLow;
             double tmp_5 = Math.Abs(prevHigh - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
-            }
+            range_5 = MaxGt(tmp_5, range_5);
             tmp_5 = Math.Abs(prevLow - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
-            }
+            range_5 = MaxGt(tmp_5, range_5);
             _true_range_5 = range_5;
             tempReal = _true_range_5;
             prevTR += tempReal;
@@ -1503,7 +1447,7 @@ public partial class Core
             /* Minus Delta */
             prevLow = tempReal;
             tempReal = diffP - diffM;
-            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
             tempReal = prevPlusDM - prevPlusDM * invPeriod;
             prevPlusDM = tempReal + plusDM1;
             prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -1511,13 +1455,9 @@ public partial class Core
             double _true_range_6 = 0;
             double range_6 = prevHigh - prevLow;
             double tmp_6 = Math.Abs(prevHigh - prevClose);
-            if( tmp_6 > range_6 ) {
-               range_6 = tmp_6;
-            }
+            range_6 = MaxGt(tmp_6, range_6);
             tmp_6 = Math.Abs(prevLow - prevClose);
-            if( tmp_6 > range_6 ) {
-               range_6 = tmp_6;
-            }
+            range_6 = MaxGt(tmp_6, range_6);
             _true_range_6 = range_6;
             tempReal = _true_range_6;
             prevTR = prevTR - prevTR * invPeriod + tempReal;
@@ -1551,7 +1491,7 @@ public partial class Core
             /* Minus Delta */
             prevLow = tempReal;
             tempReal = diffP - diffM;
-            plusDM1 = (tempReal > 0.0) ? diffP : 0.0;
+            plusDM1 = KeepIfGt(tempReal, 0.0, diffP);
             tempReal = prevPlusDM - prevPlusDM * invPeriod;
             prevPlusDM = tempReal + plusDM1;
             prevPlusDM = (tempReal > prevPlusDM) ? tempReal : prevPlusDM;
@@ -1559,13 +1499,9 @@ public partial class Core
             double _true_range_7 = 0;
             double range_7 = prevHigh - prevLow;
             double tmp_7 = Math.Abs(prevHigh - prevClose);
-            if( tmp_7 > range_7 ) {
-               range_7 = tmp_7;
-            }
+            range_7 = MaxGt(tmp_7, range_7);
             tmp_7 = Math.Abs(prevLow - prevClose);
-            if( tmp_7 > range_7 ) {
-               range_7 = tmp_7;
-            }
+            range_7 = MaxGt(tmp_7, range_7);
             _true_range_7 = range_7;
             tempReal = _true_range_7;
             prevTR = prevTR - prevTR * invPeriod + tempReal;

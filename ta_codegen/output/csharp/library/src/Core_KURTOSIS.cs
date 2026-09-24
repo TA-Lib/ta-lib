@@ -188,12 +188,8 @@ public partial class Core
          total2 += dev2;
          total3 += dev2 * dev;
          total4 += dev2 * dev2;
-         if( total2 > peak2 ) {
-            peak2 = total2;
-         }
-         if( total4 > peak4 ) {
-            peak4 = total4;
-         }
+         peak2 = MaxGt(total2, peak2);
+         peak4 = MaxGt(total4, peak4);
          residue = total1 * invPeriod;
          residueSq = residue * residue;
          moment2 = total2 - dPeriod * residueSq;
@@ -376,12 +372,8 @@ public partial class Core
          total2 += dev2;
          total3 += dev2 * dev;
          total4 += dev2 * dev2;
-         if( total2 > peak2 ) {
-            peak2 = total2;
-         }
-         if( total4 > peak4 ) {
-            peak4 = total4;
-         }
+         peak2 = MaxGt(total2, peak2);
+         peak4 = MaxGt(total4, peak4);
          residue = total1 * invPeriod;
          residueSq = residue * residue;
          moment2 = total2 - dPeriod * residueSq;
@@ -785,12 +777,8 @@ public partial class Core
          total2 += dev2;
          total3 += dev2 * dev;
          total4 += dev2 * dev2;
-         if( total2 > peak2 ) {
-            peak2 = total2;
-         }
-         if( total4 > peak4 ) {
-            peak4 = total4;
-         }
+         peak2 = MaxGt(total2, peak2);
+         peak4 = MaxGt(total4, peak4);
          residue = total1 * sp.invPeriod;
          residueSq = residue * residue;
          moment2 = total2 - sp.dPeriod * residueSq;
@@ -914,12 +902,8 @@ public partial class Core
       sp.total2 += dev2;
       sp.total3 += dev2 * dev;
       sp.total4 += dev2 * dev2;
-      if( sp.total2 > sp.peak2 ) {
-         sp.peak2 = sp.total2;
-      }
-      if( sp.total4 > sp.peak4 ) {
-         sp.peak4 = sp.total4;
-      }
+      sp.peak2 = MaxGt(sp.total2, sp.peak2);
+      sp.peak4 = MaxGt(sp.total4, sp.peak4);
       residue = sp.total1 * sp.invPeriod;
       residueSq = residue * residue;
       moment2 = sp.total2 - sp.dPeriod * residueSq;
@@ -1113,12 +1097,8 @@ public partial class Core
          total2 += dev2;
          total3 += dev2 * dev;
          total4 += dev2 * dev2;
-         if( total2 > peak2 ) {
-            peak2 = total2;
-         }
-         if( total4 > peak4 ) {
-            peak4 = total4;
-         }
+         peak2 = MaxGt(total2, peak2);
+         peak4 = MaxGt(total4, peak4);
          residue = total1 * invPeriod;
          residueSq = residue * residue;
          moment2 = total2 - dPeriod * residueSq;

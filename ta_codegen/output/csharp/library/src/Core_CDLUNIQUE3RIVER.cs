@@ -73,7 +73,7 @@ public partial class Core
       int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
       int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
       double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
-      return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
+      return MaxGt(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
    internal RetCode Cdlunique3riverImpl( int startIdx,

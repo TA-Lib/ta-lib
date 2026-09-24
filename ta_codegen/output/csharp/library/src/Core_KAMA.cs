@@ -234,9 +234,7 @@ public partial class Core
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
       }
       /* Calculate the smoothing constant */
       tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -285,9 +283,7 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -336,9 +332,7 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -444,9 +438,7 @@ public partial class Core
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
       }
       tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
       tempReal *= tempReal;
@@ -471,9 +463,7 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
          }
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -502,9 +492,7 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
          }
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -842,9 +830,7 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, sp.constDiff, sp.constMax);
@@ -919,9 +905,7 @@ public partial class Core
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sp.sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
       }
       /* Calculate the smoothing constant */
       tempReal = Math.FusedMultiplyAdd(tempReal, sp.constDiff, sp.constMax);
@@ -1079,9 +1063,7 @@ public partial class Core
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
-         if( tempReal > 1.0 ) {
-            tempReal = 1.0;
-         }
+         tempReal = MinLt(1.0, tempReal);
       }
       /* Calculate the smoothing constant */
       tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -1130,9 +1112,7 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -1181,9 +1161,7 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
-            if( tempReal > 1.0 ) {
-               tempReal = 1.0;
-            }
+            tempReal = MinLt(1.0, tempReal);
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);

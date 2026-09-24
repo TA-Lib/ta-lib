@@ -147,7 +147,7 @@ public partial class Core
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) &&
              Math.Abs(inClose[i - 4] - inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
              (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
-               (Math.Max(inOpen[i - 3], inClose[i - 3]) < Math.Min(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps down */
+               (MaxGt(inOpen[i - 3], inClose[i - 3]) < MinLt(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps down */
                inHigh[i - 2] < inHigh[i - 3] &&
                inLow[i - 2] < inLow[i - 3] &&                             /* 3rd has lower high and low than 2nd */
                inHigh[i - 1] < inHigh[i - 2] &&
@@ -155,7 +155,7 @@ public partial class Core
                inClose[i] > inOpen[i - 3] &&
                inClose[i] < inClose[i - 4] ||                             /* 5th closes inside the gap */
               ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
-               (Math.Min(inOpen[i - 3], inClose[i - 3]) > Math.Max(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps up */
+               (MinLt(inOpen[i - 3], inClose[i - 3]) > MaxGt(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps up */
                inHigh[i - 2] > inHigh[i - 3] &&
                inLow[i - 2] > inLow[i - 3] &&                             /* 3rd has higher high and low than 2nd */
                inHigh[i - 1] > inHigh[i - 2] &&
@@ -227,7 +227,7 @@ public partial class Core
       i = startIdx;
       outIdx = 0;
       do {
-         if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 4] - (double)inLow[i - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 4] - ((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inClose[i - 4]) : ((double)inOpen[i - 4]))) + (((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inOpen[i - 4]) : ((double)inClose[i - 4])) - (double)inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (Math.Max((double)inOpen[i - 3], (double)inClose[i - 3]) < Math.Min((double)inOpen[i - 4], (double)inClose[i - 4])) && (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] < (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] < (double)inLow[i - 2] && (double)inClose[i] > (double)inOpen[i - 3] && (double)inClose[i] < (double)inClose[i - 4] || (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (Math.Min((double)inOpen[i - 3], (double)inClose[i - 3]) > Math.Max((double)inOpen[i - 4], (double)inClose[i - 4])) && (double)inHigh[i - 2] > (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] > (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (double)inClose[i] < (double)inOpen[i - 3] && (double)inClose[i] > (double)inClose[i - 4]) ) {
+         if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 4] - (double)inLow[i - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 4] - ((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inClose[i - 4]) : ((double)inOpen[i - 4]))) + (((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inOpen[i - 4]) : ((double)inClose[i - 4])) - (double)inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (MaxGt((double)inOpen[i - 3], (double)inClose[i - 3]) < MinLt((double)inOpen[i - 4], (double)inClose[i - 4])) && (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] < (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] < (double)inLow[i - 2] && (double)inClose[i] > (double)inOpen[i - 3] && (double)inClose[i] < (double)inClose[i - 4] || (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (MinLt((double)inOpen[i - 3], (double)inClose[i - 3]) > MaxGt((double)inOpen[i - 4], (double)inClose[i - 4])) && (double)inHigh[i - 2] > (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] > (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (double)inClose[i] < (double)inOpen[i - 3] && (double)inClose[i] > (double)inClose[i - 4]) ) {
             outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -572,7 +572,7 @@ public partial class Core
              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
              Math.Abs(sp.lag4_inClose - sp.lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
              (((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
-               (Math.Max(sp.lag3_inOpen, sp.lag3_inClose) < Math.Min(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps down */
+               (MaxGt(sp.lag3_inOpen, sp.lag3_inClose) < MinLt(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps down */
                sp.lag2_inHigh < sp.lag3_inHigh &&
                sp.lag2_inLow < sp.lag3_inLow &&                             /* 3rd has lower high and low than 2nd */
                sp.lag1_inHigh < sp.lag2_inHigh &&
@@ -580,7 +580,7 @@ public partial class Core
                inClose > sp.lag3_inOpen &&
                inClose < sp.lag4_inClose ||                                 /* 5th closes inside the gap */
               ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
-               (Math.Min(sp.lag3_inOpen, sp.lag3_inClose) > Math.Max(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps up */
+               (MinLt(sp.lag3_inOpen, sp.lag3_inClose) > MaxGt(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps up */
                sp.lag2_inHigh > sp.lag3_inHigh &&
                sp.lag2_inLow > sp.lag3_inLow &&                             /* 3rd has higher high and low than 2nd */
                sp.lag1_inHigh > sp.lag2_inHigh &&
@@ -623,7 +623,7 @@ public partial class Core
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
           Math.Abs(sp.lag4_inClose - sp.lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
           (((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
-            (Math.Max(sp.lag3_inOpen, sp.lag3_inClose) < Math.Min(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps down */
+            (MaxGt(sp.lag3_inOpen, sp.lag3_inClose) < MinLt(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps down */
             sp.lag2_inHigh < sp.lag3_inHigh &&
             sp.lag2_inLow < sp.lag3_inLow &&                             /* 3rd has lower high and low than 2nd */
             sp.lag1_inHigh < sp.lag2_inHigh &&
@@ -631,7 +631,7 @@ public partial class Core
             inClose > sp.lag3_inOpen &&
             inClose < sp.lag4_inClose ||                                 /* 5th closes inside the gap */
            ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
-            (Math.Min(sp.lag3_inOpen, sp.lag3_inClose) > Math.Max(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps up */
+            (MinLt(sp.lag3_inOpen, sp.lag3_inClose) > MaxGt(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps up */
             sp.lag2_inHigh > sp.lag3_inHigh &&
             sp.lag2_inLow > sp.lag3_inLow &&                             /* 3rd has higher high and low than 2nd */
             sp.lag1_inHigh > sp.lag2_inHigh &&
@@ -742,7 +742,7 @@ public partial class Core
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) &&
              Math.Abs(inClose[i - 4] - inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
              (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
-               (Math.Max(inOpen[i - 3], inClose[i - 3]) < Math.Min(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps down */
+               (MaxGt(inOpen[i - 3], inClose[i - 3]) < MinLt(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps down */
                inHigh[i - 2] < inHigh[i - 3] &&
                inLow[i - 2] < inLow[i - 3] &&                             /* 3rd has lower high and low than 2nd */
                inHigh[i - 1] < inHigh[i - 2] &&
@@ -750,7 +750,7 @@ public partial class Core
                inClose[i] > inOpen[i - 3] &&
                inClose[i] < inClose[i - 4] ||                             /* 5th closes inside the gap */
               ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
-               (Math.Min(inOpen[i - 3], inClose[i - 3]) > Math.Max(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps up */
+               (MinLt(inOpen[i - 3], inClose[i - 3]) > MaxGt(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps up */
                inHigh[i - 2] > inHigh[i - 3] &&
                inLow[i - 2] > inLow[i - 3] &&                             /* 3rd has higher high and low than 2nd */
                inHigh[i - 1] > inHigh[i - 2] &&

@@ -80,7 +80,7 @@ public partial class Core
        * optInTimePeriod-1 at a period of 2, and a bare optInTimePeriod-1 would
        * then read inReal[-1].
        */
-      return Math.Max(optInTimePeriod - 1, optInTimePeriod / 2 + 1) ;
+      return MaxGt(optInTimePeriod - 1, optInTimePeriod / 2 + 1) ;
 
    }
    internal RetCode DpoImpl( int startIdx,

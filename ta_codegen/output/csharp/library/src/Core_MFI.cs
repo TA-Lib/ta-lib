@@ -197,8 +197,8 @@ public partial class Core
           * indicator body over.
           */
          moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+         negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -237,7 +237,7 @@ public partial class Core
        * then slide the window over the remaining bars below.
        */
       tempValue1 = posSumMF + negSumMF;
-      posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+      posClamped = (posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, posSumMF);
       if( tempValue1 <= 0.0 ) {
          outReal[outIdx++] = 0.0;
       } else {
@@ -256,8 +256,8 @@ public partial class Core
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
          moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+         negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -269,7 +269,7 @@ public partial class Core
             negSumMF = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
-         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         posClamped = (posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, posSumMF);
          if( tempValue1 <= 0.0 ) {
             outReal[outIdx++] = 0.0;
          } else {
@@ -356,8 +356,8 @@ public partial class Core
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
          moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+         negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -372,7 +372,7 @@ public partial class Core
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
       }
       tempValue1 = posSumMF + negSumMF;
-      posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+      posClamped = (posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, posSumMF);
       if( tempValue1 <= 0.0 ) {
          outReal[outIdx++] = 0.0;
       } else {
@@ -387,8 +387,8 @@ public partial class Core
          prevValue = tempValue1;
          tempValue1 *= (double)inVolume[today++];
          moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+         negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -400,7 +400,7 @@ public partial class Core
             negSumMF = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
-         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         posClamped = (posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, posSumMF);
          if( tempValue1 <= 0.0 ) {
             outReal[outIdx++] = 0.0;
          } else {
@@ -730,8 +730,8 @@ public partial class Core
          prevValue = tempValue1;
          tempValue1 *= inVolume;
          moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+         negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
          posSumMF += posFlow;
          negSumMF += negFlow;
          nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
@@ -741,7 +741,7 @@ public partial class Core
             negSumMF = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
-         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         posClamped = (posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, posSumMF);
          if( tempValue1 <= 0.0 ) {
             cur_outReal = 0.0;
          } else {
@@ -787,8 +787,8 @@ public partial class Core
       sp.prevValue = tempValue1;
       tempValue1 *= inVolume;
       moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-      posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-      negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+      posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+      negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
       sp.cb_mflow_positive[sp.mflow_Idx] = posFlow;
       sp.cb_mflow_negative[sp.mflow_Idx] = negFlow;
       sp.posSumMF += posFlow;
@@ -800,7 +800,7 @@ public partial class Core
          sp.negSumMF = 0.0;
       }
       tempValue1 = sp.posSumMF + sp.negSumMF;
-      posClamped = (sp.posSumMF < 0.0) ? 0.0 : ((sp.posSumMF > tempValue1) ? tempValue1 : sp.posSumMF);
+      posClamped = (sp.posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, sp.posSumMF);
       if( tempValue1 <= 0.0 ) {
          sp.cur_outReal = 0.0;
       } else {
@@ -915,8 +915,8 @@ public partial class Core
           * indicator body over.
           */
          moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+         negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -955,7 +955,7 @@ public partial class Core
        * then slide the window over the remaining bars below.
        */
       tempValue1 = posSumMF + negSumMF;
-      posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+      posClamped = (posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, posSumMF);
       if( tempValue1 <= 0.0 ) {
          outReal[outIdx++ * outStride] = 0.0;
       } else {
@@ -974,8 +974,8 @@ public partial class Core
          prevValue = tempValue1;
          tempValue1 *= inVolume[today++];
          moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
-         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
-         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posFlow = ZeroIfLt(tempValue2, 0.0, moneyFlow);
+         negFlow = KeepIfLt(tempValue2, 0.0, moneyFlow);
          mflow_positive[mflow_Idx] = posFlow;
          mflow_negative[mflow_Idx] = negFlow;
          posSumMF += posFlow;
@@ -987,7 +987,7 @@ public partial class Core
             negSumMF = 0.0;
          }
          tempValue1 = posSumMF + negSumMF;
-         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         posClamped = (posSumMF < 0.0) ? 0.0 : MinLt(tempValue1, posSumMF);
          if( tempValue1 <= 0.0 ) {
             outReal[outIdx++ * outStride] = 0.0;
          } else {

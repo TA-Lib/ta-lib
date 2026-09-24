@@ -184,7 +184,7 @@ public partial class Core
          x = inReal[today] - shift;
          sumX += x;
          sumX2 += x * x;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakX2 = MaxGt(sumX2, peakX2);
          ssX = sumX2 - sumX * sumX * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -267,8 +267,8 @@ public partial class Core
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -368,7 +368,7 @@ public partial class Core
          x = (double)inReal[today] - shift;
          sumX += x;
          sumX2 += x * x;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakX2 = MaxGt(sumX2, peakX2);
          ssX = sumX2 - sumX * sumX * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          barsSinceReseed -= 1;
@@ -411,8 +411,8 @@ public partial class Core
             tempReal = (0 - spXY) / Math.Sqrt(ssX * ssY);
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             outReal[outIdx++] = tempReal;
          } else {
@@ -749,7 +749,7 @@ public partial class Core
          x = (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0) - shift;
          sumX += x;
          sumX2 += x * x;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakX2 = MaxGt(sumX2, peakX2);
          ssX = sumX2 - sumX * sumX * sp.invPeriod;
          spXY = sumXY - sumX * sp.sumY * sp.invPeriod;
          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -828,8 +828,8 @@ public partial class Core
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             cur_outReal = tempReal;
          } else {
@@ -870,7 +870,7 @@ public partial class Core
       x = sp.x_inReal[sp.today & sp.xMask] - sp.shift;
       sp.sumX += x;
       sp.sumX2 += x * x;
-      sp.peakX2 = (sp.sumX2 > sp.peakX2) ? sp.sumX2 : sp.peakX2;
+      sp.peakX2 = MaxGt(sp.sumX2, sp.peakX2);
       ssX = sp.sumX2 - sp.sumX * sp.sumX * sp.invPeriod;
       spXY = sp.sumXY - sp.sumX * sp.sumY * sp.invPeriod;
       /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -953,8 +953,8 @@ public partial class Core
           */
          if( tempReal > 1.0 ) {
             tempReal = 1.0;
-         } else if( tempReal < 0 - 1.0 ) {
-            tempReal = 0 - 1.0;
+         } else {
+            tempReal = MaxGt(0 - 1.0, tempReal);
          }
          sp.cur_outReal = tempReal;
       } else {
@@ -1076,7 +1076,7 @@ public partial class Core
          x = inReal[today] - shift;
          sumX += x;
          sumX2 += x * x;
-         peakX2 = (sumX2 > peakX2) ? sumX2 : peakX2;
+         peakX2 = MaxGt(sumX2, peakX2);
          ssX = sumX2 - sumX * sumX * invPeriod;
          spXY = sumXY - sumX * sumY * invPeriod;
          /* Re-anchor and rebuild when the shift has gone stale: the price sum of
@@ -1159,8 +1159,8 @@ public partial class Core
              */
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
-            } else if( tempReal < 0 - 1.0 ) {
-               tempReal = 0 - 1.0;
+            } else {
+               tempReal = MaxGt(0 - 1.0, tempReal);
             }
             outReal[outIdx++ * outStride] = tempReal;
          } else {

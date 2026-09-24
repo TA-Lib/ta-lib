@@ -134,13 +134,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          outReal[outIdx++] = greatest;
          today += 1;
       }
@@ -192,13 +188,9 @@ public partial class Core
          tempCY = (double)inClose[today - 1];
          greatest = tempHT - tempLT;
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          outReal[outIdx++] = greatest;
          today += 1;
       }
@@ -482,13 +474,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          cur_outReal = greatest;
          return cur_outReal;
       }
@@ -525,13 +513,9 @@ public partial class Core
       greatest = tempHT - tempLT;
       /* val1 */
       val2 = Math.Abs(tempCY - tempHT);
-      if( val2 > greatest ) {
-         greatest = val2;
-      }
+      greatest = MaxGt(val2, greatest);
       val3 = Math.Abs(tempCY - tempLT);
-      if( val3 > greatest ) {
-         greatest = val3;
-      }
+      greatest = MaxGt(val3, greatest);
       sp.cur_outReal = greatest;
       sp.lag1_inClose = inClose;
    }
@@ -599,13 +583,9 @@ public partial class Core
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
+         greatest = MaxGt(val2, greatest);
          val3 = Math.Abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
+         greatest = MaxGt(val3, greatest);
          outReal[outIdx++ * outStride] = greatest;
          today += 1;
       }

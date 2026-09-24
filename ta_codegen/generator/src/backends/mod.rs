@@ -29,6 +29,7 @@ pub mod java_shipped;
 pub mod makefile_am;
 pub mod price_bundle;
 pub mod retcode;
+pub mod select_chain;
 pub mod rust_abstract;
 pub mod rust_doc;
 pub mod rust_enums;
