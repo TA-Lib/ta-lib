@@ -90152,8 +90152,8 @@ class Core {
           tempHigh = inHigh[startIdx];
           tempLow = inLow[startIdx];
           /* The three-way extremum is spelled with plain comparisons, never the
-           * max/min builtins: C's macros return their SECOND operand on a tie where
-           * Rust, Java and .NET return the negative zero, so a bar of signed zeros
+           * max/min builtins: C's macros return their SECOND operand on a tie and
+           * Rust's and Java's builtins do not, so a bar of signed zeros
            * emits different bytes per backend and the cross-language gate compares
            * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
            */
@@ -90833,8 +90833,8 @@ class Core {
           tempHigh = inHigh[startIdx];
           tempLow = inLow[startIdx];
           /* The three-way extremum is spelled with plain comparisons, never the
-           * max/min builtins: C's macros return their SECOND operand on a tie where
-           * Rust, Java and .NET return the negative zero, so a bar of signed zeros
+           * max/min builtins: C's macros return their SECOND operand on a tie and
+           * Rust's and Java's builtins do not, so a bar of signed zeros
            * emits different bytes per backend and the cross-language gate compares
            * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
            */
@@ -186795,7 +186795,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "1adbbc9e3983279f";
+    static final String SPLICED_GENCODE_DIGEST = "45df2910a458bf09";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

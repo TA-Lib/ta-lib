@@ -368,12 +368,11 @@ static int              g_numTimingResults = 0;
  * only symptom is a zero's sign is green in the stream gate, absent from
  * --xlang-hash (batch only), and invisible in the nightly.
  *
- * Compared JAVA vs C# ONLY, deliberately. Those two render identically, down
- * to `Math.Min` keeping -0.0. C and Rust legitimately differ: the C `min()`
- * macro is a ternary that returns +0.0 for `min(-0.0, 0.0)`, and C also
- * counts candidate prefixes rather than successful opens, so its `legs` is on
- * a different accounting entirely. Adding either to the comparison would make
- * this a permanent red that teaches nothing. */
+ * Compared JAVA vs C#, and not against C: C counts candidate prefixes rather
+ * than successful opens, so its `legs` is on a different accounting entirely.
+ * C#'s max()/min() keep the C macro's tie rule and Java's rank -0.0 below +0.0,
+ * which moves `benign` only where a batch and a stream tier bring max()/min()
+ * differently signed zeros. */
 typedef struct {
     char      funcName[64];
     int       seen[NUM_LANGUAGES];

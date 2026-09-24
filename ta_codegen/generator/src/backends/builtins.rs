@@ -9,8 +9,7 @@
 //! Name aliases that render identically within every backend collapse into one
 //! variant: `max`/`fmax` → [`MathFn::Max`], `min`/`fmin` → [`MathFn::Min`],
 //! `fabs`/`ABS` → [`MathFn::Abs`]. Each backend starts from [`MathFn::canonical`]
-//! and applies its own small remap (C uses `fmax`/`fmin`/`fabs`; Java prefixes
-//! `Math.`; Rust emits method calls and uses `ln` for `Log`).
+//! and applies its own small remap.
 
 /// A `<math.h>` builtin math function callable from indicator source.
 #[derive(Clone, Copy)]
@@ -65,7 +64,7 @@ impl MathFn {
 
     /// The canonical lowercase math name (`Abs` → `"abs"`, `Max` → `"max"`, …).
     /// Backends start from this and apply their own remaps where the language name
-    /// differs (e.g. C maps `Max`/`Min`/`Abs` to `fmax`/`fmin`/`fabs`).
+    /// differs.
     pub fn canonical(self) -> &'static str {
         match self {
             Self::Atan => "atan",

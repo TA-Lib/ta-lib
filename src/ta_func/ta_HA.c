@@ -150,8 +150,8 @@ TA_LIB_API TA_RetCode TA_HA( int    startIdx,
    tempHigh = inHigh[startIdx];
    tempLow = inLow[startIdx];
    /* The three-way extremum is spelled with plain comparisons, never the
-    * max/min builtins: C's macros return their SECOND operand on a tie where
-    * Rust, Java and .NET return the negative zero, so a bar of signed zeros
+    * max/min builtins: C's macros return their SECOND operand on a tie and
+    * Rust's and Java's builtins do not, so a bar of signed zeros
     * emits different bytes per backend and the cross-language gate compares
     * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
     */
@@ -493,8 +493,8 @@ static TA_RetCode TA_HA_OpenImpl( struct TA_HA_Stream **stream, const double inO
       tempHigh = inHigh[startIdx];
       tempLow = inLow[startIdx];
       /* The three-way extremum is spelled with plain comparisons, never the
-       * max/min builtins: C's macros return their SECOND operand on a tie where
-       * Rust, Java and .NET return the negative zero, so a bar of signed zeros
+       * max/min builtins: C's macros return their SECOND operand on a tie and
+       * Rust's and Java's builtins do not, so a bar of signed zeros
        * emits different bytes per backend and the cross-language gate compares
        * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
        */
