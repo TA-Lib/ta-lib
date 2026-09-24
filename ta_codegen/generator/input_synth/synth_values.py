@@ -199,6 +199,19 @@ GOLDEN = {
             "outTwice": [0.0, -50.0, -10.0, -50.0, 75.0, 72.25, 85.0, 99.5,
                          0.0, 152.75, 0.0, 0.5, 6.0],
         }),
+
+    # in[i] - trunc(in[i-3]), trunc clamping 2e6 to 0 and cutting -0.001 to 0.
+    "TA_SYNTH15": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
+        outs={"outReal": [1999900.0, -250.0, 80.25, -0.001, 5.5, 250.0, 700.0, 7.0,
+                          -212.0, 800.0, 33.0, 911.9, -1280.0]}),
+
+    # An even period takes the `double` arm: in[i-3] - in[i]. SYNTH15's row pins
+    # the odd arm's values, which are the same series.
+    "TA_SYNTH17": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
+        outs={"outReal": [-1999900.0, 250.5, -80.25, 2000000.001, -5.5, -249.75,
+                          -700.001, -6.5, 212.0, -800.0, -33.0, -911.9, 1280.0]}),
 }
 
 
