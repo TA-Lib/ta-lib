@@ -679,7 +679,7 @@ fn parse_pragma(lines: &[String], line: u32, file: Option<&str>) -> Option<Pragm
         // Read as free text, a second value on the same line would be dropped.
         let rest = v[close + 1..].trim_start();
         assert!(
-            !rest.starts_with(',') && !rest.starts_with('{') && !rest.contains(&format!("{name}=")),
+            !rest.starts_with(',') && !rest.contains('{') && !rest.contains(&format!("{name}=")),
             "{loc}PRAGMA {name}: one value per decoration; give the next its own \
              `PRAGMA {name}=` line"
         );

@@ -222,13 +222,12 @@ accepted reason to carry one is a significant performance gain — a second copy
 an algorithm is a maintenance cost. There is no alternate lookback: one
 `<name>_lookback` serves every cell.
 
-A claim may be language-scoped, as PERCENTILE's is for Java, C# and the Rust
-stream tier. `--xlang-hash` holds every language server bit-identical to the
-in-process C library (Java and C# get about 1 ULP on functions that call a
-transcendental), and C is the golden. So a `{...,C}` alternate that is not
-bit-identical to the others moves the reference and fails all three remaining
-languages at once. That is a loud failure, not a silent one, but it is the gate
-such a change has to answer for.
+A language-scoped claim answers to `--xlang-hash`, which holds every language
+server bit-identical to the in-process C library (Java and C# to a relative 1e-9
+on calls that reach a transcendental), with C as the golden. So a `{...,C}`
+alternate that is not bit-identical to the others moves the reference and fails
+Rust, and Java and C# beyond that tolerance. That is a loud failure, not a silent
+one, but it is the gate such a change has to answer for.
 
 `_ALT<n>` is **generator input only and never becomes a symbol**. There is still
 one `TA_MIN`, one `TA_MIN_Open`; the claim decides only which body the generator

@@ -298,6 +298,7 @@ rejects!(
 rejects!(rejects_a_duplicate_claim, SRC_DUPLICATE_CLAIM(), "decides no cell");
 rejects!(rejects_two_claims_on_one_line, SRC_TWO_CLAIMS_ONE_LINE(), "one value per decoration");
 rejects!(rejects_two_claims_one_space_apart, SRC_TWO_CLAIMS_SPACED(), "one value per decoration");
+rejects!(rejects_two_claims_joined_by_a_plus, SRC_TWO_CLAIMS_PLUS(), "one value per decoration");
 rejects!(rejects_two_decorations_on_one_line, SRC_TWO_PRAGMAS_ONE_LINE(), "one value per decoration");
 rejects!(
     rejects_a_claim_its_sibling_already_covers,
@@ -559,6 +560,11 @@ src_const!(SRC_TWO_CLAIMS_ONE_LINE, src(&[
 src_const!(SRC_TWO_CLAIMS_SPACED, src(&[
     &body("sma", 1),
     "/* PRAGMA TA_ALT={ALL_API,JAVA} {ALL_API,CSHARP} */",
+    &body("sma_ALT1", 2),
+]));
+src_const!(SRC_TWO_CLAIMS_PLUS, src(&[
+    &body("sma", 1),
+    "/* PRAGMA TA_ALT={ALL_API,JAVA} + {ALL_API,CSHARP} */",
     &body("sma_ALT1", 2),
 ]));
 src_const!(SRC_TWO_PRAGMAS_ONE_LINE, src(&[
