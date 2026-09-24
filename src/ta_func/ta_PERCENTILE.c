@@ -57,12 +57,13 @@
  *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
  *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
+ *  092426 MF,CC  Default period 100, and stack buffers sized to it (issue #437).
  */
 
 TA_LIB_API int TA_PERCENTILE_Lookback( int optInTimePeriod, double optInPercentile )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
+      optInTimePeriod = 100;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return -1;
    if( optInPercentile == TA_REAL_DEFAULT )
@@ -166,11 +167,11 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
    int dn;
    int seg;
    int room;
-   double local_ring[30];
+   double local_ring[100];
    double *ring = &local_ring[0];
    int ring_Idx;
    int maxIdx_ring;
-   double local_sorted[30];
+   double local_sorted[100];
    double *sorted = &local_sorted[0];
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -179,7 +180,7 @@ TA_LIB_API TA_RetCode TA_PERCENTILE( int    startIdx,
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
+      optInTimePeriod = 100;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( optInPercentile == TA_REAL_DEFAULT )
@@ -1025,11 +1026,11 @@ TA_RetCode TA_S_PERCENTILE( int    startIdx,
    int dn;
    int seg;
    int room;
-   double local_ring[30];
+   double local_ring[100];
    double *ring = &local_ring[0];
    int ring_Idx;
    int maxIdx_ring;
-   double local_sorted[30];
+   double local_sorted[100];
    double *sorted = &local_sorted[0];
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -1038,7 +1039,7 @@ TA_RetCode TA_S_PERCENTILE( int    startIdx,
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
+      optInTimePeriod = 100;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( optInPercentile == TA_REAL_DEFAULT )
@@ -2278,11 +2279,11 @@ static void TA_PERCENTILE_StepImpl( struct TA_PERCENTILE_Stream *sp, double inRe
 static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_PERCENTILE_Stream *sp;
-   double local_ring[30];
+   double local_ring[100];
    double *ring;
    int ring_Idx;
    int maxIdx_ring;
-   double local_sorted[30];
+   double local_sorted[100];
    double *sorted;
    int sorted_Idx;
    int maxIdx_sorted;
@@ -2294,7 +2295,7 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
+      optInTimePeriod = 100;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
    if( optInPercentile == TA_REAL_DEFAULT )

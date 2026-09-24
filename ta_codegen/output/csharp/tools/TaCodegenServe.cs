@@ -31916,7 +31916,7 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
+        int optInTimePeriod = GetInt(req, "optInTimePeriod", 100);
         double optInPercentile = GetDouble(req, "optInPercentile", 5e1);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -32072,7 +32072,7 @@ public class TaCodegenServe {
             }
             try {
                 Core.PercentileStream sD = c2.PercentileOpen(fz_c, int.MinValue, optInPercentile);
-                Core.PercentileStream sE = c2.PercentileOpen(fz_c, 30, optInPercentile);
+                Core.PercentileStream sE = c2.PercentileOpen(fz_c, 100, optInPercentile);
                 double vD = sD.Value;
                 double vE = sE.Value;
                 if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }

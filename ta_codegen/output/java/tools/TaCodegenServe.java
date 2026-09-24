@@ -140399,6 +140399,7 @@ class Core {
      *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
      *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
      *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
+     *  092426 MF,CC  Default period 100, and stack buffers sized to it (issue #437).
      */
 
     /* Using percentile_ALT1 for TA_ALT={ALL_API,JAVA} */
@@ -140410,7 +140411,7 @@ class Core {
         * series is requested. Feed at least {@code lookback + 1} bars to get any
         * output.
         *
-        * @param optInTimePeriod Number of bars in the trailing window (default 30;
+        * @param optInTimePeriod Number of bars in the trailing window (default 100;
         *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
@@ -140419,7 +140420,7 @@ class Core {
        public int percentileLookback( int optInTimePeriod, double optInPercentile )
        {
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 30;
+             optInTimePeriod = 100;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return -1;
           }
@@ -140455,10 +140456,10 @@ class Core {
           int mid = 0;
           double[] ring;
           int ring_Idx = 0;
-          int maxIdx_ring = (30)-1;
+          int maxIdx_ring = (100)-1;
           double[] sorted;
           int sorted_Idx = 0;
-          int maxIdx_sorted = (30)-1;
+          int maxIdx_sorted = (100)-1;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -140466,7 +140467,7 @@ class Core {
              return RetCode.OUT_OF_RANGE_END_INDEX ;
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 30;
+             optInTimePeriod = 100;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
@@ -140654,10 +140655,10 @@ class Core {
           int mid = 0;
           double[] ring;
           int ring_Idx = 0;
-          int maxIdx_ring = (30)-1;
+          int maxIdx_ring = (100)-1;
           double[] sorted;
           int sorted_Idx = 0;
-          int maxIdx_sorted = (30)-1;
+          int maxIdx_sorted = (100)-1;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -140665,7 +140666,7 @@ class Core {
              return RetCode.OUT_OF_RANGE_END_INDEX ;
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 30;
+             optInTimePeriod = 100;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
@@ -140806,6 +140807,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's {@code ta.percentile_linear_interpolation}) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</li>
+        * <li>A tail percentile rests on the few values beyond it: at N = 30, P = 95 is the second-largest value in the window. For a stable estimate keep about ten values beyond the percentile, N ≥ 1000 / min(P, 100 − P): 100 bars at P = 10 or 90, 200 at P = 5 or 95.</li>
         * <li>Every input value in the window must be finite. A NaN makes every comparison against it false, which breaks the ordering the rank index is read from.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -140817,7 +140819,7 @@ class Core {
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source series to take the percentile of.
-        * @param optInTimePeriod Number of bars in the trailing window (default 30;
+        * @param optInTimePeriod Number of bars in the trailing window (default 100;
         *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
@@ -140876,6 +140878,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's {@code ta.percentile_linear_interpolation}) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</li>
+        * <li>A tail percentile rests on the few values beyond it: at N = 30, P = 95 is the second-largest value in the window. For a stable estimate keep about ten values beyond the percentile, N ≥ 1000 / min(P, 100 − P): 100 bars at P = 10 or 90, 200 at P = 5 or 95.</li>
         * <li>Every input value in the window must be finite. A NaN makes every comparison against it false, which breaks the ordering the rank index is read from.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -140890,7 +140893,7 @@ class Core {
         * @param startIdx First bar of the requested range (inclusive).
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Source series to take the percentile of.
-        * @param optInTimePeriod Number of bars in the trailing window (default 30;
+        * @param optInTimePeriod Number of bars in the trailing window (default 100;
         *        range 2..10000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
         *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
@@ -141235,10 +141238,10 @@ class Core {
           int mid = 0;
           double[] ring;
           int ring_Idx = 0;
-          int maxIdx_ring = (30)-1;
+          int maxIdx_ring = (100)-1;
           double[] sorted;
           int sorted_Idx = 0;
-          int maxIdx_sorted = (30)-1;
+          int maxIdx_sorted = (100)-1;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
           if( historyLen < 1 ) {
@@ -141248,7 +141251,7 @@ class Core {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( optInTimePeriod == Integer.MIN_VALUE ) {
-             optInTimePeriod = 30;
+             optInTimePeriod = 100;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
@@ -186798,7 +186801,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "7c2ae200a8d11497";
+    static final String SPLICED_GENCODE_DIGEST = "f35daa29be74202c";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -187576,7 +187579,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PERCENTILE", new AbsFunc("PERCENTILE", "Statistic Functions", "Percentile (nearest rank)", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",30.0, 0,0,0,0,0,0, 2,10000,4,200,1, null), new AbsOpt(0,"optInPercentile",1048576,"Percentile","Percentile to report",50.0, 0.0,100.0,2,10.0,90.0,5.0, 0,0,0,0,0, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the window",100.0, 0,0,0,0,0,0, 2,10000,4,200,1, null), new AbsOpt(0,"optInPercentile",1048576,"Percentile","Percentile to report",50.0, 0.0,100.0,2,10.0,90.0,5.0, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PERCENTRANK", new AbsFunc("PERCENTRANK", "Statistic Functions", "Percent Rank", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -244548,7 +244551,7 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 100;
         double optInPercentile = json.contains("\"optInPercentile\"") ? jsonDouble(json, "optInPercentile") : 5e1;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -244669,7 +244672,7 @@ public class TaCodegenServe {
             }
             try {
                 Core.PercentileStream sD = c2.percentileOpen(fz_c, Integer.MIN_VALUE, optInPercentile);
-                Core.PercentileStream sE = c2.percentileOpen(fz_c, 30, optInPercentile);
+                Core.PercentileStream sE = c2.percentileOpen(fz_c, 100, optInPercentile);
                 if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {

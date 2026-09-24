@@ -8064,20 +8064,20 @@ static void icount_PERCENTILE(int iters) {
     double v0 = 0.0;
 
     ICOUNT_ZERO();
-    rc = TA_PERCENTILE(0, g_nPoints - 1, g_close, 30, 50.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    rc = TA_PERCENTILE(0, g_nPoints - 1, g_close, 100, 50.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
     ICOUNT_DUMP("PERCENTILE/batch");
     icount_row(nm, "batch", 1, rc);
     acc += g_outBuf0[0];
 
     ICOUNT_ZERO();
-    rc = TA_PERCENTILE_OpenAndFill(&stf, g_close, g_nPoints, 30, 50.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    rc = TA_PERCENTILE_OpenAndFill(&stf, g_close, g_nPoints, 100, 50.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
     ICOUNT_DUMP("PERCENTILE/openfill");
     icount_row(nm, "openfill", 1, rc);
     acc += g_outBuf0[0];
     if( stf ) TA_PERCENTILE_Close(stf);
 
     ICOUNT_ZERO();
-    rc = TA_PERCENTILE_Open(&st, g_close, g_nPoints, 30, 50.000000000000000, &v0);
+    rc = TA_PERCENTILE_Open(&st, g_close, g_nPoints, 100, 50.000000000000000, &v0);
     ICOUNT_DUMP("PERCENTILE/open");
     icount_row(nm, "open", 1, rc);
 

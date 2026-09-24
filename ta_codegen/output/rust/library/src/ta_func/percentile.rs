@@ -55,6 +55,7 @@
  *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
  *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
+ *  092426 MF,CC  Default period 100, and stack buffers sized to it (issue #437).
  */
 
 // Import types from parent module
@@ -72,7 +73,7 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=10000)
+    /// * `optInTimePeriod` — Number of bars in the trailing window (default 100, range 2..=10000)
     /// * `optInPercentile` — Percentage position within the sorted window (default 50, range
     ///   0..=100)
     ///
@@ -85,7 +86,7 @@ impl Core {
     #[inline]
     pub fn percentile_lookback(&self, mut optInTimePeriod: i32, mut optInPercentile: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
+            optInTimePeriod = 100;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
@@ -117,7 +118,7 @@ impl Core {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
+            optInTimePeriod = 100;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return RetCode::BadParam;
         }
@@ -216,16 +217,16 @@ impl Core {
         let mut dn: usize = 0_usize;
         let mut seg: usize = 0_usize;
         let mut room: usize = 0_usize;
-        let mut local_ring: [f64; 30] = [0.0_f64; 30];
+        let mut local_ring: [f64; 100] = [0.0_f64; 100];
         let mut heap_ring: Vec<f64> = Vec::new();
         let mut ring: &mut [f64] = &mut [];
         let mut ring_Idx: usize = 0;
-        let mut maxIdx_ring: usize = 29;
-        let mut local_sorted: [f64; 30] = [0.0_f64; 30];
+        let mut maxIdx_ring: usize = 99;
+        let mut local_sorted: [f64; 100] = [0.0_f64; 100];
         let mut heap_sorted: Vec<f64> = Vec::new();
         let mut sorted: &mut [f64] = &mut [];
         let mut sorted_Idx: usize = 0;
-        let mut maxIdx_sorted: usize = 29;
+        let mut maxIdx_sorted: usize = 99;
         // The window is carried twice: "ring" by age, "sorted" by value.
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
@@ -238,7 +239,7 @@ impl Core {
         }
         let inReal = &inReal[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
+        if (optInTimePeriod) as usize <= 100usize {
             ring = &mut local_ring[..(optInTimePeriod) as usize];
         } else {
             heap_ring = vec![0.0_f64; (optInTimePeriod) as usize];
@@ -247,7 +248,7 @@ impl Core {
         maxIdx_ring = ((optInTimePeriod) as usize) - 1;
         ring_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 30usize {
+        if (optInTimePeriod) as usize <= 100usize {
             sorted = &mut local_sorted[..(optInTimePeriod) as usize];
         } else {
             heap_sorted = vec![0.0_f64; (optInTimePeriod) as usize];
@@ -863,7 +864,7 @@ impl Core {
     /// * `startIdx` — Start index of the requested calculation range.
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inReal` — Source series to take the percentile of.
-    /// * `optInTimePeriod` — Number of bars in the trailing window (default 30, range 2..=10000)
+    /// * `optInTimePeriod` — Number of bars in the trailing window (default 100, range 2..=10000)
     /// * `optInPercentile` — Percentage position within the sorted window (default 50, range
     ///   0..=100)
     /// * `outReal` — The value at the requested rank within the trailing window.
@@ -899,7 +900,7 @@ impl Core {
     /// let core = Core::new();
     /// let mut out = vec![0.0; 252];
     ///
-    /// let out_range = core.percentile(0, data.len() - 1, &data, 30, 50.0, &mut out)?;
+    /// let out_range = core.percentile(0, data.len() - 1, &data, 100, 50.0, &mut out)?;
     /// assert!(out_range.count > 0);
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
@@ -1485,7 +1486,7 @@ impl Core {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
+            optInTimePeriod = 100;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 10000) {
             return Err(RetCode::BadParam);
         }
@@ -1591,10 +1592,10 @@ impl Core {
         let mut room: usize = 0_usize;
         let mut ring: Vec<f64> = Vec::new();
         let mut ring_Idx: usize = 0;
-        let mut maxIdx_ring: usize = 29;
+        let mut maxIdx_ring: usize = 99;
         let mut sorted: Vec<f64> = Vec::new();
         let mut sorted_Idx: usize = 0;
-        let mut maxIdx_sorted: usize = 29;
+        let mut maxIdx_sorted: usize = 99;
         // The window is carried twice: "ring" by age, "sorted" by value.
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
@@ -2279,7 +2280,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.percentile_open(&data, 30, 50.0).expect("enough history");
+    /// let (mut s, _last) = core.percentile_open(&data, 100, 50.0).expect("enough history");
     /// let r0 = s.out_range();
     /// let peeked = s.peek(100.9).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
@@ -2311,10 +2312,10 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];
-    /// let batch = core.percentile(0, data.len() - 1, &data, 30, 50.0, &mut batch_out)?;
+    /// let batch = core.percentile(0, data.len() - 1, &data, 100, 50.0, &mut batch_out)?;
     ///
     /// let mut out = vec![0.0; 252];
-    /// let (_stream, filled) = core.percentile_open_and_fill(&data, 30, 50.0, &mut out)?;
+    /// let (_stream, filled) = core.percentile_open_and_fill(&data, 100, 50.0, &mut out)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);

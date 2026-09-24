@@ -6,8 +6,8 @@
 #policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	e21c144fc471efa3ceab5eab35e7847a552b3503
-#generated	2026-09-24T18:49:46Z
+#commit	88734b3a3cd81800ce2c093719a4b70b734c8b3a
+#generated	2026-09-24T19:17:44Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -773,11 +773,11 @@ OBV	open	0	180097
 OBV	openfill	0	200934
 OBV	peek	0	41947
 OBV	update	0	53417
-PERCENTILE	batch	0	2441881
-PERCENTILE	open	0	2462390
-PERCENTILE	openfill	0	2462385
-PERCENTILE	peek	0	38925
-PERCENTILE	update	0	211034
+PERCENTILE	batch	0	3357765
+PERCENTILE	open	0	3431211
+PERCENTILE	openfill	0	3430885
+PERCENTILE	peek	0	38928
+PERCENTILE	update	0	267047
 PERCENTRANK	batch	0	5034828
 PERCENTRANK	open	0	4935677
 PERCENTRANK	openfill	0	5035211

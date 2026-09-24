@@ -13,6 +13,7 @@
  *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
  *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
  *  092426 MF,CC  Rust stream tier takes the branchless kernels too (issue #439).
+ *  092426 MF,CC  Default period 100, and stack buffers sized to it (issue #437).
  */
 
 int percentile_lookback(int optInTimePeriod, double optInPercentile)
@@ -38,8 +39,8 @@ TA_RetCode percentile(int startIdx, int endIdx,
    int freeSlot, maxSlot, nextSlot, bp, bq, q1, q2, q3, p1, p2, p3, sP, sQ, slot, cnt, dn, seg, room;
 
    /* The window is carried twice: "ring" by age, "sorted" by value. */
-   CIRCBUF_PROLOG(ring,double,30);
-   CIRCBUF_PROLOG(sorted,double,30);
+   CIRCBUF_PROLOG(ring,double,100);
+   CIRCBUF_PROLOG(sorted,double,100);
 
    lookbackTotal = (optInTimePeriod-1);
 
@@ -750,8 +751,8 @@ TA_RetCode percentile_ALT1(int startIdx, int endIdx,
    int lookbackTotal, outIdx, i, j, pos, nbSorted, rank, lo, hi, mid;
 
    /* The window is carried twice: "ring" by age, "sorted" by value. */
-   CIRCBUF_PROLOG(ring,double,30);
-   CIRCBUF_PROLOG(sorted,double,30);
+   CIRCBUF_PROLOG(ring,double,100);
+   CIRCBUF_PROLOG(sorted,double,100);
 
    lookbackTotal = (optInTimePeriod-1);
 

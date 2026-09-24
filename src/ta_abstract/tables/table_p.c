@@ -56,7 +56,7 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_PERCENTILE_TimePeriod =
 
    "Time Period",
    (const void *)&TA_DEF_PERCENTILE_TimePeriod,
-   30,
+   100,
    "Number of bars in the window",
 
    NULL

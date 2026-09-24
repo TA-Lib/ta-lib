@@ -2474,7 +2474,7 @@ static FUNC_TABLE: [FuncInfo; 206] = [
         hint: "Percentile (nearest rank)",
         flags: FuncFlags(0x03000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 30, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInPercentile", display_name: "Percentile", hint: "Percentile to report", flags: OptInputFlags(0x00100000), kind: OptInputType::RealRange { min: 0.0, max: 100.0, precision: 2, default: 50.0, suggested: (10.0, 90.0, 5.0) } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 100, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInPercentile", display_name: "Percentile", hint: "Percentile to report", flags: OptInputFlags(0x00100000), kind: OptInputType::RealRange { min: 0.0, max: 100.0, precision: 2, default: 50.0, suggested: (10.0, 90.0, 5.0) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },

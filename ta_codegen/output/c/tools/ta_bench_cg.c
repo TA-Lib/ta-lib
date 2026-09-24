@@ -2814,7 +2814,7 @@ static void bench_all(const char *filter, int iters) {
             int outBegIdx, outNBElement;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
-                TA_PERCENTILE(0, g_nPoints - 1, g_close, 30, 50.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+                TA_PERCENTILE(0, g_nPoints - 1, g_close, 100, 50.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
             }
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;

@@ -28,6 +28,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   the 0-100 scale (a few 1e-15 relative for the DMs). CMO, ADX and ADXR move more at longer
   periods. After thousands of identical prices the smoothed sums reach rounding residue, and
   old and new values can then differ by tens of points (CMO by up to 100).
+- PERCENTILE's default period is now 100, up from 30: at 30 bars the 95th percentile is the
+  second-largest value. Pass the period explicitly to keep the old output.
 - PERCENTILE and PERCENTRANK accept periods up to 10000, down from 100000. Both do work
   proportional to the period on every bar, so a 100000-bar window costs ten times as much
   per bar as a 10000-bar one. A longer period is now rejected.

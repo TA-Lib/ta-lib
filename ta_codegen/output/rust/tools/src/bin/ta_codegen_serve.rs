@@ -18640,7 +18640,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _json_inReal = parse_f64_array(&params["inReal"]);
                 inReal = &_json_inReal;
             }
-            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
+            let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(100) as i32;
             let optInPercentile = params["optInPercentile"].as_f64().unwrap_or(50.0) as f64;
             // The output buffers are sized to the count the call actually PRODUCES --
             // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
@@ -47720,7 +47720,7 @@ fn sv_percentile(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
+    let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(100) as i32;
     let optInPercentile = params["optInPercentile"].as_f64().unwrap_or(50.0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];

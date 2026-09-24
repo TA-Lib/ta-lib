@@ -11,7 +11,7 @@ optional_inputs:
     display_name: Time Period
     hint: Number of bars in the window
     range: [2, 10000]
-    default: 30
+    default: 100
     suggested: [4, 200, 1]
   - name: optInPercentile
     type: real

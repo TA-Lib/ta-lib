@@ -2803,7 +2803,7 @@ public final class Functions {
          List.of(
             new OptInputInfo(
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
-               "Time Period", "Number of bars in the window", 30.0,
+               "Time Period", "Number of bars in the window", 100.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 10000, 4, 200, 1, null),
             new OptInputInfo(

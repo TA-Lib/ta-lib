@@ -6813,7 +6813,7 @@ public static class FunctionDescription
 					<SuggestedEnd>200</SuggestedEnd>
 					<SuggestedIncrement>1</SuggestedIncrement>
 				</Range>
-				<DefaultValue>30</DefaultValue>
+				<DefaultValue>100</DefaultValue>
 			</OptionalInputArgument>
 			<OptionalInputArgument>
 				<Name>Percentile</Name>
