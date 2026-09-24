@@ -8,11 +8,12 @@
                                                    after SECS (max 900, exit 124). Without --queue,
                                                    exit 75 at once if the window is taken or anyone
                                                    is queued; with it, wait in the queue, first come
-                                                   first served, at most MAX seconds, then exit 75
+                                                   first served, at most MAX (<= 900) seconds, then
+                                                   exit 75
     scripts/quiet.py noisy WHO [--defer=MAX] -- CMD...
                                                    run CMD; measurers back off while it runs. With
-                                                   --defer, first wait at most MAX seconds while a
-                                                   measurement runs or is queued
+                                                   --defer, first wait at most MAX (<= 60) seconds
+                                                   while a measurement runs or is queued
 
 The lock is flock(2) on ~/.cache/ta-lib/quiet/bench.lock plus the `holder`,
 `noisy.<pid>` and `want.<pid>` files beside it. Those files are the interface:
@@ -20,8 +21,13 @@ every copy of this tool on the machine, in any worktree or language, must keep
 that layout and serve the queue in the same order. The kernel drops a flock when
 its holder dies, a `.<pid>` file counts only while its pid lives, a measured CMD
 dies with its wrapper (Linux), and CMD never inherits the lock fd, so no crash
-leaves the window stuck or a measurement running outside it. Without fcntl
-(Windows) CMD runs unguarded.
+leaves the window stuck or a measurement running outside it. A measurement is
+the exclusive flock and nothing else: `holder` is only its label, so a wrapper
+killed before it can clear the file makes nobody wait. CMD gets
+TA_QUIET=<kind>:<pid>. Under a live wrapper a nested `noisy` skips its defer, a
+`measure` nested in a measure runs its CMD within its own cap, and a `measure`
+nested in a noisy job exits 75 at once: it can never get the window there.
+Without fcntl (Windows) CMD runs unguarded.
 """
 
 import datetime
@@ -50,7 +56,10 @@ LOCK = DIR / "bench.lock"
 HOLDER = DIR / "holder"
 BUSY = 75
 MAX_SECS = 900
-POLL = 5
+MAX_QUEUE = 900
+MAX_DEFER = 60
+POLL = 1
+GRACE = (10, 5)
 PR_SET_PDEATHSIG = 1
 
 
@@ -102,17 +111,17 @@ def live(prefix):
     return "; ".join(p for p in parts if p)
 
 
-def who_holds():
+def who_holds(fallback="unknown holder"):
     parts = []
     try:
         line = HOLDER.read_text().strip()
         m = re.search(r"\bpid=(\d+)", line)
-        if line and (m is None or alive(int(m.group(1)))):
+        if line and (m is None or alive(int(m.group(1)))) and measuring():
             parts.append(line)
     except OSError:
         pass
     parts.append(live("noisy"))
-    return "; ".join(p for p in parts if p) or "unknown holder"
+    return "; ".join(p for p in parts if p) or fallback
 
 
 def with_queue(text):
@@ -148,17 +157,39 @@ def older_waiter(pid):
 
 
 def measuring():
-    """Whether a measurement holds the window now."""
-    try:
-        if not HOLDER.read_text().strip():
-            return False
-    except OSError:
-        return False
+    """Whether a measurement holds the window now: only an exclusive holder refuses
+    a shared probe."""
     fd = open_lock()
     try:
-        return not try_lock(fd, fcntl.LOCK_EX)
+        return not try_lock(fd, fcntl.LOCK_SH)
     finally:
         os.close(fd)
+
+
+def parent_kind():
+    """The kind of the live quiet wrapper this process runs under, else None."""
+    kind, _, pid = os.environ.get("TA_QUIET", "").partition(":")
+    return kind if pid.isdigit() and alive(int(pid)) else None
+
+
+def marked(kind):
+    return dict(os.environ, TA_QUIET=f"{kind}:{os.getpid()}")
+
+
+def run_plain(cmd, env=None):
+    p, rc = start(cmd, env=env)
+    if p is None:
+        return rc
+    try:
+        return exit_code(p.wait())
+    except KeyboardInterrupt:
+        # CMD shares our process group, so it got the same SIGINT: let it clean up.
+        try:
+            p.wait(timeout=30)
+        except (subprocess.TimeoutExpired, KeyboardInterrupt):
+            p.kill()
+            p.wait()
+        return 130
 
 
 def exit_code(rc):
@@ -194,9 +225,9 @@ def die_with(parent):
     return hook
 
 
-def stop_group(p, first):
+def stop_group(p, first, grace):
     """SIGINT first so Python tools run their cleanup, then TERM, then KILL."""
-    for sig, grace in ((first, 10), (signal.SIGTERM, 5), (signal.SIGKILL, None)):
+    for sig, grace in ((first, grace[0]), (signal.SIGTERM, grace[1]), (signal.SIGKILL, None)):
         try:
             os.killpg(p.pid, sig)
         except ProcessLookupError:
@@ -213,8 +244,9 @@ def stop_group(p, first):
     p.wait()
 
 
-def run_bounded(cmd, secs):
-    p, rc = start(cmd, start_new_session=True, preexec_fn=die_with(os.getpid()))
+def run_bounded(cmd, secs, grace=None):
+    p, rc = start(cmd, start_new_session=True, preexec_fn=die_with(os.getpid()),
+                  env=marked("measure"))
     if p is None:
         return rc
     try:
@@ -228,12 +260,22 @@ def run_bounded(cmd, secs):
         rc = 128 + e.signum
     for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, signal.SIG_IGN)
-    stop_group(p, signal.SIGINT)
+    stop_group(p, signal.SIGINT, grace or GRACE)
     return rc
 
 
 def measure(who, secs, queue, cmd):
     secs = min(secs, MAX_SECS)
+    signal.signal(signal.SIGTERM, interrupt)
+    signal.signal(signal.SIGHUP, interrupt)
+    parent = parent_kind()
+    if parent == "measure":
+        # Half the parent's grace, so this finishes stopping its own session before
+        # the parent's escalation reaches this wrapper.
+        return run_bounded(cmd, secs, tuple(g / 2 for g in GRACE))
+    if parent == "noisy":
+        print("quiet: busy: running inside a noisy job, which holds the window", file=sys.stderr)
+        return BUSY
     if fcntl is None:
         try:
             return subprocess.call(cmd, timeout=secs)
@@ -247,6 +289,7 @@ def measure(who, secs, queue, cmd):
             return BUSY
         want = DIR / f"want.{os.getpid()}"
         want.write_text(f"WAITING to measure: {who} pid={os.getpid()} since={now()} for<={secs}s\n")
+        print(f"quiet: queued, waiting up to {queue}s: {with_queue(who_holds())}", file=sys.stderr)
         try:
             deadline = time.monotonic() + queue
             while older_waiter(os.getpid()) or not try_lock(fd, fcntl.LOCK_EX):
@@ -257,8 +300,6 @@ def measure(who, secs, queue, cmd):
                 time.sleep(POLL)
         finally:
             want.unlink(missing_ok=True)
-    signal.signal(signal.SIGTERM, interrupt)
-    signal.signal(signal.SIGHUP, interrupt)
     HOLDER.write_text(f"MEASURING by {who} pid={os.getpid()} since={now()} until<={now(secs)}\n")
     try:
         return run_bounded(cmd, secs)
@@ -269,9 +310,16 @@ def measure(who, secs, queue, cmd):
 
 def noisy(who, defer, cmd):
     if fcntl is None:
-        return subprocess.call(cmd)
+        return run_plain(cmd)
+    if parent_kind():
+        defer = 0
     deadline = time.monotonic() + defer
-    while time.monotonic() < deadline and (measuring() or live("want")):
+    # The queue first: a queued measurer drops its `want` only once it holds the lock.
+    if defer and (live("want") or measuring()):
+        reasons = [who_holds(""), live("want") and f"queued: {live('want')}"]
+        print(f"quiet: deferring up to {defer}s: {'; '.join(r for r in reasons if r)}",
+              file=sys.stderr)
+    while time.monotonic() < deadline and (live("want") or measuring()):
         time.sleep(POLL)
     fd = open_lock()
     mark = DIR / f"noisy.{os.getpid()}"
@@ -297,20 +345,8 @@ def noisy(who, defer, cmd):
     queued = live("want")
     if queued:
         print(f"quiet: note, queued measurement: {queued}", file=sys.stderr)
-    p, rc = start(cmd)
     try:
-        if p is None:
-            return rc
-        try:
-            return exit_code(p.wait())
-        except KeyboardInterrupt:
-            # CMD shares our process group, so it got the same SIGINT: let it clean up.
-            try:
-                p.wait(timeout=30)
-            except (subprocess.TimeoutExpired, KeyboardInterrupt):
-                p.kill()
-                p.wait()
-            return 130
+        return run_plain(cmd, env=marked("noisy"))
     finally:
         done.set()
         mark.unlink(missing_ok=True)
@@ -342,14 +378,14 @@ def main(argv):
         if queue is None:
             return usage()
         cmd = cmd[1:] if cmd and cmd[0] == "--" else cmd
-        return measure(who, int(secs), queue, cmd) if cmd else usage()
+        return measure(who, int(secs), min(queue, MAX_QUEUE), cmd) if cmd else usage()
     if verb == "noisy" and len(rest) >= 2:
         who, cmd = rest[0], rest[1:]
         defer, cmd = option(cmd, "--defer=")
         if defer is None:
             return usage()
         cmd = cmd[1:] if cmd and cmd[0] == "--" else cmd
-        return noisy(who, defer, cmd) if cmd else usage()
+        return noisy(who, min(defer, MAX_DEFER), cmd) if cmd else usage()
     return usage()
 
 

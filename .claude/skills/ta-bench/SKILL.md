@@ -7,7 +7,7 @@ description: Benchmarking TA-Lib — ta_bench, ta_bench_direct, ta_bench_stream,
 
 ```bash
 # Full pipeline: build + regen + correctness as a heavy job, then the benches in the quiet window
-scripts/quiet.py noisy <session> --defer=900 -- scripts/regtest.py --no-perftest --no-direct-bench
+scripts/quiet.py noisy <session> --defer=60 -- scripts/regtest.py --no-perftest --no-direct-bench
 scripts/quiet.py measure <session> 900 --queue=900 -- scripts/regtest.py --test-only --no-regtest
 
 # Benchmark specific indicators (trustworthy — isolated, high iterations)
@@ -17,9 +17,11 @@ cd bin && ../scripts/quiet.py measure <session> 120 --queue=900 -- ./ta_bench --
 cd bin && ../scripts/quiet.py measure <session> 900 --queue=900 -- ./ta_bench --language=cref,c --points=100000 --iters=200
 ```
 
-`quiet.py` caps a window at 900 s: split a longer run by `--function=`. The
-spread check below catches a box that is noisy, not one that is steadily busy: a
-parallel build in another session slows every pass alike and passes it.
+`quiet.py` caps a window at 900 s, but a deferring build waits at most 60 s and
+then starts inside it, so keep each window short: split a long run by
+`--function=`. The spread check below catches a box that is noisy, not one that
+is steadily busy: a parallel build in another session slows every pass alike and
+passes it.
 
 Both hand-written benches report the **spread** of their own repeated passes,
 because a bare median is silent about whether the box was quiet enough for it
