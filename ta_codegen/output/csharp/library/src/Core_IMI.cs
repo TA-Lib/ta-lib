@@ -132,9 +132,9 @@ public partial class Core
          int i;
          for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double diff = inClose[i] - inOpen[i];
-            /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-             * A ternary or if/else retires fewer instructions but branches (Java
-             * always) and mispredicts on random data.
+            /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+             * compiles a ternary to a branch and gcc an if/else; either mispredicts
+             * on random data, though the if/else retires fewer instructions.
              */
             double up = (diff + Math.Abs(diff)) * 0.5;
             upsum += up;
@@ -486,9 +486,9 @@ public partial class Core
          downsum = 0.0;
          for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
             diff = ((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1) - ((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0);
-            /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-             * A ternary or if/else retires fewer instructions but branches (Java
-             * always) and mispredicts on random data.
+            /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+             * compiles a ternary to a branch and gcc an if/else; either mispredicts
+             * on random data, though the if/else retires fewer instructions.
              */
             up = (diff + Math.Abs(diff)) * 0.5;
             upsum += up;
@@ -532,9 +532,9 @@ public partial class Core
       downsum = 0.0;
       for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
          diff = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-         /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-          * A ternary or if/else retires fewer instructions but branches (Java
-          * always) and mispredicts on random data.
+         /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+          * compiles a ternary to a branch and gcc an if/else; either mispredicts
+          * on random data, though the if/else retires fewer instructions.
           */
          up = (diff + Math.Abs(diff)) * 0.5;
          upsum += up;
@@ -596,9 +596,9 @@ public partial class Core
          int i;
          for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
             double diff = inClose[i] - inOpen[i];
-            /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-             * A ternary or if/else retires fewer instructions but branches (Java
-             * always) and mispredicts on random data.
+            /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+             * compiles a ternary to a branch and gcc an if/else; either mispredicts
+             * on random data, though the if/else retires fewer instructions.
              */
             double up = (diff + Math.Abs(diff)) * 0.5;
             upsum += up;

@@ -149,9 +149,9 @@ impl Core {
             let mut i: usize = 0_usize;
             for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
                 let mut diff: f64 = inClose[i] - inOpen[i];
-                // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-                // A ternary or if/else retires fewer instructions but branches (Java
-                // always) and mispredicts on random data.
+                // max(diff, 0) spelled with fabs is branch-free in every backend. Java
+                // compiles a ternary to a branch and gcc an if/else; either mispredicts
+                // on random data, though the if/else retires fewer instructions.
                 let mut up: f64 = (diff + (diff).abs()) * 0.5;
                 upsum += up;
                 downsum += up - diff;
@@ -322,9 +322,9 @@ impl Core {
         i = (sp.optInTimePeriod - 1) as usize;
         loop {
             diff = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] - sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-            // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-            // A ternary or if/else retires fewer instructions but branches (Java
-            // always) and mispredicts on random data.
+            // max(diff, 0) spelled with fabs is branch-free in every backend. Java
+            // compiles a ternary to a branch and gcc an if/else; either mispredicts
+            // on random data, though the if/else retires fewer instructions.
             up = (diff + (diff).abs()) * 0.5;
             upsum += up;
             downsum += up - diff;
@@ -391,9 +391,9 @@ impl Core {
             let mut i: usize = 0_usize;
             for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
                 let mut diff: f64 = inClose[i] - inOpen[i];
-                // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-                // A ternary or if/else retires fewer instructions but branches (Java
-                // always) and mispredicts on random data.
+                // max(diff, 0) spelled with fabs is branch-free in every backend. Java
+                // compiles a ternary to a branch and gcc an if/else; either mispredicts
+                // on random data, though the if/else retires fewer instructions.
                 let mut up: f64 = (diff + (diff).abs()) * 0.5;
                 upsum += up;
                 downsum += up - diff;
@@ -623,9 +623,9 @@ impl ImiStream {
             i = (sp.optInTimePeriod - 1) as usize;
             loop {
                 diff = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 }) - (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
-                // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-                // A ternary or if/else retires fewer instructions but branches (Java
-                // always) and mispredicts on random data.
+                // max(diff, 0) spelled with fabs is branch-free in every backend. Java
+                // compiles a ternary to a branch and gcc an if/else; either mispredicts
+                // on random data, though the if/else retires fewer instructions.
                 up = (diff + (diff).abs()) * 0.5;
                 upsum += up;
                 downsum += up - diff;

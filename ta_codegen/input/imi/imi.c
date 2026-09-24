@@ -56,9 +56,9 @@ TA_RetCode imi(int startIdx, int endIdx,
 
       for (i = startIdx - (optInTimePeriod - 1); i <= startIdx; i++) {
          double diff = inClose[i] - inOpen[i];
-         /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-          * A ternary or if/else retires fewer instructions but branches (Java
-          * always) and mispredicts on random data. */
+         /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+          * compiles a ternary to a branch and gcc an if/else; either mispredicts
+          * on random data, though the if/else retires fewer instructions. */
          double up = (diff + fabs(diff)) * 0.5;
 
          upsum += up;

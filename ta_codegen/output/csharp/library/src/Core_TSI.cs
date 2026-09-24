@@ -421,7 +421,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</description></item>
+   /// <item><description>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there, its neutral value, as CCI and IMI emit theirs. Some implementations divide unguarded and return a non-finite value.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up. Implementations seeding from a single first sample — trading-signals among them — differ over the transient and agree once it decays.</description></item>
    /// <item><description>The parameters are named by the order they are applied in, not fast and slow. Blau's published pair applies the longer average first, the inverse of the differenced fast/slow pairs elsewhere in the library, so swapping them silently returns a different indicator with the same lookback.</description></item>
    /// </list>
@@ -500,7 +500,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</description></item>
+   /// <item><description>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there, its neutral value, as CCI and IMI emit theirs. Some implementations divide unguarded and return a non-finite value.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up. Implementations seeding from a single first sample — trading-signals among them — differ over the transient and agree once it decays.</description></item>
    /// <item><description>The parameters are named by the order they are applied in, not fast and slow. Blau's published pair applies the longer average first, the inverse of the differenced fast/slow pairs elsewhere in the library, so swapping them silently returns a different indicator with the same lookback.</description></item>
    /// </list>

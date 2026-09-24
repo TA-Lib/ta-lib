@@ -105676,9 +105676,9 @@ class Core {
              int i;
              for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
                 double diff = inClose[i] - inOpen[i];
-                /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-                 * A ternary or if/else retires fewer instructions but branches (Java
-                 * always) and mispredicts on random data.
+                /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+                 * compiles a ternary to a branch and gcc an if/else; either mispredicts
+                 * on random data, though the if/else retires fewer instructions.
                  */
                 double up = (diff + Math.abs(diff)) * 0.5;
                 upsum += up;
@@ -106001,9 +106001,9 @@ class Core {
              downsum = 0.0;
              for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
                 diff = ((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1) - ((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0);
-                /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-                 * A ternary or if/else retires fewer instructions but branches (Java
-                 * always) and mispredicts on random data.
+                /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+                 * compiles a ternary to a branch and gcc an if/else; either mispredicts
+                 * on random data, though the if/else retires fewer instructions.
                  */
                 up = (diff + Math.abs(diff)) * 0.5;
                 upsum += up;
@@ -106056,9 +106056,9 @@ class Core {
           downsum = 0.0;
           for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
              diff = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-             /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-              * A ternary or if/else retires fewer instructions but branches (Java
-              * always) and mispredicts on random data.
+             /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+              * compiles a ternary to a branch and gcc an if/else; either mispredicts
+              * on random data, though the if/else retires fewer instructions.
               */
              up = (diff + Math.abs(diff)) * 0.5;
              upsum += up;
@@ -106117,9 +106117,9 @@ class Core {
              int i;
              for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
                 double diff = inClose[i] - inOpen[i];
-                /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-                 * A ternary or if/else retires fewer instructions but branches (Java
-                 * always) and mispredicts on random data.
+                /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+                 * compiles a ternary to a branch and gcc an if/else; either mispredicts
+                 * on random data, though the if/else retires fewer instructions.
                  */
                 double up = (diff + Math.abs(diff)) * 0.5;
                 upsum += up;
@@ -160457,7 +160457,7 @@ class Core {
         * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there, its neutral value, as CCI and IMI emit theirs. Some implementations divide unguarded and return a non-finite value.</li>
         * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</li>
         * <li>One output range covers both outputs, so the SMI values consumed by the signal line's own warm-up are not published.</li>
         * </ul>
@@ -160549,7 +160549,7 @@ class Core {
         * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there, its neutral value, as CCI and IMI emit theirs. Some implementations divide unguarded and return a non-finite value.</li>
         * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</li>
         * <li>One output range covers both outputs, so the SMI values consumed by the signal line's own warm-up are not published.</li>
         * </ul>
@@ -175231,7 +175231,7 @@ class Core {
         * href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there, its neutral value, as CCI and IMI emit theirs. Some implementations divide unguarded and return a non-finite value.</li>
         * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — trading-signals among them — differ over the transient and agree once it decays.</li>
         * <li>The parameters are named by the order they are applied in, not fast and slow. Blau's published pair applies the longer average first, the inverse of the differenced fast/slow pairs elsewhere in the library, so swapping them silently returns a different indicator with the same lookback.</li>
         * </ul>
@@ -175311,7 +175311,7 @@ class Core {
         * href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there, its neutral value, as CCI and IMI emit theirs. Some implementations divide unguarded and return a non-finite value.</li>
         * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — trading-signals among them — differ over the transient and agree once it decays.</li>
         * <li>The parameters are named by the order they are applied in, not fast and slow. Blau's published pair applies the longer average first, the inverse of the differenced fast/slow pairs elsewhere in the library, so swapping them silently returns a different indicator with the same lookback.</li>
         * </ul>
@@ -186798,7 +186798,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c91fe0ee24e0c76b";
+    static final String SPLICED_GENCODE_DIGEST = "7c2ae200a8d11497";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

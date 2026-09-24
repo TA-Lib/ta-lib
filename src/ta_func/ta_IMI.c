@@ -127,9 +127,9 @@ TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
       for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
          double diff = inClose[i] - inOpen[i];
-         /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-          * A ternary or if/else retires fewer instructions but branches (Java
-          * always) and mispredicts on random data.
+         /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+          * compiles a ternary to a branch and gcc an if/else; either mispredicts
+          * on random data, though the if/else retires fewer instructions.
           */
          double up = (diff + fabs(diff)) * 0.5;
          upsum += up;
@@ -250,9 +250,9 @@ static void TA_IMI_StepImpl( struct TA_IMI_Stream *sp, double inOpen, double inC
    for( i = sp->optInTimePeriod - 1; i >= 0; i -= 1 )
    {
       diff = sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] - sp->win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
-      /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-       * A ternary or if/else retires fewer instructions but branches (Java
-       * always) and mispredicts on random data.
+      /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+       * compiles a ternary to a branch and gcc an if/else; either mispredicts
+       * on random data, though the if/else retires fewer instructions.
        */
       up = (diff + fabs(diff)) * 0.5;
       upsum += up;
@@ -318,9 +318,9 @@ static TA_RetCode TA_IMI_OpenImpl( struct TA_IMI_Stream **stream, const double i
          for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
          {
             double diff = inClose[i] - inOpen[i];
-            /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-             * A ternary or if/else retires fewer instructions but branches (Java
-             * always) and mispredicts on random data.
+            /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+             * compiles a ternary to a branch and gcc an if/else; either mispredicts
+             * on random data, though the if/else retires fewer instructions.
              */
             double up = (diff + fabs(diff)) * 0.5;
             upsum += up;
@@ -440,9 +440,9 @@ TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, d
    for( i = sp->optInTimePeriod - 1; i >= 0; i -= 1 )
    {
       diff = ((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot1) ? win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal1) - ((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0);
-      /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
-       * A ternary or if/else retires fewer instructions but branches (Java
-       * always) and mispredicts on random data.
+      /* max(diff, 0) spelled with fabs is branch-free in every backend. Java
+       * compiles a ternary to a branch and gcc an if/else; either mispredicts
+       * on random data, though the if/else retires fewer instructions.
        */
       up = (diff + fabs(diff)) * 0.5;
       upsum += up;

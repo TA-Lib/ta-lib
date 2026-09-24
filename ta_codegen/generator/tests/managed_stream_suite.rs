@@ -49,13 +49,17 @@ fn streaming_funcs() -> Vec<String> {
 
 fn section(name: &str, lang: &str) -> String {
     let (func, enums) = load(name);
+    render_stream(&func, &enums, lang)
+}
+
+fn render_stream(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>, lang: &str) -> String {
     let registry = Registry::from_dir(&input_dir());
     let helpers = HelperRegistry::from_dir(&input_dir());
     let full = match lang {
-        "c" => backends::c_stream::generate(&func, &enums, &registry, &helpers),
-        "rust" => backends::rust_lang::generate(&func, &enums, &registry, &helpers),
-        "java" => backends::java::generate(&func, &enums, &registry, &helpers),
-        "csharp" => backends::csharp::generate(&func, &enums, &registry, &helpers),
+        "c" => backends::c_stream::generate(func, enums, &registry, &helpers),
+        "rust" => backends::rust_lang::generate(func, enums, &registry, &helpers),
+        "java" => backends::java::generate(func, enums, &registry, &helpers),
+        "csharp" => backends::csharp::generate(func, enums, &registry, &helpers),
         other => panic!("unknown backend {other}"),
     };
     match full.find("/**** Streaming API *****/") {
@@ -96,9 +100,14 @@ fn body_of(src: &str, needle: &str) -> String {
 /// managed backends: C writes the output through an out-param and has no such
 /// local, and Rust deletes the wholly dead local outright — declaration and
 /// stores together (issue #353, gated in rust_stream_suite). No frame in the
-/// corpus keeps a seed, so one that grows back fails.
+/// corpus keeps a seed, so one that grows back fails. The control keeps one,
+/// its only store sitting in a loop body the IR cannot prove runs, so the
+/// needle is proven to match a kept seed in each backend.
 #[test]
 fn no_managed_peek_seeds_a_dead_output_local() {
+    let (mut control, enums) = load("imi");
+    let parsed = parser::c_source::parse_c_source_str(LOOP_STORE_CONTROL);
+    parser::c_source::wire_parsed_source(&mut control, &parsed);
     for (lang, needle) in [("java", " peek("), ("csharp", " Peek(")] {
         let mut swept = 0usize;
         let mut seedless = 0usize;
@@ -132,8 +141,53 @@ fn no_managed_peek_seeds_a_dead_output_local() {
             seeded.is_empty(),
             "{lang}: peek frames seeding an output local from the handle: {seeded:?}"
         );
+        let body = body_of(&render_stream(&control, &enums, lang), needle);
+        assert!(
+            body.contains("cur_outReal = sp.cur_outReal;"),
+            "{lang}: the control's kept seed no longer matches the needle"
+        );
     }
 }
+
+/// IMI's metadata over a body whose only output store is inside the window loop.
+const LOOP_STORE_CONTROL: &str = r#"
+int imi_lookback(int optInTimePeriod)
+{
+   return optInTimePeriod - 1;
+}
+
+TA_RetCode imi(int startIdx, int endIdx,
+   const double inOpen[],
+   const double inClose[],
+   int optInTimePeriod,
+   int *outBegIdx, int *outNBElement,
+   double outReal[])
+{
+   int lookback, outIdx = 0;
+
+   lookback = imi_lookback( optInTimePeriod );
+   if(startIdx < lookback)
+      startIdx = lookback;
+   if( startIdx > endIdx ) {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_SUCCESS;
+   }
+   *outBegIdx = startIdx;
+   while (startIdx <= endIdx) {
+      double sum = .0;
+      int i;
+      for (i = startIdx - (optInTimePeriod - 1); i <= startIdx; i++) {
+         sum += inClose[i] - inOpen[i];
+         outReal[outIdx] = sum;
+      }
+      startIdx++;
+      outIdx++;
+   }
+   *outNBElement = outIdx;
+   return TA_SUCCESS;
+}
+"#;
 /// `value(out)` must name the last COMMITTED bar on every exit, the throwing
 /// ones included. Since #310 it reads `cur_*` straight through to the caller's
 /// sink, so the fields ARE the answer — which is only sound if a throw out of
