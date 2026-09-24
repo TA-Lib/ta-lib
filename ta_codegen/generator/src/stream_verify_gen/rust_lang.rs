@@ -313,8 +313,16 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .join(", ");
     let _ = writeln!(
         s,
-        "            if c2.{fname_snake}_open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
+        "            match c2.{fname_snake}_open({short_ins}{opts_tail}) {{ Err(RetCode::InsufficientHistory) => {{}} Ok(_) => {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }} Err(_) => {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryWrongType\\\":1\".to_string(); }} }} }}"
     );
+    // OpenAndFill's guard is not always Open's: MAVP hand-rolls one per entry.
+    s.push_str("            {\n");
+    s.push_str(&fdecls.replace("        ", "            "));
+    let _ = writeln!(
+        s,
+        "            match c2.{fname_snake}_open_and_fill({short_ins}{opts_tail}{fargs}) {{ Err(RetCode::InsufficientHistory) => {{}} Ok(_) => {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryFillAccepted\\\":1\".to_string(); }} }} Err(_) => {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryFillWrongType\\\":1\".to_string(); }} }} }}"
+    );
+    s.push_str("            }\n");
     s.push_str("        }\n");
 
     s.push_str("    }\n");

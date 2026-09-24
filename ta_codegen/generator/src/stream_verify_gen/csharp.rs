@@ -939,6 +939,17 @@ fn emit_csharp_sv_func(
     );
     s.push_str("                catch (InsufficientHistoryException) { /* expected, typed */ }\n");
     s.push_str("                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = \",\\\"shortHistoryWrongType\\\":1\"; }\n");
+    // OpenAndFill's guard is not always Open's: MAVP hand-rolls one per entry.
+    s.push_str("                {\n");
+    s.push_str(&fdecls.replace("            ", "                    "));
+    let _ = writeln!(
+        s,
+        "                    try {{ _ = c2.{base_pascal}OpenAndFill({}{opts_tail}{fargs}); allOk = false; if (diag.Length == 0) diag = \",\\\"shortHistoryFillAccepted\\\":1\"; }}",
+        pfx_ins("lb")
+    );
+    s.push_str("                    catch (InsufficientHistoryException) { /* expected, typed */ }\n");
+    s.push_str("                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = \",\\\"shortHistoryFillWrongType\\\":1\"; }\n");
+    s.push_str("                }\n");
     s.push_str("            }\n");
 
     // ---- int.MinValue default-sentinel pair: Open(int.MinValue) must equal

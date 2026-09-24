@@ -6532,6 +6532,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_AC_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_AC_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_AC_OpenAndFill(&stSF, sv_h, sv_l, lb, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_AC_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -6820,6 +6824,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ACCBANDS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ACCBANDS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ACCBANDS_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ACCBANDS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -7069,6 +7077,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ACOS_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ACOS_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ACOS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ACOS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ACOS_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ACOS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -7320,6 +7332,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_AD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_AD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_AD_OpenAndFill(&stSF, sv_h, sv_l, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_AD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -7569,6 +7585,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ADD_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ADD_Open(&stSH, sv_c, sv_v, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ADD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ADD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ADD_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ADD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -7824,6 +7844,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ADOSC_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ADOSC_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ADOSC_OpenAndFill(&stSF, sv_h, sv_l, sv_c, sv_v, lb, optInFastPeriod, optInSlowPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ADOSC_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -8075,6 +8099,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ADR_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ADR_Open(&stSH, sv_h, sv_l, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ADR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ADR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ADR_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ADR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -8328,6 +8356,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ADX_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ADX_Open(&stSH, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ADX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ADX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ADX_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ADX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -8583,6 +8615,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ADXR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ADXR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ADXR_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ADXR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(0, 0);
@@ -8835,6 +8871,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_AO_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_AO_Open(&stSH, sv_h, sv_l, lb, optInFastPeriod, optInSlowPeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_AO_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_AO_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_AO_OpenAndFill(&stSF, sv_h, sv_l, lb, optInFastPeriod, optInSlowPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_AO_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -9098,6 +9138,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_APO_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_APO_Open(&stSH, sv_c, lb, optInFastPeriod, optInSlowPeriod, optInMAType, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_APO_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_APO_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_APO_OpenAndFill(&stSF, sv_c, lb, optInFastPeriod, optInSlowPeriod, optInMAType, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_APO_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -9377,6 +9421,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_AROON_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_AROON_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_AROON_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_AROON_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -9628,6 +9676,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_AROONOSC_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_AROONOSC_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_AROONOSC_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_AROONOSC_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -9878,6 +9930,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ASIN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ASIN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ASIN_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ASIN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -10127,6 +10183,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ATAN_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ATAN_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ATAN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ATAN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ATAN_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ATAN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -10381,6 +10441,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ATR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ATR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ATR_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ATR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(2, 0);
@@ -10633,6 +10697,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_AVGDEV_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_AVGDEV_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_AVGDEV_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_AVGDEV_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -10882,6 +10950,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_AVGPRICE_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_AVGPRICE_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_AVGPRICE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_AVGPRICE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_AVGPRICE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_AVGPRICE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -11184,6 +11256,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_BBANDS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_BBANDS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_BBANDS_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_BBANDS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -11440,6 +11516,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_BETA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_BETA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_BETA_OpenAndFill(&stSF, sv_c, sv_v, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_BETA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -11689,6 +11769,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_BOP_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_BOP_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_BOP_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_BOP_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_BOP_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_BOP_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -11940,6 +12024,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CCI_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_CCI_Open(&stSH, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CCI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CCI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CCI_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CCI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -12194,6 +12282,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDL2CROWS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDL2CROWS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDL2CROWS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDL2CROWS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -12446,6 +12538,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDL3BLACKCROWS_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDL3BLACKCROWS_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDL3BLACKCROWS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDL3BLACKCROWS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDL3BLACKCROWS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDL3BLACKCROWS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -12700,6 +12796,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDL3INSIDE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDL3INSIDE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDL3INSIDE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDL3INSIDE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -12952,6 +13052,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDL3LINESTRIKE_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDL3LINESTRIKE_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDL3LINESTRIKE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDL3LINESTRIKE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDL3LINESTRIKE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDL3LINESTRIKE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -13206,6 +13310,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDL3OUTSIDE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDL3OUTSIDE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDL3OUTSIDE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDL3OUTSIDE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -13459,6 +13567,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDL3STARSINSOUTH_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDL3STARSINSOUTH_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDL3STARSINSOUTH_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDL3STARSINSOUTH_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -13711,6 +13823,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDL3WHITESOLDIERS_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDL3WHITESOLDIERS_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDL3WHITESOLDIERS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDL3WHITESOLDIERS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDL3WHITESOLDIERS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDL3WHITESOLDIERS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -13966,6 +14082,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLABANDONEDBABY_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLABANDONEDBABY_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLABANDONEDBABY_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLABANDONEDBABY_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -14218,6 +14338,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLADVANCEBLOCK_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLADVANCEBLOCK_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLADVANCEBLOCK_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLADVANCEBLOCK_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLADVANCEBLOCK_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLADVANCEBLOCK_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -14472,6 +14596,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLBELTHOLD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLBELTHOLD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLBELTHOLD_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLBELTHOLD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -14724,6 +14852,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLBREAKAWAY_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLBREAKAWAY_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLBREAKAWAY_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLBREAKAWAY_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLBREAKAWAY_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLBREAKAWAY_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -14978,6 +15110,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLCLOSINGMARUBOZU_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLCLOSINGMARUBOZU_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLCLOSINGMARUBOZU_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLCLOSINGMARUBOZU_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -15231,6 +15367,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLCONCEALBABYSWALL_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLCONCEALBABYSWALL_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLCONCEALBABYSWALL_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLCONCEALBABYSWALL_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -15483,6 +15623,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLCOUNTERATTACK_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLCOUNTERATTACK_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLCOUNTERATTACK_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLCOUNTERATTACK_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLCOUNTERATTACK_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLCOUNTERATTACK_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -15738,6 +15882,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLDARKCLOUDCOVER_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLDARKCLOUDCOVER_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLDARKCLOUDCOVER_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLDARKCLOUDCOVER_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -15990,6 +16138,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLDOJI_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLDOJI_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLDOJI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLDOJI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLDOJI_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLDOJI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -16244,6 +16396,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLDOJISTAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLDOJISTAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLDOJISTAR_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLDOJISTAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -16497,6 +16653,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLDRAGONFLYDOJI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLDRAGONFLYDOJI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLDRAGONFLYDOJI_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLDRAGONFLYDOJI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -16749,6 +16909,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLENGULFING_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLENGULFING_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLENGULFING_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLENGULFING_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLENGULFING_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLENGULFING_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -17004,6 +17168,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLEVENINGDOJISTAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLEVENINGDOJISTAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLEVENINGDOJISTAR_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLEVENINGDOJISTAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -17258,6 +17426,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLEVENINGSTAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLEVENINGSTAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLEVENINGSTAR_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLEVENINGSTAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -17510,6 +17682,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLGAPSIDESIDEWHITE_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLGAPSIDESIDEWHITE_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLGAPSIDESIDEWHITE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLGAPSIDESIDEWHITE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLGAPSIDESIDEWHITE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLGAPSIDESIDEWHITE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -17764,6 +17940,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLGRAVESTONEDOJI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLGRAVESTONEDOJI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLGRAVESTONEDOJI_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLGRAVESTONEDOJI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -18016,6 +18196,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLHAMMER_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLHAMMER_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHAMMER_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLHAMMER_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHAMMER_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHAMMER_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -18270,6 +18454,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHANGINGMAN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLHANGINGMAN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHANGINGMAN_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHANGINGMAN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -18522,6 +18710,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLHARAMI_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLHARAMI_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHARAMI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLHARAMI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHARAMI_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHARAMI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -18776,6 +18968,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHARAMICROSS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLHARAMICROSS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHARAMICROSS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHARAMICROSS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -19028,6 +19224,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLHIGHWAVE_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLHIGHWAVE_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHIGHWAVE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLHIGHWAVE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHIGHWAVE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHIGHWAVE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -19282,6 +19482,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHIKKAKE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLHIKKAKE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHIKKAKE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHIKKAKE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -19534,6 +19738,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLHIKKAKEMOD_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLHIKKAKEMOD_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHIKKAKEMOD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLHIKKAKEMOD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHIKKAKEMOD_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHIKKAKEMOD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -19788,6 +19996,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLHOMINGPIGEON_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLHOMINGPIGEON_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLHOMINGPIGEON_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLHOMINGPIGEON_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -20040,6 +20252,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLIDENTICAL3CROWS_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLIDENTICAL3CROWS_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLIDENTICAL3CROWS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLIDENTICAL3CROWS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLIDENTICAL3CROWS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLIDENTICAL3CROWS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -20294,6 +20510,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLINNECK_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLINNECK_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLINNECK_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLINNECK_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -20546,6 +20766,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLINVERTEDHAMMER_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLINVERTEDHAMMER_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLINVERTEDHAMMER_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLINVERTEDHAMMER_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLINVERTEDHAMMER_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLINVERTEDHAMMER_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -20800,6 +21024,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLKICKING_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLKICKING_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLKICKING_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLKICKING_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -21052,6 +21280,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLKICKINGBYLENGTH_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLKICKINGBYLENGTH_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLKICKINGBYLENGTH_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLKICKINGBYLENGTH_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLKICKINGBYLENGTH_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLKICKINGBYLENGTH_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -21306,6 +21538,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLLADDERBOTTOM_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLLADDERBOTTOM_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLLADDERBOTTOM_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLLADDERBOTTOM_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -21558,6 +21794,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLLONGLEGGEDDOJI_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLLONGLEGGEDDOJI_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLLONGLEGGEDDOJI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLLONGLEGGEDDOJI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLLONGLEGGEDDOJI_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLLONGLEGGEDDOJI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -21812,6 +22052,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLLONGLINE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLLONGLINE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLLONGLINE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLLONGLINE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -22065,6 +22309,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLMARUBOZU_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLMARUBOZU_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLMARUBOZU_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLMARUBOZU_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -22317,6 +22565,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLMATCHINGLOW_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLMATCHINGLOW_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLMATCHINGLOW_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLMATCHINGLOW_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLMATCHINGLOW_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLMATCHINGLOW_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -22572,6 +22824,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLMATHOLD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLMATHOLD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLMATHOLD_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLMATHOLD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -22825,6 +23081,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLMORNINGDOJISTAR_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLMORNINGDOJISTAR_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLMORNINGDOJISTAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLMORNINGDOJISTAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLMORNINGDOJISTAR_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLMORNINGDOJISTAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -23080,6 +23340,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLMORNINGSTAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLMORNINGSTAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLMORNINGSTAR_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, optInPenetration, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLMORNINGSTAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -23332,6 +23596,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLONNECK_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLONNECK_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLONNECK_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLONNECK_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLONNECK_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLONNECK_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -23586,6 +23854,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLPIERCING_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLPIERCING_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLPIERCING_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLPIERCING_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -23838,6 +24110,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLRICKSHAWMAN_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLRICKSHAWMAN_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLRICKSHAWMAN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLRICKSHAWMAN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLRICKSHAWMAN_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLRICKSHAWMAN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -24092,6 +24368,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLRISEFALL3METHODS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLRISEFALL3METHODS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLRISEFALL3METHODS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLRISEFALL3METHODS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -24344,6 +24624,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLSEPARATINGLINES_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLSEPARATINGLINES_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLSEPARATINGLINES_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLSEPARATINGLINES_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLSEPARATINGLINES_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLSEPARATINGLINES_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -24598,6 +24882,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLSHOOTINGSTAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLSHOOTINGSTAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLSHOOTINGSTAR_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLSHOOTINGSTAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -24850,6 +25138,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLSHORTLINE_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLSHORTLINE_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLSHORTLINE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLSHORTLINE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLSHORTLINE_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLSHORTLINE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -25104,6 +25396,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLSPINNINGTOP_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLSPINNINGTOP_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLSPINNINGTOP_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLSPINNINGTOP_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -25356,6 +25652,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLSTALLEDPATTERN_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLSTALLEDPATTERN_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLSTALLEDPATTERN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLSTALLEDPATTERN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLSTALLEDPATTERN_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLSTALLEDPATTERN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -25610,6 +25910,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLSTICKSANDWICH_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLSTICKSANDWICH_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLSTICKSANDWICH_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLSTICKSANDWICH_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -25862,6 +26166,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLTAKURI_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLTAKURI_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLTAKURI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLTAKURI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLTAKURI_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLTAKURI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -26116,6 +26424,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLTASUKIGAP_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLTASUKIGAP_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLTASUKIGAP_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLTASUKIGAP_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -26368,6 +26680,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLTHRUSTING_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLTHRUSTING_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLTHRUSTING_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLTHRUSTING_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLTHRUSTING_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLTHRUSTING_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -26622,6 +26938,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLTRISTAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLTRISTAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLTRISTAR_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLTRISTAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -26874,6 +27194,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CDLUNIQUE3RIVER_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_CDLUNIQUE3RIVER_Open(&stSH, sv_o, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLUNIQUE3RIVER_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CDLUNIQUE3RIVER_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLUNIQUE3RIVER_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLUNIQUE3RIVER_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -27128,6 +27452,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLUPSIDEGAP2CROWS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLUPSIDEGAP2CROWS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLUPSIDEGAP2CROWS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLUPSIDEGAP2CROWS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -27381,6 +27709,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CDLXSIDEGAP3METHODS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CDLXSIDEGAP3METHODS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CDLXSIDEGAP3METHODS_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CDLXSIDEGAP3METHODS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -27630,6 +27962,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CEIL_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_CEIL_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CEIL_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CEIL_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CEIL_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CEIL_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -27881,6 +28217,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CMF_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_CMF_Open(&stSH, sv_h, sv_l, sv_c, sv_v, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CMF_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CMF_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CMF_OpenAndFill(&stSF, sv_h, sv_l, sv_c, sv_v, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CMF_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -28135,6 +28475,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CMO_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CMO_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CMO_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CMO_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(3, 0);
@@ -28386,6 +28730,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CMOU_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_CMOU_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CMOU_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CMOU_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CMOU_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CMOU_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -28640,6 +28988,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_COPPOCK_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_COPPOCK_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_COPPOCK_OpenAndFill(&stSF, sv_c, lb, optInWMAPeriod, optInROC1Period, optInROC2Period, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_COPPOCK_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -28891,6 +29243,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CORREL_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CORREL_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CORREL_OpenAndFill(&stSF, sv_c, sv_v, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CORREL_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -29141,6 +29497,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_COS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_COS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_COS_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_COS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -29390,6 +29750,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_COSH_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_COSH_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_COSH_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_COSH_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_COSH_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_COSH_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -29646,6 +30010,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CRSI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CRSI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CRSI_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInStreakPeriod, optInRankPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CRSI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(21, 0);
@@ -29898,6 +30266,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CTI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CTI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CTI_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CTI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -30147,6 +30519,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_CUMSUM_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_CUMSUM_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CUMSUM_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_CUMSUM_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CUMSUM_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CUMSUM_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -30402,6 +30778,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_CVI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_CVI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_CVI_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, optInROCPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_CVI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -30656,6 +31036,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_DEMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_DEMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_DEMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_DEMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -30906,6 +31290,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_DIV_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_DIV_Open(&stSH, sv_c, sv_v, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_DIV_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_DIV_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_DIV_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_DIV_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -31195,6 +31583,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_DONCHIAN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_DONCHIAN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_DONCHIAN_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_DONCHIAN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -31445,6 +31837,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_DPO_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_DPO_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_DPO_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_DPO_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_DPO_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_DPO_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -31699,6 +32095,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_DX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_DX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_DX_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_DX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(4, 0);
@@ -31950,6 +32350,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_EFI_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_EFI_Open(&stSH, sv_c, sv_v, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_EFI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_EFI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_EFI_OpenAndFill(&stSF, sv_c, sv_v, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_EFI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -32204,6 +32608,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_EMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_EMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_EMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_EMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -32455,6 +32863,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ER_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ER_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ER_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ER_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ER_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ER_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -32731,6 +33143,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ERI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ERI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ERI_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ERI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -32982,6 +33398,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_EXP_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_EXP_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_EXP_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_EXP_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -33231,6 +33651,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_FLOOR_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_FLOOR_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_FLOOR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_FLOOR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_FLOOR_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_FLOOR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -33482,6 +33906,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_FOSC_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_FOSC_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_FOSC_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_FOSC_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_FOSC_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_FOSC_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -33749,6 +34177,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_FRACTAL_Stream *stSH = NULL; int sh0 = 0; int sh1 = 0; TA_RetCode shrc = TA_FRACTAL_Open(&stSH, sv_h, sv_l, lb, optInLeftBars, optInRightBars, &sh0, &sh1);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_FRACTAL_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_FRACTAL_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_FRACTAL_OpenAndFill(&stSF, sv_h, sv_l, lb, optInLeftBars, optInRightBars, &sfB, &sfN, sv_if0, sv_if1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_FRACTAL_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -34054,6 +34486,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_HA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HA_OpenAndFill(&stSF, sv_o, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_f0, sv_f1, sv_f2, sv_f3);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(25, 0);
@@ -34305,6 +34741,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_HMA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_HMA_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_HMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -34558,6 +34998,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HT_DCPERIOD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_HT_DCPERIOD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HT_DCPERIOD_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HT_DCPERIOD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(6, 0);
@@ -34810,6 +35254,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_HT_DCPHASE_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_HT_DCPHASE_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HT_DCPHASE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_HT_DCPHASE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HT_DCPHASE_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HT_DCPHASE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -35086,6 +35534,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HT_PHASOR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_HT_PHASOR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HT_PHASOR_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HT_PHASOR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(8, 0);
@@ -35361,6 +35813,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HT_SINE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_HT_SINE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HT_SINE_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HT_SINE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(9, 0);
@@ -35614,6 +36070,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HT_TRENDLINE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_HT_TRENDLINE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HT_TRENDLINE_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HT_TRENDLINE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(10, 0);
@@ -35859,6 +36319,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_HT_TRENDMODE_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_HT_TRENDMODE_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_HT_TRENDMODE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_HT_TRENDMODE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_HT_TRENDMODE_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_HT_TRENDMODE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -36112,6 +36576,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_IMI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_IMI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_IMI_OpenAndFill(&stSF, sv_o, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_IMI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -36364,6 +36832,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_KAMA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_KAMA_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_KAMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_KAMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_KAMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_KAMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -36659,6 +37131,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_KC_Stream *stSH = NULL; double sh0 = 0.0; double sh1 = 0.0; double sh2 = 0.0; TA_RetCode shrc = TA_KC_Open(&stSH, sv_h, sv_l, sv_c, lb, optInTimePeriod, optInATRPeriod, optInNbDev, &sh0, &sh1, &sh2);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_KC_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_KC_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_KC_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, optInATRPeriod, optInNbDev, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_KC_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -36964,6 +37440,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_KDJ_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_KDJ_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_KDJ_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_KDJ_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -37220,6 +37700,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_KURTOSIS_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_KURTOSIS_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_KURTOSIS_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_KURTOSIS_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -37470,6 +37954,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LINEARREG_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_LINEARREG_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_LINEARREG_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_LINEARREG_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_LINEARREG_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_LINEARREG_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -37722,6 +38210,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_LINEARREG_ANGLE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_LINEARREG_ANGLE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_LINEARREG_ANGLE_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_LINEARREG_ANGLE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -37972,6 +38464,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LINEARREG_INTERCEPT_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_LINEARREG_INTERCEPT_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_LINEARREG_INTERCEPT_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_LINEARREG_INTERCEPT_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_LINEARREG_INTERCEPT_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_LINEARREG_INTERCEPT_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -38224,6 +38720,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_LINEARREG_SLOPE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_LINEARREG_SLOPE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_LINEARREG_SLOPE_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_LINEARREG_SLOPE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -38474,6 +38974,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_LN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_LN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_LN_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_LN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -38723,6 +39227,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_LOG10_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_LOG10_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_LOG10_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_LOG10_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_LOG10_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_LOG10_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -38985,6 +39493,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_MA_Open(&stSH, sv_c, lb, optInTimePeriod, optInMAType, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInMAType, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -39282,6 +39794,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MACD_Stream *stSH = NULL; double sh0 = 0.0; double sh1 = 0.0; double sh2 = 0.0; TA_RetCode shrc = TA_MACD_Open(&stSH, sv_c, lb, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &sh0, &sh1, &sh2);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MACD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MACD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MACD_OpenAndFill(&stSF, sv_c, lb, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MACD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -39587,6 +40103,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MACDEXT_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MACDEXT_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MACDEXT_OpenAndFill(&stSF, sv_c, lb, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MACDEXT_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -39882,6 +40402,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MACDFIX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MACDFIX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MACDFIX_OpenAndFill(&stSF, sv_c, lb, optInSignalPeriod, &sfB, &sfN, sv_f0, sv_f1, sv_f2);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MACDFIX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -40159,6 +40683,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MAMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MAMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MAMA_OpenAndFill(&stSF, sv_c, lb, optInFastLimit, optInSlowLimit, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MAMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(14, 0);
@@ -40409,6 +40937,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MARKETFI_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_MARKETFI_Open(&stSH, sv_h, sv_l, sv_v, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MARKETFI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MARKETFI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MARKETFI_OpenAndFill(&stSF, sv_h, sv_l, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MARKETFI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -40663,6 +41195,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MASSI_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_MASSI_Open(&stSH, sv_h, sv_l, lb, optInFastPeriod, optInSlowPeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MASSI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MASSI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MASSI_OpenAndFill(&stSF, sv_h, sv_l, lb, optInFastPeriod, optInSlowPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MASSI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -40929,6 +41465,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MAVP_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MAVP_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MAVP_OpenAndFill(&stSF, sv_c, sv_v, lb, optInMinPeriod, optInMaxPeriod, optInMAType, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MAVP_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -41185,6 +41725,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MAX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MAX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MAX_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MAX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -41428,6 +41972,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MAXINDEX_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_MAXINDEX_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MAXINDEX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MAXINDEX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MAXINDEX_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MAXINDEX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -41680,6 +42228,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MEDIAN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MEDIAN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MEDIAN_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MEDIAN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -41929,6 +42481,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MEDPRICE_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_MEDPRICE_Open(&stSH, sv_h, sv_l, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MEDPRICE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MEDPRICE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MEDPRICE_OpenAndFill(&stSF, sv_h, sv_l, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MEDPRICE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -42181,6 +42737,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MFI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MFI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MFI_OpenAndFill(&stSF, sv_h, sv_l, sv_c, sv_v, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MFI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -42431,6 +42991,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MIDPOINT_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_MIDPOINT_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MIDPOINT_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MIDPOINT_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MIDPOINT_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MIDPOINT_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -42683,6 +43247,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MIDPRICE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MIDPRICE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MIDPRICE_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MIDPRICE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -42934,6 +43502,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MIN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MIN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MIN_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MIN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -43177,6 +43749,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MININDEX_Stream *stSH = NULL; int sh0 = 0; TA_RetCode shrc = TA_MININDEX_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MININDEX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MININDEX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MININDEX_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MININDEX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -43451,6 +44027,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MINMAX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MINMAX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MINMAX_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MINMAX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -43717,6 +44297,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MINMAXINDEX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MINMAXINDEX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MINMAXINDEX_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_if0, sv_if1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MINMAXINDEX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -43969,6 +44553,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MINUS_DI_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_MINUS_DI_Open(&stSH, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MINUS_DI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MINUS_DI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MINUS_DI_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MINUS_DI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -44224,6 +44812,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MINUS_DM_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MINUS_DM_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MINUS_DM_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MINUS_DM_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(17, 0);
@@ -44476,6 +45068,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MOM_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_MOM_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MOM_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MOM_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -44725,6 +45321,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_MULT_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_MULT_Open(&stSH, sv_c, sv_v, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_MULT_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_MULT_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_MULT_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_MULT_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -44979,6 +45579,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_NATR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_NATR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_NATR_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_NATR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(18, 0);
@@ -45230,6 +45834,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_NVI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_NVI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_NVI_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_NVI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -45479,6 +46087,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_OBV_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_OBV_Open(&stSH, sv_c, sv_v, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_OBV_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_OBV_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_OBV_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_OBV_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -45732,6 +46344,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PERCENTILE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_PERCENTILE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PERCENTILE_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInPercentile, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PERCENTILE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -45982,6 +46598,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_PERCENTRANK_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_PERCENTRANK_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PERCENTRANK_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_PERCENTRANK_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PERCENTRANK_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PERCENTRANK_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -46236,6 +46856,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PLUS_DI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_PLUS_DI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PLUS_DI_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PLUS_DI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(19, 0);
@@ -46489,6 +47113,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_PLUS_DM_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_PLUS_DM_Open(&stSH, sv_h, sv_l, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PLUS_DM_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_PLUS_DM_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PLUS_DM_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PLUS_DM_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -46754,6 +47382,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PPO_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_PPO_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PPO_OpenAndFill(&stSF, sv_c, lb, optInFastPeriod, optInSlowPeriod, optInMAType, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PPO_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -47008,6 +47640,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_PVI_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_PVI_Open(&stSH, sv_c, sv_v, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PVI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_PVI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PVI_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PVI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -47272,6 +47908,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PVO_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_PVO_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PVO_OpenAndFill(&stSF, sv_v, lb, optInFastPeriod, optInSlowPeriod, optInMAType, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PVO_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -47527,6 +48167,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_PVT_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_PVT_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_PVT_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_PVT_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -47777,6 +48421,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_QSTICK_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_QSTICK_Open(&stSH, sv_o, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_QSTICK_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_QSTICK_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_QSTICK_OpenAndFill(&stSF, sv_o, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_QSTICK_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -48031,6 +48679,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_RMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_RMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_RMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_RMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -48283,6 +48935,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ROC_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ROC_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ROC_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ROC_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -48533,6 +49189,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ROCP_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ROCP_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ROCP_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ROCP_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ROCP_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ROCP_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -48785,6 +49445,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ROCR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ROCR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ROCR_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ROCR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -49035,6 +49699,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ROCR100_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ROCR100_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ROCR100_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ROCR100_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ROCR100_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ROCR100_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -49288,6 +49956,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_RSI_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_RSI_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_RSI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_RSI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_RSI_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_RSI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -49544,6 +50216,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_RVI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_RVI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_RVI_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInStdDevPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_RVI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(26, 0);
@@ -49799,6 +50475,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_RVIR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_RVIR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_RVIR_OpenAndFill(&stSF, sv_h, sv_l, lb, optInTimePeriod, optInStdDevPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_RVIR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(26, 0);
@@ -50051,6 +50731,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_RVOL_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_RVOL_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_RVOL_OpenAndFill(&stSF, sv_v, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_RVOL_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -50302,6 +50986,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SAR_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_SAR_Open(&stSH, sv_h, sv_l, lb, optInAcceleration, optInMaximum, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_SAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SAR_OpenAndFill(&stSF, sv_h, sv_l, lb, optInAcceleration, optInMaximum, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -50561,6 +51249,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SAREXT_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_SAREXT_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SAREXT_OpenAndFill(&stSF, sv_h, sv_l, lb, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SAREXT_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -50810,6 +51502,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SIN_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_SIN_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SIN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_SIN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SIN_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SIN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -51061,6 +51757,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SINH_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_SINH_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SINH_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SINH_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -51311,6 +52011,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SMA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_SMA_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_SMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -51590,6 +52294,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SMI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_SMI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SMI_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SMI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -51840,6 +52548,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SQRT_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_SQRT_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SQRT_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_SQRT_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SQRT_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SQRT_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -52092,6 +52804,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_STDDEV_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_STDDEV_Open(&stSH, sv_c, lb, optInTimePeriod, optInNbDev, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_STDDEV_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_STDDEV_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_STDDEV_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInNbDev, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_STDDEV_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -52379,6 +53095,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_STOCH_Stream *stSH = NULL; double sh0 = 0.0; double sh1 = 0.0; TA_RetCode shrc = TA_STOCH_Open(&stSH, sv_h, sv_l, sv_c, lb, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &sh0, &sh1);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_STOCH_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_STOCH_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_STOCH_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_STOCH_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -52669,6 +53389,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_STOCHF_Stream *stSH = NULL; double sh0 = 0.0; double sh1 = 0.0; TA_RetCode shrc = TA_STOCHF_Open(&stSH, sv_h, sv_l, sv_c, lb, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &sh0, &sh1);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_STOCHF_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_STOCHF_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_STOCHF_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_STOCHF_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -52963,6 +53687,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_STOCHRSI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_STOCHRSI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_STOCHRSI_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_STOCHRSI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(24, 0);
@@ -53219,6 +53947,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SUB_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_SUB_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SUB_OpenAndFill(&stSF, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SUB_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -53469,6 +54201,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_SUM_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_SUM_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SUM_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_SUM_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SUM_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SUM_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -53739,6 +54475,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_SUPERTREND_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_SUPERTREND_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_SUPERTREND_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, optInMultiplier, &sfB, &sfN, sv_f0, sv_if0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_SUPERTREND_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(2, 0);
@@ -53994,6 +54734,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_T3_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_T3_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_T3_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInVFactor, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_T3_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(23, 0);
@@ -54245,6 +54989,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TAN_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_TAN_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TAN_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TAN_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -54494,6 +55242,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TANH_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_TANH_Open(&stSH, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TANH_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_TANH_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TANH_OpenAndFill(&stSF, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TANH_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -54748,6 +55500,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TEMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_TEMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TEMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TEMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -54999,6 +55755,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TRANGE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_TRANGE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TRANGE_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TRANGE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -55249,6 +56009,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TRIMA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_TRIMA_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TRIMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_TRIMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TRIMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TRIMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -55503,6 +56267,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TRIX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_TRIX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TRIX_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TRIX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -55754,6 +56522,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TSF_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_TSF_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TSF_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_TSF_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TSF_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TSF_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -56009,6 +56781,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TSI_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_TSI_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TSI_OpenAndFill(&stSF, sv_c, lb, optInFirstPeriod, optInSecondPeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TSI_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         TA_SetUnstablePeriod(5, 0);
@@ -56259,6 +57035,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_TYPPRICE_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_TYPPRICE_Open(&stSH, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_TYPPRICE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_TYPPRICE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_TYPPRICE_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_TYPPRICE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -56513,6 +57293,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ULTOSC_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_ULTOSC_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ULTOSC_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ULTOSC_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -56765,6 +57549,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_VAR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_VAR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_VAR_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, optInNbDev, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_VAR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -57015,6 +57803,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_VHF_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_VHF_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_VHF_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_VHF_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_VHF_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_VHF_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -57289,6 +58081,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_VORTEX_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_VORTEX_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_VORTEX_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0, sv_f1);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_VORTEX_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -57538,6 +58334,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_VWAP_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_VWAP_Open(&stSH, sv_h, sv_l, sv_c, sv_v, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_VWAP_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_VWAP_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_VWAP_OpenAndFill(&stSF, sv_h, sv_l, sv_c, sv_v, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_VWAP_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -57790,6 +58590,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_VWMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_VWMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_VWMA_OpenAndFill(&stSF, sv_c, sv_v, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_VWMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -58040,6 +58844,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_WAD_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_WAD_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_WAD_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_WAD_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -58289,6 +59097,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_WCLPRICE_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_WCLPRICE_Open(&stSH, sv_h, sv_l, sv_c, lb, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_WCLPRICE_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_WCLPRICE_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_WCLPRICE_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_WCLPRICE_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -58541,6 +59353,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_WILLR_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
               }
+            { TA_WILLR_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_WILLR_OpenAndFill(&stSF, sv_h, sv_l, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_WILLR_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
+              }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
         if( fillChecked && !fillOk ) allOk = 0;
@@ -58791,6 +59607,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_WMA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_WMA_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_WMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_WMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_WMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_WMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;
@@ -59044,6 +59864,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             { TA_ZLEMA_Stream *stSH = NULL; double sh0 = 0.0; TA_RetCode shrc = TA_ZLEMA_Open(&stSH, sv_c, lb, optInTimePeriod, &sh0);
               if( shrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "open accepted a history shorter than one output"; TA_ZLEMA_Close(stSH); }
               else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "open rejected with the wrong retCode"; }
+              }
+            { TA_ZLEMA_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_ZLEMA_OpenAndFill(&stSF, sv_c, lb, optInTimePeriod, &sfB, &sfN, sv_f0);
+              if( sfrc == TA_SUCCESS ) { shortHistOk = 0; shortHistBad = "openAndFill accepted a history shorter than one output"; TA_ZLEMA_Close(stSF); }
+              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = "openAndFill rejected with the wrong retCode"; }
               }
         }
         if( shortHistChecked && !shortHistOk ) allOk = 0;

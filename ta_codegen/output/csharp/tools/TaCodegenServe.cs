@@ -1310,6 +1310,13 @@ public class TaCodegenServe {
                 try { _ = c2.AcOpen(fz_h[..lb], fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AcOpenAndFill(fz_h[..lb], fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AcStream sD = c2.AcOpen(fz_h, fz_l, int.MinValue, int.MinValue, int.MinValue);
@@ -1559,6 +1566,17 @@ public class TaCodegenServe {
                 try { _ = c2.AccbandsOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.AccbandsOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AccbandsStream sD = c2.AccbandsOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -1748,6 +1766,13 @@ public class TaCodegenServe {
                 try { _ = c2.AcosOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AcosOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -1934,6 +1959,13 @@ public class TaCodegenServe {
                 try { _ = c2.AdOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AdOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -2116,6 +2148,13 @@ public class TaCodegenServe {
                 try { _ = c2.AddOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AddOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -2305,6 +2344,13 @@ public class TaCodegenServe {
                 try { _ = c2.AdoscOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], optInFastPeriod, optInSlowPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AdoscOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], optInFastPeriod, optInSlowPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdoscStream sD = c2.AdoscOpen(fz_h, fz_l, fz_c, fz_v, int.MinValue, int.MinValue);
@@ -2495,6 +2541,13 @@ public class TaCodegenServe {
                 try { _ = c2.AdrOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AdrOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdrStream sD = c2.AdrOpen(fz_h, fz_l, int.MinValue);
@@ -2688,6 +2741,13 @@ public class TaCodegenServe {
                 try { _ = c2.AdxOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AdxOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdxStream sD = c2.AdxOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -2881,6 +2941,13 @@ public class TaCodegenServe {
                 try { _ = c2.AdxrOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AdxrOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdxrStream sD = c2.AdxrOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -3072,6 +3139,13 @@ public class TaCodegenServe {
                 try { _ = c2.AoOpen(fz_h[..lb], fz_l[..lb], optInFastPeriod, optInSlowPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AoOpenAndFill(fz_h[..lb], fz_l[..lb], optInFastPeriod, optInSlowPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AoStream sD = c2.AoOpen(fz_h, fz_l, int.MinValue, int.MinValue);
@@ -3280,6 +3354,13 @@ public class TaCodegenServe {
                 try { _ = c2.ApoOpen(fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.ApoOpenAndFill(fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ApoStream sD = c2.ApoOpen(fz_c, int.MinValue, int.MinValue, optInMAType);
@@ -3494,6 +3575,15 @@ public class TaCodegenServe {
                 try { _ = c2.AroonOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.AroonOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AroonStream sD = c2.AroonOpen(fz_h, fz_l, int.MinValue);
@@ -3685,6 +3775,13 @@ public class TaCodegenServe {
                 try { _ = c2.AroonoscOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AroonoscOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AroonoscStream sD = c2.AroonoscOpen(fz_h, fz_l, int.MinValue);
@@ -3872,6 +3969,13 @@ public class TaCodegenServe {
                 try { _ = c2.AsinOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AsinOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -4052,6 +4156,13 @@ public class TaCodegenServe {
                 try { _ = c2.AtanOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AtanOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -4238,6 +4349,13 @@ public class TaCodegenServe {
                 try { _ = c2.AtrOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AtrOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AtrStream sD = c2.AtrOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -4426,6 +4544,13 @@ public class TaCodegenServe {
                 try { _ = c2.AvgdevOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AvgdevOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AvgdevStream sD = c2.AvgdevOpen(fz_c, int.MinValue);
@@ -4619,6 +4744,13 @@ public class TaCodegenServe {
                 try { _ = c2.AvgpriceOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.AvgpriceOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -4874,6 +5006,17 @@ public class TaCodegenServe {
                 try { _ = c2.BbandsOpen(fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.BbandsOpenAndFill(fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.BbandsStream sD = c2.BbandsOpen(fz_c, int.MinValue, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -5066,6 +5209,13 @@ public class TaCodegenServe {
                 try { _ = c2.BetaOpen(fz_c[..lb], fz_v[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.BetaOpenAndFill(fz_c[..lb], fz_v[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.BetaStream sD = c2.BetaOpen(fz_c, fz_v, int.MinValue);
@@ -5259,6 +5409,13 @@ public class TaCodegenServe {
                 try { _ = c2.BopOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.BopOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -5444,6 +5601,13 @@ public class TaCodegenServe {
                 try { _ = c2.CciOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CciOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CciStream sD = c2.CciOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -5658,6 +5822,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdl2crowsOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdl2crowsOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -5866,6 +6037,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdl3blackcrowsOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdl3blackcrowsOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -6074,6 +6252,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdl3insideOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdl3insideOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -6282,6 +6467,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdl3linestrikeOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdl3linestrikeOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -6490,6 +6682,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdl3outsideOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdl3outsideOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -6698,6 +6897,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdl3starsinsouthOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdl3starsinsouthOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -6906,6 +7112,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdl3whitesoldiersOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdl3whitesoldiersOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -7115,6 +7328,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlabandonedbabyOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlabandonedbabyOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -7323,6 +7543,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdladvanceblockOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdladvanceblockOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -7531,6 +7758,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlbeltholdOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlbeltholdOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -7739,6 +7973,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlbreakawayOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlbreakawayOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -7947,6 +8188,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlclosingmarubozuOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlclosingmarubozuOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -8155,6 +8403,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlconcealbabyswallOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlconcealbabyswallOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -8363,6 +8618,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlcounterattackOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlcounterattackOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -8572,6 +8834,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdldarkcloudcoverOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdldarkcloudcoverOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -8780,6 +9049,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdldojiOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdldojiOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -8988,6 +9264,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdldojistarOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdldojistarOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -9196,6 +9479,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdldragonflydojiOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdldragonflydojiOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -9404,6 +9694,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlengulfingOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlengulfingOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -9613,6 +9910,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdleveningdojistarOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdleveningdojistarOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -9822,6 +10126,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdleveningstarOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdleveningstarOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -10030,6 +10341,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlgapsidesidewhiteOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlgapsidesidewhiteOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -10238,6 +10556,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlgravestonedojiOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlgravestonedojiOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -10446,6 +10771,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlhammerOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlhammerOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -10654,6 +10986,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlhangingmanOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlhangingmanOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -10862,6 +11201,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlharamiOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlharamiOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -11070,6 +11416,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlharamicrossOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlharamicrossOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -11278,6 +11631,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlhighwaveOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlhighwaveOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -11486,6 +11846,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlhikkakeOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlhikkakeOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -11694,6 +12061,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlhikkakemodOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlhikkakemodOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -11902,6 +12276,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlhomingpigeonOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlhomingpigeonOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -12110,6 +12491,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdlidentical3crowsOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdlidentical3crowsOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -12318,6 +12706,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlinneckOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlinneckOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -12526,6 +12921,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlinvertedhammerOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlinvertedhammerOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -12734,6 +13136,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlkickingOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlkickingOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -12942,6 +13351,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlkickingbylengthOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlkickingbylengthOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -13150,6 +13566,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlladderbottomOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlladderbottomOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -13358,6 +13781,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdllongleggeddojiOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdllongleggeddojiOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -13566,6 +13996,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdllonglineOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdllonglineOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -13774,6 +14211,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlmarubozuOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlmarubozuOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -13982,6 +14426,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlmatchinglowOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlmatchinglowOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -14191,6 +14642,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlmatholdOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlmatholdOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -14400,6 +14858,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlmorningdojistarOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlmorningdojistarOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -14609,6 +15074,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlmorningstarOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlmorningstarOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], optInPenetration, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -14817,6 +15289,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlonneckOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlonneckOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -15025,6 +15504,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlpiercingOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlpiercingOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -15233,6 +15719,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlrickshawmanOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlrickshawmanOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -15441,6 +15934,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdlrisefall3methodsOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdlrisefall3methodsOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -15649,6 +16149,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlseparatinglinesOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlseparatinglinesOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -15857,6 +16364,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlshootingstarOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlshootingstarOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -16065,6 +16579,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlshortlineOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlshortlineOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -16273,6 +16794,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlspinningtopOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlspinningtopOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -16481,6 +17009,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlstalledpatternOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlstalledpatternOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -16689,6 +17224,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlsticksandwichOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlsticksandwichOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -16897,6 +17439,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdltakuriOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdltakuriOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -17105,6 +17654,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdltasukigapOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdltasukigapOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -17313,6 +17869,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdlthrustingOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdlthrustingOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -17521,6 +18084,13 @@ public class TaCodegenServe {
                 try { _ = c2.CdltristarOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.CdltristarOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -17729,6 +18299,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdlunique3riverOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdlunique3riverOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -17937,6 +18514,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdlupsidegap2crowsOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdlupsidegap2crowsOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -18145,6 +18729,13 @@ public class TaCodegenServe {
                 try { _ = c2.Cdlxsidegap3methodsOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.Cdlxsidegap3methodsOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -18326,6 +18917,13 @@ public class TaCodegenServe {
                 try { _ = c2.CeilOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CeilOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -18513,6 +19111,13 @@ public class TaCodegenServe {
                 try { _ = c2.CmfOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CmfOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CmfStream sD = c2.CmfOpen(fz_h, fz_l, fz_c, fz_v, int.MinValue);
@@ -18702,6 +19307,13 @@ public class TaCodegenServe {
                 try { _ = c2.CmoOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CmoOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CmoStream sD = c2.CmoOpen(fz_c, int.MinValue);
@@ -18890,6 +19502,13 @@ public class TaCodegenServe {
                 try { _ = c2.CmouOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CmouOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CmouStream sD = c2.CmouOpen(fz_c, int.MinValue);
@@ -19080,6 +19699,13 @@ public class TaCodegenServe {
                 try { _ = c2.CoppockOpen(fz_c[..lb], optInWMAPeriod, optInROC1Period, optInROC2Period); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CoppockOpenAndFill(fz_c[..lb], optInWMAPeriod, optInROC1Period, optInROC2Period, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CoppockStream sD = c2.CoppockOpen(fz_c, int.MinValue, int.MinValue, int.MinValue);
@@ -19270,6 +19896,13 @@ public class TaCodegenServe {
                 try { _ = c2.CorrelOpen(fz_c[..lb], fz_v[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CorrelOpenAndFill(fz_c[..lb], fz_v[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CorrelStream sD = c2.CorrelOpen(fz_c, fz_v, int.MinValue);
@@ -19457,6 +20090,13 @@ public class TaCodegenServe {
                 try { _ = c2.CosOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CosOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -19637,6 +20277,13 @@ public class TaCodegenServe {
                 try { _ = c2.CoshOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CoshOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -19821,6 +20468,13 @@ public class TaCodegenServe {
                 try { _ = c2.CrsiOpen(fz_c[..lb], optInTimePeriod, optInStreakPeriod, optInRankPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CrsiOpenAndFill(fz_c[..lb], optInTimePeriod, optInStreakPeriod, optInRankPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CrsiStream sD = c2.CrsiOpen(fz_c, int.MinValue, int.MinValue, int.MinValue);
@@ -20009,6 +20663,13 @@ public class TaCodegenServe {
                 try { _ = c2.CtiOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CtiOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CtiStream sD = c2.CtiOpen(fz_c, int.MinValue);
@@ -20196,6 +20857,13 @@ public class TaCodegenServe {
                 try { _ = c2.CumsumOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CumsumOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -20381,6 +21049,13 @@ public class TaCodegenServe {
                 try { _ = c2.CviOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod, optInROCPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.CviOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, optInROCPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CviStream sD = c2.CviOpen(fz_h, fz_l, int.MinValue, int.MinValue);
@@ -20570,6 +21245,13 @@ public class TaCodegenServe {
                 try { _ = c2.DemaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.DemaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DemaStream sD = c2.DemaOpen(fz_c, int.MinValue);
@@ -20759,6 +21441,13 @@ public class TaCodegenServe {
                 try { _ = c2.DivOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.DivOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -20995,6 +21684,17 @@ public class TaCodegenServe {
                 try { _ = c2.DonchianOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.DonchianOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DonchianStream sD = c2.DonchianOpen(fz_h, fz_l, int.MinValue);
@@ -21185,6 +21885,13 @@ public class TaCodegenServe {
                 try { _ = c2.DpoOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.DpoOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DpoStream sD = c2.DpoOpen(fz_c, int.MinValue);
@@ -21378,6 +22085,13 @@ public class TaCodegenServe {
                 try { _ = c2.DxOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.DxOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DxStream sD = c2.DxOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -21568,6 +22282,13 @@ public class TaCodegenServe {
                 try { _ = c2.EfiOpen(fz_c[..lb], fz_v[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.EfiOpenAndFill(fz_c[..lb], fz_v[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.EfiStream sD = c2.EfiOpen(fz_c, fz_v, int.MinValue);
@@ -21757,6 +22478,13 @@ public class TaCodegenServe {
                 try { _ = c2.EmaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.EmaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.EmaStream sD = c2.EmaOpen(fz_c, int.MinValue);
@@ -21945,6 +22673,13 @@ public class TaCodegenServe {
                 try { _ = c2.ErOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.ErOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ErStream sD = c2.ErOpen(fz_c, int.MinValue);
@@ -22164,6 +22899,15 @@ public class TaCodegenServe {
                 try { _ = c2.EriOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.EriOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.EriStream sD = c2.EriOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -22352,6 +23096,13 @@ public class TaCodegenServe {
                 try { _ = c2.ExpOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.ExpOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -22532,6 +23283,13 @@ public class TaCodegenServe {
                 try { _ = c2.FloorOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.FloorOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -22713,6 +23471,13 @@ public class TaCodegenServe {
                 try { _ = c2.FoscOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.FoscOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.FoscStream sD = c2.FoscOpen(fz_c, int.MinValue);
@@ -22914,6 +23679,15 @@ public class TaCodegenServe {
                 try { _ = c2.FractalOpen(fz_h[..lb], fz_l[..lb], optInLeftBars, optInRightBars); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    int[] f1 = new int[svN];
+                    Array.Fill(f1, (int)-987654321);
+                    try { _ = c2.FractalOpenAndFill(fz_h[..lb], fz_l[..lb], optInLeftBars, optInRightBars, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.FractalStream sD = c2.FractalOpen(fz_h, fz_l, int.MinValue, int.MinValue);
@@ -23209,6 +23983,19 @@ public class TaCodegenServe {
                 try { _ = c2.HaOpen(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    double[] f3 = new double[svN];
+                    Array.Fill(f3, (double)-1.2345678901234e300);
+                    try { _ = c2.HaOpenAndFill(fz_o[..lb], fz_h[..lb], fz_l[..lb], fz_c[..lb], f0, f1, f2, f3); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -23390,6 +24177,13 @@ public class TaCodegenServe {
                 try { _ = c2.HmaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.HmaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.HmaStream sD = c2.HmaOpen(fz_c, int.MinValue);
@@ -23578,6 +24372,13 @@ public class TaCodegenServe {
                 try { _ = c2.HtDcperiodOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.HtDcperiodOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -23759,6 +24560,13 @@ public class TaCodegenServe {
                 try { _ = c2.HtDcphaseOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.HtDcphaseOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -23962,6 +24770,15 @@ public class TaCodegenServe {
                 try { _ = c2.HtPhasorOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.HtPhasorOpenAndFill(fz_c[..lb], f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -24165,6 +24982,15 @@ public class TaCodegenServe {
                 try { _ = c2.HtSineOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.HtSineOpenAndFill(fz_c[..lb], f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -24346,6 +25172,13 @@ public class TaCodegenServe {
                 try { _ = c2.HtTrendlineOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.HtTrendlineOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -24521,6 +25354,13 @@ public class TaCodegenServe {
                 try { _ = c2.HtTrendmodeOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.HtTrendmodeOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -24704,6 +25544,13 @@ public class TaCodegenServe {
                 try { _ = c2.ImiOpen(fz_o[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.ImiOpenAndFill(fz_o[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ImiStream sD = c2.ImiOpen(fz_o, fz_c, int.MinValue);
@@ -24893,6 +25740,13 @@ public class TaCodegenServe {
                 try { _ = c2.KamaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.KamaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KamaStream sD = c2.KamaOpen(fz_c, int.MinValue);
@@ -25146,6 +26000,17 @@ public class TaCodegenServe {
                 try { _ = c2.KcOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, optInATRPeriod, optInNbDev); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.KcOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, optInATRPeriod, optInNbDev, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KcStream sD = c2.KcOpen(fz_h, fz_l, fz_c, int.MinValue, int.MinValue, optInNbDev);
@@ -25424,6 +26289,17 @@ public class TaCodegenServe {
                 try { _ = c2.KdjOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.KdjOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KdjStream sD = c2.KdjOpen(fz_h, fz_l, fz_c, int.MinValue, int.MinValue, optInSlowK_MAType, int.MinValue, optInSlowD_MAType);
@@ -25614,6 +26490,13 @@ public class TaCodegenServe {
                 try { _ = c2.KurtosisOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.KurtosisOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KurtosisStream sD = c2.KurtosisOpen(fz_c, int.MinValue);
@@ -25802,6 +26685,13 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.LinearregOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregStream sD = c2.LinearregOpen(fz_c, int.MinValue);
@@ -25990,6 +26880,13 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregAngleOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.LinearregAngleOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregAngleStream sD = c2.LinearregAngleOpen(fz_c, int.MinValue);
@@ -26178,6 +27075,13 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregInterceptOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.LinearregInterceptOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregInterceptStream sD = c2.LinearregInterceptOpen(fz_c, int.MinValue);
@@ -26366,6 +27270,13 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregSlopeOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.LinearregSlopeOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregSlopeStream sD = c2.LinearregSlopeOpen(fz_c, int.MinValue);
@@ -26553,6 +27464,13 @@ public class TaCodegenServe {
                 try { _ = c2.LnOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.LnOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -26733,6 +27651,13 @@ public class TaCodegenServe {
                 try { _ = c2.Log10Open(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.Log10OpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -26933,6 +27858,13 @@ public class TaCodegenServe {
                 try { _ = c2.MaOpen(fz_c[..lb], optInTimePeriod, optInMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MaOpenAndFill(fz_c[..lb], optInTimePeriod, optInMAType, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MaStream sD = c2.MaOpen(fz_c, int.MinValue, optInMAType);
@@ -27173,6 +28105,17 @@ public class TaCodegenServe {
                 try { _ = c2.MacdOpen(fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.MacdOpenAndFill(fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MacdStream sD = c2.MacdOpen(fz_c, int.MinValue, int.MinValue, int.MinValue);
@@ -27441,6 +28384,17 @@ public class TaCodegenServe {
                 try { _ = c2.MacdextOpen(fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.MacdextOpenAndFill(fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MacdextStream sD = c2.MacdextOpen(fz_c, int.MinValue, optInFastMAType, int.MinValue, optInSlowMAType, int.MinValue, optInSignalMAType);
@@ -27681,6 +28635,17 @@ public class TaCodegenServe {
                 try { _ = c2.MacdfixOpen(fz_c[..lb], optInSignalPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    Array.Fill(f2, (double)-1.2345678901234e300);
+                    try { _ = c2.MacdfixOpenAndFill(fz_c[..lb], optInSignalPeriod, f0, f1, f2); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MacdfixStream sD = c2.MacdfixOpen(fz_c, int.MinValue);
@@ -27895,6 +28860,15 @@ public class TaCodegenServe {
                 try { _ = c2.MamaOpen(fz_c[..lb], optInFastLimit, optInSlowLimit); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.MamaOpenAndFill(fz_c[..lb], optInFastLimit, optInSlowLimit, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -28079,6 +29053,13 @@ public class TaCodegenServe {
                 try { _ = c2.MarketfiOpen(fz_h[..lb], fz_l[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MarketfiOpenAndFill(fz_h[..lb], fz_l[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -28264,6 +29245,13 @@ public class TaCodegenServe {
                 try { _ = c2.MassiOpen(fz_h[..lb], fz_l[..lb], optInFastPeriod, optInSlowPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MassiOpenAndFill(fz_h[..lb], fz_l[..lb], optInFastPeriod, optInSlowPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MassiStream sD = c2.MassiOpen(fz_h, fz_l, int.MinValue, int.MinValue);
@@ -28475,6 +29463,13 @@ public class TaCodegenServe {
                 try { _ = c2.MavpOpen(fz_c[..lb], fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MavpOpenAndFill(fz_c[..lb], fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MavpStream sD = c2.MavpOpen(fz_c, fz_v, int.MinValue, int.MinValue, optInMAType);
@@ -28663,6 +29658,13 @@ public class TaCodegenServe {
                 try { _ = c2.MaxOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MaxOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MaxStream sD = c2.MaxOpen(fz_c, int.MinValue);
@@ -28845,6 +29847,13 @@ public class TaCodegenServe {
                 try { _ = c2.MaxindexOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.MaxindexOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MaxindexStream sD = c2.MaxindexOpen(fz_c, int.MinValue);
@@ -29033,6 +30042,13 @@ public class TaCodegenServe {
                 try { _ = c2.MedianOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MedianOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MedianStream sD = c2.MedianOpen(fz_c, int.MinValue);
@@ -29222,6 +30238,13 @@ public class TaCodegenServe {
                 try { _ = c2.MedpriceOpen(fz_h[..lb], fz_l[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MedpriceOpenAndFill(fz_h[..lb], fz_l[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -29409,6 +30432,13 @@ public class TaCodegenServe {
                 try { _ = c2.MfiOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MfiOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MfiStream sD = c2.MfiOpen(fz_h, fz_l, fz_c, fz_v, int.MinValue);
@@ -29597,6 +30627,13 @@ public class TaCodegenServe {
                 try { _ = c2.MidpointOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MidpointOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MidpointStream sD = c2.MidpointOpen(fz_c, int.MinValue);
@@ -29787,6 +30824,13 @@ public class TaCodegenServe {
                 try { _ = c2.MidpriceOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MidpriceOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MidpriceStream sD = c2.MidpriceOpen(fz_h, fz_l, int.MinValue);
@@ -29975,6 +31019,13 @@ public class TaCodegenServe {
                 try { _ = c2.MinOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MinOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinStream sD = c2.MinOpen(fz_c, int.MinValue);
@@ -30157,6 +31208,13 @@ public class TaCodegenServe {
                 try { _ = c2.MinindexOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    try { _ = c2.MinindexOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinindexStream sD = c2.MinindexOpen(fz_c, int.MinValue);
@@ -30367,6 +31425,15 @@ public class TaCodegenServe {
                 try { _ = c2.MinmaxOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.MinmaxOpenAndFill(fz_c[..lb], optInTimePeriod, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinmaxStream sD = c2.MinmaxOpen(fz_c, int.MinValue);
@@ -30568,6 +31635,15 @@ public class TaCodegenServe {
                 try { _ = c2.MinmaxindexOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    Array.Fill(f0, (int)-987654321);
+                    int[] f1 = new int[svN];
+                    Array.Fill(f1, (int)-987654321);
+                    try { _ = c2.MinmaxindexOpenAndFill(fz_c[..lb], optInTimePeriod, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinmaxindexStream sD = c2.MinmaxindexOpen(fz_c, int.MinValue);
@@ -30762,6 +31838,13 @@ public class TaCodegenServe {
                 try { _ = c2.MinusDiOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MinusDiOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinusDiStream sD = c2.MinusDiOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -30953,6 +32036,13 @@ public class TaCodegenServe {
                 try { _ = c2.MinusDmOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MinusDmOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinusDmStream sD = c2.MinusDmOpen(fz_h, fz_l, int.MinValue);
@@ -31141,6 +32231,13 @@ public class TaCodegenServe {
                 try { _ = c2.MomOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MomOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MomStream sD = c2.MomOpen(fz_c, int.MinValue);
@@ -31330,6 +32427,13 @@ public class TaCodegenServe {
                 try { _ = c2.MultOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.MultOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -31516,6 +32620,13 @@ public class TaCodegenServe {
                 try { _ = c2.NatrOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.NatrOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.NatrStream sD = c2.NatrOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -31705,6 +32816,13 @@ public class TaCodegenServe {
                 try { _ = c2.NviOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.NviOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -31887,6 +33005,13 @@ public class TaCodegenServe {
                 try { _ = c2.ObvOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.ObvOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -32069,6 +33194,13 @@ public class TaCodegenServe {
                 try { _ = c2.PercentileOpen(fz_c[..lb], optInTimePeriod, optInPercentile); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PercentileOpenAndFill(fz_c[..lb], optInTimePeriod, optInPercentile, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PercentileStream sD = c2.PercentileOpen(fz_c, int.MinValue, optInPercentile);
@@ -32257,6 +33389,13 @@ public class TaCodegenServe {
                 try { _ = c2.PercentrankOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PercentrankOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PercentrankStream sD = c2.PercentrankOpen(fz_c, int.MinValue);
@@ -32450,6 +33589,13 @@ public class TaCodegenServe {
                 try { _ = c2.PlusDiOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PlusDiOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PlusDiStream sD = c2.PlusDiOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -32641,6 +33787,13 @@ public class TaCodegenServe {
                 try { _ = c2.PlusDmOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PlusDmOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PlusDmStream sD = c2.PlusDmOpen(fz_h, fz_l, int.MinValue);
@@ -32849,6 +34002,13 @@ public class TaCodegenServe {
                 try { _ = c2.PpoOpen(fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PpoOpenAndFill(fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PpoStream sD = c2.PpoOpen(fz_c, int.MinValue, int.MinValue, optInMAType);
@@ -33038,6 +34198,13 @@ public class TaCodegenServe {
                 try { _ = c2.PviOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PviOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -33239,6 +34406,13 @@ public class TaCodegenServe {
                 try { _ = c2.PvoOpen(fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PvoOpenAndFill(fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PvoStream sD = c2.PvoOpen(fz_v, int.MinValue, int.MinValue, optInMAType);
@@ -33428,6 +34602,13 @@ public class TaCodegenServe {
                 try { _ = c2.PvtOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.PvtOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -33611,6 +34792,13 @@ public class TaCodegenServe {
                 try { _ = c2.QstickOpen(fz_o[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.QstickOpenAndFill(fz_o[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.QstickStream sD = c2.QstickOpen(fz_o, fz_c, int.MinValue);
@@ -33800,6 +34988,13 @@ public class TaCodegenServe {
                 try { _ = c2.RmaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RmaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RmaStream sD = c2.RmaOpen(fz_c, int.MinValue);
@@ -33988,6 +35183,13 @@ public class TaCodegenServe {
                 try { _ = c2.RocOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RocOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RocStream sD = c2.RocOpen(fz_c, int.MinValue);
@@ -34176,6 +35378,13 @@ public class TaCodegenServe {
                 try { _ = c2.RocpOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RocpOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RocpStream sD = c2.RocpOpen(fz_c, int.MinValue);
@@ -34364,6 +35573,13 @@ public class TaCodegenServe {
                 try { _ = c2.RocrOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RocrOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RocrStream sD = c2.RocrOpen(fz_c, int.MinValue);
@@ -34552,6 +35768,13 @@ public class TaCodegenServe {
                 try { _ = c2.Rocr100Open(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.Rocr100OpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.Rocr100Stream sD = c2.Rocr100Open(fz_c, int.MinValue);
@@ -34741,6 +35964,13 @@ public class TaCodegenServe {
                 try { _ = c2.RsiOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RsiOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RsiStream sD = c2.RsiOpen(fz_c, int.MinValue);
@@ -34931,6 +36161,13 @@ public class TaCodegenServe {
                 try { _ = c2.RviOpen(fz_c[..lb], optInTimePeriod, optInStdDevPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RviOpenAndFill(fz_c[..lb], optInTimePeriod, optInStdDevPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RviStream sD = c2.RviOpen(fz_c, int.MinValue, int.MinValue);
@@ -35123,6 +36360,13 @@ public class TaCodegenServe {
                 try { _ = c2.RvirOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod, optInStdDevPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RvirOpenAndFill(fz_h[..lb], fz_l[..lb], optInTimePeriod, optInStdDevPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RvirStream sD = c2.RvirOpen(fz_h, fz_l, int.MinValue, int.MinValue);
@@ -35311,6 +36555,13 @@ public class TaCodegenServe {
                 try { _ = c2.RvolOpen(fz_v[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.RvolOpenAndFill(fz_v[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RvolStream sD = c2.RvolOpen(fz_v, int.MinValue);
@@ -35502,6 +36753,13 @@ public class TaCodegenServe {
                 try { _ = c2.SarOpen(fz_h[..lb], fz_l[..lb], optInAcceleration, optInMaximum); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SarOpenAndFill(fz_h[..lb], fz_l[..lb], optInAcceleration, optInMaximum, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -35692,6 +36950,13 @@ public class TaCodegenServe {
                 try { _ = c2.SarextOpen(fz_h[..lb], fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SarextOpenAndFill(fz_h[..lb], fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -35872,6 +37137,13 @@ public class TaCodegenServe {
                 try { _ = c2.SinOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SinOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -36052,6 +37324,13 @@ public class TaCodegenServe {
                 try { _ = c2.SinhOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SinhOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -36233,6 +37512,13 @@ public class TaCodegenServe {
                 try { _ = c2.SmaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SmaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SmaStream sD = c2.SmaOpen(fz_c, int.MinValue);
@@ -36455,6 +37741,15 @@ public class TaCodegenServe {
                 try { _ = c2.SmiOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.SmiOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SmiStream sD = c2.SmiOpen(fz_h, fz_l, fz_c, int.MinValue, int.MinValue, int.MinValue, int.MinValue);
@@ -36643,6 +37938,13 @@ public class TaCodegenServe {
                 try { _ = c2.SqrtOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SqrtOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -36825,6 +38127,13 @@ public class TaCodegenServe {
                 try { _ = c2.StddevOpen(fz_c[..lb], optInTimePeriod, optInNbDev); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.StddevOpenAndFill(fz_c[..lb], optInTimePeriod, optInNbDev, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StddevStream sD = c2.StddevOpen(fz_c, int.MinValue, optInNbDev);
@@ -37068,6 +38377,15 @@ public class TaCodegenServe {
                 try { _ = c2.StochOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.StochOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StochStream sD = c2.StochOpen(fz_h, fz_l, fz_c, int.MinValue, int.MinValue, optInSlowK_MAType, int.MinValue, optInSlowD_MAType);
@@ -37309,6 +38627,15 @@ public class TaCodegenServe {
                 try { _ = c2.StochfOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.StochfOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StochfStream sD = c2.StochfOpen(fz_h, fz_l, fz_c, int.MinValue, int.MinValue, optInFastD_MAType);
@@ -37544,6 +38871,15 @@ public class TaCodegenServe {
                 try { _ = c2.StochrsiOpen(fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.StochrsiOpenAndFill(fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StochrsiStream sD = c2.StochrsiOpen(fz_c, int.MinValue, int.MinValue, int.MinValue, optInFastD_MAType);
@@ -37734,6 +39070,13 @@ public class TaCodegenServe {
                 try { _ = c2.SubOpen(fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SubOpenAndFill(fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -37915,6 +39258,13 @@ public class TaCodegenServe {
                 try { _ = c2.SumOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.SumOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SumStream sD = c2.SumOpen(fz_c, int.MinValue);
@@ -38120,6 +39470,15 @@ public class TaCodegenServe {
                 try { _ = c2.SupertrendOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, optInMultiplier); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    int[] f1 = new int[svN];
+                    Array.Fill(f1, (int)-987654321);
+                    try { _ = c2.SupertrendOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, optInMultiplier, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SupertrendStream sD = c2.SupertrendOpen(fz_h, fz_l, fz_c, int.MinValue, optInMultiplier);
@@ -38311,6 +39670,13 @@ public class TaCodegenServe {
                 try { _ = c2.T3Open(fz_c[..lb], optInTimePeriod, optInVFactor); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.T3OpenAndFill(fz_c[..lb], optInTimePeriod, optInVFactor, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.T3Stream sD = c2.T3Open(fz_c, int.MinValue, optInVFactor);
@@ -38498,6 +39864,13 @@ public class TaCodegenServe {
                 try { _ = c2.TanOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TanOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -38678,6 +40051,13 @@ public class TaCodegenServe {
                 try { _ = c2.TanhOpen(fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TanhOpenAndFill(fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -38860,6 +40240,13 @@ public class TaCodegenServe {
                 try { _ = c2.TemaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TemaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TemaStream sD = c2.TemaOpen(fz_c, int.MinValue);
@@ -39051,6 +40438,13 @@ public class TaCodegenServe {
                 try { _ = c2.TrangeOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TrangeOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -39232,6 +40626,13 @@ public class TaCodegenServe {
                 try { _ = c2.TrimaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TrimaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TrimaStream sD = c2.TrimaOpen(fz_c, int.MinValue);
@@ -39421,6 +40822,13 @@ public class TaCodegenServe {
                 try { _ = c2.TrixOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TrixOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TrixStream sD = c2.TrixOpen(fz_c, int.MinValue);
@@ -39609,6 +41017,13 @@ public class TaCodegenServe {
                 try { _ = c2.TsfOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TsfOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TsfStream sD = c2.TsfOpen(fz_c, int.MinValue);
@@ -39799,6 +41214,13 @@ public class TaCodegenServe {
                 try { _ = c2.TsiOpen(fz_c[..lb], optInFirstPeriod, optInSecondPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TsiOpenAndFill(fz_c[..lb], optInFirstPeriod, optInSecondPeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TsiStream sD = c2.TsiOpen(fz_c, int.MinValue, int.MinValue);
@@ -39990,6 +41412,13 @@ public class TaCodegenServe {
                 try { _ = c2.TyppriceOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.TyppriceOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -40177,6 +41606,13 @@ public class TaCodegenServe {
                 try { _ = c2.UltoscOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.UltoscOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.UltoscStream sD = c2.UltoscOpen(fz_h, fz_l, fz_c, int.MinValue, int.MinValue, int.MinValue);
@@ -40366,6 +41802,13 @@ public class TaCodegenServe {
                 try { _ = c2.VarOpen(fz_c[..lb], optInTimePeriod, optInNbDev); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.VarOpenAndFill(fz_c[..lb], optInTimePeriod, optInNbDev, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VarStream sD = c2.VarOpen(fz_c, int.MinValue, optInNbDev);
@@ -40554,6 +41997,13 @@ public class TaCodegenServe {
                 try { _ = c2.VhfOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.VhfOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VhfStream sD = c2.VhfOpen(fz_c, int.MinValue);
@@ -40772,6 +42222,15 @@ public class TaCodegenServe {
                 try { _ = c2.VortexOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    Array.Fill(f1, (double)-1.2345678901234e300);
+                    try { _ = c2.VortexOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0, f1); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VortexStream sD = c2.VortexOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -40966,6 +42425,13 @@ public class TaCodegenServe {
                 try { _ = c2.VwapOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.VwapOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], fz_v[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -41149,6 +42615,13 @@ public class TaCodegenServe {
                 try { _ = c2.VwmaOpen(fz_c[..lb], fz_v[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.VwmaOpenAndFill(fz_c[..lb], fz_v[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VwmaStream sD = c2.VwmaOpen(fz_c, fz_v, int.MinValue);
@@ -41340,6 +42813,13 @@ public class TaCodegenServe {
                 try { _ = c2.WadOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.WadOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -41524,6 +43004,13 @@ public class TaCodegenServe {
                 try { _ = c2.WclpriceOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb]); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.WclpriceOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -41709,6 +43196,13 @@ public class TaCodegenServe {
                 try { _ = c2.WillrOpen(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.WillrOpenAndFill(fz_h[..lb], fz_l[..lb], fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.WillrStream sD = c2.WillrOpen(fz_h, fz_l, fz_c, int.MinValue);
@@ -41897,6 +43391,13 @@ public class TaCodegenServe {
                 try { _ = c2.WmaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.WmaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.WmaStream sD = c2.WmaOpen(fz_c, int.MinValue);
@@ -42086,6 +43587,13 @@ public class TaCodegenServe {
                 try { _ = c2.ZlemaOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException) { /* expected, typed */ }
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    Array.Fill(f0, (double)-1.2345678901234e300);
+                    try { _ = c2.ZlemaOpenAndFill(fz_c[..lb], optInTimePeriod, f0); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException) { /* expected, typed */ }
+                    catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ZlemaStream sD = c2.ZlemaOpen(fz_c, int.MinValue);

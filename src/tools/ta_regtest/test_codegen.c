@@ -6840,14 +6840,14 @@ static long long xlang_lookback_norm(const char *resp, int *present)
 /* ---- Same-server tier agreement: Lookback vs Batch vs Open vs OpenAndFill
  * (issue #256, completing L2's B3+S5) ---------------------------------------
  *
- * A fixed, tiny history, built ONCE and read-only afterward: these calls only
- * need to reach the parameter-validation prologue (plus a little real
- * execution, so a composed function's inner call is validated too, not just
- * its own outer checks) — not the numerics — so LB_TIER_N stays small and the
- * buffer is never rebuilt per call. FUZZ_RANDWALK is real, price-shaped,
- * finite data, already trusted everywhere else in this gate.
+ * A fixed history, built ONCE and read-only afterward. FUZZ_RANDWALK is real,
+ * price-shaped, finite data, already trusted everywhere else in this gate.
+ * A vector whose lookback reaches LB_TIER_N produces no output here, so its
+ * tier compares see return codes only and the array-transport leg compares
+ * nothing for it.
  */
-#define LB_TIER_N 50
+#define LB_TIER_N 256
+typedef char lb_tier_n_fits_fuzz_buf[LB_TIER_N <= FUZZ_MAXN ? 1 : -1];
 static double g_lbTierO[LB_TIER_N], g_lbTierH[LB_TIER_N], g_lbTierL[LB_TIER_N],
               g_lbTierC[LB_TIER_N], g_lbTierV[LB_TIER_N], g_lbTierOI[LB_TIER_N];
 static int    g_lbTierInit = 0;
@@ -6858,6 +6858,30 @@ static void lb_tier_buf_init(void)
     fuzz_gen(FUZZ_RANDWALK, 7, LB_TIER_N,
              g_lbTierO, g_lbTierH, g_lbTierL, g_lbTierC, g_lbTierV, g_lbTierOI);
     g_lbTierInit = 1;
+}
+
+/* Half, not all, of the series: the vectors around the default need more
+ * history than the default itself. */
+static void tier_series_check(const TA_FuncInfo *fi, void *opaque)
+{
+    TA_ParamHolder *ph = NULL;
+    TA_Integer lb = -1;
+    if( TA_ParamHolderAlloc(fi->handle, &ph) != TA_SUCCESS
+        || TA_GetLookback(ph, &lb) != TA_SUCCESS || lb > LB_TIER_N / 2 )
+    {
+        printf("FAIL - TA_%s: default lookback %d needs more than half of the %d-bar\n"
+               "       tier series. Raise LB_TIER_N in test_codegen.c.\n",
+               fi->name, (int)lb, LB_TIER_N);
+        (*(int *)opaque)++;
+    }
+    if( ph ) TA_ParamHolderFree(ph);
+}
+
+static int xlang_tier_series_fits(void)
+{
+    int tooLong = 0;
+    TA_ForEachFunc(tier_series_check, &tooLong);
+    return tooLong == 0;
 }
 
 /* Which fixed LB_TIER_N buffer feeds a given flattened input array slot --
@@ -7099,11 +7123,8 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
      * S6 (docs/error-handling-spec.md) — Open and OpenAndFill reject outright
      * (TA_INSUFFICIENT_HISTORY) when the fixed LB_TIER_N-bar buffer is
      * shorter than the lookback, where batch just returns a coherent EMPTY
-     * success. A lookback that fits the params but exceeds the buffer (DEMA/
-     * TEMA/T3/MAMA used as an MAType dispatch target can need far more than
-     * SMA/EMA) is therefore an EXPECTED streaming reject, not a divergence —
-     * measured live: APO/MACDEXT/STOCHRSI at their default periods with one
-     * of those as the dispatch MAType. */
+     * success. A lookback that fits the params but exceeds the buffer is
+     * therefore an EXPECTED streaming reject, not a divergence. */
     int streamRejected = rejected || (lookbackVerdict >= LB_TIER_N);
 
     xlang_build_tier_request(ctx->tierReqBuf, funcInfo, optVals, 0);
@@ -7727,11 +7748,8 @@ static void xlang_array_transport_one(const TA_FuncInfo *fi, void *opaqueData)
 
     /* Capped at LB_TIER_N, NOT a free choice: LbTierResp (reused here from the
      * tier-agreement leg above) sizes its arrays to that constant, and a
-     * larger N would parse past it into uninitialized stack memory -- which
-     * is exactly what happened here before this fix: it hashed garbage past
-     * element 50 and got the SAME wrong hash for C and Rust alike, since
-     * "garbage" was really just whatever the stack held from the previous
-     * call, not anything language-specific. */
+     * larger N would parse past it into uninitialized stack memory, which
+     * hashes the same garbage for every language and so still matches. */
     enum { N = LB_TIER_N };
     fuzz_gen(FUZZ_RANDWALK, 1, N, g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
     TA_History hist;
@@ -8126,12 +8144,12 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     xlang_lookback_leg(funcInfo, ctx, paramHolder, (const double (*)[FUZZ_MAX_OPT])vec,
                        kind, nvec);
     /* xlang_lookback_leg's native Batch check (xlang_tier_native_check, #256)
-     * rebinds paramHolder's INPUT pointers to its own tiny LB_TIER_N buffers
+     * rebinds paramHolder's INPUT pointers to the tier buffers
      * for the duration of that check. Restore them to `hist` (g_fzBuf) before
      * the main loop below, which assumes the ONE setup_inputs() call above
      * still holds — it never re-binds inputs itself, only outputs (per call,
      * inside the `ri` loop), so left unrestored every comparison after the
-     * lookback leg would silently run over stale 50-bar tier data instead of
+     * lookback leg would silently run over the tier data instead of
      * each iteration's freshly generated corpus. */
     setup_inputs(paramHolder, funcInfo, &hist);
 
@@ -8483,6 +8501,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     printf("\n=============================================\n");
     printf("Cross-language BITWISE parity gate (--xlang-hash)\n");
     printf("=============================================\n");
+
+    if( !xlang_tier_series_fits() )
+        return TA_CODEGEN_TIER_SERIES_TOO_SHORT;
 
     /* Each generated language server, diffed against the in-process C golden (C
      * is the golden, not a server row). Rust uses the seed transport

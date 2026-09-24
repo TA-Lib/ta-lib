@@ -1728,6 +1728,18 @@ pub(crate) fn generate_c_stream_verify(
         );
         s.push_str("              else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = \"open rejected with the wrong retCode\"; }\n");
         s.push_str("              (void)stSH; }\n");
+        // OpenAndFill's guard is not always Open's: MAVP hand-rolls one per entry.
+        let _ = writeln!(
+            s,
+            "            {{ TA_{name}_Stream *stSF = NULL; int sfB = 0, sfN = 0; TA_RetCode sfrc = TA_{name}_OpenAndFill(&stSF, {in_args}lb, {opt_args}&sfB, &sfN, {});",
+            fbuf_names.join(", ")
+        );
+        let _ = writeln!(
+            s,
+            "              if( sfrc == TA_SUCCESS ) {{ shortHistOk = 0; shortHistBad = \"openAndFill accepted a history shorter than one output\"; TA_{name}_Close(stSF); }}"
+        );
+        s.push_str("              else if( sfrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = \"openAndFill rejected with the wrong retCode\"; }\n");
+        s.push_str("              (void)stSF; (void)sfB; (void)sfN; }\n");
         s.push_str("        }\n");
         s.push_str("        if( shortHistChecked && !shortHistOk ) allOk = 0;\n");
         for id in &pin_ids {

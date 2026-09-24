@@ -221314,6 +221314,13 @@ public class TaCodegenServe {
                 try { c2.acOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.acOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AcStream sD = c2.acOpen(fz_h, fz_l, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -221494,6 +221501,17 @@ public class TaCodegenServe {
                 try { c2.accbandsOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.accbandsOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AccbandsStream sD = c2.accbandsOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -221648,6 +221666,13 @@ public class TaCodegenServe {
                 try { c2.acosOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.acosOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -221793,6 +221818,13 @@ public class TaCodegenServe {
                 try { c2.adOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.adOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -221938,6 +221970,13 @@ public class TaCodegenServe {
                 try { c2.addOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.addOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -222086,6 +222125,13 @@ public class TaCodegenServe {
                 try { c2.adoscOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInFastPeriod, optInSlowPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.adoscOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInFastPeriod, optInSlowPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdoscStream sD = c2.adoscOpen(fz_h, fz_l, fz_c, fz_v, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -222237,6 +222283,13 @@ public class TaCodegenServe {
                 try { c2.adrOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.adrOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdrStream sD = c2.adrOpen(fz_h, fz_l, Integer.MIN_VALUE);
@@ -222389,6 +222442,13 @@ public class TaCodegenServe {
                 try { c2.adxOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.adxOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdxStream sD = c2.adxOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -222541,6 +222601,13 @@ public class TaCodegenServe {
                 try { c2.adxrOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.adxrOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AdxrStream sD = c2.adxrOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -222693,6 +222760,13 @@ public class TaCodegenServe {
                 try { c2.aoOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInFastPeriod, optInSlowPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.aoOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInFastPeriod, optInSlowPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AoStream sD = c2.aoOpen(fz_h, fz_l, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -222857,6 +222931,13 @@ public class TaCodegenServe {
                 try { c2.apoOpen(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.apoOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInMAType, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ApoStream sD = c2.apoOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInMAType);
@@ -223026,6 +223107,15 @@ public class TaCodegenServe {
                 try { c2.aroonOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.aroonOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AroonStream sD = c2.aroonOpen(fz_h, fz_l, Integer.MIN_VALUE);
@@ -223180,6 +223270,13 @@ public class TaCodegenServe {
                 try { c2.aroonoscOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.aroonoscOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AroonoscStream sD = c2.aroonoscOpen(fz_h, fz_l, Integer.MIN_VALUE);
@@ -223330,6 +223427,13 @@ public class TaCodegenServe {
                 try { c2.asinOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.asinOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -223475,6 +223579,13 @@ public class TaCodegenServe {
                 try { c2.atanOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.atanOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -223622,6 +223733,13 @@ public class TaCodegenServe {
                 try { c2.atrOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.atrOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AtrStream sD = c2.atrOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -223773,6 +223891,13 @@ public class TaCodegenServe {
                 try { c2.avgdevOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.avgdevOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.AvgdevStream sD = c2.avgdevOpen(fz_c, Integer.MIN_VALUE);
@@ -223923,6 +224048,13 @@ public class TaCodegenServe {
                 try { c2.avgpriceOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.avgpriceOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -224112,6 +224244,17 @@ public class TaCodegenServe {
                 try { c2.bbandsOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.bbandsOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.BbandsStream sD = c2.bbandsOpen(fz_c, Integer.MIN_VALUE, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -224267,6 +224410,13 @@ public class TaCodegenServe {
                 try { c2.betaOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.betaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.BetaStream sD = c2.betaOpen(fz_c, fz_v, Integer.MIN_VALUE);
@@ -224417,6 +224567,13 @@ public class TaCodegenServe {
                 try { c2.bopOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.bopOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -224563,6 +224720,13 @@ public class TaCodegenServe {
                 try { c2.cciOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.cciOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CciStream sD = c2.cciOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -224716,6 +224880,13 @@ public class TaCodegenServe {
                 try { c2.cdl2crowsOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdl2crowsOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -224864,6 +225035,13 @@ public class TaCodegenServe {
                 try { c2.cdl3blackcrowsOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdl3blackcrowsOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -225012,6 +225190,13 @@ public class TaCodegenServe {
                 try { c2.cdl3insideOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdl3insideOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -225160,6 +225345,13 @@ public class TaCodegenServe {
                 try { c2.cdl3linestrikeOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdl3linestrikeOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -225308,6 +225500,13 @@ public class TaCodegenServe {
                 try { c2.cdl3outsideOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdl3outsideOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -225456,6 +225655,13 @@ public class TaCodegenServe {
                 try { c2.cdl3starsinsouthOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdl3starsinsouthOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -225604,6 +225810,13 @@ public class TaCodegenServe {
                 try { c2.cdl3whitesoldiersOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdl3whitesoldiersOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -225753,6 +225966,13 @@ public class TaCodegenServe {
                 try { c2.cdlabandonedbabyOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlabandonedbabyOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -225901,6 +226121,13 @@ public class TaCodegenServe {
                 try { c2.cdladvanceblockOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdladvanceblockOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -226049,6 +226276,13 @@ public class TaCodegenServe {
                 try { c2.cdlbeltholdOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlbeltholdOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -226197,6 +226431,13 @@ public class TaCodegenServe {
                 try { c2.cdlbreakawayOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlbreakawayOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -226345,6 +226586,13 @@ public class TaCodegenServe {
                 try { c2.cdlclosingmarubozuOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlclosingmarubozuOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -226493,6 +226741,13 @@ public class TaCodegenServe {
                 try { c2.cdlconcealbabyswallOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlconcealbabyswallOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -226641,6 +226896,13 @@ public class TaCodegenServe {
                 try { c2.cdlcounterattackOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlcounterattackOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -226790,6 +227052,13 @@ public class TaCodegenServe {
                 try { c2.cdldarkcloudcoverOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdldarkcloudcoverOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -226938,6 +227207,13 @@ public class TaCodegenServe {
                 try { c2.cdldojiOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdldojiOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -227086,6 +227362,13 @@ public class TaCodegenServe {
                 try { c2.cdldojistarOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdldojistarOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -227234,6 +227517,13 @@ public class TaCodegenServe {
                 try { c2.cdldragonflydojiOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdldragonflydojiOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -227382,6 +227672,13 @@ public class TaCodegenServe {
                 try { c2.cdlengulfingOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlengulfingOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -227531,6 +227828,13 @@ public class TaCodegenServe {
                 try { c2.cdleveningdojistarOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdleveningdojistarOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -227680,6 +227984,13 @@ public class TaCodegenServe {
                 try { c2.cdleveningstarOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdleveningstarOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -227828,6 +228139,13 @@ public class TaCodegenServe {
                 try { c2.cdlgapsidesidewhiteOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlgapsidesidewhiteOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -227976,6 +228294,13 @@ public class TaCodegenServe {
                 try { c2.cdlgravestonedojiOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlgravestonedojiOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -228124,6 +228449,13 @@ public class TaCodegenServe {
                 try { c2.cdlhammerOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlhammerOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -228272,6 +228604,13 @@ public class TaCodegenServe {
                 try { c2.cdlhangingmanOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlhangingmanOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -228420,6 +228759,13 @@ public class TaCodegenServe {
                 try { c2.cdlharamiOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlharamiOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -228568,6 +228914,13 @@ public class TaCodegenServe {
                 try { c2.cdlharamicrossOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlharamicrossOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -228716,6 +229069,13 @@ public class TaCodegenServe {
                 try { c2.cdlhighwaveOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlhighwaveOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -228864,6 +229224,13 @@ public class TaCodegenServe {
                 try { c2.cdlhikkakeOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlhikkakeOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -229012,6 +229379,13 @@ public class TaCodegenServe {
                 try { c2.cdlhikkakemodOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlhikkakemodOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -229160,6 +229534,13 @@ public class TaCodegenServe {
                 try { c2.cdlhomingpigeonOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlhomingpigeonOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -229308,6 +229689,13 @@ public class TaCodegenServe {
                 try { c2.cdlidentical3crowsOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlidentical3crowsOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -229456,6 +229844,13 @@ public class TaCodegenServe {
                 try { c2.cdlinneckOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlinneckOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -229604,6 +229999,13 @@ public class TaCodegenServe {
                 try { c2.cdlinvertedhammerOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlinvertedhammerOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -229752,6 +230154,13 @@ public class TaCodegenServe {
                 try { c2.cdlkickingOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlkickingOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -229900,6 +230309,13 @@ public class TaCodegenServe {
                 try { c2.cdlkickingbylengthOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlkickingbylengthOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -230048,6 +230464,13 @@ public class TaCodegenServe {
                 try { c2.cdlladderbottomOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlladderbottomOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -230196,6 +230619,13 @@ public class TaCodegenServe {
                 try { c2.cdllongleggeddojiOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdllongleggeddojiOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -230344,6 +230774,13 @@ public class TaCodegenServe {
                 try { c2.cdllonglineOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdllonglineOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -230492,6 +230929,13 @@ public class TaCodegenServe {
                 try { c2.cdlmarubozuOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlmarubozuOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -230640,6 +231084,13 @@ public class TaCodegenServe {
                 try { c2.cdlmatchinglowOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlmatchinglowOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -230789,6 +231240,13 @@ public class TaCodegenServe {
                 try { c2.cdlmatholdOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlmatholdOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -230938,6 +231396,13 @@ public class TaCodegenServe {
                 try { c2.cdlmorningdojistarOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlmorningdojistarOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -231087,6 +231552,13 @@ public class TaCodegenServe {
                 try { c2.cdlmorningstarOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlmorningstarOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInPenetration, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -231235,6 +231707,13 @@ public class TaCodegenServe {
                 try { c2.cdlonneckOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlonneckOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -231383,6 +231862,13 @@ public class TaCodegenServe {
                 try { c2.cdlpiercingOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlpiercingOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -231531,6 +232017,13 @@ public class TaCodegenServe {
                 try { c2.cdlrickshawmanOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlrickshawmanOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -231679,6 +232172,13 @@ public class TaCodegenServe {
                 try { c2.cdlrisefall3methodsOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlrisefall3methodsOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -231827,6 +232327,13 @@ public class TaCodegenServe {
                 try { c2.cdlseparatinglinesOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlseparatinglinesOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -231975,6 +232482,13 @@ public class TaCodegenServe {
                 try { c2.cdlshootingstarOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlshootingstarOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -232123,6 +232637,13 @@ public class TaCodegenServe {
                 try { c2.cdlshortlineOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlshortlineOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -232271,6 +232792,13 @@ public class TaCodegenServe {
                 try { c2.cdlspinningtopOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlspinningtopOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -232419,6 +232947,13 @@ public class TaCodegenServe {
                 try { c2.cdlstalledpatternOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlstalledpatternOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -232567,6 +233102,13 @@ public class TaCodegenServe {
                 try { c2.cdlsticksandwichOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlsticksandwichOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -232715,6 +233257,13 @@ public class TaCodegenServe {
                 try { c2.cdltakuriOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdltakuriOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -232863,6 +233412,13 @@ public class TaCodegenServe {
                 try { c2.cdltasukigapOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdltasukigapOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -233011,6 +233567,13 @@ public class TaCodegenServe {
                 try { c2.cdlthrustingOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlthrustingOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -233159,6 +233722,13 @@ public class TaCodegenServe {
                 try { c2.cdltristarOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdltristarOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -233307,6 +233877,13 @@ public class TaCodegenServe {
                 try { c2.cdlunique3riverOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlunique3riverOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -233455,6 +234032,13 @@ public class TaCodegenServe {
                 try { c2.cdlupsidegap2crowsOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlupsidegap2crowsOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -233603,6 +234187,13 @@ public class TaCodegenServe {
                 try { c2.cdlxsidegap3methodsOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.cdlxsidegap3methodsOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -233748,6 +234339,13 @@ public class TaCodegenServe {
                 try { c2.ceilOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.ceilOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -233894,6 +234492,13 @@ public class TaCodegenServe {
                 try { c2.cmfOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.cmfOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CmfStream sD = c2.cmfOpen(fz_h, fz_l, fz_c, fz_v, Integer.MIN_VALUE);
@@ -234046,6 +234651,13 @@ public class TaCodegenServe {
                 try { c2.cmoOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.cmoOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CmoStream sD = c2.cmoOpen(fz_c, Integer.MIN_VALUE);
@@ -234197,6 +234809,13 @@ public class TaCodegenServe {
                 try { c2.cmouOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.cmouOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CmouStream sD = c2.cmouOpen(fz_c, Integer.MIN_VALUE);
@@ -234350,6 +234969,13 @@ public class TaCodegenServe {
                 try { c2.coppockOpen(java.util.Arrays.copyOf(fz_c, lb), optInWMAPeriod, optInROC1Period, optInROC2Period); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.coppockOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInWMAPeriod, optInROC1Period, optInROC2Period, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CoppockStream sD = c2.coppockOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -234501,6 +235127,13 @@ public class TaCodegenServe {
                 try { c2.correlOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.correlOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CorrelStream sD = c2.correlOpen(fz_c, fz_v, Integer.MIN_VALUE);
@@ -234651,6 +235284,13 @@ public class TaCodegenServe {
                 try { c2.cosOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.cosOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -234796,6 +235436,13 @@ public class TaCodegenServe {
                 try { c2.coshOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.coshOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -234945,6 +235592,13 @@ public class TaCodegenServe {
                 try { c2.crsiOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInStreakPeriod, optInRankPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.crsiOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInStreakPeriod, optInRankPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CrsiStream sD = c2.crsiOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -235096,6 +235750,13 @@ public class TaCodegenServe {
                 try { c2.ctiOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.ctiOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CtiStream sD = c2.ctiOpen(fz_c, Integer.MIN_VALUE);
@@ -235246,6 +235907,13 @@ public class TaCodegenServe {
                 try { c2.cumsumOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.cumsumOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -235394,6 +236062,13 @@ public class TaCodegenServe {
                 try { c2.cviOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, optInROCPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.cviOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, optInROCPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.CviStream sD = c2.cviOpen(fz_h, fz_l, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -235546,6 +236221,13 @@ public class TaCodegenServe {
                 try { c2.demaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.demaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DemaStream sD = c2.demaOpen(fz_c, Integer.MIN_VALUE);
@@ -235696,6 +236378,13 @@ public class TaCodegenServe {
                 try { c2.divOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.divOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -235871,6 +236560,17 @@ public class TaCodegenServe {
                 try { c2.donchianOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.donchianOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DonchianStream sD = c2.donchianOpen(fz_h, fz_l, Integer.MIN_VALUE);
@@ -236026,6 +236726,13 @@ public class TaCodegenServe {
                 try { c2.dpoOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.dpoOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DpoStream sD = c2.dpoOpen(fz_c, Integer.MIN_VALUE);
@@ -236178,6 +236885,13 @@ public class TaCodegenServe {
                 try { c2.dxOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.dxOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.DxStream sD = c2.dxOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -236329,6 +237043,13 @@ public class TaCodegenServe {
                 try { c2.efiOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.efiOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.EfiStream sD = c2.efiOpen(fz_c, fz_v, Integer.MIN_VALUE);
@@ -236481,6 +237202,13 @@ public class TaCodegenServe {
                 try { c2.emaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.emaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.EmaStream sD = c2.emaOpen(fz_c, Integer.MIN_VALUE);
@@ -236632,6 +237360,13 @@ public class TaCodegenServe {
                 try { c2.erOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.erOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ErStream sD = c2.erOpen(fz_c, Integer.MIN_VALUE);
@@ -236802,6 +237537,15 @@ public class TaCodegenServe {
                 try { c2.eriOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.eriOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.EriStream sD = c2.eriOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -236955,6 +237699,13 @@ public class TaCodegenServe {
                 try { c2.expOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.expOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -237100,6 +237851,13 @@ public class TaCodegenServe {
                 try { c2.floorOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.floorOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -237246,6 +238004,13 @@ public class TaCodegenServe {
                 try { c2.foscOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.foscOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.FoscStream sD = c2.foscOpen(fz_c, Integer.MIN_VALUE);
@@ -237414,6 +238179,15 @@ public class TaCodegenServe {
                 try { c2.fractalOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInLeftBars, optInRightBars); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    int[] f1 = new int[svN];
+                    java.util.Arrays.fill(f1, (int)-987654321);
+                    try { c2.fractalOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInLeftBars, optInRightBars, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.FractalStream sD = c2.fractalOpen(fz_h, fz_l, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -237608,6 +238382,19 @@ public class TaCodegenServe {
                 try { c2.haOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    double[] f3 = new double[svN];
+                    java.util.Arrays.fill(f3, (double)-1.2345678901234e300);
+                    try { c2.haOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0, f1, f2, f3); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -237754,6 +238541,13 @@ public class TaCodegenServe {
                 try { c2.hmaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.hmaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.HmaStream sD = c2.hmaOpen(fz_c, Integer.MIN_VALUE);
@@ -237905,6 +238699,13 @@ public class TaCodegenServe {
                 try { c2.htDcperiodOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.htDcperiodOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -238051,6 +238852,13 @@ public class TaCodegenServe {
                 try { c2.htDcphaseOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.htDcphaseOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -238215,6 +239023,15 @@ public class TaCodegenServe {
                 try { c2.htPhasorOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.htPhasorOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -238379,6 +239196,15 @@ public class TaCodegenServe {
                 try { c2.htSineOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.htSineOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -238525,6 +239351,13 @@ public class TaCodegenServe {
                 try { c2.htTrendlineOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.htTrendlineOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -238670,6 +239503,13 @@ public class TaCodegenServe {
                 try { c2.htTrendmodeOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.htTrendmodeOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -238816,6 +239656,13 @@ public class TaCodegenServe {
                 try { c2.imiOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.imiOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ImiStream sD = c2.imiOpen(fz_o, fz_c, Integer.MIN_VALUE);
@@ -238968,6 +239815,13 @@ public class TaCodegenServe {
                 try { c2.kamaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.kamaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KamaStream sD = c2.kamaOpen(fz_c, Integer.MIN_VALUE);
@@ -239152,6 +240006,17 @@ public class TaCodegenServe {
                 try { c2.kcOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInATRPeriod, optInNbDev); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.kcOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInATRPeriod, optInNbDev, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KcStream sD = c2.kcOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInNbDev);
@@ -239357,6 +240222,17 @@ public class TaCodegenServe {
                 try { c2.kdjOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.kdjOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KdjStream sD = c2.kdjOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInSlowK_MAType, Integer.MIN_VALUE, optInSlowD_MAType);
@@ -239512,6 +240388,13 @@ public class TaCodegenServe {
                 try { c2.kurtosisOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.kurtosisOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.KurtosisStream sD = c2.kurtosisOpen(fz_c, Integer.MIN_VALUE);
@@ -239663,6 +240546,13 @@ public class TaCodegenServe {
                 try { c2.linearregOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.linearregOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregStream sD = c2.linearregOpen(fz_c, Integer.MIN_VALUE);
@@ -239814,6 +240704,13 @@ public class TaCodegenServe {
                 try { c2.linearregAngleOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.linearregAngleOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregAngleStream sD = c2.linearregAngleOpen(fz_c, Integer.MIN_VALUE);
@@ -239965,6 +240862,13 @@ public class TaCodegenServe {
                 try { c2.linearregInterceptOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.linearregInterceptOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregInterceptStream sD = c2.linearregInterceptOpen(fz_c, Integer.MIN_VALUE);
@@ -240116,6 +241020,13 @@ public class TaCodegenServe {
                 try { c2.linearregSlopeOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.linearregSlopeOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.LinearregSlopeStream sD = c2.linearregSlopeOpen(fz_c, Integer.MIN_VALUE);
@@ -240266,6 +241177,13 @@ public class TaCodegenServe {
                 try { c2.lnOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.lnOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -240411,6 +241329,13 @@ public class TaCodegenServe {
                 try { c2.log10Open(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.log10OpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -240569,6 +241494,13 @@ public class TaCodegenServe {
                 try { c2.maOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.maOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInMAType, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MaStream sD = c2.maOpen(fz_c, Integer.MIN_VALUE, optInMAType);
@@ -240752,6 +241684,17 @@ public class TaCodegenServe {
                 try { c2.macdOpen(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.macdOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MacdStream sD = c2.macdOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -240964,6 +241907,17 @@ public class TaCodegenServe {
                 try { c2.macdextOpen(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.macdextOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MacdextStream sD = c2.macdextOpen(fz_c, Integer.MIN_VALUE, optInFastMAType, Integer.MIN_VALUE, optInSlowMAType, Integer.MIN_VALUE, optInSignalMAType);
@@ -241149,6 +242103,17 @@ public class TaCodegenServe {
                 try { c2.macdfixOpen(java.util.Arrays.copyOf(fz_c, lb), optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.macdfixOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInSignalPeriod, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MacdfixStream sD = c2.macdfixOpen(fz_c, Integer.MIN_VALUE);
@@ -241324,6 +242289,15 @@ public class TaCodegenServe {
                 try { c2.mamaOpen(java.util.Arrays.copyOf(fz_c, lb), optInFastLimit, optInSlowLimit); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.mamaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInFastLimit, optInSlowLimit, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -241469,6 +242443,13 @@ public class TaCodegenServe {
                 try { c2.marketfiOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.marketfiOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -241617,6 +242598,13 @@ public class TaCodegenServe {
                 try { c2.massiOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInFastPeriod, optInSlowPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.massiOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInFastPeriod, optInSlowPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MassiStream sD = c2.massiOpen(fz_h, fz_l, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -241782,6 +242770,13 @@ public class TaCodegenServe {
                 try { c2.mavpOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInMinPeriod, optInMaxPeriod, optInMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.mavpOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInMinPeriod, optInMaxPeriod, optInMAType, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MavpStream sD = c2.mavpOpen(fz_c, fz_v, Integer.MIN_VALUE, Integer.MIN_VALUE, optInMAType);
@@ -241933,6 +242928,13 @@ public class TaCodegenServe {
                 try { c2.maxOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.maxOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MaxStream sD = c2.maxOpen(fz_c, Integer.MIN_VALUE);
@@ -242083,6 +243085,13 @@ public class TaCodegenServe {
                 try { c2.maxindexOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.maxindexOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MaxindexStream sD = c2.maxindexOpen(fz_c, Integer.MIN_VALUE);
@@ -242234,6 +243243,13 @@ public class TaCodegenServe {
                 try { c2.medianOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.medianOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MedianStream sD = c2.medianOpen(fz_c, Integer.MIN_VALUE);
@@ -242384,6 +243400,13 @@ public class TaCodegenServe {
                 try { c2.medpriceOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.medpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -242530,6 +243553,13 @@ public class TaCodegenServe {
                 try { c2.mfiOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.mfiOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MfiStream sD = c2.mfiOpen(fz_h, fz_l, fz_c, fz_v, Integer.MIN_VALUE);
@@ -242681,6 +243711,13 @@ public class TaCodegenServe {
                 try { c2.midpointOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.midpointOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MidpointStream sD = c2.midpointOpen(fz_c, Integer.MIN_VALUE);
@@ -242832,6 +243869,13 @@ public class TaCodegenServe {
                 try { c2.midpriceOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.midpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MidpriceStream sD = c2.midpriceOpen(fz_h, fz_l, Integer.MIN_VALUE);
@@ -242983,6 +244027,13 @@ public class TaCodegenServe {
                 try { c2.minOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.minOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinStream sD = c2.minOpen(fz_c, Integer.MIN_VALUE);
@@ -243133,6 +244184,13 @@ public class TaCodegenServe {
                 try { c2.minindexOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    try { c2.minindexOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinindexStream sD = c2.minindexOpen(fz_c, Integer.MIN_VALUE);
@@ -243302,6 +244360,15 @@ public class TaCodegenServe {
                 try { c2.minmaxOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.minmaxOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinmaxStream sD = c2.minmaxOpen(fz_c, Integer.MIN_VALUE);
@@ -243472,6 +244539,15 @@ public class TaCodegenServe {
                 try { c2.minmaxindexOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    int[] f0 = new int[svN];
+                    java.util.Arrays.fill(f0, (int)-987654321);
+                    int[] f1 = new int[svN];
+                    java.util.Arrays.fill(f1, (int)-987654321);
+                    try { c2.minmaxindexOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinmaxindexStream sD = c2.minmaxindexOpen(fz_c, Integer.MIN_VALUE);
@@ -243627,6 +244703,13 @@ public class TaCodegenServe {
                 try { c2.minusDiOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.minusDiOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinusDiStream sD = c2.minusDiOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -243779,6 +244862,13 @@ public class TaCodegenServe {
                 try { c2.minusDmOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.minusDmOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MinusDmStream sD = c2.minusDmOpen(fz_h, fz_l, Integer.MIN_VALUE);
@@ -243930,6 +245020,13 @@ public class TaCodegenServe {
                 try { c2.momOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.momOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.MomStream sD = c2.momOpen(fz_c, Integer.MIN_VALUE);
@@ -244080,6 +245177,13 @@ public class TaCodegenServe {
                 try { c2.multOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.multOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -244227,6 +245331,13 @@ public class TaCodegenServe {
                 try { c2.natrOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.natrOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.NatrStream sD = c2.natrOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -244377,6 +245488,13 @@ public class TaCodegenServe {
                 try { c2.nviOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.nviOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -244522,6 +245640,13 @@ public class TaCodegenServe {
                 try { c2.obvOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.obvOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -244669,6 +245794,13 @@ public class TaCodegenServe {
                 try { c2.percentileOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInPercentile); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.percentileOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInPercentile, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PercentileStream sD = c2.percentileOpen(fz_c, Integer.MIN_VALUE, optInPercentile);
@@ -244820,6 +245952,13 @@ public class TaCodegenServe {
                 try { c2.percentrankOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.percentrankOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PercentrankStream sD = c2.percentrankOpen(fz_c, Integer.MIN_VALUE);
@@ -244972,6 +246111,13 @@ public class TaCodegenServe {
                 try { c2.plusDiOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.plusDiOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PlusDiStream sD = c2.plusDiOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -245124,6 +246270,13 @@ public class TaCodegenServe {
                 try { c2.plusDmOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.plusDmOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PlusDmStream sD = c2.plusDmOpen(fz_h, fz_l, Integer.MIN_VALUE);
@@ -245288,6 +246441,13 @@ public class TaCodegenServe {
                 try { c2.ppoOpen(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.ppoOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInMAType, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PpoStream sD = c2.ppoOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInMAType);
@@ -245438,6 +246598,13 @@ public class TaCodegenServe {
                 try { c2.pviOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.pviOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -245597,6 +246764,13 @@ public class TaCodegenServe {
                 try { c2.pvoOpen(java.util.Arrays.copyOf(fz_v, lb), optInFastPeriod, optInSlowPeriod, optInMAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.pvoOpenAndFill(java.util.Arrays.copyOf(fz_v, lb), optInFastPeriod, optInSlowPeriod, optInMAType, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.PvoStream sD = c2.pvoOpen(fz_v, Integer.MIN_VALUE, Integer.MIN_VALUE, optInMAType);
@@ -245747,6 +246921,13 @@ public class TaCodegenServe {
                 try { c2.pvtOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.pvtOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -245893,6 +247074,13 @@ public class TaCodegenServe {
                 try { c2.qstickOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.qstickOpenAndFill(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.QstickStream sD = c2.qstickOpen(fz_o, fz_c, Integer.MIN_VALUE);
@@ -246045,6 +247233,13 @@ public class TaCodegenServe {
                 try { c2.rmaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rmaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RmaStream sD = c2.rmaOpen(fz_c, Integer.MIN_VALUE);
@@ -246196,6 +247391,13 @@ public class TaCodegenServe {
                 try { c2.rocOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rocOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RocStream sD = c2.rocOpen(fz_c, Integer.MIN_VALUE);
@@ -246347,6 +247549,13 @@ public class TaCodegenServe {
                 try { c2.rocpOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rocpOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RocpStream sD = c2.rocpOpen(fz_c, Integer.MIN_VALUE);
@@ -246498,6 +247707,13 @@ public class TaCodegenServe {
                 try { c2.rocrOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rocrOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RocrStream sD = c2.rocrOpen(fz_c, Integer.MIN_VALUE);
@@ -246649,6 +247865,13 @@ public class TaCodegenServe {
                 try { c2.rocr100Open(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rocr100OpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.Rocr100Stream sD = c2.rocr100Open(fz_c, Integer.MIN_VALUE);
@@ -246801,6 +248024,13 @@ public class TaCodegenServe {
                 try { c2.rsiOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rsiOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RsiStream sD = c2.rsiOpen(fz_c, Integer.MIN_VALUE);
@@ -246954,6 +248184,13 @@ public class TaCodegenServe {
                 try { c2.rviOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInStdDevPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rviOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInStdDevPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RviStream sD = c2.rviOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -247107,6 +248344,13 @@ public class TaCodegenServe {
                 try { c2.rvirOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, optInStdDevPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rvirOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod, optInStdDevPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RvirStream sD = c2.rvirOpen(fz_h, fz_l, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -247258,6 +248502,13 @@ public class TaCodegenServe {
                 try { c2.rvolOpen(java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.rvolOpenAndFill(java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.RvolStream sD = c2.rvolOpen(fz_v, Integer.MIN_VALUE);
@@ -247410,6 +248661,13 @@ public class TaCodegenServe {
                 try { c2.sarOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInAcceleration, optInMaximum); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.sarOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInAcceleration, optInMaximum, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -247563,6 +248821,13 @@ public class TaCodegenServe {
                 try { c2.sarextOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.sarextOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -247708,6 +248973,13 @@ public class TaCodegenServe {
                 try { c2.sinOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.sinOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -247853,6 +249125,13 @@ public class TaCodegenServe {
                 try { c2.sinhOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.sinhOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -247999,6 +249278,13 @@ public class TaCodegenServe {
                 try { c2.smaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.smaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SmaStream sD = c2.smaOpen(fz_c, Integer.MIN_VALUE);
@@ -248172,6 +249458,15 @@ public class TaCodegenServe {
                 try { c2.smiOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.smiOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SmiStream sD = c2.smiOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -248325,6 +249620,13 @@ public class TaCodegenServe {
                 try { c2.sqrtOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.sqrtOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -248472,6 +249774,13 @@ public class TaCodegenServe {
                 try { c2.stddevOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInNbDev); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.stddevOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInNbDev, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StddevStream sD = c2.stddevOpen(fz_c, Integer.MIN_VALUE, optInNbDev);
@@ -248662,6 +249971,15 @@ public class TaCodegenServe {
                 try { c2.stochOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.stochOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StochStream sD = c2.stochOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInSlowK_MAType, Integer.MIN_VALUE, optInSlowD_MAType);
@@ -248847,6 +250165,15 @@ public class TaCodegenServe {
                 try { c2.stochfOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastK_Period, optInFastD_Period, optInFastD_MAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.stochfOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StochfStream sD = c2.stochfOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInFastD_MAType);
@@ -249034,6 +250361,15 @@ public class TaCodegenServe {
                 try { c2.stochrsiOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.stochrsiOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.StochrsiStream sD = c2.stochrsiOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, optInFastD_MAType);
@@ -249187,6 +250523,13 @@ public class TaCodegenServe {
                 try { c2.subOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.subOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -249333,6 +250676,13 @@ public class TaCodegenServe {
                 try { c2.sumOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.sumOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SumStream sD = c2.sumOpen(fz_c, Integer.MIN_VALUE);
@@ -249503,6 +250853,15 @@ public class TaCodegenServe {
                 try { c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInMultiplier); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    int[] f1 = new int[svN];
+                    java.util.Arrays.fill(f1, (int)-987654321);
+                    try { c2.supertrendOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInMultiplier, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.SupertrendStream sD = c2.supertrendOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, optInMultiplier);
@@ -249659,6 +251018,13 @@ public class TaCodegenServe {
                 try { c2.t3Open(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInVFactor); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.t3OpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInVFactor, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.T3Stream sD = c2.t3Open(fz_c, Integer.MIN_VALUE, optInVFactor);
@@ -249809,6 +251175,13 @@ public class TaCodegenServe {
                 try { c2.tanOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.tanOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -249954,6 +251327,13 @@ public class TaCodegenServe {
                 try { c2.tanhOpen(java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.tanhOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -250101,6 +251481,13 @@ public class TaCodegenServe {
                 try { c2.temaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.temaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TemaStream sD = c2.temaOpen(fz_c, Integer.MIN_VALUE);
@@ -250251,6 +251638,13 @@ public class TaCodegenServe {
                 try { c2.trangeOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.trangeOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -250397,6 +251791,13 @@ public class TaCodegenServe {
                 try { c2.trimaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.trimaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TrimaStream sD = c2.trimaOpen(fz_c, Integer.MIN_VALUE);
@@ -250549,6 +251950,13 @@ public class TaCodegenServe {
                 try { c2.trixOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.trixOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TrixStream sD = c2.trixOpen(fz_c, Integer.MIN_VALUE);
@@ -250700,6 +252108,13 @@ public class TaCodegenServe {
                 try { c2.tsfOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.tsfOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TsfStream sD = c2.tsfOpen(fz_c, Integer.MIN_VALUE);
@@ -250853,6 +252268,13 @@ public class TaCodegenServe {
                 try { c2.tsiOpen(java.util.Arrays.copyOf(fz_c, lb), optInFirstPeriod, optInSecondPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.tsiOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInFirstPeriod, optInSecondPeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.TsiStream sD = c2.tsiOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -251003,6 +252425,13 @@ public class TaCodegenServe {
                 try { c2.typpriceOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.typpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -251151,6 +252580,13 @@ public class TaCodegenServe {
                 try { c2.ultoscOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.ultoscOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.UltoscStream sD = c2.ultoscOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
@@ -251303,6 +252739,13 @@ public class TaCodegenServe {
                 try { c2.varOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInNbDev); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.varOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInNbDev, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VarStream sD = c2.varOpen(fz_c, Integer.MIN_VALUE, optInNbDev);
@@ -251454,6 +252897,13 @@ public class TaCodegenServe {
                 try { c2.vhfOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.vhfOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VhfStream sD = c2.vhfOpen(fz_c, Integer.MIN_VALUE);
@@ -251623,6 +253073,15 @@ public class TaCodegenServe {
                 try { c2.vortexOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    try { c2.vortexOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0, f1); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VortexStream sD = c2.vortexOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -251776,6 +253235,13 @@ public class TaCodegenServe {
                 try { c2.vwapOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.vwapOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -251922,6 +253388,13 @@ public class TaCodegenServe {
                 try { c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.vwmaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.VwmaStream sD = c2.vwmaOpen(fz_c, fz_v, Integer.MIN_VALUE);
@@ -252072,6 +253545,13 @@ public class TaCodegenServe {
                 try { c2.wadOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.wadOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -252217,6 +253697,13 @@ public class TaCodegenServe {
                 try { c2.wclpriceOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.wclpriceOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -252363,6 +253850,13 @@ public class TaCodegenServe {
                 try { c2.willrOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.willrOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.WillrStream sD = c2.willrOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
@@ -252514,6 +254008,13 @@ public class TaCodegenServe {
                 try { c2.wmaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.wmaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.WmaStream sD = c2.wmaOpen(fz_c, Integer.MIN_VALUE);
@@ -252666,6 +254167,13 @@ public class TaCodegenServe {
                 try { c2.zlemaOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
                 catch (InsufficientHistoryException _e) { /* expected, typed */ }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.zlemaOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
             }
             try {
                 Core.ZlemaStream sD = c2.zlemaOpen(fz_c, Integer.MIN_VALUE);

@@ -25204,7 +25204,11 @@ fn sv_ac(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ac_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ac_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ac_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -25372,7 +25376,13 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.accbands_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.accbands_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.accbands_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -25515,7 +25525,11 @@ fn sv_acos(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.acos_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.acos_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.acos_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -25658,7 +25672,11 @@ fn sv_ad(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ad_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -25801,7 +25819,11 @@ fn sv_add(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.add_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.add_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.add_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -25947,7 +25969,11 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.adosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.adosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInFastPeriod, optInSlowPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.adosc_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInFastPeriod, optInSlowPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -26091,7 +26117,11 @@ fn sv_adr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.adr_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.adr_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.adr_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -26236,7 +26266,11 @@ fn sv_adx(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.adx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.adx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.adx_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -26381,7 +26415,11 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.adxr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.adxr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.adxr_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -26526,7 +26564,11 @@ fn sv_ao(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ao_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ao_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ao_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -26681,7 +26723,11 @@ fn sv_apo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.apo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.apo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.apo_open_and_fill(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -26837,7 +26883,12 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.aroon_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.aroon_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.aroon_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -26981,7 +27032,11 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.aroonosc_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.aroonosc_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.aroonosc_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -27124,7 +27179,11 @@ fn sv_asin(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.asin_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.asin_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.asin_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -27267,7 +27326,11 @@ fn sv_atan(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.atan_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.atan_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.atan_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -27412,7 +27475,11 @@ fn sv_atr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.atr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.atr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.atr_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -27556,7 +27623,11 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.avgdev_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.avgdev_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.avgdev_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -27699,7 +27770,11 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.avgprice_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.avgprice_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.avgprice_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -27879,7 +27954,13 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.bbands_open(&fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.bbands_open(&fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.bbands_open_and_fill(&fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -28023,7 +28104,11 @@ fn sv_beta(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.beta_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.beta_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.beta_open_and_fill(&fz_c[..lb], &fz_v[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -28166,7 +28251,11 @@ fn sv_bop(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.bop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.bop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.bop_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -28310,7 +28399,11 @@ fn sv_cci(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cci_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cci_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cci_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -28457,7 +28550,11 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdl2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdl2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdl2crows_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -28604,7 +28701,11 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdl3blackcrows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdl3blackcrows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdl3blackcrows_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -28751,7 +28852,11 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdl3inside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdl3inside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdl3inside_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -28898,7 +29003,11 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdl3linestrike_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdl3linestrike_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdl3linestrike_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -29045,7 +29154,11 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdl3outside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdl3outside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdl3outside_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -29192,7 +29305,11 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdl3starsinsouth_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdl3starsinsouth_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdl3starsinsouth_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -29339,7 +29456,11 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdl3whitesoldiers_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdl3whitesoldiers_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdl3whitesoldiers_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -29487,7 +29608,11 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlabandonedbaby_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlabandonedbaby_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlabandonedbaby_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -29634,7 +29759,11 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdladvanceblock_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdladvanceblock_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdladvanceblock_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -29781,7 +29910,11 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlbelthold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlbelthold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlbelthold_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -29928,7 +30061,11 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlbreakaway_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlbreakaway_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlbreakaway_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -30075,7 +30212,11 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlclosingmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlclosingmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlclosingmarubozu_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -30222,7 +30363,11 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlconcealbabyswall_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlconcealbabyswall_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlconcealbabyswall_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -30369,7 +30514,11 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlcounterattack_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlcounterattack_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlcounterattack_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -30517,7 +30666,11 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdldarkcloudcover_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdldarkcloudcover_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdldarkcloudcover_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -30664,7 +30817,11 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdldoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdldoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdldoji_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -30811,7 +30968,11 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdldojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdldojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdldojistar_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -30958,7 +31119,11 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdldragonflydoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdldragonflydoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdldragonflydoji_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -31105,7 +31270,11 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlengulfing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlengulfing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlengulfing_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -31253,7 +31422,11 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdleveningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdleveningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdleveningdojistar_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -31401,7 +31574,11 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdleveningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdleveningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdleveningstar_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -31548,7 +31725,11 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlgapsidesidewhite_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlgapsidesidewhite_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlgapsidesidewhite_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -31695,7 +31876,11 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlgravestonedoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlgravestonedoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlgravestonedoji_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -31842,7 +32027,11 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlhammer_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -31989,7 +32178,11 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlhangingman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlhangingman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlhangingman_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -32136,7 +32329,11 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlharami_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlharami_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlharami_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -32283,7 +32480,11 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlharamicross_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlharamicross_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlharamicross_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -32430,7 +32631,11 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlhighwave_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlhighwave_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlhighwave_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -32577,7 +32782,11 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlhikkake_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlhikkake_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlhikkake_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -32724,7 +32933,11 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlhikkakemod_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlhikkakemod_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlhikkakemod_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -32871,7 +33084,11 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlhomingpigeon_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlhomingpigeon_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlhomingpigeon_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -33018,7 +33235,11 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlidentical3crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlidentical3crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlidentical3crows_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -33165,7 +33386,11 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlinneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlinneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlinneck_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -33312,7 +33537,11 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlinvertedhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlinvertedhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlinvertedhammer_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -33459,7 +33688,11 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlkicking_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlkicking_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlkicking_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -33606,7 +33839,11 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlkickingbylength_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlkickingbylength_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlkickingbylength_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -33753,7 +33990,11 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlladderbottom_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlladderbottom_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlladderbottom_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -33900,7 +34141,11 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdllongleggeddoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdllongleggeddoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdllongleggeddoji_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -34047,7 +34292,11 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdllongline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdllongline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdllongline_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -34194,7 +34443,11 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlmarubozu_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -34341,7 +34594,11 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlmatchinglow_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlmatchinglow_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlmatchinglow_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -34489,7 +34746,11 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlmathold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlmathold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlmathold_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -34637,7 +34898,11 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlmorningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlmorningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlmorningdojistar_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -34785,7 +35050,11 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlmorningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlmorningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlmorningstar_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -34932,7 +35201,11 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlonneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlonneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlonneck_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -35079,7 +35352,11 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlpiercing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlpiercing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlpiercing_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -35226,7 +35503,11 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlrickshawman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlrickshawman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlrickshawman_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -35373,7 +35654,11 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlrisefall3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlrisefall3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlrisefall3methods_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -35520,7 +35805,11 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlseparatinglines_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlseparatinglines_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlseparatinglines_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -35667,7 +35956,11 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlshootingstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlshootingstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlshootingstar_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -35814,7 +36107,11 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlshortline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlshortline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlshortline_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -35961,7 +36258,11 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlspinningtop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlspinningtop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlspinningtop_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -36108,7 +36409,11 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlstalledpattern_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlstalledpattern_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlstalledpattern_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -36255,7 +36560,11 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlsticksandwich_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlsticksandwich_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlsticksandwich_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -36402,7 +36711,11 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdltakuri_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdltakuri_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdltakuri_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -36549,7 +36862,11 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdltasukigap_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdltasukigap_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdltasukigap_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -36696,7 +37013,11 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlthrusting_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlthrusting_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlthrusting_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -36843,7 +37164,11 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdltristar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdltristar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdltristar_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -36990,7 +37315,11 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlunique3river_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlunique3river_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlunique3river_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -37137,7 +37466,11 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlupsidegap2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlupsidegap2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlupsidegap2crows_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -37284,7 +37617,11 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cdlxsidegap3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cdlxsidegap3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.cdlxsidegap3methods_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -37427,7 +37764,11 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ceil_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ceil_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ceil_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -37571,7 +37912,11 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cmf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cmf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cmf_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -37716,7 +38061,11 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cmo_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cmo_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cmo_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -37860,7 +38209,11 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cmou_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cmou_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cmou_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -38006,7 +38359,11 @@ fn sv_coppock(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.coppock_open(&fz_c[..lb], optInWMAPeriod, optInROC1Period, optInROC2Period).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.coppock_open(&fz_c[..lb], optInWMAPeriod, optInROC1Period, optInROC2Period) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.coppock_open_and_fill(&fz_c[..lb], optInWMAPeriod, optInROC1Period, optInROC2Period, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -38150,7 +38507,11 @@ fn sv_correl(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.correl_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.correl_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.correl_open_and_fill(&fz_c[..lb], &fz_v[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -38293,7 +38654,11 @@ fn sv_cos(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cos_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cos_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cos_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -38436,7 +38801,11 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cosh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cosh_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cosh_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -38583,7 +38952,11 @@ fn sv_crsi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.crsi_open(&fz_c[..lb], optInTimePeriod, optInStreakPeriod, optInRankPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.crsi_open(&fz_c[..lb], optInTimePeriod, optInStreakPeriod, optInRankPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.crsi_open_and_fill(&fz_c[..lb], optInTimePeriod, optInStreakPeriod, optInRankPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -38727,7 +39100,11 @@ fn sv_cti(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cti_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cti_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cti_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -38870,7 +39247,11 @@ fn sv_cumsum(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cumsum_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cumsum_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cumsum_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -39016,7 +39397,11 @@ fn sv_cvi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.cvi_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, optInROCPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.cvi_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, optInROCPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.cvi_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, optInROCPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -39161,7 +39546,11 @@ fn sv_dema(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.dema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.dema_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.dema_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -39304,7 +39693,11 @@ fn sv_div(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.div_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.div_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.div_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -39472,7 +39865,13 @@ fn sv_donchian(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.donchian_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.donchian_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.donchian_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -39616,7 +40015,11 @@ fn sv_dpo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.dpo_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.dpo_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.dpo_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -39761,7 +40164,11 @@ fn sv_dx(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.dx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.dx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.dx_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -39905,7 +40312,11 @@ fn sv_efi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.efi_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.efi_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.efi_open_and_fill(&fz_c[..lb], &fz_v[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -40050,7 +40461,11 @@ fn sv_ema(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ema_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ema_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -40194,7 +40609,11 @@ fn sv_er(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.er_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.er_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.er_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -40351,7 +40770,12 @@ fn sv_eri(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.eri_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.eri_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.eri_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -40494,7 +40918,11 @@ fn sv_exp(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.exp_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.exp_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.exp_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -40637,7 +41065,11 @@ fn sv_floor(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.floor_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.floor_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.floor_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -40781,7 +41213,11 @@ fn sv_fosc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.fosc_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.fosc_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.fosc_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -40938,7 +41374,12 @@ fn sv_fractal(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.fractal_open(&fz_h[..lb], &fz_l[..lb], optInLeftBars, optInRightBars).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.fractal_open(&fz_h[..lb], &fz_l[..lb], optInLeftBars, optInRightBars) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            let mut f1: Vec<i32> = vec![-987654321i32; svN];
+            match c2.fractal_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInLeftBars, optInRightBars, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -41118,7 +41559,14 @@ fn sv_ha(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ha_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ha_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f3: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ha_open_and_fill(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0, &mut f1, &mut f2, &mut f3) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -41262,7 +41710,11 @@ fn sv_hma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.hma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.hma_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.hma_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -41406,7 +41858,11 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ht_dcperiod_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ht_dcperiod_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ht_dcperiod_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -41550,7 +42006,11 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ht_dcphase_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ht_dcphase_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ht_dcphase_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -41706,7 +42166,12 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ht_phasor_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ht_phasor_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ht_phasor_open_and_fill(&fz_c[..lb], &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -41862,7 +42327,12 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ht_sine_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ht_sine_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ht_sine_open_and_fill(&fz_c[..lb], &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -42006,7 +42476,11 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ht_trendline_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ht_trendline_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ht_trendline_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -42150,7 +42624,11 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ht_trendmode_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ht_trendmode_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.ht_trendmode_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -42294,7 +42772,11 @@ fn sv_imi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.imi_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.imi_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.imi_open_and_fill(&fz_o[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -42439,7 +42921,11 @@ fn sv_kama(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.kama_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.kama_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.kama_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -42611,7 +43097,13 @@ fn sv_kc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.kc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInATRPeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.kc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInATRPeriod, optInNbDev) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.kc_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInATRPeriod, optInNbDev, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -42796,7 +43288,13 @@ fn sv_kdj(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.kdj_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.kdj_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.kdj_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -42940,7 +43438,11 @@ fn sv_kurtosis(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.kurtosis_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.kurtosis_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.kurtosis_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -43084,7 +43586,11 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.linearreg_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.linearreg_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.linearreg_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -43228,7 +43734,11 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.linearreg_angle_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.linearreg_angle_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.linearreg_angle_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -43372,7 +43882,11 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.linearreg_intercept_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.linearreg_intercept_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.linearreg_intercept_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -43516,7 +44030,11 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.linearreg_slope_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.linearreg_slope_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.linearreg_slope_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -43659,7 +44177,11 @@ fn sv_ln(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ln_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ln_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ln_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -43802,7 +44324,11 @@ fn sv_log10(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.log10_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.log10_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.log10_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -43956,7 +44482,11 @@ fn sv_ma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ma_open(&fz_c[..lb], optInTimePeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ma_open(&fz_c[..lb], optInTimePeriod, optInMAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ma_open_and_fill(&fz_c[..lb], optInTimePeriod, optInMAType, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -44127,7 +44657,13 @@ fn sv_macd(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.macd_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.macd_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.macd_open_and_fill(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -44317,7 +44853,13 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.macdext_open(&fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.macdext_open(&fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.macdext_open_and_fill(&fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -44486,7 +45028,13 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.macdfix_open(&fz_c[..lb], optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.macdfix_open(&fz_c[..lb], optInSignalPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.macdfix_open_and_fill(&fz_c[..lb], optInSignalPeriod, &mut f0, &mut f1, &mut f2) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -44644,7 +45192,12 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.mama_open(&fz_c[..lb], optInFastLimit, optInSlowLimit).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.mama_open(&fz_c[..lb], optInFastLimit, optInSlowLimit) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.mama_open_and_fill(&fz_c[..lb], optInFastLimit, optInSlowLimit, &mut f0, Some(&mut f1)) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -44787,7 +45340,11 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.marketfi_open(&fz_h[..lb], &fz_l[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.marketfi_open(&fz_h[..lb], &fz_l[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.marketfi_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -44933,7 +45490,11 @@ fn sv_massi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.massi_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.massi_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.massi_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -45089,7 +45650,11 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.mavp_open(&fz_c[..lb], &fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.mavp_open(&fz_c[..lb], &fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.mavp_open_and_fill(&fz_c[..lb], &fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -45233,7 +45798,11 @@ fn sv_max(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.max_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.max_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.max_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -45377,7 +45946,11 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.maxindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.maxindex_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.maxindex_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -45521,7 +46094,11 @@ fn sv_median(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.median_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.median_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.median_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -45664,7 +46241,11 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.medprice_open(&fz_h[..lb], &fz_l[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.medprice_open(&fz_h[..lb], &fz_l[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.medprice_open_and_fill(&fz_h[..lb], &fz_l[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -45808,7 +46389,11 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.mfi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.mfi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.mfi_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -45952,7 +46537,11 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.midpoint_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.midpoint_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.midpoint_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -46096,7 +46685,11 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.midprice_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.midprice_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.midprice_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -46240,7 +46833,11 @@ fn sv_min(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.min_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.min_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.min_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -46384,7 +46981,11 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.minindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.minindex_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            match c2.minindex_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -46540,7 +47141,12 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.minmax_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.minmax_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.minmax_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -46696,7 +47302,12 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.minmaxindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.minmaxindex_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<i32> = vec![-987654321i32; svN];
+            let mut f1: Vec<i32> = vec![-987654321i32; svN];
+            match c2.minmaxindex_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -46841,7 +47452,11 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.minus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.minus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.minus_di_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -46986,7 +47601,11 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.minus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.minus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.minus_dm_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -47130,7 +47749,11 @@ fn sv_mom(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.mom_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.mom_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.mom_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -47273,7 +47896,11 @@ fn sv_mult(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.mult_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.mult_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.mult_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -47418,7 +48045,11 @@ fn sv_natr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.natr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.natr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.natr_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -47561,7 +48192,11 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.nvi_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.nvi_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.nvi_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -47704,7 +48339,11 @@ fn sv_obv(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.obv_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.obv_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.obv_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -47849,7 +48488,11 @@ fn sv_percentile(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.percentile_open(&fz_c[..lb], optInTimePeriod, optInPercentile).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.percentile_open(&fz_c[..lb], optInTimePeriod, optInPercentile) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.percentile_open_and_fill(&fz_c[..lb], optInTimePeriod, optInPercentile, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -47993,7 +48636,11 @@ fn sv_percentrank(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.percentrank_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.percentrank_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.percentrank_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -48138,7 +48785,11 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.plus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.plus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.plus_di_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -48283,7 +48934,11 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.plus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.plus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.plus_dm_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -48438,7 +49093,11 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ppo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ppo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ppo_open_and_fill(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -48581,7 +49240,11 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.pvi_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.pvi_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.pvi_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -48736,7 +49399,11 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.pvo_open(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.pvo_open(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.pvo_open_and_fill(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -48879,7 +49546,11 @@ fn sv_pvt(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.pvt_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.pvt_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.pvt_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -49023,7 +49694,11 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.qstick_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.qstick_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.qstick_open_and_fill(&fz_o[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -49168,7 +49843,11 @@ fn sv_rma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rma_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rma_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -49312,7 +49991,11 @@ fn sv_roc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.roc_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.roc_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.roc_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -49456,7 +50139,11 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rocp_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rocp_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rocp_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -49600,7 +50287,11 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rocr_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rocr_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rocr_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -49744,7 +50435,11 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rocr100_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rocr100_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rocr100_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -49889,7 +50584,11 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rsi_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rsi_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rsi_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -50035,7 +50734,11 @@ fn sv_rvi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rvi_open(&fz_c[..lb], optInTimePeriod, optInStdDevPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rvi_open(&fz_c[..lb], optInTimePeriod, optInStdDevPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rvi_open_and_fill(&fz_c[..lb], optInTimePeriod, optInStdDevPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -50181,7 +50884,11 @@ fn sv_rvir(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rvir_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, optInStdDevPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rvir_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, optInStdDevPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rvir_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInTimePeriod, optInStdDevPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -50325,7 +51032,11 @@ fn sv_rvol(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.rvol_open(&fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.rvol_open(&fz_v[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.rvol_open_and_fill(&fz_v[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -50470,7 +51181,11 @@ fn sv_sar(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sar_open(&fz_h[..lb], &fz_l[..lb], optInAcceleration, optInMaximum).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sar_open(&fz_h[..lb], &fz_l[..lb], optInAcceleration, optInMaximum) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sar_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInAcceleration, optInMaximum, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -50621,7 +51336,11 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sarext_open(&fz_h[..lb], &fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sarext_open(&fz_h[..lb], &fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sarext_open_and_fill(&fz_h[..lb], &fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -50764,7 +51483,11 @@ fn sv_sin(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sin_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sin_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sin_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -50907,7 +51630,11 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sinh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sinh_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sinh_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -51051,7 +51778,11 @@ fn sv_sma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sma_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sma_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -51211,7 +51942,12 @@ fn sv_smi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.smi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.smi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.smi_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -51354,7 +52090,11 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sqrt_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sqrt_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sqrt_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -51499,7 +52239,11 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.stddev_open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.stddev_open(&fz_c[..lb], optInTimePeriod, optInNbDev) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.stddev_open_and_fill(&fz_c[..lb], optInTimePeriod, optInNbDev, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -51672,7 +52416,12 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.stoch_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.stoch_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.stoch_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -51839,7 +52588,12 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.stochf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.stochf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.stochf_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -52008,7 +52762,12 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.stochrsi_open(&fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.stochrsi_open(&fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.stochrsi_open_and_fill(&fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -52151,7 +52910,11 @@ fn sv_sub(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sub_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sub_open(&fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sub_open_and_fill(&fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -52295,7 +53058,11 @@ fn sv_sum(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.sum_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.sum_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.sum_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -52453,7 +53220,12 @@ fn sv_supertrend(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.supertrend_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInMultiplier).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.supertrend_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInMultiplier) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<i32> = vec![-987654321i32; svN];
+            match c2.supertrend_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInMultiplier, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -52599,7 +53371,11 @@ fn sv_t3(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.t3_open(&fz_c[..lb], optInTimePeriod, optInVFactor).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.t3_open(&fz_c[..lb], optInTimePeriod, optInVFactor) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.t3_open_and_fill(&fz_c[..lb], optInTimePeriod, optInVFactor, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -52742,7 +53518,11 @@ fn sv_tan(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.tan_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.tan_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.tan_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -52885,7 +53665,11 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.tanh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.tanh_open(&fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.tanh_open_and_fill(&fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -53030,7 +53814,11 @@ fn sv_tema(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.tema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.tema_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.tema_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -53173,7 +53961,11 @@ fn sv_trange(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.trange_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.trange_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.trange_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -53317,7 +54109,11 @@ fn sv_trima(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.trima_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.trima_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.trima_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -53462,7 +54258,11 @@ fn sv_trix(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.trix_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.trix_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.trix_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -53606,7 +54406,11 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.tsf_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.tsf_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.tsf_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -53752,7 +54556,11 @@ fn sv_tsi(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.tsi_open(&fz_c[..lb], optInFirstPeriod, optInSecondPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.tsi_open(&fz_c[..lb], optInFirstPeriod, optInSecondPeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.tsi_open_and_fill(&fz_c[..lb], optInFirstPeriod, optInSecondPeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -53895,7 +54703,11 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.typprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.typprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.typprice_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -54041,7 +54853,11 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.ultosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.ultosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.ultosc_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -54186,7 +55002,11 @@ fn sv_var(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.var_open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.var_open(&fz_c[..lb], optInTimePeriod, optInNbDev) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.var_open_and_fill(&fz_c[..lb], optInTimePeriod, optInNbDev, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -54330,7 +55150,11 @@ fn sv_vhf(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.vhf_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.vhf_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.vhf_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -54486,7 +55310,12 @@ fn sv_vortex(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.vortex_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.vortex_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.vortex_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0, &mut f1) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -54629,7 +55458,11 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.vwap_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.vwap_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.vwap_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -54773,7 +55606,11 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.vwma_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.vwma_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.vwma_open_and_fill(&fz_c[..lb], &fz_v[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -54916,7 +55753,11 @@ fn sv_wad(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.wad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.wad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.wad_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -55059,7 +55900,11 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.wclprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.wclprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.wclprice_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -55203,7 +56048,11 @@ fn sv_willr(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.willr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.willr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.willr_open_and_fill(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -55347,7 +56196,11 @@ fn sv_wma(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.wma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.wma_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.wma_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)
@@ -55492,7 +56345,11 @@ fn sv_zlema(core: &Core, params: &Value) -> String {
             }
         }
         if lb >= 1 && lb < svN {
-            if c2.zlema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+            match c2.zlema_open(&fz_c[..lb], optInTimePeriod) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryWrongType\":1".to_string(); } } }
+            {
+            let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+            match c2.zlema_open_and_fill(&fz_c[..lb], optInTimePeriod, &mut f0) { Err(RetCode::InsufficientHistory) => {} Ok(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillAccepted\":1".to_string(); } } Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryFillWrongType\":1".to_string(); } } }
+            }
         }
     }
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":27,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"step_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"peek_rejects\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok), i32::from(all_ok && fill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), peek_rejects, zsign, diag)

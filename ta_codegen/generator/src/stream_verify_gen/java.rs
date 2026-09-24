@@ -567,6 +567,17 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     );
     s.push_str("                catch (InsufficientHistoryException _e) { /* expected, typed */ }\n");
     s.push_str("                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryWrongType\\\":1\"; }\n");
+    // OpenAndFill's guard is not always Open's: MAVP hand-rolls one per entry.
+    s.push_str("                {\n");
+    s.push_str(&fdecls.replace("            ", "                    "));
+    let _ = writeln!(
+        s,
+        "                    try {{ c2.{base_camel}OpenAndFill({}{opts_tail}{fargs}); allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryFillAccepted\\\":1\"; }}",
+        pfx_ins("lb")
+    );
+    s.push_str("                    catch (InsufficientHistoryException _e) { /* expected, typed */ }\n");
+    s.push_str("                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryFillWrongType\\\":1\"; }\n");
+    s.push_str("                }\n");
     s.push_str("            }\n");
 
     // Integer.MIN_VALUE default-sentinel leg: open(MIN_VALUE) must equal
