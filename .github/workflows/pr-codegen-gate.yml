@@ -185,7 +185,7 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       # The committed sources, not a fresh `generate` — regen-check already
       # proves they match, so this job needs no cargo.

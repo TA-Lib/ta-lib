@@ -154,6 +154,8 @@ jobs:
       - name: Install WiX (Windows x64)
         if: runner.os == 'Windows'
         shell: cmd
+        # Outside the checkout: global.json pins an SDK this job never installs.
+        working-directory: ${{ runner.temp }}
         run: dotnet tool install --global wix --version 7.0.0 && echo %USERPROFILE%\.dotnet\tools>>%GITHUB_PATH%
 
       # TA-Lib generates no revenue, so the Open Source Maintenance Fee does
@@ -469,7 +471,7 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Build servers and run cross-language verification
         shell: bash
@@ -526,7 +528,7 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Run the synthetic cross-language gate
         shell: bash
@@ -582,7 +584,7 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Build the shipped library and run every suite against it
         shell: bash
@@ -1122,7 +1124,7 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       # --language=csharp reaches this at all only because build.py's prerequisite
       # check and backend filter became per-language; before that the target
@@ -1178,7 +1180,7 @@ jobs:
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: "10.0.x"
+          global-json-file: global.json
 
       - name: Bitwise-diff each language server vs the in-process C library
         shell: bash

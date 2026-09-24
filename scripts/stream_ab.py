@@ -759,7 +759,7 @@ CSHARP_BENCH_CSPROJ = """<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>%s</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <Nullable>disable</Nullable>
     <AssemblyName>stream_ab</AssemblyName>
     <Optimize>true</Optimize>

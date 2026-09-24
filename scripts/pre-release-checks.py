@@ -45,12 +45,14 @@ if __name__ == "__main__":
 
     # Every shipped description claims "200+ indicators" -- a floor, so that no
     # release has to restate a count that is published immutably (Maven Central,
-    # crates.io) and cannot be corrected afterwards. The floor is only worth
+    # crates.io, nuget.org) and cannot be corrected afterwards. The floor is only worth
     # claiming while it is true, which is what this checks.
     claim_paths = (
         path_join(root_dir, 'ta_codegen', 'output', 'java', 'library', 'pom.xml'),
         path_join(root_dir, 'ta_codegen', 'output', 'rust', 'library', 'Cargo.toml'),
+        path_join(root_dir, 'ta_codegen', 'output', 'rust', 'library', 'README.md'),
         path_join(root_dir, 'ta_codegen', 'output', 'csharp', 'library', 'TALib.csproj'),
+        path_join(root_dir, 'ta_codegen', 'output', 'csharp', 'library', 'README.md'),
     )
     input_dir = path_join(root_dir, 'ta_codegen', 'input')
     func_count = sum(

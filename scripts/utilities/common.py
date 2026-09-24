@@ -66,9 +66,11 @@ def is_dpkg_installed() -> bool:
     return True
 
 def is_dotnet_installed() -> bool:
+    # Not `--version`: inside the checkout that answers for the SDK global.json
+    # selects, and fails when the pin cannot be met although an SDK is installed.
     try:
-        subprocess.run(['dotnet', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return True
+        out = subprocess.run(['dotnet', '--list-sdks'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return bool(out.stdout.strip())
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 

@@ -31,7 +31,10 @@ SHA-256-verified Apache distribution itself. `ta_codegen build-libraries
 --backend=java` runs `./mvnw clean package` and tests *that jar*, so nothing
 tests a class directory and every machine builds with the same Maven. No
 credentials are involved (signing and the Central upload sit behind the pom's `release` profile);
-only the wrapper's first run needs the network.
+only the wrapper's first run needs the network. C# builds with the .NET SDK the
+root `global.json` pins, or a later feature band of it. Keep its `rollForward`
+off the `latest*` values: for those, `setup-dotnet` installs the newest SDK
+instead of the pin.
 
 Correctness is verified against three baselines: the in-process C library, which
 `ta_regtest --codegen` and `--xlang-hash` diff every language server against; the

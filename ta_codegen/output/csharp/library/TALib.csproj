@@ -25,7 +25,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>TALib</RootNamespace>
     <AssemblyName>TALib</AssemblyName>
@@ -49,9 +49,19 @@
     <RepositoryUrl>https://github.com/TA-Lib/ta-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- Maps the build path to /_/, so every clone builds the same DLL and none
+         leaks a local path; Debug keeps local paths for the debugger. Pack from
+         a clone whose origin is TA-Lib/ta-lib: an exported tree or a fork packs
+         without a warning, with the local path in the DLL or SourceLink
+         pointing at the fork. -->
+    <ContinuousIntegrationBuild Condition="'$(Configuration)' == 'Release'">true</ContinuousIntegrationBuild>
     <!-- The file, not the SPDX expression: BSD-3 clause 2 requires the text to
          travel with a binary redistribution, and an expression ships none. -->
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <!-- No PackageId yet. The default is AssemblyName, an id the project does
          not own, and pushing to an id someone else owns answers 403 with text
          that blames the API key. -->
@@ -68,6 +78,8 @@
          PackagePath empty puts it at the archive root, where
          PackageLicenseFile resolves it. -->
     <None Include="../../../../LICENSE" Pack="true" PackagePath="" />
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="../../../../website/src/.vuepress/public/android-chrome-512x512.png" Pack="true" PackagePath="icon.png" />
   </ItemGroup>
 
 </Project>

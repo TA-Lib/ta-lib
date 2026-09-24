@@ -3260,7 +3260,7 @@ pub fn csharp_server_csproj() -> String {
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <!-- Pin invariant culture so double.ToString() cannot vary by locale. -->
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
