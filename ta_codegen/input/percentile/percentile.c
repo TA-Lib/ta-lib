@@ -732,11 +732,11 @@ TA_RetCode percentile(int startIdx, int endIdx,
    return TA_SUCCESS;
 }
 
-/* Same outputs with one search and one shift per bar. The JITs turn the selects above
- * into branches, which mispredict on every bar, and the Rust stream step has too
- * many state accesses for LLVM to prove its buffers do not overlap the state, so
- * it reloads them after every store. Keep this body small: C# compiles the same
- * loop slower inside a larger method.
+/* Same outputs with a search per value and one shift per bar. The JITs turn the
+ * selects above into branches, which mispredict on every bar, and the Rust
+ * stream step has too many state accesses for LLVM to prove its buffers do not
+ * overlap the state, so it reloads them after every store. Keep this body
+ * small: C# compiles the same loop slower inside a larger method.
  */
 /* PRAGMA TA_ALT={ALL_API,JAVA} */
 /* PRAGMA TA_ALT={ALL_API,CSHARP} */
