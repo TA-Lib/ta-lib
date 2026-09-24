@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Quiet-window coordination for timing runs on a shared machine. Every wait is bounded.
 
-    scripts/quiet.py status                        exit 0 if free with no one queued, else
-                                                   name the holder and the queue, exit 1
+    scripts/quiet.py status                        exit 0 if free with no one queued and the
+                                                   machine not loaded, else say which, exit 1
     scripts/quiet.py measure WHO SECS [--queue=MAX] -- CMD...
                                                    run CMD holding the window exclusively, stopped
                                                    after SECS (max 900, exit 124). Without --queue,
-                                                   exit 75 at once if the window is taken or anyone
-                                                   is queued; with it, wait in the queue, first come
+                                                   exit 75 at once if the window is taken, anyone is
+                                                   queued or the machine is loaded; with it, wait in
+                                                   the queue, first come
                                                    first served, at most MAX (<= 900) seconds, then
                                                    exit 75
     scripts/quiet.py noisy WHO [--defer=MAX] -- CMD...
@@ -18,12 +19,17 @@
 The lock is flock(2) on ~/.cache/ta-lib/quiet/bench.lock plus the `holder`,
 `noisy.<pid>` and `want.<pid>` files beside it. Those files are the interface:
 every copy of this tool on the machine, in any worktree or language, must keep
-that layout and serve the queue in the same order. The kernel drops a flock when
-its holder dies, a `.<pid>` file counts only while its pid lives, a measured CMD
-dies with its wrapper (Linux), and CMD never inherits the lock fd, so no crash
-leaves the window stuck or a measurement running outside it. A measurement is
-the exclusive flock and nothing else: `holder` is only its label, so a wrapper
-killed before it can clear the file makes nobody wait. CMD gets
+that layout and serve the queue in the same order. All of it is kernel state or
+backed by it: a measurement is the exclusive flock (`holder` is only its label),
+and a `.<pid>` file appears only already locked by its owner and counts while
+that lock is held. A crash or a reboot therefore leaves nothing that looks alive:
+a bare pid is never trusted. A measured CMD dies with its wrapper (Linux),
+and CMD never inherits a lock fd.
+
+`measure` also refuses, or with --queue keeps waiting, while other work keeps
+more than max(1.5, CPUs/8) cores busy (at most CPUs - 0.5), whoever started it;
+Linux only, as it reads /proc/stat. TA_QUIET_MAX_LOAD sets that limit in cores;
+`off` disables the check. CMD gets
 TA_QUIET=<kind>:<pid>. Under a live wrapper a nested `noisy` skips its defer, a
 `measure` nested in a measure runs its CMD within its own cap, and a `measure`
 nested in a noisy job exits 75 at once: it can never get the window there.
@@ -96,27 +102,128 @@ def try_lock(fd, mode):
         return False
 
 
+class Label:
+    """A `<prefix>.<pid>` file that exists only while this process holds its lock: it
+    is written under a hidden name, locked, then renamed into place."""
+
+    def __init__(self, prefix, text):
+        DIR.mkdir(parents=True, exist_ok=True)
+        tmp = DIR / f".{prefix}.{os.getpid()}"
+        self.path = DIR / f"{prefix}.{os.getpid()}"
+        self.fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+        fcntl.flock(self.fd, fcntl.LOCK_EX)
+        os.write(self.fd, text.encode())
+        os.rename(tmp, self.path)
+
+    def drop(self):
+        self.path.unlink(missing_ok=True)
+        os.close(self.fd)
+
+
+def started_before(pid, t):
+    """Whether process `pid` was already running at epoch time `t` (Linux /proc)."""
+    try:
+        with open("/proc/stat") as fh:
+            btime = next(int(r.split()[1]) for r in fh if r.startswith("btime"))
+        with open(f"/proc/{pid}/stat") as fh:
+            fields = fh.read().rsplit(")", 1)[1].split()
+        if fields[0] in ("Z", "X"):
+            return False
+        starttime = int(fields[19])
+    except (OSError, StopIteration, ValueError, IndexError):
+        return False
+    return btime + starttime / os.sysconf("SC_CLK_TCK") <= t + 1
+
+
+def owned(f):
+    """Whether `f`'s owner is alive; a label nobody owns is removed.
+
+    Owned means its lock is held. An unlocked label (written by a copy of this tool
+    that predates the locks) still counts while its pid lives and that process was
+    already running when the label was written, which a reused pid never was."""
+    try:
+        fd = os.open(f, os.O_RDONLY)
+    except OSError:
+        return False
+    try:
+        if not try_lock(fd, fcntl.LOCK_SH):
+            return True
+        pid = f.name.rsplit(".", 1)[1]
+        if pid.isdigit() and alive(int(pid)) and started_before(int(pid), os.fstat(fd).st_mtime):
+            return True
+        try:
+            if os.fstat(fd).st_ino == os.stat(f).st_ino:
+                f.unlink()
+        except OSError:
+            pass
+        return False
+    finally:
+        os.close(fd)
+
+
 def live(prefix):
-    """The text of every `<prefix>.<pid>` file whose pid still lives; the rest are removed."""
+    """The text of every `<prefix>.<pid>` label still held; the rest are removed."""
+    for f in DIR.glob(f".{prefix}.*"):
+        try:
+            if time.time() - f.stat().st_mtime > 60:
+                owned(f)
+        except OSError:
+            pass
     parts = []
     for f in sorted(DIR.glob(f"{prefix}.*")):
-        pid = f.name.split(".", 1)[1]
         try:
-            if pid.isdigit() and alive(int(pid)):
+            if owned(f):
                 parts.append(f.read_text().strip())
-            else:
-                f.unlink(missing_ok=True)
         except OSError:
             pass
     return "; ".join(p for p in parts if p)
+
+
+def busy_cores(interval=0.5):
+    """(busy, cpus): cores kept busy over `interval` and the CPUs counted, from
+    /proc/stat; None where it is unavailable."""
+    def sample():
+        with open("/proc/stat") as fh:
+            rows = [r.split() for r in fh if r.startswith("cpu") and r[3:4].isdigit()]
+        return [(sum(map(int, r[1:8])), int(r[4]) + int(r[5])) for r in rows]
+    try:
+        a = sample()
+        time.sleep(interval)
+        b = sample()
+    except (OSError, ValueError, IndexError):
+        return None
+    busy = sum(1 - (ib - ia) / (tb - ta) for (ta, ia), (tb, ib) in zip(a, b) if tb > ta)
+    return round(busy, 1), len(b)
+
+
+def loaded():
+    """A description of the load when it is above the limit, else ''."""
+    setting = os.environ.get("TA_QUIET_MAX_LOAD", "")
+    if setting == "off":
+        return ""
+    sample = busy_cores()
+    if sample is None:
+        return ""
+    busy, cpus = sample
+    if re.fullmatch(r"[0-9]+(\.[0-9]+)?", setting):
+        limit = float(setting)
+    else:
+        limit = min(max(1.5, cpus / 8), cpus - 0.5)
+    return f"{busy:.1f} cores busy (limit {limit:g})" if busy > limit else ""
+
+
+def reasons(load=""):
+    """Why the window is not free: its holders, the queue and the load."""
+    queued = live("want")
+    parts = [who_holds(""), queued and f"queued: {queued}", load]
+    return "; ".join(p for p in parts if p) or "unknown holder"
 
 
 def who_holds(fallback="unknown holder"):
     parts = []
     try:
         line = HOLDER.read_text().strip()
-        m = re.search(r"\bpid=(\d+)", line)
-        if line and (m is None or alive(int(m.group(1)))) and measuring():
+        if line and measuring():
             parts.append(line)
     except OSError:
         pass
@@ -141,10 +248,7 @@ def older_waiter(pid):
         mine = (0, pid)
     for f in DIR.glob("want.*"):
         other = f.name.split(".", 1)[1]
-        if not other.isdigit() or int(other) == pid:
-            continue
-        if not alive(int(other)):
-            f.unlink(missing_ok=True)
+        if not other.isdigit() or int(other) == pid or not owned(f):
             continue
         if mine is None:
             return True
@@ -264,6 +368,15 @@ def run_bounded(cmd, secs, grace=None):
     return rc
 
 
+def acquire(fd, pid):
+    """'' once this process holds the window exclusively, else why it cannot yet."""
+    ahead = older_waiter(pid)
+    load = loaded()
+    if not ahead and not load and try_lock(fd, fcntl.LOCK_EX):
+        return ""
+    return reasons(load)
+
+
 def measure(who, secs, queue, cmd):
     secs = min(secs, MAX_SECS)
     signal.signal(signal.SIGTERM, interrupt)
@@ -282,24 +395,25 @@ def measure(who, secs, queue, cmd):
         except subprocess.TimeoutExpired:
             return 124
     fd = open_lock()
-    if older_waiter(0) or not try_lock(fd, fcntl.LOCK_EX):
+    why = acquire(fd, 0)
+    if why:
         if queue <= 0:
-            print(f"quiet: busy: {with_queue(who_holds())}", file=sys.stderr)
+            print(f"quiet: busy: {why}", file=sys.stderr)
             os.close(fd)
             return BUSY
-        want = DIR / f"want.{os.getpid()}"
-        want.write_text(f"WAITING to measure: {who} pid={os.getpid()} since={now()} for<={secs}s\n")
-        print(f"quiet: queued, waiting up to {queue}s: {with_queue(who_holds())}", file=sys.stderr)
+        want = Label("want", f"WAITING to measure: {who} pid={os.getpid()} since={now()} for<={secs}s\n")
+        print(f"quiet: queued, waiting up to {queue}s: {why}", file=sys.stderr)
         try:
             deadline = time.monotonic() + queue
-            while older_waiter(os.getpid()) or not try_lock(fd, fcntl.LOCK_EX):
+            while why:
                 if time.monotonic() >= deadline:
-                    print(f"quiet: gave up after {queue}s: {who_holds()}", file=sys.stderr)
+                    print(f"quiet: gave up after {queue}s: {why}", file=sys.stderr)
                     os.close(fd)
                     return BUSY
                 time.sleep(POLL)
+                why = acquire(fd, os.getpid())
         finally:
-            want.unlink(missing_ok=True)
+            want.drop()
     HOLDER.write_text(f"MEASURING by {who} pid={os.getpid()} since={now()} until<={now(secs)}\n")
     try:
         return run_bounded(cmd, secs)
@@ -322,13 +436,14 @@ def noisy(who, defer, cmd):
     while time.monotonic() < deadline and (live("want") or measuring()):
         time.sleep(POLL)
     fd = open_lock()
-    mark = DIR / f"noisy.{os.getpid()}"
-    done = threading.Event()
+    marks = []
+    done = threading.Lock()
 
     def register(blocking):
         fcntl.flock(fd, fcntl.LOCK_SH | (0 if blocking else fcntl.LOCK_NB))
-        if not done.is_set():
-            mark.write_text(f"NOISY by {who} pid={os.getpid()} since={now()}\n")
+        with done:
+            if marks is not None:
+                marks.append(Label("noisy", f"NOISY by {who} pid={os.getpid()} since={now()}\n"))
 
     def register_later():
         try:
@@ -348,8 +463,10 @@ def noisy(who, defer, cmd):
     try:
         return run_plain(cmd, env=marked("noisy"))
     finally:
-        done.set()
-        mark.unlink(missing_ok=True)
+        with done:
+            for m in marks:
+                m.drop()
+            marks = None
 
 
 def main(argv):
@@ -363,11 +480,15 @@ def main(argv):
         fd = open_lock()
         try:
             queued = live("want")
-            if try_lock(fd, fcntl.LOCK_EX):
-                print(f"free (queued: {queued})" if queued else "free")
-                return 1 if queued else 0
-            print(with_queue(who_holds()))
-            return 1
+            free = try_lock(fd, fcntl.LOCK_EX)
+            if free:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            load = loaded()
+            if not free:
+                print(reasons(load))
+                return 1
+            print("free" + (f" (queued: {queued})" if queued else "") + (f", but {load}" if load else ""))
+            return 1 if queued or load else 0
         finally:
             os.close(fd)
     if verb == "measure" and len(rest) >= 3:

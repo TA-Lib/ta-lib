@@ -304,6 +304,8 @@ timing run without any error. Run anything that measures time as
 turn, first come first served, for at most `<max>` seconds (900 at most), and
 exits 75 if the window stays taken. Without `--queue` it exits 75 at once.
 Either way, do other work and retry rather than wait in a loop of your own.
+It also refuses while other work keeps the machine busy, whoever started it
+(`status` shows the load; `TA_QUIET_MAX_LOAD=<cores>` sets the limit).
 Run heavy jobs (`generate`, `build.py` targets, raw cargo/cmake builds) as
 `scripts/quiet.py noisy <session> --defer=60 -- <cmd>` so measurers back off:
 `--defer` first waits, at most that long (60 at most), while a measurement runs

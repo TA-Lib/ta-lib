@@ -19,6 +19,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 RUN = ("import sys; sys.path.insert(0, %r); import quiet; quiet.POLL = 0.1; "
        "quiet.GRACE = (0.5, 0.5); sys.exit(quiet.main(sys.argv[1:]))" % HERE)
 CAPPED = RUN.replace("quiet.GRACE", "quiet.MAX_DEFER = quiet.MAX_QUEUE = 2; quiet.GRACE")
+# Holds a `<prefix>.<pid>` label the way quiet.py does (hidden name, lock, rename) until killed.
+HOLD = ("import fcntl, os, sys, time; d, prefix, mtime = sys.argv[1], sys.argv[2], float(sys.argv[3]); "
+        "tmp = os.path.join(d, '.%s.%d' % (prefix, os.getpid())); "
+        "fd = os.open(tmp, os.O_WRONLY | os.O_CREAT, 0o644); fcntl.flock(fd, fcntl.LOCK_EX); "
+        "os.write(fd, b'WAITING to measure: other pid=%d\\n' % os.getpid()); "
+        "mtime and os.utime(tmp, (mtime, mtime)); "
+        "os.rename(tmp, os.path.join(d, '%s.%d' % (prefix, os.getpid()))); "
+        "print('ready', flush=True); time.sleep(60)")
+
+
+def loadstub(path):
+    """A runner whose load probe reads the number of busy cores from `path`."""
+    return RUN.replace("quiet.GRACE", "quiet.busy_cores = lambda interval=0.5: "
+                       "(float(open(%r).read()), 16); quiet.GRACE" % path)
 
 
 class Quiet(unittest.TestCase):
@@ -27,6 +41,7 @@ class Quiet(unittest.TestCase):
         self.dir = Path(self.home) / ".cache" / "ta-lib" / "quiet"
         self.env = dict(os.environ, HOME=self.home)
         self.env.pop("TA_QUIET", None)
+        self.env["TA_QUIET_MAX_LOAD"] = "off"
         self.keep = []
 
     def tearDown(self):
@@ -71,15 +86,16 @@ class Quiet(unittest.TestCase):
     def measuring(self):
         return "MEASURING" in self.holder()
 
-    def fake_waiter(self, age=0):
-        pid = self.sleeper().pid
+    def held_label(self, prefix="want", mtime=0):
         self.dir.mkdir(parents=True, exist_ok=True)
-        f = self.dir / f"want.{pid}"
-        f.write_text(f"WAITING to measure: other pid={pid} since=then for<=60s\n")
-        if age:
-            t = time.time() - age
-            os.utime(f, (t, t))
-        return f
+        p = subprocess.Popen([sys.executable, "-c", HOLD, str(self.dir), prefix, str(mtime)],
+                             stdout=subprocess.PIPE, text=True)
+        self.keep.append(p)
+        self.assertEqual(p.stdout.readline().strip(), "ready")
+        return self.dir / f"{prefix}.{p.pid}"
+
+    def fake_waiter(self, age=0):
+        return self.held_label("want", time.time() - age if age else 0)
 
     # --- the window -----------------------------------------------------------
 
@@ -293,17 +309,128 @@ class Quiet(unittest.TestCase):
         self.assertEqual(self.q("measure", "other", "30", "--", "true").returncode, 75)
 
     def test_equal_arrival_goes_to_the_lower_pid(self):
-        a, b = sorted((self.sleeper().pid, self.sleeper().pid))
-        self.dir.mkdir(parents=True, exist_ok=True)
-        for pid in (a, b):
-            f = self.dir / f"want.{pid}"
-            f.write_text("WAITING\n")
-            os.utime(f, (1_000_000, 1_000_000))
+        a, b = sorted(int(self.held_label("want", 1_000_000).name.split(".")[1]) for _ in range(2))
         probe = ("import sys; sys.path.insert(0, %r); import quiet; "
                  "print(quiet.older_waiter(%d), quiet.older_waiter(%d))" % (HERE, a, b))
         r = subprocess.run([sys.executable, "-c", probe], env=self.env, capture_output=True,
                            text=True, timeout=60)
         self.assertEqual(r.stdout.split(), ["False", "True"])
+
+    def left_by_a_crash(self, prefix):
+        """An unlocked label whose pid now names a process started after it was written,
+        as after a reboot."""
+        f = self.dir / f"{prefix}.{self.sleeper().pid}"
+        self.dir.mkdir(parents=True, exist_ok=True)
+        f.write_text(f"{prefix.upper()} left by a crash\n")
+        t = time.time() - 3600
+        os.utime(f, (t, t))
+        return f
+
+    def test_an_unlocked_label_from_a_live_older_writer_still_counts(self):
+        self.dir.mkdir(parents=True, exist_ok=True)
+        pid = self.sleeper().pid
+        time.sleep(1.1)
+        f = self.dir / f"want.{pid}"
+        f.write_text("WAITING to measure: an older copy of the tool\n")
+        self.assertEqual(self.q("measure", "me", "30", "--", "true").returncode, 75)
+        self.assertTrue(f.exists())
+
+    def test_a_label_nobody_holds_is_stale_under_a_live_pid(self):
+        want = self.left_by_a_crash("want")
+        noisy = self.left_by_a_crash("noisy")
+        self.assertEqual(self.q("status").stdout.strip(), "free")
+        self.assertEqual(self.q("measure", "me", "30", "--", "true").returncode, 0)
+        self.assertFalse(want.exists())
+        self.spawn("noisy", "real", "--", "sleep", "3")
+        self.until(lambda: len(list(self.dir.glob("noisy.*"))) == 2)
+        s = self.q("status").stdout
+        self.assertIn("NOISY by real", s)
+        self.assertNotIn("crash", s)
+        self.assertFalse(noisy.exists())
+
+    # --- load -------------------------------------------------------------------
+
+    def load(self, cores):
+        """Sets the stubbed probe's reading, atomically: a reader must never see it empty."""
+        f, tmp = Path(self.home) / "load", Path(self.home) / "load.tmp"
+        tmp.write_text(str(cores))
+        tmp.replace(f)
+        return loadstub(str(f))
+
+    def run_with(self, runner, *args, **env):
+        return subprocess.run([sys.executable, "-c", runner, *args], env=dict(self.env, **env),
+                              capture_output=True, text=True, timeout=60)
+
+    def test_a_loaded_machine_turns_measurers_away(self):
+        runner = self.load(9)
+        r = self.run_with(runner, "measure", "me", "30", "--", "true", TA_QUIET_MAX_LOAD="2")
+        self.assertEqual(r.returncode, 75)
+        self.assertIn("9.0 cores busy (limit 2)", r.stderr)
+        s = self.run_with(runner, "status", TA_QUIET_MAX_LOAD="2")
+        self.assertEqual((s.returncode, s.stdout.strip()), (1, "free, but 9.0 cores busy (limit 2)"))
+        self.assertEqual(self.run_with(runner, "measure", "me", "30", "--", "true").returncode, 0)
+        self.spawn("noisy", "build", "--", "sleep", "3")
+        self.until(lambda: list(self.dir.glob("noisy.*")))
+        r = self.run_with(runner, "measure", "me", "30", "--", "true", TA_QUIET_MAX_LOAD="2")
+        self.assertIn("NOISY by build", r.stderr, "a loaded refusal hid the holder")
+        self.assertIn("cores busy", r.stderr)
+
+    def test_queued_measure_waits_for_the_load_to_drop(self):
+        runner = self.load(9)
+        p = subprocess.Popen([sys.executable, "-c", runner, "measure", "me", "30", "--queue=20",
+                              "--", "true"], env=dict(self.env, TA_QUIET_MAX_LOAD="2"),
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.keep.append(p)
+        self.until(lambda: list(self.dir.glob("want.*")))
+        time.sleep(1)
+        self.assertIsNone(p.poll(), "a queued measure ran on a loaded machine")
+        self.load(0)
+        self.assertEqual(p.wait(timeout=20), 0)
+        self.assertIn("cores busy", p.stderr.read())
+
+    def test_the_load_is_shown_when_it_holds_up_the_queue_head(self):
+        runner = self.load(9)
+        p = subprocess.Popen([sys.executable, "-c", runner, "measure", "me", "30", "--queue=20",
+                              "--", "true"], env=dict(self.env, TA_QUIET_MAX_LOAD="2"),
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.keep.append(p)
+        self.until(lambda: list(self.dir.glob("want.*")))
+        s = self.run_with(runner, "status", TA_QUIET_MAX_LOAD="2").stdout
+        self.assertIn("queued", s)
+        self.assertIn("cores busy", s)
+        r = self.run_with(runner, "measure", "other", "30", "--", "true", TA_QUIET_MAX_LOAD="2")
+        self.assertIn("cores busy", r.stderr)
+        self.assertNotIn("unknown holder", r.stderr)
+
+    def test_a_malformed_load_limit_falls_back_to_the_default(self):
+        for bad in ("inf", "nan", "-1", "1e9", " 3", "1.2.3"):
+            r = self.run_with(self.load(1.0), "measure", "me", "30", "--", "true", TA_QUIET_MAX_LOAD=bad)
+            self.assertEqual(r.returncode, 0, f"TA_QUIET_MAX_LOAD={bad!r} changed the limit")
+
+    def test_a_zombie_owner_does_not_keep_its_label_alive(self):
+        self.dir.mkdir(parents=True, exist_ok=True)
+        z = subprocess.Popen(["sh", "-c", "exit 0"])
+        self.keep.append(z)
+        self.until(lambda: open(f"/proc/{z.pid}/stat").read().rsplit(")", 1)[1].split()[0] == "Z")
+        f = self.dir / f"want.{z.pid}"
+        f.write_text("WAITING to measure: a killed waiter\n")
+        self.assertEqual(self.q("measure", "me", "30", "--", "true").returncode, 0)
+
+    def test_nested_measure_skips_the_load_check(self):
+        r = self.q("measure", "outer", "30", "--", "env", "TA_QUIET_MAX_LOAD=2",
+                   sys.executable, "-c", self.load(9), "measure", "inner", "30", "--", "true")
+        self.assertEqual(r.returncode, 0)
+
+    @unittest.skipUnless(sum(r.startswith("cpu") and r[3:4].isdigit()
+                             for r in open("/proc/stat")) >= 2 if os.path.exists("/proc/stat") else False,
+                         "needs Linux /proc/stat and at least 2 CPUs")
+    def test_real_load_is_seen(self):
+        spin = [subprocess.Popen([sys.executable, "-c", "while True: pass"]) for _ in range(3)]
+        self.keep.extend(spin)
+        time.sleep(0.5)
+        r = self.run_with(RUN, "measure", "me", "30", "--", "true", TA_QUIET_MAX_LOAD="1")
+        self.assertEqual(r.returncode, 75)
+        self.assertIn("cores busy", r.stderr)
 
     # --- exit codes -------------------------------------------------------------
 

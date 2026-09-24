@@ -15,7 +15,7 @@ GENERATE → BUILD → TEST → BENCHMARK → ANALYZE → PLAN → FIX → TEST 
 
 Run each GENERATE and BUILD command under `scripts/quiet.py noisy <session> --defer=60 --`
 and each BENCHMARK command under `scripts/quiet.py measure <session> <secs> --queue=900 --`.
-Exit 75 means the window stayed taken: do other work and retry.
+Exit 75 means the window stayed taken or the machine stayed loaded: do other work and retry.
 
 ### GENERATE
 ```bash
