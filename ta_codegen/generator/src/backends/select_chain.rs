@@ -137,7 +137,9 @@ fn collect<'a>(stmts: &'a [Statement], keep: &mut dyn FnMut(&Statement) -> bool,
 
 /// A loop's run-once prefix, the bodies of one pass, and whether a pass is
 /// guaranteed.
-fn loop_parts(s: &Statement) -> Option<(Vec<&[Statement]>, Vec<&[Statement]>, bool)> {
+type LoopParts<'a> = (Vec<&'a [Statement]>, Vec<&'a [Statement]>, bool);
+
+fn loop_parts(s: &Statement) -> Option<LoopParts<'_>> {
     match s {
         Statement::While { body, .. } | Statement::For { body, .. } => {
             Some((Vec::new(), vec![body.as_slice()], false))
