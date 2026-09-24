@@ -1,18 +1,27 @@
 #!/usr/bin/env python3
-"""Quiet-window coordination for timing runs on a shared machine. Never waits.
+"""Quiet-window coordination for timing runs on a shared machine. Every wait is bounded.
 
-    scripts/quiet.py status                        exit 0 if free, else name the holder, exit 1
-    scripts/quiet.py measure WHO SECS -- CMD...    run CMD holding the window exclusively, stopped
-                                                   after SECS (max 900, exit 124); exit 75 at once
-                                                   if it is taken by a measurement or a noisy job
-    scripts/quiet.py noisy WHO -- CMD...           run CMD now; measurers back off while it runs
+    scripts/quiet.py status                        exit 0 if free with no one queued, else
+                                                   name the holder and the queue, exit 1
+    scripts/quiet.py measure WHO SECS [--queue=MAX] -- CMD...
+                                                   run CMD holding the window exclusively, stopped
+                                                   after SECS (max 900, exit 124). Without --queue,
+                                                   exit 75 at once if the window is taken or anyone
+                                                   is queued; with it, wait in the queue, first come
+                                                   first served, at most MAX seconds, then exit 75
+    scripts/quiet.py noisy WHO [--defer=MAX] -- CMD...
+                                                   run CMD; measurers back off while it runs. With
+                                                   --defer, first wait at most MAX seconds while a
+                                                   measurement runs or is queued
 
-The lock is flock(2) on ~/.cache/ta-lib/quiet/bench.lock plus the `holder` and
-`noisy.<pid>` files beside it. Those files are the interface: every copy of this
-tool on the machine, in any worktree or language, must keep that layout. The
-kernel drops a flock when its holder dies, a measured CMD dies with its wrapper
-(Linux), and CMD never inherits the lock fd, so no crash leaves the window stuck
-or a measurement running outside it. Without fcntl (Windows) CMD runs unguarded.
+The lock is flock(2) on ~/.cache/ta-lib/quiet/bench.lock plus the `holder`,
+`noisy.<pid>` and `want.<pid>` files beside it. Those files are the interface:
+every copy of this tool on the machine, in any worktree or language, must keep
+that layout and serve the queue in the same order. The kernel drops a flock when
+its holder dies, a `.<pid>` file counts only while its pid lives, a measured CMD
+dies with its wrapper (Linux), and CMD never inherits the lock fd, so no crash
+leaves the window stuck or a measurement running outside it. Without fcntl
+(Windows) CMD runs unguarded.
 """
 
 import datetime
@@ -22,6 +31,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
 try:
@@ -40,6 +50,7 @@ LOCK = DIR / "bench.lock"
 HOLDER = DIR / "holder"
 BUSY = 75
 MAX_SECS = 900
+POLL = 5
 PR_SET_PDEATHSIG = 1
 
 
@@ -76,6 +87,21 @@ def try_lock(fd, mode):
         return False
 
 
+def live(prefix):
+    """The text of every `<prefix>.<pid>` file whose pid still lives; the rest are removed."""
+    parts = []
+    for f in sorted(DIR.glob(f"{prefix}.*")):
+        pid = f.name.split(".", 1)[1]
+        try:
+            if pid.isdigit() and alive(int(pid)):
+                parts.append(f.read_text().strip())
+            else:
+                f.unlink(missing_ok=True)
+        except OSError:
+            pass
+    return "; ".join(p for p in parts if p)
+
+
 def who_holds():
     parts = []
     try:
@@ -85,16 +111,54 @@ def who_holds():
             parts.append(line)
     except OSError:
         pass
-    for f in DIR.glob("noisy.*"):
-        pid = f.name.split(".", 1)[1]
+    parts.append(live("noisy"))
+    return "; ".join(p for p in parts if p) or "unknown holder"
+
+
+def with_queue(text):
+    queued = live("want")
+    return f"{text}; queued: {queued}" if queued else text
+
+
+def older_waiter(pid):
+    """Whether a live queued measurer other than `pid` came first; any at all for pid 0.
+
+    First come is the `want` file's mtime in whole seconds, then the lower pid. The
+    shell copy orders by that same key, which is what lets both serve one queue.
+    """
+    try:
+        mine = (int((DIR / f"want.{pid}").stat().st_mtime), pid) if pid else None
+    except OSError:
+        mine = (0, pid)
+    for f in DIR.glob("want.*"):
+        other = f.name.split(".", 1)[1]
+        if not other.isdigit() or int(other) == pid:
+            continue
+        if not alive(int(other)):
+            f.unlink(missing_ok=True)
+            continue
+        if mine is None:
+            return True
         try:
-            if pid.isdigit() and alive(int(pid)):
-                parts.append(f.read_text().strip())
-            else:
-                f.unlink(missing_ok=True)
+            if (int(f.stat().st_mtime), int(other)) < mine:
+                return True
         except OSError:
             pass
-    return "; ".join(p for p in parts if p) or "unknown holder"
+    return False
+
+
+def measuring():
+    """Whether a measurement holds the window now."""
+    try:
+        if not HOLDER.read_text().strip():
+            return False
+    except OSError:
+        return False
+    fd = open_lock()
+    try:
+        return not try_lock(fd, fcntl.LOCK_EX)
+    finally:
+        os.close(fd)
 
 
 def exit_code(rc):
@@ -168,7 +232,7 @@ def run_bounded(cmd, secs):
     return rc
 
 
-def measure(who, secs, cmd):
+def measure(who, secs, queue, cmd):
     secs = min(secs, MAX_SECS)
     if fcntl is None:
         try:
@@ -176,9 +240,23 @@ def measure(who, secs, cmd):
         except subprocess.TimeoutExpired:
             return 124
     fd = open_lock()
-    if not try_lock(fd, fcntl.LOCK_EX):
-        print(f"quiet: busy: {who_holds()}", file=sys.stderr)
-        return BUSY
+    if older_waiter(0) or not try_lock(fd, fcntl.LOCK_EX):
+        if queue <= 0:
+            print(f"quiet: busy: {with_queue(who_holds())}", file=sys.stderr)
+            os.close(fd)
+            return BUSY
+        want = DIR / f"want.{os.getpid()}"
+        want.write_text(f"WAITING to measure: {who} pid={os.getpid()} since={now()} for<={secs}s\n")
+        try:
+            deadline = time.monotonic() + queue
+            while older_waiter(os.getpid()) or not try_lock(fd, fcntl.LOCK_EX):
+                if time.monotonic() >= deadline:
+                    print(f"quiet: gave up after {queue}s: {who_holds()}", file=sys.stderr)
+                    os.close(fd)
+                    return BUSY
+                time.sleep(POLL)
+        finally:
+            want.unlink(missing_ok=True)
     signal.signal(signal.SIGTERM, interrupt)
     signal.signal(signal.SIGHUP, interrupt)
     HOLDER.write_text(f"MEASURING by {who} pid={os.getpid()} since={now()} until<={now(secs)}\n")
@@ -189,9 +267,12 @@ def measure(who, secs, cmd):
         os.close(fd)
 
 
-def noisy(who, cmd):
+def noisy(who, defer, cmd):
     if fcntl is None:
         return subprocess.call(cmd)
+    deadline = time.monotonic() + defer
+    while time.monotonic() < deadline and (measuring() or live("want")):
+        time.sleep(POLL)
     fd = open_lock()
     mark = DIR / f"noisy.{os.getpid()}"
     done = threading.Event()
@@ -213,6 +294,9 @@ def noisy(who, cmd):
         print(f"quiet: note, a measurement is running ({who_holds()}); running anyway",
               file=sys.stderr)
         threading.Thread(target=register_later, daemon=True).start()
+    queued = live("want")
+    if queued:
+        print(f"quiet: note, queued measurement: {queued}", file=sys.stderr)
     p, rc = start(cmd)
     try:
         if p is None:
@@ -242,10 +326,11 @@ def main(argv):
             return 0
         fd = open_lock()
         try:
+            queued = live("want")
             if try_lock(fd, fcntl.LOCK_EX):
-                print("free")
-                return 0
-            print(who_holds())
+                print(f"free (queued: {queued})" if queued else "free")
+                return 1 if queued else 0
+            print(with_queue(who_holds()))
             return 1
         finally:
             os.close(fd)
@@ -253,13 +338,27 @@ def main(argv):
         who, secs, cmd = rest[0], rest[1], rest[2:]
         if not secs.isdigit() or int(secs) == 0:
             return usage()
-        cmd = cmd[1:] if cmd[0] == "--" else cmd
-        return measure(who, int(secs), cmd) if cmd else usage()
+        queue, cmd = option(cmd, "--queue=")
+        if queue is None:
+            return usage()
+        cmd = cmd[1:] if cmd and cmd[0] == "--" else cmd
+        return measure(who, int(secs), queue, cmd) if cmd else usage()
     if verb == "noisy" and len(rest) >= 2:
         who, cmd = rest[0], rest[1:]
-        cmd = cmd[1:] if cmd[0] == "--" else cmd
-        return noisy(who, cmd) if cmd else usage()
+        defer, cmd = option(cmd, "--defer=")
+        if defer is None:
+            return usage()
+        cmd = cmd[1:] if cmd and cmd[0] == "--" else cmd
+        return noisy(who, defer, cmd) if cmd else usage()
     return usage()
+
+
+def option(args, flag):
+    """`(seconds, rest)` for a leading `<flag><seconds>`: 0 when absent, None when malformed."""
+    if not args or not args[0].startswith(flag):
+        return 0, args
+    value = args[0][len(flag):]
+    return (int(value), args[1:]) if value.isdigit() else (None, args)
 
 
 if __name__ == "__main__":

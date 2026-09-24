@@ -13,9 +13,9 @@ Autonomously evolve ta-lib's codegen output toward performance parity with the C
 GENERATE → BUILD → TEST → BENCHMARK → ANALYZE → PLAN → FIX → TEST → BENCHMARK → COMMIT/REVERT → repeat
 ```
 
-Run each GENERATE and BUILD command under `scripts/quiet.py noisy <session> --`
-and each BENCHMARK command under `scripts/quiet.py measure <session> <secs> --`.
-Exit 75 means another session holds the window: do other work and retry.
+Run each GENERATE and BUILD command under `scripts/quiet.py noisy <session> --defer=900 --`
+and each BENCHMARK command under `scripts/quiet.py measure <session> <secs> --queue=900 --`.
+Exit 75 means the window stayed taken: do other work and retry.
 
 ### GENERATE
 ```bash

@@ -7,14 +7,14 @@ description: Benchmarking TA-Lib — ta_bench, ta_bench_direct, ta_bench_stream,
 
 ```bash
 # Full pipeline: build + regen + correctness as a heavy job, then the benches in the quiet window
-scripts/quiet.py noisy <session> -- scripts/regtest.py --no-perftest --no-direct-bench
-scripts/quiet.py measure <session> 900 -- scripts/regtest.py --test-only --no-regtest
+scripts/quiet.py noisy <session> --defer=900 -- scripts/regtest.py --no-perftest --no-direct-bench
+scripts/quiet.py measure <session> 900 --queue=900 -- scripts/regtest.py --test-only --no-regtest
 
 # Benchmark specific indicators (trustworthy — isolated, high iterations)
-cd bin && ../scripts/quiet.py measure <session> 120 -- ./ta_bench --language=cref,c --function=RSI,SMA --points=100000 --iters=500
+cd bin && ../scripts/quiet.py measure <session> 120 --queue=900 -- ./ta_bench --language=cref,c --function=RSI,SMA --points=100000 --iters=500
 
 # Full benchmark (noisy — use for overview, verify outliers in isolation)
-cd bin && ../scripts/quiet.py measure <session> 900 -- ./ta_bench --language=cref,c --points=100000 --iters=200
+cd bin && ../scripts/quiet.py measure <session> 900 --queue=900 -- ./ta_bench --language=cref,c --points=100000 --iters=200
 ```
 
 `quiet.py` caps a window at 900 s: split a longer run by `--function=`. The

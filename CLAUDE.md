@@ -293,12 +293,16 @@ corpus.
 
 When several sessions share a machine, one session's build skews another's
 timing run without any error. Run anything that measures time as
-`scripts/quiet.py measure <session> <secs> -- <cmd>`. It exits 75 at once when
-the window is taken: do other work and retry, never wait in a loop. Run heavy
-jobs (`generate`, `build.py` targets, raw cargo/cmake builds) as
-`scripts/quiet.py noisy <session> -- <cmd>` so measurers back off; it never
-blocks you. `scripts/regtest.py` both builds and times, so split it: `noisy`
+`scripts/quiet.py measure <session> <secs> --queue=<max> -- <cmd>`: it waits its
+turn, first come first served, for at most `<max>` seconds, and exits 75 if the
+window stays taken. Without `--queue` it exits 75 at once. Either way, do other
+work and retry rather than wait in a loop of your own. Run heavy jobs
+(`generate`, `build.py` targets, raw cargo/cmake builds) as
+`scripts/quiet.py noisy <session> --defer=900 -- <cmd>` so measurers back off:
+`--defer` first waits, at most that long, while a measurement runs or is queued,
+because back-to-back heavy jobs otherwise starve a queued measurer.
+`scripts/regtest.py` both builds and times, so split it: `noisy`
 with `--no-perftest --no-direct-bench`, then `measure` with
 `--test-only --no-regtest`. `bench_icount.py` counts instructions, which load
 cannot move, but it builds first: run it as `noisy`. `scripts/quiet.py status`
-names the holder.
+names the holder and the queue.

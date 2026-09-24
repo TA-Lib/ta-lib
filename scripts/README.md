@@ -12,7 +12,8 @@ See `README-DEVS.md` at the repo root for the build/test/release walkthroughs.
 | `regtest.py` | Full pipeline: generate → build → correctness → benchmark. The nightly drives it three ways. |
 | `python-dev.py` | Keeps `~/ta-lib-python` on **dev** in step with this worktree: builds the wrapper from both `_ta_lib.pyx` and the committed `_ta_lib.c`, runs its suite, checks that regenerating changes nothing, and diffs its enum/flag tables against `include/`. `sync` regenerates the drift. Commits nothing. |
 | `abi.py` | `check`: the PR/nightly gate on the public C ABI and the shared library version. `sync.py` does the updating. |
-| `quiet.py` | The shared quiet window for timing runs across sessions on one machine: `measure` holds it exclusively (exit 75 at once if taken), `noisy` marks a heavy job so measurers back off, `status` names the holder. Never waits. |
+| `quiet.py` | The shared quiet window for timing runs across sessions on one machine: `measure` holds it exclusively (exit 75 if taken; `--queue` waits its turn, first come first served), `noisy` marks a heavy job so measurers back off (`--defer` lets a running or queued measurement go first), `status` names the holder and the queue. Every wait is bounded. |
+| `test_quiet.py` | Tests for `quiet.py`, each against a throwaway HOME. |
 | `gen_test_reference.py` | Rebuilds `ta_regtest`'s baked numerical goldens (`src/tools/ta_regtest/ta_test_reference_golden.{h,c}`) from the datasets in `ta_test_reference.c`, in exact rational arithmetic. Run it when a dataset changes; `--check` verifies in place. Deliberately NOT on a gate — `ta_regtest --function=REFERENCE` catches a stale table at runtime, because the oracle stops reproducing it. |
 
 ## Verification gates
