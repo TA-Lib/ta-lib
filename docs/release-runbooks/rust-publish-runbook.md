@@ -6,8 +6,9 @@ Releasing the `ta-lib` crate to crates.io.
 has to be public before the crate publishes; `README.md` in this directory holds
 the order.
 
-**Status:** `ta-lib-dispatch` 0.1.2 published 2026-08-12. `ta-lib` not yet published; the
-remaining blockers are tracked in issue #179.
+**Status:** `ta-lib-dispatch` 0.1.2 published 2026-08-12. `ta-lib` not yet published: 0.8.1
+shipped C and Java only, so the first crate carries whatever `VERSION` holds at the next
+release. The remaining blockers are tracked in issue #179.
 
 This is a **per-release** procedure, not a one-off: the crate version is locked to the repo
 `VERSION`, and a release in practice changes something every backend shares. It runs on its own path, though: cutting a release publishes the C assets and
@@ -81,9 +82,10 @@ per-release rather than one-off: a personal token on one machine is a bus factor
 
 (RP1) Pre-flight.
 
-`main nightly tests` runs these same gates against `main` every night (#179 E5). Run
-them here anyway: the nightly can predate the commit being tagged, and the release path
-itself compiles no Rust.
+`main nightly tests` runs these gates against `main` every night, plus the ones a local
+machine cannot: the debug-profile overflow sweep, the MSRV floor, arm64, Windows and macOS.
+Confirm its latest run is green on the commit being tagged. Run the gates below anyway: the
+nightly can predate that commit, and the release path itself compiles no Rust.
 
 From the repo root:
 
@@ -126,7 +128,7 @@ cd ta_codegen/output/rust
 cargo publish -p ta-lib-dispatch --dry-run     # only if dispatch changed
 cargo publish -p ta-lib-dispatch               # permanent
 
-cargo publish -p ta-lib --dry-run              # resolves only after the above is live
+cargo publish -p ta-lib --dry-run              # if dispatch changed, resolves only once it is live
 cargo publish -p ta-lib                        # permanent
 ```
 
@@ -139,9 +141,9 @@ lag — retry in a minute. It is not a manifest problem.
 **Badges lag by minutes.** The README badges are live shields.io / docs.rs renders keyed
   on crate *name*; they report the registry's newest version and know nothing about the
   tree. Nothing to update.
-(RP5) **Flip the website** (#179 B4) — `website/src/api/rust/README.md` and
-  `website/src/install/README.md` still carry pre-release banners. The site deploys from
-  `main` on push.
+(RP5) **Flip the website** (#179 B4): remove the "Not yet released" banner from
+  `website/src/api/rust/README.md` and `website/src/api/rust/stream/README.md`. The site
+  deploys from `main` on push.
 (RP6) **`cargo owner --list`** on both crates if the maintainer set changed.
 
 ## Known, not covered here
@@ -151,5 +153,3 @@ lag — retry in a minute. It is not a manifest problem.
   README badges advertise that crate and its failing docs build. Whether to yank is #179 B2
   — it breaks no published crate and no existing lockfile, and only blocks new `^0.1`
   resolutions.
-- Nothing has ever run `cargo publish --dry-run` in CI (#179 E1). A packaging break is
-  currently discovered with the version already burned.

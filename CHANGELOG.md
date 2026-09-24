@@ -8,6 +8,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 
 ## [0.8.2] Not Released Yet
 ### Added
+- Rust: the `ta-lib` crate is on crates.io (`cargo add ta-lib`). Its versions 0.1.x are an
+  unrelated earlier crate that used the same name. (#179)
 - `find_package(ta-lib CONFIG)` now works against a CMake install and provides the `ta-lib::ta-lib`
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - New TA Functions:
