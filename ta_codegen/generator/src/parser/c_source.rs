@@ -1607,6 +1607,9 @@ struct Parser {
     /// CIRCBUF id -> element layout, captured at PROLOG so INIT/INIT_LOCAL_ONLY/DESTROY
     /// can carry the layout without a cross-statement lookup.
     circbufs: HashMap<String, CircBufLayout>,
+    /// How many [`parse_statements`](Parser::parse_statements) calls are open: 1
+    /// while parsing a function's own scope.
+    depth: usize,
 }
 
 /// Comment slots accumulated while climbing an if-condition's boolean spine: one
@@ -1630,6 +1633,16 @@ enum SpineDrain {
     GroupClose,
 }
 
+/// Whether `s` runs in place. An initializer runs ahead of the body; a chained
+/// assignment and a bare `{ .. }` both parse as a block.
+fn runs(s: &Statement) -> bool {
+    match s {
+        Statement::CircBuf(CircBuf::Prolog { .. }) | Statement::VarDecl { .. } => false,
+        Statement::Block { body } => body.iter().any(runs),
+        _ => true,
+    }
+}
+
 impl Parser {
     #[cfg(test)]
     fn new(tokens: Vec<Token>) -> Self {
@@ -1646,6 +1659,7 @@ impl Parser {
             comment_idx: 0,
             struct_defs: HashMap::new(),
             circbufs: HashMap::new(),
+            depth: 0,
         }
     }
 
@@ -1768,8 +1782,10 @@ impl Parser {
     }
 
     fn parse_statements(&mut self) -> Vec<Statement> {
+        self.depth += 1;
         let mut stmts = Vec::new();
         let mut declared_vars: HashSet<String> = HashSet::new();
+        let mut ran = false;
         while self.pos < self.tokens.len() {
             // Flush comments that precede the token at the current boundary so
             // they render immediately before the upcoming statement.
@@ -1782,18 +1798,25 @@ impl Parser {
                 self.advance();
                 continue;
             }
+            let at = self.pos;
             match self.peek().cloned() {
-                Some(Token::Ident(ref s)) if Self::is_type_keyword(s) => {
+                Some(Token::Ident(ref s)) if Self::is_type_keyword(s) || s == "const" => {
+                    if s == "const" {
+                        self.advance();
+                    }
                     let decls = self.parse_var_decl();
-                    Self::dedup_var_decls(decls, &mut declared_vars, &mut stmts);
-                }
-                Some(Token::Ident(ref s)) if s == "const" => {
-                    self.advance(); // consume `const`
-                    let decls = self.parse_var_decl();
+                    if ran && self.depth == 1 {
+                        self.reject_late_initializer(&decls, &declared_vars, at);
+                    }
                     Self::dedup_var_decls(decls, &mut declared_vars, &mut stmts);
                 }
                 _ => {
-                    stmts.push(self.parse_statement());
+                    let stmt = self.parse_statement();
+                    if ran && self.depth == 1 {
+                        self.reject_late_initializer(std::slice::from_ref(&stmt), &declared_vars, at);
+                    }
+                    ran |= runs(&stmt);
+                    stmts.push(stmt);
                 }
             }
         }
@@ -1801,7 +1824,32 @@ impl Parser {
         // or at end of the top-level body where the loop exits without a boundary
         // check at the final position).
         self.flush_comments(self.pos, &mut stmts);
+        self.depth -= 1;
         stmts
+    }
+
+    /// Every backend runs a function-scope initializer ahead of the body, so one
+    /// declared after a statement would read what that statement had not yet
+    /// computed, the same wrong way in all four. A re-declaration is already an
+    /// assignment in place, and a declaration inside a block stays in its block.
+    fn reject_late_initializer(&self, decls: &[Statement], declared: &HashSet<String>, at: usize) {
+        let late = decls.iter().find_map(|d| match d {
+            Statement::VarDecl { name, init: Some(_), .. } if !declared.contains(name) => Some(name),
+            _ => None,
+        });
+        if let Some(name) = late {
+            let loc = match (self.file.as_deref(), self.tok_lines.get(at)) {
+                (Some(f), Some(l)) => format!("{f}:{l}: "),
+                (Some(f), None) => format!("{f}: "),
+                _ => String::new(),
+            };
+            panic!(
+                "{loc}`{name}` is declared with an initializer after the function's first \
+                 statement. The generated code runs function-scope initializers before the \
+                 body, not here. Declare `{name}` with the other locals at the top of the \
+                 function and assign it here instead."
+            );
+        }
     }
 
     /// Deduplicate variable declarations: if a name was already declared, convert
@@ -4523,6 +4571,42 @@ TA_RetCode test_func(int startIdx, int endIdx, int *outBegIdx, int *outNBElement
     fn test_tokenize_unexpected_char() {
         // Line 396: unexpected character
         tokenize("int x = @;");
+    }
+
+    // ===== Function-scope initializers after a statement =====
+
+    fn parse_scope(src: &str) -> Vec<Statement> {
+        Parser::new(tokenize(src)).parse_statements()
+    }
+
+    #[test]
+    #[should_panic(expected = "`b` is declared with an initializer after the function's first statement")]
+    fn a_function_scope_initializer_after_a_statement_is_rejected() {
+        parse_scope("int a; a = 1; double b = a;");
+    }
+
+    #[test]
+    #[should_panic(expected = "`c` is declared with an initializer after the function's first statement")]
+    fn a_chained_assignment_counts_as_a_statement() {
+        parse_scope("int a, b; a = b = 1; double c = a;");
+    }
+
+    #[test]
+    #[should_panic(expected = "`b` is declared with an initializer after the function's first statement")]
+    fn a_bare_block_counts_as_a_statement() {
+        parse_scope("int a; { a = 1; } double b = a;");
+    }
+
+    #[test]
+    fn initializers_the_backends_place_correctly_are_accepted() {
+        // Inside a block, after a statement: every backend keeps it in its block.
+        parse_scope("int a; a = 1; while( a ) { a = 0; double c = 2.0; }");
+        // A re-declaration: already an assignment in place.
+        parse_scope("double b = 1.0; int a; a = 2; double b = 3.0;");
+        // No initializer.
+        parse_scope("int a; a = 1; double c;");
+        // CIRCBUF_PROLOG declares; it runs nothing.
+        parse_scope("CIRCBUF_PROLOG(buf,double,30); double c = 2.0;");
     }
 
     // ===== extract_func_params edge cases =====

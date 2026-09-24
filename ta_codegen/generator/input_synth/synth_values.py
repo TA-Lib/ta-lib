@@ -212,6 +212,15 @@ GOLDEN = {
         params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
         outs={"outReal": [-1999900.0, 250.5, -80.25, 2000000.001, -5.5, -249.75,
                           -700.001, -6.5, 212.0, -800.0, -33.0, -911.9, 1280.0]}),
+
+    # cap = max(in[0] = 100, 1000) = 1000, ramp = 2.0 * 3, offset = 3.0,
+    # bias = 7.0 + 0.25, weight = 0.5: ((((x - 1000) + 6) + 3) + 7.25) * 0.5,
+    # in C's left-to-right order. A lost initializer moves every value.
+    "TA_SYNTH18": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
+        outs={"outReal": [999508.125, -491.875, -466.75, -491.8755, -489.125, -341.875,
+                          -141.875, -485.875, -447.875, 258.125, -469.375,
+                          8.074999999999989, -381.875]}),
 }
 
 
