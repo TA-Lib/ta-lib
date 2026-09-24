@@ -310,8 +310,8 @@ Run heavy jobs (`generate`, `build.py` targets, raw cargo/cmake builds) as
 or is queued, because back-to-back heavy jobs otherwise starve a queued measurer.
 A deferred job starts after 60 s even inside a running measurement, so keep each
 `measure` window short and split a long campaign into several.
-`scripts/regtest.py` both builds and times, so split it: `noisy`
-with `--no-perftest --no-direct-bench`, then `measure` with
+`scripts/regtest.py` both builds and times, so split it: a heavy job with
+`--no-perftest --no-direct-bench`, then `measure` with
 `--test-only --no-regtest`. `bench_icount.py` counts instructions, which load
-cannot move, but it builds first: run it as `noisy`. `scripts/quiet.py status`
+cannot move, but it builds first: run it as a heavy job. `scripts/quiet.py status`
 names the holder and the queue.

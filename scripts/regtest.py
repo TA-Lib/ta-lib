@@ -243,6 +243,16 @@ def main():
                 os.path.join(bin_dir, "ta_codegen_serve_rust"),
             )
 
+    # The newest frozen release's serve, the bench's cref column, built with the rest so
+    # a later --test-only bench (the quiet-window split) finds it current. After generate,
+    # so it carries the transport this run speaks.
+    if not no_build:
+        try:
+            ta_ref.build_serve(root, build_dir, ta_ref.newest(root))
+        except ta_ref.RefError as e:
+            print(f"regtest.py: {e}")
+            sys.exit(1)
+
     # 5. regtest — ONE invocation. --codegen runs the C reference tests and the
     #    cross-language verification in the same process, which is what lets
     #    server_verify ride the hand-written tests (it is gated on them running).
@@ -282,19 +292,12 @@ def main():
                        "--period=", "--shape=", "--seed=", "--regime-period=",
                        "--trend-strength=")
         # Always include cref for comparison, even when --language= filters.
-        # Built here, after generate, so it carries the transport this run speaks.
         bench_args = [a for a in passthrough if a.startswith(BENCH_FLAGS)]
         if lang_filter and "cref" not in lang_filter:
             for i, a in enumerate(bench_args):
                 if a.startswith("--language="):
                     bench_args[i] = a + ",cref"
                     break
-        if not no_build:
-            try:
-                ta_ref.build_serve(root, build_dir, ta_ref.newest(root))
-            except ta_ref.RefError as e:
-                print(f"regtest.py: {e}")
-                sys.exit(1)
         bench_rc = subprocess.run(
             [os.path.join(bin_dir, "ta_bench")] + bench_args,
             cwd=bin_dir,
