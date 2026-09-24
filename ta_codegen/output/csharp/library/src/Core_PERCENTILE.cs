@@ -36,6 +36,8 @@
 
 using System;
 
+/* Using percentile_ALT1 for TA_ALT={ALL_API,CSHARP} */
+
 #pragma warning disable CS0219 // variable assigned but never used
 
 namespace TALib;
@@ -55,6 +57,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  090426 MF,CC  First version (issue #368).
     *  092226 MF,CC  O(1) read, binary search from 256 values, one shift per bar (issue #435).
+    *  092326 MF,CC  Branchless update kernels, merge-sorted first window (issue #435).
     */
    /// <summary>
    /// Number of leading input bars <c>Percentile</c> consumes before it can
@@ -608,6 +611,8 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /**** Streaming API *****/
+
+   /* Using percentile_ALT1 for TA_ALT={ALL_API,CSHARP} */
 
    /// <summary>A live <c>PERCENTILE</c> stream: one value per closed bar, bit-identical
    /// to <c>PERCENTILE</c> over the same series.</summary>

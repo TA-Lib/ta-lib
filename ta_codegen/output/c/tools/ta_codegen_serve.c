@@ -5161,8 +5161,26 @@ static int sv_steq_TA_PERCENTILE( const struct TA_PERCENTILE_Stream *a, const st
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInPercentile, b->optInPercentile, z) ) { *w = "optInPercentile"; return 1; }
+   if( sv_xtier_ne(a->loV, b->loV, z) ) { *w = "loV"; return 1; }
+   if( sv_xtier_ne(a->hiV, b->hiV, z) ) { *w = "hiV"; return 1; }
+   if( sv_xtier_ne(a->last, b->last, z) ) { *w = "last"; return 1; }
+   if( sv_xtier_ne(a->pendNew, b->pendNew, z) ) { *w = "pendNew"; return 1; }
+   if( sv_xtier_ne(a->pendOld, b->pendOld, z) ) { *w = "pendOld"; return 1; }
    if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
    if( a->rank != b->rank ) { *w = "rank"; return 1; }
+   if( a->hiRank != b->hiRank ) { *w = "hiRank"; return 1; }
+   if( a->loRank != b->loRank ) { *w = "loRank"; return 1; }
+   if( a->tail != b->tail ) { *w = "tail"; return 1; }
+   if( a->lim != b->lim ) { *w = "lim"; return 1; }
+   if( a->run != b->run ) { *w = "run"; return 1; }
+   if( a->dPrev != b->dPrev ) { *w = "dPrev"; return 1; }
+   if( a->trend != b->trend ) { *w = "trend"; return 1; }
+   if( a->layout != b->layout ) { *w = "layout"; return 1; }
+   if( a->head != b->head ) { *w = "head"; return 1; }
+   if( a->pendPos != b->pendPos ) { *w = "pendPos"; return 1; }
+   if( a->pendDel != b->pendDel ) { *w = "pendDel"; return 1; }
+   if( a->runLen != b->runLen ) { *w = "runLen"; return 1; }
+   if( a->saving != b->saving ) { *w = "saving"; return 1; }
    if( a->ring_Idx != b->ring_Idx ) { *w = "ring_Idx"; return 1; }
    if( a->maxIdx_ring != b->maxIdx_ring ) { *w = "maxIdx_ring"; return 1; }
    if( a->sorted_Idx != b->sorted_Idx ) { *w = "sorted_Idx"; return 1; }
