@@ -69,8 +69,8 @@ Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
 lives under `output/` too (the Java shared types, `Core.java` outside the GENCODE
 markers, the test suites, the C# `TALib.csproj`, `pom.xml`); the generator
-preserves those and never overwrites them. Of `pom.xml` only the `<version>` is
-written for you, by `scripts/sync.py`.
+preserves those and never overwrites them. Of `pom.xml` and `TALib.csproj` only
+the version is written for you, by `scripts/sync.py`.
 
 ### API tiers and entry points
 

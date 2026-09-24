@@ -47,7 +47,11 @@ if __name__ == "__main__":
     # release has to restate a count that is published immutably (Maven Central,
     # crates.io) and cannot be corrected afterwards. The floor is only worth
     # claiming while it is true, which is what this checks.
-    pom_path = path_join(root_dir, 'ta_codegen', 'output', 'java', 'library', 'pom.xml')
+    claim_paths = (
+        path_join(root_dir, 'ta_codegen', 'output', 'java', 'library', 'pom.xml'),
+        path_join(root_dir, 'ta_codegen', 'output', 'rust', 'library', 'Cargo.toml'),
+        path_join(root_dir, 'ta_codegen', 'output', 'csharp', 'library', 'TALib.csproj'),
+    )
     input_dir = path_join(root_dir, 'ta_codegen', 'input')
     func_count = sum(
         1 for d in os.listdir(input_dir)
@@ -59,11 +63,11 @@ if __name__ == "__main__":
         print(f"Error: only {func_count} indicators in {input_dir}, but the shipped")
         print("       descriptions claim '200+ indicators'. Lower the claim or stop shipping it.")
         exit(1)
-    with open(pom_path, 'r') as f:
-        pom_text = f.read()
-    if '200+ indicators' not in pom_text:
-        print(f"Error: {pom_path} <description> does not say '200+ indicators'.")
-        exit(1)
+    for claim_path in claim_paths:
+        with open(claim_path, 'r') as f:
+            if '200+ indicators' not in f.read():
+                print(f"Error: {claim_path} no longer claims '200+ indicators'.")
+                exit(1)
 
     # generate refuses non-ASCII only in the headers it writes; the rest of
     # include/ is hand-written.

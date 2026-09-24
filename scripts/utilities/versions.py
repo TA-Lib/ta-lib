@@ -482,6 +482,65 @@ def set_version_string_pom(root_dir: str, new_version: str):
     with open(pom_path, 'w') as pom_file:
         pom_file.writelines(lines)
 
+def get_version_string_csproj(root_dir: str) -> str:
+    """
+    Parse the shipped C# library manifest
+    ta_codegen/output/csharp/library/TALib.csproj to get the package version.
+    Example:
+      <Version>0.6.4</Version>
+
+    Anchored on the four-space PropertyGroup indent, the way the pom is anchored
+    on its two-space coordinate: it is the package's own version, not one a
+    deeper or conditioned element may carry later.
+    """
+    csproj_path = path_join(root_dir, "ta_codegen/output", "csharp", "library", "TALib.csproj")
+
+    if not os.path.exists(csproj_path):
+        print(f"Error: TALib.csproj not found at {csproj_path}")
+        sys.exit(1)
+
+    version_pattern = re.compile(r'^    <Version>(\d+\.\d+\.\d+)</Version>')
+
+    try:
+        with open(csproj_path, 'r') as csproj_file:
+            for line in csproj_file:
+                match = version_pattern.search(line)
+                if match:
+                    return match.group(1)
+
+        print(f"Error: Package version not found in {csproj_path}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error reading TALib.csproj file: {e}")
+        sys.exit(1)
+
+def set_version_string_csproj(root_dir: str, new_version: str):
+    """
+    Update the package version in the shipped C# library's TALib.csproj.
+    """
+    if get_version_string_csproj(root_dir) == new_version:
+        return  # No changes needed. The version is already up to date.
+
+    csproj_path = path_join(root_dir, "ta_codegen/output", "csharp", "library", "TALib.csproj")
+    version_pattern = re.compile(r'^    <Version>(\d+\.\d+\.\d+)</Version>')
+
+    with open(csproj_path, 'r') as csproj_file:
+        lines = csproj_file.readlines()
+
+    updated = False
+    for i, line in enumerate(lines):
+        if version_pattern.search(line):
+            lines[i] = f'    <Version>{new_version}</Version>\n'
+            updated = True
+            break
+
+    if not updated:
+        print(f"Error: Package version line not found in {csproj_path}")
+        sys.exit(1)
+
+    with open(csproj_path, 'w') as csproj_file:
+        csproj_file.writelines(lines)
+
 def get_version_string_conanfile(root_dir: str) -> str:
     """
     Parse the file conanfile.py to get the version string. Example:
@@ -578,6 +637,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
           ta_codegen/output/rust/library/Cargo.toml (and tools/)
           ta_codegen/output/rust/Cargo.lock (refreshed by cargo, not edited)
           ta_codegen/output/java/library/pom.xml
+          ta_codegen/output/csharp/library/TALib.csproj
           CMakeLists.txt, ta-lib.spec.in, conanfile.py (root of repos)
 
     Touches nothing when they already agree. Return (updated, version).
@@ -589,6 +649,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
         ("ta-lib.spec.in", get_version_string_spec_in, set_version_string_spec_in),
         ("Cargo.toml", get_version_string_cargo, set_version_string_cargo),
         ("pom.xml", get_version_string_pom, set_version_string_pom),
+        ("TALib.csproj", get_version_string_csproj, set_version_string_csproj),
         ("conanfile.py", get_version_string_conanfile, set_version_string_conanfile),
     )
     is_updated = False
@@ -620,11 +681,12 @@ def check_versions(root_dir: str) -> str:
     version_cmake = get_version_string_cmake(root_dir)
     version_spec_in = get_version_string_spec_in(root_dir)
     version_conanfile = get_version_string_conanfile(root_dir)
-    # Cargo.toml and pom.xml matter most here even though sync_versions() would
-    # already have fixed them: crates.io and Maven Central are immutable, so a
-    # version published from a stale manifest cannot be withdrawn.
+    # The binding manifests matter most here even though sync_versions() would
+    # already have fixed them: crates.io, Maven Central and nuget.org are
+    # immutable, so a version published from a stale manifest cannot be withdrawn.
     version_cargo = get_version_string_cargo(root_dir)
     version_pom = get_version_string_pom(root_dir)
+    version_csproj = get_version_string_csproj(root_dir)
     # The lock is not published -- `cargo package` synthesises a fresh one into the
     # tarball -- but it is what the git tag carries, so a stale one is a tagged tree
     # that fails `cargo build --locked` for anyone who clones it.
@@ -652,6 +714,10 @@ def check_versions(root_dir: str) -> str:
 
     if version_file != version_pom:
         print(f"Error: VERSION [{version_file}] does not match pom.xml [{version_pom}]")
+        return None
+
+    if version_file != version_csproj:
+        print(f"Error: VERSION [{version_file}] does not match TALib.csproj [{version_csproj}]")
         return None
 
     if version_file != version_cargo_lock:

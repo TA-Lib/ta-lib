@@ -51,7 +51,7 @@ There is no initialization step and nothing to shut down. Where C requires `TA_I
 
 ## 2.0 Add it to your project {#build}
 
-NuGet packaging (`PackageId`, versioning) lands with the release milestone — until then, `dotnet pack` deliberately produces nothing. Reference the `TALib` project directly:
+The package is not on NuGet yet. `dotnet pack` builds it locally; until it is published, reference the `TALib` project directly:
 
 ```xml
 <ItemGroup>

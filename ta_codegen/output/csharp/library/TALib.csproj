@@ -36,10 +36,25 @@
          rather than a claim: IL2026/IL3050 (trim/AOT-unsafe) become warnings
          here, and TreatWarningsAsErrors turns them into build failures. -->
     <IsAotCompatible>true</IsAotCompatible>
-    <!-- NuGet packaging (PackageId, Version, license, readme) arrives with the
-         release milestone; until then `dotnet pack` must not produce a
-         placeholder package. -->
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
+    <!-- Written by scripts/sync.py from the VERSION file, like the pom and the
+         Cargo manifests. Never hand-edit it. -->
+    <Version>0.8.2</Version>
+    <Authors>Mario Fortier</Authors>
+    <!-- Claims a floor, not a count: a published version is immutable, and
+         scripts/pre-release-checks.py verifies the corpus still meets it. -->
+    <Description>Technical analysis library: 200+ indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official .NET port of TA-Lib, verified against the C reference.</Description>
+    <PackageTags>ta-lib technical-analysis finance trading indicators candlestick</PackageTags>
+    <PackageProjectUrl>https://ta-lib.org</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TA-Lib/ta-lib</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <!-- The file, not the SPDX expression: BSD-3 clause 2 requires the text to
+         travel with a binary redistribution, and an expression ships none. -->
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <!-- No PackageId yet. The default is AssemblyName, an id the project does
+         not own, and pushing to an id someone else owns answers 403 with text
+         that blames the API key. -->
     <!-- test/ is a SIBLING project (test/TALib.Test.csproj) that compiles these
          same library sources itself. Without this exclusion the SDK's default
          **/*.cs glob pulls the suites — and their obj/ AssemblyInfo — into the
@@ -47,5 +62,12 @@
          would ship test code inside TALib.dll. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);test/**</DefaultItemExcludes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The repo root LICENSE in place, the way the pom reads it for the jar.
+         PackagePath empty puts it at the archive root, where
+         PackageLicenseFile resolves it. -->
+    <None Include="../../../../LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
 
 </Project>
