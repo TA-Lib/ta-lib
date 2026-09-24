@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	monotone
+#policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	0ff6f19ff0b309d99d2553546d80f90801b1204e
-#generated	2026-09-22T21:03:57Z
+#commit	7d2518e36531b195318977af8068018aa91c6e1e
+#generated	2026-09-24T00:21:47Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -773,11 +773,11 @@ OBV	open	0	180097
 OBV	openfill	0	200934
 OBV	peek	0	41947
 OBV	update	0	53417
-PERCENTILE	batch	0	5077502
-PERCENTILE	open	0	5117901
-PERCENTILE	openfill	0	5117896
-PERCENTILE	peek	0	213741
-PERCENTILE	update	0	318918
+PERCENTILE	batch	0	2441881
+PERCENTILE	open	0	2462390
+PERCENTILE	openfill	0	2462385
+PERCENTILE	peek	0	38925
+PERCENTILE	update	0	211034
 PERCENTRANK	batch	0	5034828
 PERCENTRANK	open	0	4935677
 PERCENTRANK	openfill	0	5035211
@@ -793,7 +793,7 @@ PLUS_DM	open	0	460070
 PLUS_DM	openfill	0	480079
 PLUS_DM	peek	0	52237
 PLUS_DM	update	0	68621
-PPO	batch	0	645995
+PPO	batch	0	641200
 PPO	open	0	961947
 PPO	openfill	0	960693
 PPO	peek	0	157709
@@ -854,8 +854,8 @@ RVI	openfill	0	1919474
 RVI	peek	0	91881
 RVI	update	0	167907
 RVIR	batch	0	1959465
-RVIR	open	0	3922272
-RVIR	openfill	0	3921347
+RVIR	open	0	3922186
+RVIR	openfill	0	3921254
 RVIR	peek	0	221637
 RVIR	update	0	380949
 RVOL	batch	0	219941
@@ -890,7 +890,7 @@ SMA	peek	0	33805
 SMA	update	0	63501
 SMI	batch	0	2562513
 SMI	open	0	4184739
-SMI	openfill	0	4185112
+SMI	openfill	0	4184983
 SMI	peek	0	251917
 SMI	update	0	319103
 SQRT	batch	0	60083
@@ -899,7 +899,7 @@ SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
 STDDEV	batch	0	763885
-STDDEV	open	0	786431
+STDDEV	open	0	786387
 STDDEV	openfill	0	785420
 STDDEV	peek	0	98317
 STDDEV	update	0	150489

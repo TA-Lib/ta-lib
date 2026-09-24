@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	monotone
+#policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	fee8646c9fd80ac26ee2cc250ff430a9f84e3035
-#generated	2026-09-23T09:39:47Z
+#commit	7d2518e36531b195318977af8068018aa91c6e1e
+#generated	2026-09-24T00:21:32Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -773,11 +773,11 @@ OBV	open	0	180172
 OBV	openfill	0	210217
 OBV	peek	0	42745
 OBV	update	0	54767
-PERCENTILE	batch	0	5572211
-PERCENTILE	open	0	5612610
-PERCENTILE	openfill	0	5612605
-PERCENTILE	peek	0	84166
-PERCENTILE	update	0	338265
+PERCENTILE	batch	0	8291268
+PERCENTILE	open	0	8311777
+PERCENTILE	openfill	0	8311772
+PERCENTILE	peek	0	38925
+PERCENTILE	update	0	522287
 PERCENTRANK	batch	0	5034828
 PERCENTRANK	open	0	4935677
 PERCENTRANK	openfill	0	5035211
@@ -793,7 +793,7 @@ PLUS_DM	open	0	460070
 PLUS_DM	openfill	0	480079
 PLUS_DM	peek	0	52237
 PLUS_DM	update	0	68621
-PPO	batch	0	645990
+PPO	batch	0	641200
 PPO	open	0	961947
 PPO	openfill	0	960693
 PPO	peek	0	157709
@@ -899,7 +899,7 @@ SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
 STDDEV	batch	0	752293
-STDDEV	open	0	774622
+STDDEV	open	0	774578
 STDDEV	openfill	0	773611
 STDDEV	peek	0	98317
 STDDEV	update	0	147530
