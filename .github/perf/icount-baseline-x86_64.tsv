@@ -6,8 +6,8 @@
 #policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	7d2518e36531b195318977af8068018aa91c6e1e
-#generated	2026-09-24T00:21:32Z
+#commit	e21c144fc471efa3ceab5eab35e7847a552b3503
+#generated	2026-09-24T18:49:32Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -588,11 +588,11 @@ HT_TRENDMODE	open	0	94245756
 HT_TRENDMODE	openfill	0	94245885
 HT_TRENDMODE	peek	0	5870633
 HT_TRENDMODE	update	0	5189158
-IMI	batch	0	5417101
-IMI	open	0	5497472
-IMI	openfill	0	5497462
-IMI	peek	0	445935
-IMI	update	0	453216
+IMI	batch	0	3297972
+IMI	open	0	3278412
+IMI	openfill	0	3158514
+IMI	peek	0	376847
+IMI	update	0	344082
 KAMA	batch	0	639536
 KAMA	open	0	1259011
 KAMA	openfill	0	1259005
