@@ -212,6 +212,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // The two price WMAs are anchored where the first de-lagged value is
         // needed: lookbackSqrt bars before the first requested output.
         // wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
@@ -300,7 +301,7 @@ impl Core {
             ringSize = sqrtPeriod - 1;
             if ringSize < 1 { return RetCode::InternalError; }
             if (ringSize) as usize <= 50usize {
-                dRing = &mut local_dRing;
+                dRing = &mut local_dRing[..(ringSize) as usize];
             } else {
                 heap_dRing = vec![0.0_f64; (ringSize) as usize];
                 dRing = &mut heap_dRing;

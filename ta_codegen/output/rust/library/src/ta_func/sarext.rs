@@ -344,6 +344,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         // Check if the acceleration factors are being defined by the user.
         // Make sure the acceleration and maximum are coherent.
         // If not, correct the acceleration.
@@ -355,16 +357,12 @@ impl Core {
             optInAccelerationInitLong = optInAccelerationMaxLong;
             afLong = optInAccelerationInitLong;
         }
-        if optInAccelerationLong > optInAccelerationMaxLong {
-            optInAccelerationLong = optInAccelerationMaxLong;
-        }
+        optInAccelerationLong = c_min(optInAccelerationMaxLong, optInAccelerationLong);
         if afShort > optInAccelerationMaxShort {
             optInAccelerationInitShort = optInAccelerationMaxShort;
             afShort = optInAccelerationInitShort;
         }
-        if optInAccelerationShort > optInAccelerationMaxShort {
-            optInAccelerationShort = optInAccelerationMaxShort;
-        }
+        optInAccelerationShort = c_min(optInAccelerationMaxShort, optInAccelerationShort);
         // Initialise SAR calculations
         if optInStartValue == 0_f64 {
             // Default action
@@ -993,16 +991,12 @@ impl Core {
             optInAccelerationInitLong = optInAccelerationMaxLong;
             afLong = optInAccelerationInitLong;
         }
-        if optInAccelerationLong > optInAccelerationMaxLong {
-            optInAccelerationLong = optInAccelerationMaxLong;
-        }
+        optInAccelerationLong = c_min(optInAccelerationMaxLong, optInAccelerationLong);
         if afShort > optInAccelerationMaxShort {
             optInAccelerationInitShort = optInAccelerationMaxShort;
             afShort = optInAccelerationInitShort;
         }
-        if optInAccelerationShort > optInAccelerationMaxShort {
-            optInAccelerationShort = optInAccelerationMaxShort;
-        }
+        optInAccelerationShort = c_min(optInAccelerationMaxShort, optInAccelerationShort);
         // Initialise SAR calculations
         if optInStartValue == 0_f64 {
             // Default action

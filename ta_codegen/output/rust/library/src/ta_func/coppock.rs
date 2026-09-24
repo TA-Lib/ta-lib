@@ -206,6 +206,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Triangle divider in double: the int product w*(w+1) overflows int32 at
         // w >= 46341 (#142), exactly as in TA_WMA.
         divider = (optInWMAPeriod as f64) * (((optInWMAPeriod + 1)) as f64) / 2.0;
@@ -221,7 +222,7 @@ impl Core {
         }
         if ringSize < 1 { return RetCode::InternalError; }
         if (ringSize) as usize <= 50usize {
-            sRing = &mut local_sRing;
+            sRing = &mut local_sRing[..(ringSize) as usize];
         } else {
             heap_sRing = vec![0.0_f64; (ringSize) as usize];
             sRing = &mut heap_sRing;

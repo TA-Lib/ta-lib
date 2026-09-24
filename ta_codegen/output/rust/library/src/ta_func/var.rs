@@ -162,6 +162,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         invPeriod = 1.0 / (optInTimePeriod as f64);
         // Measure deviations against a shift near the window: the running sums
         // periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)

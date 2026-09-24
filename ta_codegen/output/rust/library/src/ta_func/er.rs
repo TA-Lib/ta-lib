@@ -173,6 +173,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Prime the path sum over the optInTimePeriod one-bar changes ending
         // at the first output bar's predecessor.
         sumROC1 = 0.0;

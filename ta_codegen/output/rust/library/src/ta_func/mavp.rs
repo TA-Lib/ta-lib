@@ -197,6 +197,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inPeriods = &inPeriods[..=endIdx];
         // Calculate exact output size. A dedicated temp: tempInt is the cast-fed
         // period below, which the Rust backend types SIGNED (#160) — reusing it
         // here would drag this index arithmetic into i32.

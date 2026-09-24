@@ -236,6 +236,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         // Make sure the acceleration and maximum are coherent.
         // If not, correct the acceleration.
         af = optInAcceleration;

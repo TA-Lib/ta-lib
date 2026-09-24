@@ -193,6 +193,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         (*outBegIdx) = startIdx;
         // Blau's double smoothing in one pass: the signed momentum and its
         // magnitude are carried through the same two EMA stages, then divided.

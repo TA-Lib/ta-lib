@@ -1,8 +1,7 @@
 //! Which selects sit on a loop-carried arithmetic recurrence.
 //!
-//! Read by the C# renderer only: RyuJIT turns every floating-point select into
-//! a branch, and the renderer lowers the exact ones to MAXSD/MINSD or a compare
-//! mask everywhere except here.
+//! A backend that makes a select branch-free (C#'s compare masks, Rust's
+//! `select_unpredictable`) leaves these ones branches.
 
 use std::collections::{BTreeSet, HashMap, HashSet};
 

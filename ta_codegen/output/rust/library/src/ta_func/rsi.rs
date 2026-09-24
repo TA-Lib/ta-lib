@@ -149,6 +149,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         outIdx = 0;
         // Index into the output.
         // Trap special case where the period is '1'.

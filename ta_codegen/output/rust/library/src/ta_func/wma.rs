@@ -144,6 +144,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // To make the rest more efficient, handle exception
         // case where the user is asking for a period of '1'.
         // In that case outputs equals inputs for the requested

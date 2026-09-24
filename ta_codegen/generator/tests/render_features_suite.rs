@@ -860,6 +860,12 @@ fn backends_render_max_min_fmax_fmin_abs() {
         make_assign("c", "fmax", vec![x.clone(), y.clone()]),
         make_assign("d", "fmin", vec![x.clone(), y.clone()]),
         make_assign("e", "ABS", vec![x.clone()]),
+        Statement::VarDecl { var_type: VarType::Integer, name: "p".to_string(), init: Some(Expr::IntLiteral(1)) },
+        Statement::VarDecl { var_type: VarType::Integer, name: "q".to_string(), init: Some(Expr::IntLiteral(2)) },
+        Statement::VarDecl { var_type: VarType::Integer, name: "g".to_string(), init: None },
+        make_assign("g", "max", vec![Expr::Var("p".to_string()), Expr::Var("q".to_string())]),
+        make_assign("f", "floor", vec![x.clone()]),
+        make_assign("h", "ceil", vec![Expr::IntLiteral(3)]),
     ];
 
     let func = FuncDef {
@@ -933,14 +939,24 @@ fn backends_render_max_min_fmax_fmin_abs() {
         "Java: ABS should render as Math.abs(): {java_out}"
     );
 
-    // Rust: max/fmax → .max(), min/fmin → .min(), ABS → .ta_abs() (generic) or .abs()
+    // Rust: a real max/min is C's macro (`c_max`/`c_min`), not f64::max/min,
+    // which answer NaN differently; an integer one keeps Ord::max. floor/ceil
+    // are the inline `c_floor`/`c_ceil`, not libm calls (#438).
     assert!(
-        rust_out.contains(".max("),
-        "Rust: max/fmax should render as .max(): {rust_out}"
+        rust_out.contains("c_max(x, y)") && rust_out.contains("c_min(x, y)"),
+        "Rust: real max/fmax/min/fmin should render as c_max/c_min: {rust_out}"
     );
     assert!(
-        rust_out.contains(".min("),
-        "Rust: min/fmin should render as .min(): {rust_out}"
+        !rust_out.contains("(x).max(") && !rust_out.contains("(x).min("),
+        "Rust: a real max/min must not render as f64::max/min: {rust_out}"
+    );
+    assert!(
+        rust_out.contains("(p).max(q)"),
+        "Rust: an integer max should stay Ord::max: {rust_out}"
+    );
+    assert!(
+        rust_out.contains("c_floor(x)") && rust_out.contains("c_ceil(3_f64)"),
+        "Rust: floor/ceil should render as c_floor/c_ceil: {rust_out}"
     );
     assert!(
         rust_out.contains(".abs()"),

@@ -194,6 +194,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // No smoothing at period of 1: the output is a copy of the input
         // (same convention as TA_MA for every MAType). Explicit and separate
         // from TA_EMA's own copy because the two EMA below are inlined here,

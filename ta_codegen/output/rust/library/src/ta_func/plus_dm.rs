@@ -215,6 +215,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         // Indicate where the next output should be put
         // in the outReal.
         outIdx = 0;

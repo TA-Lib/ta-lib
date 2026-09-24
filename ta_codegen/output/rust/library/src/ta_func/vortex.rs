@@ -170,6 +170,9 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Prime the three window sums over the optInTimePeriod-1 terms before the
         // first output bar: [startIdx-optInTimePeriod+1, startIdx). Each term at
         // bar i reads bar i-1, so the earliest read is bar startIdx-optInTimePeriod
@@ -186,13 +189,9 @@ impl Core {
             tempCY = inClose[i - 1];
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR += trueRange;
             sVMP += (inHigh[i] - inLow[i - 1]).abs();
             sVMM += (inLow[i] - inHigh[i - 1]).abs();
@@ -213,13 +212,9 @@ impl Core {
             tempCY = inClose[today - 1];
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
@@ -253,13 +248,9 @@ impl Core {
             tempCY = inClose[trailingIdx - 1];
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR -= trueRange;
             sVMP -= (inHigh[trailingIdx] - inLow[trailingIdx - 1]).abs();
             sVMM -= (inLow[trailingIdx] - inHigh[trailingIdx - 1]).abs();
@@ -489,13 +480,9 @@ impl Core {
         tempCY = sp.lag1_inClose;
         trueRange = tempHT - tempLT;
         tempDouble = (tempCY - tempHT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
+        trueRange = c_max(tempDouble, trueRange);
         tempDouble = (tempCY - tempLT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
+        trueRange = c_max(tempDouble, trueRange);
         sp.sTR += trueRange;
         sp.sVMP += (inHigh - sp.lag1_inLow).abs();
         sp.sVMM += (inLow - sp.lag1_inHigh).abs();
@@ -529,13 +516,9 @@ impl Core {
         tempCY = sp.ring_trailingIdx_inClose[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize];
         trueRange = tempHT - tempLT;
         tempDouble = (tempCY - tempHT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
+        trueRange = c_max(tempDouble, trueRange);
         tempDouble = (tempCY - tempLT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
+        trueRange = c_max(tempDouble, trueRange);
         sp.sTR -= trueRange;
         sp.sVMP -= (sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] - sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize]).abs();
         sp.sVMM -= (sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] - sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize]).abs();
@@ -665,13 +648,9 @@ impl Core {
             tempCY = inClose[i - 1];
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR += trueRange;
             sVMP += (inHigh[i] - inLow[i - 1]).abs();
             sVMM += (inLow[i] - inHigh[i - 1]).abs();
@@ -692,13 +671,9 @@ impl Core {
             tempCY = inClose[today - 1];
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR += trueRange;
             sVMP += (inHigh[today] - inLow[today - 1]).abs();
             sVMM += (inLow[today] - inHigh[today - 1]).abs();
@@ -732,13 +707,9 @@ impl Core {
             tempCY = inClose[trailingIdx - 1];
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR -= trueRange;
             sVMP -= (inHigh[trailingIdx] - inLow[trailingIdx - 1]).abs();
             sVMM -= (inLow[trailingIdx] - inHigh[trailingIdx - 1]).abs();
@@ -1043,13 +1014,9 @@ impl VortexStream {
             tempCY = sp.lag1_inClose;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR += trueRange;
             sVMP += (inHigh - sp.lag1_inLow).abs();
             sVMM += (inLow - sp.lag1_inHigh).abs();
@@ -1083,13 +1050,9 @@ impl VortexStream {
             tempCY = (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize) != pkSlot2 { sp.ring_trailingIdx_inClose[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize] } else { pkVal2 });
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             sTR -= trueRange;
             sVMP -= ((if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal0 }) - (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize] } else { pkVal1 })).abs();
             sVMM -= ((if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx) as usize] } else { pkVal1 }) - (if (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx) as usize] } else { pkVal0 })).abs();

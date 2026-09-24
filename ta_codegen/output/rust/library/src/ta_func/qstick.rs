@@ -154,6 +154,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inOpen = &inOpen[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Do the MA calculation using tight loops.
         // Add-up the initial period, except for the last value.
         periodTotal = 0.0;

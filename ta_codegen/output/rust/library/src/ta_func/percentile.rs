@@ -236,9 +236,10 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            ring = &mut local_ring;
+            ring = &mut local_ring[..(optInTimePeriod) as usize];
         } else {
             heap_ring = vec![0.0_f64; (optInTimePeriod) as usize];
             ring = &mut heap_ring;
@@ -247,7 +248,7 @@ impl Core {
         ring_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            sorted = &mut local_sorted;
+            sorted = &mut local_sorted[..(optInTimePeriod) as usize];
         } else {
             heap_sorted = vec![0.0_f64; (optInTimePeriod) as usize];
             sorted = &mut heap_sorted;
@@ -262,7 +263,7 @@ impl Core {
         // arithmetic; P/100 is inexact in binary64 and lands the product just above
         // an integer, one order statistic too high, at exactly the round
         // percentages a caller types.
-        rank = ((((optInPercentile) as f64) * (optInTimePeriod as f64) / 100.0).ceil()) as i32;
+        rank = (c_ceil(((optInPercentile) as f64) * (optInTimePeriod as f64) / 100.0)) as i32;
         if rank < 1 {
             rank = 1;
         }
@@ -1640,7 +1641,7 @@ impl Core {
         // arithmetic; P/100 is inexact in binary64 and lands the product just above
         // an integer, one order statistic too high, at exactly the round
         // percentages a caller types.
-        rank = ((((optInPercentile) as f64) * (optInTimePeriod as f64) / 100.0).ceil()) as i32;
+        rank = (c_ceil(((optInPercentile) as f64) * (optInTimePeriod as f64) / 100.0)) as i32;
         if rank < 1 {
             rank = 1;
         }

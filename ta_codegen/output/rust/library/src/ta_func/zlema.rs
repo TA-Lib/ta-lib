@@ -177,6 +177,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // No smoothing at period of 1: the output is a copy of the input, the
         // convention TA_MA applies to every MAType. Explicit, because at period 1
         // lag is 0 and optInK_1 is exactly 1.0, so the recursion below reduces to

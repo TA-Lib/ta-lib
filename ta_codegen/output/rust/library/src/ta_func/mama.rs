@@ -267,6 +267,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         (*outBegIdx) = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.
@@ -498,9 +499,7 @@ impl Core {
             // Put Alpha into tempReal
             if tempReal > 1.0 {
                 tempReal = optInFastLimit / tempReal;
-                if tempReal < optInSlowLimit {
-                    tempReal = optInSlowLimit;
-                }
+                tempReal = c_max(optInSlowLimit, tempReal);
             } else {
                 tempReal = optInFastLimit;
             }
@@ -884,9 +883,7 @@ impl Core {
         // Put Alpha into tempReal
         if tempReal > 1.0 {
             tempReal = sp.optInFastLimit / tempReal;
-            if tempReal < sp.optInSlowLimit {
-                tempReal = sp.optInSlowLimit;
-            }
+            tempReal = c_max(sp.optInSlowLimit, tempReal);
         } else {
             tempReal = sp.optInFastLimit;
         }
@@ -1275,9 +1272,7 @@ impl Core {
             // Put Alpha into tempReal
             if tempReal > 1.0 {
                 tempReal = optInFastLimit / tempReal;
-                if tempReal < optInSlowLimit {
-                    tempReal = optInSlowLimit;
-                }
+                tempReal = c_max(optInSlowLimit, tempReal);
             } else {
                 tempReal = optInFastLimit;
             }
@@ -1699,9 +1694,7 @@ impl MamaStream {
             // Put Alpha into tempReal
             if tempReal > 1.0 {
                 tempReal = sp.optInFastLimit / tempReal;
-                if tempReal < sp.optInSlowLimit {
-                    tempReal = sp.optInSlowLimit;
-                }
+                tempReal = c_max(sp.optInSlowLimit, tempReal);
             } else {
                 tempReal = sp.optInFastLimit;
             }

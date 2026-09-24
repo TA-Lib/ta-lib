@@ -142,6 +142,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         // No smoothing at period of 1: the output is a copy of the input
         // (same convention as TA_MA for every MAType). Explicit because
         // (P*V)/V round-trips only ~97% of the time in IEEE double, and

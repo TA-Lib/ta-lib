@@ -139,6 +139,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inOpen = &inOpen[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         (*outBegIdx) = startIdx;
         while startIdx <= endIdx {
             let mut upsum: f64 = 0.0;

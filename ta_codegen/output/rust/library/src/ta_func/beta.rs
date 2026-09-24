@@ -218,6 +218,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal0 = &inReal0[..=endIdx];
+        let inReal1 = &inReal1[..=endIdx];
         // Consume first input.
         trailingIdx = startIdx - nbInitialElementNeeded;
         trailing_last_price_x = inReal0[trailingIdx];

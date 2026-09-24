@@ -201,10 +201,12 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         // Allocate a circular buffer equal to the requested signal period.
         if optInSignalPeriod < 1 { return RetCode::InternalError; }
         if (optInSignalPeriod) as usize <= 32usize {
-            oscBuffer = &mut local_oscBuffer;
+            oscBuffer = &mut local_oscBuffer[..(optInSignalPeriod) as usize];
         } else {
             heap_oscBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
             oscBuffer = &mut heap_oscBuffer;

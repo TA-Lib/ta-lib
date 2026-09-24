@@ -157,6 +157,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Accumulate the up/down sums over the first window: the optInTimePeriod
         // changes ending at startIdx (prices inReal[startIdx-optInTimePeriod ..
         // startIdx]). `trailingValue` caches the oldest price so the window's oldest

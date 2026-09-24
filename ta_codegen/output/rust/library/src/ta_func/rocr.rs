@@ -161,6 +161,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Calculate Rate of change Ratio: (price / prevPrice)
         outIdx = 0;
         inIdx = startIdx;

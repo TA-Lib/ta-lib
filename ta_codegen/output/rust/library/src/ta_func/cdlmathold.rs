@@ -166,6 +166,10 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inOpen = &inOpen[..=endIdx];
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Do the calculation using tight loops.
         // Add-up the initial period, except for the last value.
         BodyPeriodTotal[4] = 0.0;
@@ -264,22 +268,22 @@ impl Core {
         // outInteger is positive (1 to 100): mat hold is always bullish
         outIdx = 0;
         loop {
-            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 1 &&       // white, black, 2 black or white, white
+            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 1 && // white, black, 2 black or white, white
                (((if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
                (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&
-               ((if (inOpen[i - 3]).min(inClose[i - 3]) > (inOpen[i - 4]).max(inClose[i - 4]) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
-               (inOpen[i - 2]).min(inClose[i - 2]) < inClose[i - 4] &&                 // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
-               (inOpen[i - 1]).min(inClose[i - 1]) < inClose[i - 4] &&
-               (inOpen[i - 2]).min(inClose[i - 2]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration && // reaction days penetrate first body less than optInPenetration percent
-               (inOpen[i - 1]).min(inClose[i - 1]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration &&
-               (inClose[i - 2]).max(inOpen[i - 2]) < inOpen[i - 3] &&                  // 2nd to 4th are falling
-               (inClose[i - 1]).max(inOpen[i - 1]) < (inClose[i - 2]).max(inOpen[i - 2]) &&
-               inOpen[i] > inClose[i - 1] &&                                           // 5th opens above the prior close
-               inClose[i] > ((inHigh[i - 3]).max(inHigh[i - 2])).max(inHigh[i - 1]) && // 5th closes above the highest high of the reaction days
-               (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 4]) - (inOpen[i - 4])).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), 2 => ((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4])), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long, then 3 small
-               (inClose[i - 3] - inOpen[i - 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 3]) - (inOpen[i - 3])).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), 2 => ((inHigh[i - 3]) - (if (inClose[i - 3]) >= (inOpen[i - 3]) { (inClose[i - 3]) } else { (inOpen[i - 3]) })) + ((if (inClose[i - 3]) >= (inOpen[i - 3]) { (inOpen[i - 3]) } else { (inClose[i - 3]) }) - (inLow[i - 3])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (inClose[i - 2] - inOpen[i - 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (inClose[i - 1] - inOpen[i - 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 }))
+               ((if c_min(inOpen[i - 3], inClose[i - 3]) > c_max(inOpen[i - 4], inClose[i - 4]) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
+               c_min(inOpen[i - 2], inClose[i - 2]) < inClose[i - 4] &&          // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
+               c_min(inOpen[i - 1], inClose[i - 1]) < inClose[i - 4] &&
+               c_min(inOpen[i - 2], inClose[i - 2]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration && // reaction days penetrate first body less than optInPenetration percent
+               c_min(inOpen[i - 1], inClose[i - 1]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration &&
+               c_max(inClose[i - 2], inOpen[i - 2]) < inOpen[i - 3] &&           // 2nd to 4th are falling
+               c_max(inClose[i - 1], inOpen[i - 1]) < c_max(inClose[i - 2], inOpen[i - 2]) &&
+               inOpen[i] > inClose[i - 1] &&                                     // 5th opens above the prior close
+               inClose[i] > c_max(c_max(inHigh[i - 3], inHigh[i - 2]), inHigh[i - 1]) && // 5th closes above the highest high of the reaction days
+               (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 4]) - (inOpen[i - 4])).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), 2 => ((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small
+               (inClose[i - 3] - inOpen[i - 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 3]) - (inOpen[i - 3])).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), 2 => ((inHigh[i - 3]) - (if (inClose[i - 3]) >= (inOpen[i - 3]) { (inClose[i - 3]) } else { (inOpen[i - 3]) })) + ((if (inClose[i - 3]) >= (inOpen[i - 3]) { (inOpen[i - 3]) } else { (inClose[i - 3]) }) - (inLow[i - 3])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+               (inClose[i - 2] - inOpen[i - 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+               (inClose[i - 1] - inOpen[i - 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 }))
             {
                 outInteger[outIdx] = 100;
                 outIdx += 1;
@@ -289,71 +293,11 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_4: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_4 = (inClose[i - 4] - inOpen[i - 4]).abs();
-                }
-                1 => {
-                    _candlerange_4 = inHigh[i - 4] - inLow[i - 4];
-                }
-                2 => {
-                    _candlerange_4 = (inHigh[i - 4] - (if inClose[i - 4] >= inOpen[i - 4] { inClose[i - 4] } else { inOpen[i - 4] })) + ((if inClose[i - 4] >= inOpen[i - 4] { inOpen[i - 4] } else { inClose[i - 4] }) - inLow[i - 4]);
-                }
-                _ => {
-                    _candlerange_4 = 0.0;
-                }
-            }
-            let mut _candlerange_5: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_5 = (inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4]).abs();
-                }
-                1 => {
-                    _candlerange_5 = inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4];
-                }
-                2 => {
-                    _candlerange_5 = (inHigh[BodyLongTrailingIdx - 4] - (if inClose[BodyLongTrailingIdx - 4] >= inOpen[BodyLongTrailingIdx - 4] { inClose[BodyLongTrailingIdx - 4] } else { inOpen[BodyLongTrailingIdx - 4] })) + ((if inClose[BodyLongTrailingIdx - 4] >= inOpen[BodyLongTrailingIdx - 4] { inOpen[BodyLongTrailingIdx - 4] } else { inClose[BodyLongTrailingIdx - 4] }) - inLow[BodyLongTrailingIdx - 4]);
-                }
-                _ => {
-                    _candlerange_5 = 0.0;
-                }
-            }
-            BodyPeriodTotal[4] = BodyPeriodTotal[4] + (_candlerange_4 - _candlerange_5);
+            BodyPeriodTotal[4] = BodyPeriodTotal[4] + (match BodyLong_rangeType { 0 => (((inClose[i - 4]) - (inOpen[i - 4])).abs()) - (((inClose[BodyLongTrailingIdx - 4]) - (inOpen[BodyLongTrailingIdx - 4])).abs()), 1 => ((inHigh[i - 4]) - (inLow[i - 4])) - ((inHigh[BodyLongTrailingIdx - 4]) - (inLow[BodyLongTrailingIdx - 4])), 2 => (((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4]))) - (((inHigh[BodyLongTrailingIdx - 4]) - (if (inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4]) { (inClose[BodyLongTrailingIdx - 4]) } else { (inOpen[BodyLongTrailingIdx - 4]) })) + ((if (inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4]) { (inOpen[BodyLongTrailingIdx - 4]) } else { (inClose[BodyLongTrailingIdx - 4]) }) - (inLow[BodyLongTrailingIdx - 4]))), _ => 0.0 });
             // for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
             totIdx = 3;
             loop {
-                let mut _candlerange_6: f64;
-                match BodyShort_rangeType {
-                    0 => {
-                        _candlerange_6 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_6 = inHigh[i - totIdx] - inLow[i - totIdx];
-                    }
-                    2 => {
-                        _candlerange_6 = (inHigh[i - totIdx] - (if inClose[i - totIdx] >= inOpen[i - totIdx] { inClose[i - totIdx] } else { inOpen[i - totIdx] })) + ((if inClose[i - totIdx] >= inOpen[i - totIdx] { inOpen[i - totIdx] } else { inClose[i - totIdx] }) - inLow[i - totIdx]);
-                    }
-                    _ => {
-                        _candlerange_6 = 0.0;
-                    }
-                }
-                let mut _candlerange_7: f64;
-                match BodyShort_rangeType {
-                    0 => {
-                        _candlerange_7 = (inClose[BodyShortTrailingIdx - totIdx] - inOpen[BodyShortTrailingIdx - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_7 = inHigh[BodyShortTrailingIdx - totIdx] - inLow[BodyShortTrailingIdx - totIdx];
-                    }
-                    2 => {
-                        _candlerange_7 = (inHigh[BodyShortTrailingIdx - totIdx] - (if inClose[BodyShortTrailingIdx - totIdx] >= inOpen[BodyShortTrailingIdx - totIdx] { inClose[BodyShortTrailingIdx - totIdx] } else { inOpen[BodyShortTrailingIdx - totIdx] })) + ((if inClose[BodyShortTrailingIdx - totIdx] >= inOpen[BodyShortTrailingIdx - totIdx] { inOpen[BodyShortTrailingIdx - totIdx] } else { inClose[BodyShortTrailingIdx - totIdx] }) - inLow[BodyShortTrailingIdx - totIdx]);
-                    }
-                    _ => {
-                        _candlerange_7 = 0.0;
-                    }
-                }
-                BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (_candlerange_6 - _candlerange_7);
+                BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (match BodyShort_rangeType { 0 => (((inClose[i - totIdx]) - (inOpen[i - totIdx])).abs()) - (((inClose[BodyShortTrailingIdx - totIdx]) - (inOpen[BodyShortTrailingIdx - totIdx])).abs()), 1 => ((inHigh[i - totIdx]) - (inLow[i - totIdx])) - ((inHigh[BodyShortTrailingIdx - totIdx]) - (inLow[BodyShortTrailingIdx - totIdx])), 2 => (((inHigh[i - totIdx]) - (if (inClose[i - totIdx]) >= (inOpen[i - totIdx]) { (inClose[i - totIdx]) } else { (inOpen[i - totIdx]) })) + ((if (inClose[i - totIdx]) >= (inOpen[i - totIdx]) { (inOpen[i - totIdx]) } else { (inClose[i - totIdx]) }) - (inLow[i - totIdx]))) - (((inHigh[BodyShortTrailingIdx - totIdx]) - (if (inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx]) { (inClose[BodyShortTrailingIdx - totIdx]) } else { (inOpen[BodyShortTrailingIdx - totIdx]) })) + ((if (inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx]) { (inOpen[BodyShortTrailingIdx - totIdx]) } else { (inClose[BodyShortTrailingIdx - totIdx]) }) - (inLow[BodyShortTrailingIdx - totIdx]))), _ => 0.0 });
                 if totIdx == 1 { break; }
                 totIdx -= 1;
             }
@@ -603,22 +547,22 @@ impl Core {
             }
         }
         sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx] = _candlerange_1;
-        if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 1 &&     // white, black, 2 black or white, white
+        if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 1 && // white, black, 2 black or white, white
            (((if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
            (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&
-           ((if (sp.lag3_inOpen).min(sp.lag3_inClose) > (sp.lag4_inOpen).max(sp.lag4_inClose) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
-           (sp.lag2_inOpen).min(sp.lag2_inClose) < sp.lag4_inClose &&              // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
-           (sp.lag1_inOpen).min(sp.lag1_inClose) < sp.lag4_inClose &&
-           (sp.lag2_inOpen).min(sp.lag2_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
-           (sp.lag1_inOpen).min(sp.lag1_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration &&
-           (sp.lag2_inClose).max(sp.lag2_inOpen) < sp.lag3_inOpen &&               // 2nd to 4th are falling
-           (sp.lag1_inClose).max(sp.lag1_inOpen) < (sp.lag2_inClose).max(sp.lag2_inOpen) &&
-           inOpen > sp.lag1_inClose &&                                             // 5th opens above the prior close
-           inClose > ((sp.lag3_inHigh).max(sp.lag2_inHigh)).max(sp.lag1_inHigh) && // 5th closes above the highest high of the reaction days
-           (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long, then 3 small
-           (sp.lag3_inClose - sp.lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-           (sp.lag2_inClose - sp.lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-           (sp.lag1_inClose - sp.lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 }))
+           ((if c_min(sp.lag3_inOpen, sp.lag3_inClose) > c_max(sp.lag4_inOpen, sp.lag4_inClose) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
+           c_min(sp.lag2_inOpen, sp.lag2_inClose) < sp.lag4_inClose &&         // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
+           c_min(sp.lag1_inOpen, sp.lag1_inClose) < sp.lag4_inClose &&
+           c_min(sp.lag2_inOpen, sp.lag2_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
+           c_min(sp.lag1_inOpen, sp.lag1_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration &&
+           c_max(sp.lag2_inClose, sp.lag2_inOpen) < sp.lag3_inOpen &&          // 2nd to 4th are falling
+           c_max(sp.lag1_inClose, sp.lag1_inOpen) < c_max(sp.lag2_inClose, sp.lag2_inOpen) &&
+           inOpen > sp.lag1_inClose &&                                         // 5th opens above the prior close
+           inClose > c_max(c_max(sp.lag3_inHigh, sp.lag2_inHigh), sp.lag1_inHigh) && // 5th closes above the highest high of the reaction days
+           (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small
+           (sp.lag3_inClose - sp.lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+           (sp.lag2_inClose - sp.lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+           (sp.lag1_inClose - sp.lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 }))
         {
             (*outInteger) = 100;
         } else {
@@ -836,22 +780,22 @@ impl Core {
         // outInteger is positive (1 to 100): mat hold is always bullish
         outIdx = 0;
         loop {
-            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 1 &&       // white, black, 2 black or white, white
+            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 1 && // white, black, 2 black or white, white
                (((if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
                (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&
-               ((if (inOpen[i - 3]).min(inClose[i - 3]) > (inOpen[i - 4]).max(inClose[i - 4]) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
-               (inOpen[i - 2]).min(inClose[i - 2]) < inClose[i - 4] &&                 // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
-               (inOpen[i - 1]).min(inClose[i - 1]) < inClose[i - 4] &&
-               (inOpen[i - 2]).min(inClose[i - 2]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration && // reaction days penetrate first body less than optInPenetration percent
-               (inOpen[i - 1]).min(inClose[i - 1]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration &&
-               (inClose[i - 2]).max(inOpen[i - 2]) < inOpen[i - 3] &&                  // 2nd to 4th are falling
-               (inClose[i - 1]).max(inOpen[i - 1]) < (inClose[i - 2]).max(inOpen[i - 2]) &&
-               inOpen[i] > inClose[i - 1] &&                                           // 5th opens above the prior close
-               inClose[i] > ((inHigh[i - 3]).max(inHigh[i - 2])).max(inHigh[i - 1]) && // 5th closes above the highest high of the reaction days
-               (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 4]) - (inOpen[i - 4])).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), 2 => ((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4])), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long, then 3 small
-               (inClose[i - 3] - inOpen[i - 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 3]) - (inOpen[i - 3])).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), 2 => ((inHigh[i - 3]) - (if (inClose[i - 3]) >= (inOpen[i - 3]) { (inClose[i - 3]) } else { (inOpen[i - 3]) })) + ((if (inClose[i - 3]) >= (inOpen[i - 3]) { (inOpen[i - 3]) } else { (inClose[i - 3]) }) - (inLow[i - 3])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (inClose[i - 2] - inOpen[i - 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (inClose[i - 1] - inOpen[i - 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 }))
+               ((if c_min(inOpen[i - 3], inClose[i - 3]) > c_max(inOpen[i - 4], inClose[i - 4]) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
+               c_min(inOpen[i - 2], inClose[i - 2]) < inClose[i - 4] &&          // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
+               c_min(inOpen[i - 1], inClose[i - 1]) < inClose[i - 4] &&
+               c_min(inOpen[i - 2], inClose[i - 2]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration && // reaction days penetrate first body less than optInPenetration percent
+               c_min(inOpen[i - 1], inClose[i - 1]) > inClose[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs() * optInPenetration &&
+               c_max(inClose[i - 2], inOpen[i - 2]) < inOpen[i - 3] &&           // 2nd to 4th are falling
+               c_max(inClose[i - 1], inOpen[i - 1]) < c_max(inClose[i - 2], inOpen[i - 2]) &&
+               inOpen[i] > inClose[i - 1] &&                                     // 5th opens above the prior close
+               inClose[i] > c_max(c_max(inHigh[i - 3], inHigh[i - 2]), inHigh[i - 1]) && // 5th closes above the highest high of the reaction days
+               (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 4]) - (inOpen[i - 4])).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), 2 => ((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4])), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small
+               (inClose[i - 3] - inOpen[i - 3]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 3]) - (inOpen[i - 3])).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), 2 => ((inHigh[i - 3]) - (if (inClose[i - 3]) >= (inOpen[i - 3]) { (inClose[i - 3]) } else { (inOpen[i - 3]) })) + ((if (inClose[i - 3]) >= (inOpen[i - 3]) { (inOpen[i - 3]) } else { (inClose[i - 3]) }) - (inLow[i - 3])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+               (inClose[i - 2] - inOpen[i - 2]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 2]) - (inOpen[i - 2])).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), 2 => ((inHigh[i - 2]) - (if (inClose[i - 2]) >= (inOpen[i - 2]) { (inClose[i - 2]) } else { (inOpen[i - 2]) })) + ((if (inClose[i - 2]) >= (inOpen[i - 2]) { (inOpen[i - 2]) } else { (inClose[i - 2]) }) - (inLow[i - 2])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+               (inClose[i - 1] - inOpen[i - 1]).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 }))
             {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;
             } else {
@@ -859,71 +803,11 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_7: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_7 = (inClose[i - 4] - inOpen[i - 4]).abs();
-                }
-                1 => {
-                    _candlerange_7 = inHigh[i - 4] - inLow[i - 4];
-                }
-                2 => {
-                    _candlerange_7 = (inHigh[i - 4] - (if inClose[i - 4] >= inOpen[i - 4] { inClose[i - 4] } else { inOpen[i - 4] })) + ((if inClose[i - 4] >= inOpen[i - 4] { inOpen[i - 4] } else { inClose[i - 4] }) - inLow[i - 4]);
-                }
-                _ => {
-                    _candlerange_7 = 0.0;
-                }
-            }
-            let mut _candlerange_8: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_8 = (inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4]).abs();
-                }
-                1 => {
-                    _candlerange_8 = inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4];
-                }
-                2 => {
-                    _candlerange_8 = (inHigh[BodyLongTrailingIdx - 4] - (if inClose[BodyLongTrailingIdx - 4] >= inOpen[BodyLongTrailingIdx - 4] { inClose[BodyLongTrailingIdx - 4] } else { inOpen[BodyLongTrailingIdx - 4] })) + ((if inClose[BodyLongTrailingIdx - 4] >= inOpen[BodyLongTrailingIdx - 4] { inOpen[BodyLongTrailingIdx - 4] } else { inClose[BodyLongTrailingIdx - 4] }) - inLow[BodyLongTrailingIdx - 4]);
-                }
-                _ => {
-                    _candlerange_8 = 0.0;
-                }
-            }
-            BodyPeriodTotal[4] = BodyPeriodTotal[4] + (_candlerange_7 - _candlerange_8);
+            BodyPeriodTotal[4] = BodyPeriodTotal[4] + (match BodyLong_rangeType { 0 => (((inClose[i - 4]) - (inOpen[i - 4])).abs()) - (((inClose[BodyLongTrailingIdx - 4]) - (inOpen[BodyLongTrailingIdx - 4])).abs()), 1 => ((inHigh[i - 4]) - (inLow[i - 4])) - ((inHigh[BodyLongTrailingIdx - 4]) - (inLow[BodyLongTrailingIdx - 4])), 2 => (((inHigh[i - 4]) - (if (inClose[i - 4]) >= (inOpen[i - 4]) { (inClose[i - 4]) } else { (inOpen[i - 4]) })) + ((if (inClose[i - 4]) >= (inOpen[i - 4]) { (inOpen[i - 4]) } else { (inClose[i - 4]) }) - (inLow[i - 4]))) - (((inHigh[BodyLongTrailingIdx - 4]) - (if (inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4]) { (inClose[BodyLongTrailingIdx - 4]) } else { (inOpen[BodyLongTrailingIdx - 4]) })) + ((if (inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4]) { (inOpen[BodyLongTrailingIdx - 4]) } else { (inClose[BodyLongTrailingIdx - 4]) }) - (inLow[BodyLongTrailingIdx - 4]))), _ => 0.0 });
             // for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
             totIdx = 3;
             loop {
-                let mut _candlerange_9: f64;
-                match BodyShort_rangeType {
-                    0 => {
-                        _candlerange_9 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_9 = inHigh[i - totIdx] - inLow[i - totIdx];
-                    }
-                    2 => {
-                        _candlerange_9 = (inHigh[i - totIdx] - (if inClose[i - totIdx] >= inOpen[i - totIdx] { inClose[i - totIdx] } else { inOpen[i - totIdx] })) + ((if inClose[i - totIdx] >= inOpen[i - totIdx] { inOpen[i - totIdx] } else { inClose[i - totIdx] }) - inLow[i - totIdx]);
-                    }
-                    _ => {
-                        _candlerange_9 = 0.0;
-                    }
-                }
-                let mut _candlerange_10: f64;
-                match BodyShort_rangeType {
-                    0 => {
-                        _candlerange_10 = (inClose[BodyShortTrailingIdx - totIdx] - inOpen[BodyShortTrailingIdx - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_10 = inHigh[BodyShortTrailingIdx - totIdx] - inLow[BodyShortTrailingIdx - totIdx];
-                    }
-                    2 => {
-                        _candlerange_10 = (inHigh[BodyShortTrailingIdx - totIdx] - (if inClose[BodyShortTrailingIdx - totIdx] >= inOpen[BodyShortTrailingIdx - totIdx] { inClose[BodyShortTrailingIdx - totIdx] } else { inOpen[BodyShortTrailingIdx - totIdx] })) + ((if inClose[BodyShortTrailingIdx - totIdx] >= inOpen[BodyShortTrailingIdx - totIdx] { inOpen[BodyShortTrailingIdx - totIdx] } else { inClose[BodyShortTrailingIdx - totIdx] }) - inLow[BodyShortTrailingIdx - totIdx]);
-                    }
-                    _ => {
-                        _candlerange_10 = 0.0;
-                    }
-                }
-                BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (_candlerange_9 - _candlerange_10);
+                BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (match BodyShort_rangeType { 0 => (((inClose[i - totIdx]) - (inOpen[i - totIdx])).abs()) - (((inClose[BodyShortTrailingIdx - totIdx]) - (inOpen[BodyShortTrailingIdx - totIdx])).abs()), 1 => ((inHigh[i - totIdx]) - (inLow[i - totIdx])) - ((inHigh[BodyShortTrailingIdx - totIdx]) - (inLow[BodyShortTrailingIdx - totIdx])), 2 => (((inHigh[i - totIdx]) - (if (inClose[i - totIdx]) >= (inOpen[i - totIdx]) { (inClose[i - totIdx]) } else { (inOpen[i - totIdx]) })) + ((if (inClose[i - totIdx]) >= (inOpen[i - totIdx]) { (inOpen[i - totIdx]) } else { (inClose[i - totIdx]) }) - (inLow[i - totIdx]))) - (((inHigh[BodyShortTrailingIdx - totIdx]) - (if (inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx]) { (inClose[BodyShortTrailingIdx - totIdx]) } else { (inOpen[BodyShortTrailingIdx - totIdx]) })) + ((if (inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx]) { (inOpen[BodyShortTrailingIdx - totIdx]) } else { (inClose[BodyShortTrailingIdx - totIdx]) }) - (inLow[BodyShortTrailingIdx - totIdx]))), _ => 0.0 });
                 if totIdx == 1 { break; }
                 totIdx -= 1;
             }
@@ -1188,22 +1072,22 @@ impl CdlmatholdStream {
             let BodyShort_avgPeriod: i32 = self.cs_body_short.avg_period;
             #[allow(non_snake_case)]
             let BodyShort_factor: f64 = self.cs_body_short.factor;
-            if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 1 &&     // white, black, 2 black or white, white
+            if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 1 && // white, black, 2 black or white, white
                (((if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
                (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&
-               ((if (sp.lag3_inOpen).min(sp.lag3_inClose) > (sp.lag4_inOpen).max(sp.lag4_inClose) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
-               (sp.lag2_inOpen).min(sp.lag2_inClose) < sp.lag4_inClose &&              // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
-               (sp.lag1_inOpen).min(sp.lag1_inClose) < sp.lag4_inClose &&
-               (sp.lag2_inOpen).min(sp.lag2_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
-               (sp.lag1_inOpen).min(sp.lag1_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration &&
-               (sp.lag2_inClose).max(sp.lag2_inOpen) < sp.lag3_inOpen &&               // 2nd to 4th are falling
-               (sp.lag1_inClose).max(sp.lag1_inOpen) < (sp.lag2_inClose).max(sp.lag2_inOpen) &&
-               inOpen > sp.lag1_inClose &&                                             // 5th opens above the prior close
-               inClose > ((sp.lag3_inHigh).max(sp.lag2_inHigh)).max(sp.lag1_inHigh) && // 5th closes above the highest high of the reaction days
-               (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long, then 3 small
-               (sp.lag3_inClose - sp.lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (sp.lag2_inClose - sp.lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (sp.lag1_inClose - sp.lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 }))
+               ((if c_min(sp.lag3_inOpen, sp.lag3_inClose) > c_max(sp.lag4_inOpen, sp.lag4_inClose) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
+               c_min(sp.lag2_inOpen, sp.lag2_inClose) < sp.lag4_inClose &&         // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
+               c_min(sp.lag1_inOpen, sp.lag1_inClose) < sp.lag4_inClose &&
+               c_min(sp.lag2_inOpen, sp.lag2_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
+               c_min(sp.lag1_inOpen, sp.lag1_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration &&
+               c_max(sp.lag2_inClose, sp.lag2_inOpen) < sp.lag3_inOpen &&          // 2nd to 4th are falling
+               c_max(sp.lag1_inClose, sp.lag1_inOpen) < c_max(sp.lag2_inClose, sp.lag2_inOpen) &&
+               inOpen > sp.lag1_inClose &&                                         // 5th opens above the prior close
+               inClose > c_max(c_max(sp.lag3_inHigh, sp.lag2_inHigh), sp.lag1_inHigh) && // 5th closes above the highest high of the reaction days
+               (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) * (if (BodyLong_rangeType) == 2 { 0.5 } else { 1.0 })) && // 1st long, then 3 small
+               (sp.lag3_inClose - sp.lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+               (sp.lag2_inClose - sp.lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 })) &&
+               (sp.lag1_inClose - sp.lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) * (if (BodyShort_rangeType) == 2 { 0.5 } else { 1.0 }))
             {
                 (*outInteger) = 100;
             } else {

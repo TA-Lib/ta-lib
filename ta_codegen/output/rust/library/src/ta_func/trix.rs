@@ -177,6 +177,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
         // roc() of consecutive EMA3 values. Output element j is the TRIX
         // of bar startIdx+j (fix #98). The arithmetic order below is the

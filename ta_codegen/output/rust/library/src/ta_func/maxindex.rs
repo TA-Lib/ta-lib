@@ -137,6 +137,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Proceed with the calculation for the requested range.
         // (The integer output can never share the real input's buffer —
         // different element type; issue #130.)

@@ -133,6 +133,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inVolume = &inVolume[..=endIdx];
         periodTotal = 0.0;
         trailingIdx = startIdx - lookbackTotal;
         i = trailingIdx;

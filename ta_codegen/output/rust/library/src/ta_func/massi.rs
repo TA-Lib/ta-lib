@@ -199,9 +199,11 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         if optInSlowPeriod < 1 { return RetCode::InternalError; }
         if (optInSlowPeriod) as usize <= 32usize {
-            ratioRing = &mut local_ratioRing;
+            ratioRing = &mut local_ratioRing[..(optInSlowPeriod) as usize];
         } else {
             heap_ratioRing = vec![0.0_f64; (optInSlowPeriod) as usize];
             ratioRing = &mut heap_ratioRing;

@@ -148,6 +148,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // TRIMA Description
         // =================
         // The triangular MA is a weighted moving average. Instead of the

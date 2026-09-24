@@ -158,10 +158,14 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 50usize {
-            mfv_flow = &mut local_mfv_flow;
-            mfv_volume = &mut local_mfv_volume;
+            mfv_flow = &mut local_mfv_flow[..(optInTimePeriod) as usize];
+            mfv_volume = &mut local_mfv_volume[..(optInTimePeriod) as usize];
         } else {
             heap_mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
             mfv_flow = &mut heap_mfv_flow;

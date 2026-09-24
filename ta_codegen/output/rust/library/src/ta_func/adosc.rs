@@ -234,6 +234,10 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         (*outBegIdx) = startIdx;
         today = startIdx - lookbackTotal;
         // The following variables are used to

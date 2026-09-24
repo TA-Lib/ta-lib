@@ -1528,6 +1528,7 @@ fn peek_frame_arm(
         .filter(|p| p.param_type == ParamType::Real)
         .map(|p| p.name.clone())
         .collect();
+    let body_ir = respell(func, &body_ir, ctx, helpers);
     let var_inits: HashMap<String, &Expr> = HashMap::new();
     let mut body = String::new();
     for st in &body_ir {
@@ -1691,6 +1692,12 @@ fn emit_step_end(o: &mut String, fallible: bool) {
     let _ = writeln!(o, "    }}\n");
 }
 
+/// [`super::rust_respell::rewrite`] over a list this tier is about to render.
+fn respell(func: &FuncDef, body: &[Statement], ctx: &RustRenderCtx, helpers: &HelperRegistry) -> Vec<Statement> {
+    let recurrent = super::select_chain::recurrent_select_targets(func.stream_source());
+    super::rust_respell::rewrite(body, &ctx.fma_view(), helpers, &recurrent)
+}
+
 /// One model's per-bar step body at a given indent: temp decls, candle
 /// unpacking, and the rendered transition. Called once by the
 /// loop tier (indent 8) and once per arm by the dual-mode step (indent 12).
@@ -1748,6 +1755,7 @@ fn emit_step_body(
         .filter(|p| p.param_type == ParamType::Real)
         .map(|p| p.name.clone())
         .collect();
+    let transition = respell(func, &transition, ctx, helpers);
     let var_inits: HashMap<String, &Expr> = HashMap::new();
     let mut body = String::new();
     for s in &transition {
@@ -2229,7 +2237,7 @@ fn emit_open_region(
         Some("Err(RetCode::InsufficientHistory)"),
     );
     let folded = super::ir_cleanup::drop_deallocation(&folded);
-    let folded = super::ir_cleanup::drop_inert_guards(&folded);
+    let folded = respell(func, &super::ir_cleanup::drop_inert_guards(&folded), &typing.ctx, helpers);
     let body: &[Statement] = &folded;
 
     // Scoped to the open body: a declined output's store is wrapped in
@@ -2289,17 +2297,8 @@ fn emit_open_region(
         o.push_str(&crate::candle_settings::emit_rust_unpacking(&candle_used, 8));
     }
 
-    // VarDecl initializations (skipped when the body reassigns the same var).
-    let body_assigned: HashSet<String> = body
-        .iter()
-        .filter_map(|s| {
-            if let Statement::Assign { target: Expr::Var(name), .. } = s {
-                Some(name.clone())
-            } else {
-                None
-            }
-        })
-        .collect();
+    // VarDecl initializations, unless the body overwrites the var before reading it.
+    let body_assigned = super::rust_lang::overwritten_before_read(body);
     for stmt in body {
         if let Statement::VarDecl { name, var_type, init: Some(init) } = stmt {
             if for_loop_vars.contains(name) || body_assigned.contains(name) {
@@ -2307,7 +2306,7 @@ fn emit_open_region(
             }
             let mut hoisted = Vec::new();
             let mut cnt = counter.get();
-            let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, &[]);
+            let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, super::rust_lang::KEPT_INLINE);
             counter.set(cnt);
             o.push_str(&render_hoisted_blocks(
                 &hoisted, 8, ctx, &for_loop_vars, &var_inits, &output_names,
@@ -4454,6 +4453,7 @@ fn emit_composed_step(
         } else {
             let transition = streaming::build_transition(model, &names)
                 .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+            let transition = respell(func, &transition, &ctx, helpers);
             let mut body = String::new();
             for st in &transition {
                 body.push_str(&render_statement(
@@ -4516,7 +4516,8 @@ fn emit_composed_step(
                     cur.entry(out.clone()).or_insert_with(|| format!("cur_{out}"));
                 }
                 let _ = writeln!(o, "{pad}// Combine map (batch tail, per bar).");
-                for st in &transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings) {
+                let map = transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings);
+                for st in &respell(func, &map, &ctx, helpers) {
                     o.push_str(&render_statement(
                         st, indent, &ctx, &[], &var_inits, &output_names, &opt_real_params,
                         enums, registry, helpers, counter,
@@ -4901,7 +4902,7 @@ fn emit_composed_region(
         Some("Err(RetCode::InsufficientHistory)"),
     );
     let folded = super::ir_cleanup::drop_deallocation(&folded);
-    let folded = super::ir_cleanup::drop_inert_guards(&folded);
+    let folded = respell(func, &super::ir_cleanup::drop_inert_guards(&folded), &typing.ctx, helpers);
     let body: &[Statement] = &folded;
     let ctx = &typing.ctx;
     let for_loop_vars = collect_for_loop_vars(body);
@@ -4942,16 +4943,7 @@ fn emit_composed_region(
         o.push_str(&crate::candle_settings::emit_rust_unpacking(&candle_used, 8));
     }
 
-    let body_assigned: HashSet<String> = body
-        .iter()
-        .filter_map(|s| {
-            if let Statement::Assign { target: Expr::Var(name), .. } = s {
-                Some(name.clone())
-            } else {
-                None
-            }
-        })
-        .collect();
+    let body_assigned = super::rust_lang::overwritten_before_read(body);
     for stmt in body {
         if let Statement::VarDecl { name, var_type, init: Some(init) } = stmt {
             if for_loop_vars.contains(name) || body_assigned.contains(name) {
@@ -4959,7 +4951,7 @@ fn emit_composed_region(
             }
             let mut hoisted = Vec::new();
             let mut cnt = counter.get();
-            let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, &[]);
+            let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, super::rust_lang::KEPT_INLINE);
             counter.set(cnt);
             o.push_str(&render_hoisted_blocks(
                 &hoisted, 8, ctx, &for_loop_vars, &var_inits, &output_names,

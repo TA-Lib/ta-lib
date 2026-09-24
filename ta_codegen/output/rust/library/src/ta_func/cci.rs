@@ -166,11 +166,14 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Allocate a circular buffer equal to the requested
         // period.
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            circBuffer = &mut local_circBuffer;
+            circBuffer = &mut local_circBuffer[..(optInTimePeriod) as usize];
         } else {
             heap_circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
             circBuffer = &mut heap_circBuffer;

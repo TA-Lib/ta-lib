@@ -218,6 +218,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Initialize the variables by going through
         // the lookback period.
         sumROC1 = 0.0;

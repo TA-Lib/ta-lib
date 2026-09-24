@@ -152,6 +152,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the input and
         // output to be the same buffer.

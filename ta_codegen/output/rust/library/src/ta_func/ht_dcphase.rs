@@ -227,6 +227,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         (*outBegIdx) = startIdx;
         // Initialize the price smoother, which is simply a weighted
         // moving average of the price.

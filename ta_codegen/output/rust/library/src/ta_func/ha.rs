@@ -130,6 +130,10 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inOpen = &inOpen[..=endIdx];
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // The summation order ((O+H)+L)+C is the bit-exactness contract with every
         // external implementation of this indicator. TA_AVGPRICE is documented as
         // the same quantity but sums ((H+L)+C)+O, which is a different double on
@@ -157,19 +161,11 @@ impl Core {
         // emits different bytes per backend and the cross-language gate compares
         // bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
         haHigh = tempHigh;
-        if haOpen > haHigh {
-            haHigh = haOpen;
-        }
-        if haClose > haHigh {
-            haHigh = haClose;
-        }
+        haHigh = c_max(haOpen, haHigh);
+        haHigh = c_max(haClose, haHigh);
         haLow = tempLow;
-        if haOpen < haLow {
-            haLow = haOpen;
-        }
-        if haClose < haLow {
-            haLow = haClose;
-        }
+        haLow = c_min(haOpen, haLow);
+        haLow = c_min(haClose, haLow);
         outHAOpen[0] = haOpen;
         outHAHigh[0] = haHigh;
         outHALow[0] = haLow;
@@ -186,19 +182,11 @@ impl Core {
             haOpen = (haOpen + haClose) / 2.0;
             haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
             haHigh = tempHigh;
-            if haOpen > haHigh {
-                haHigh = haOpen;
-            }
-            if haClose > haHigh {
-                haHigh = haClose;
-            }
+            haHigh = c_max(haOpen, haHigh);
+            haHigh = c_max(haClose, haHigh);
             haLow = tempLow;
-            if haOpen < haLow {
-                haLow = haOpen;
-            }
-            if haClose < haLow {
-                haLow = haClose;
-            }
+            haLow = c_min(haOpen, haLow);
+            haLow = c_min(haClose, haLow);
             outHAOpen[outIdx] = haOpen;
             outHAHigh[outIdx] = haHigh;
             outHALow[outIdx] = haLow;
@@ -419,19 +407,11 @@ impl Core {
         sp.haOpen = (sp.haOpen + sp.haClose) / 2.0;
         sp.haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
         haHigh = tempHigh;
-        if sp.haOpen > haHigh {
-            haHigh = sp.haOpen;
-        }
-        if sp.haClose > haHigh {
-            haHigh = sp.haClose;
-        }
+        haHigh = c_max(sp.haOpen, haHigh);
+        haHigh = c_max(sp.haClose, haHigh);
         haLow = tempLow;
-        if sp.haOpen < haLow {
-            haLow = sp.haOpen;
-        }
-        if sp.haClose < haLow {
-            haLow = sp.haClose;
-        }
+        haLow = c_min(sp.haOpen, haLow);
+        haLow = c_min(sp.haClose, haLow);
         (*outHAOpen) = sp.haOpen;
         (*outHAHigh) = haHigh;
         (*outHALow) = haLow;
@@ -515,19 +495,11 @@ impl Core {
         // emits different bytes per backend and the cross-language gate compares
         // bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
         haHigh = tempHigh;
-        if haOpen > haHigh {
-            haHigh = haOpen;
-        }
-        if haClose > haHigh {
-            haHigh = haClose;
-        }
+        haHigh = c_max(haOpen, haHigh);
+        haHigh = c_max(haClose, haHigh);
         haLow = tempLow;
-        if haOpen < haLow {
-            haLow = haOpen;
-        }
-        if haClose < haLow {
-            haLow = haClose;
-        }
+        haLow = c_min(haOpen, haLow);
+        haLow = c_min(haClose, haLow);
         outHAOpen[(0 * outStride) as usize] = haOpen;
         outHAHigh[(0 * outStride) as usize] = haHigh;
         outHALow[(0 * outStride) as usize] = haLow;
@@ -544,19 +516,11 @@ impl Core {
             haOpen = (haOpen + haClose) / 2.0;
             haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
             haHigh = tempHigh;
-            if haOpen > haHigh {
-                haHigh = haOpen;
-            }
-            if haClose > haHigh {
-                haHigh = haClose;
-            }
+            haHigh = c_max(haOpen, haHigh);
+            haHigh = c_max(haClose, haHigh);
             haLow = tempLow;
-            if haOpen < haLow {
-                haLow = haOpen;
-            }
-            if haClose < haLow {
-                haLow = haClose;
-            }
+            haLow = c_min(haOpen, haLow);
+            haLow = c_min(haClose, haLow);
             outHAOpen[(outIdx * outStride) as usize] = haOpen;
             outHAHigh[(outIdx * outStride) as usize] = haHigh;
             outHALow[(outIdx * outStride) as usize] = haLow;
@@ -813,19 +777,11 @@ impl HaStream {
             haOpen = (haOpen + haClose) / 2.0;
             haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
             haHigh = tempHigh;
-            if haOpen > haHigh {
-                haHigh = haOpen;
-            }
-            if haClose > haHigh {
-                haHigh = haClose;
-            }
+            haHigh = c_max(haOpen, haHigh);
+            haHigh = c_max(haClose, haHigh);
             haLow = tempLow;
-            if haOpen < haLow {
-                haLow = haOpen;
-            }
-            if haClose < haLow {
-                haLow = haClose;
-            }
+            haLow = c_min(haOpen, haLow);
+            haLow = c_min(haClose, haLow);
             (*outHAOpen) = haOpen;
             (*outHAHigh) = haHigh;
             (*outHALow) = haLow;

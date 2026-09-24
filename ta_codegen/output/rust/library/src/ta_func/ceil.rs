@@ -98,7 +98,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            outReal[outIdx] = (((inReal[i]).ceil()) as f64);
+            outReal[outIdx] = ((c_ceil(inReal[i])) as f64);
             i += 1;
             outIdx += 1;
         }
@@ -229,7 +229,7 @@ struct CeilStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn ceil_step_impl(sp: &mut CeilStreamState, inReal: f64, outReal: &mut f64) {
-        (*outReal) = (inReal).ceil();
+        (*outReal) = c_ceil(inReal);
         sp.cur_outReal = (*outReal);
     }
 
@@ -260,7 +260,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            outReal[(outIdx * outStride) as usize] = (((inReal[i]).ceil()) as f64);
+            outReal[(outIdx * outStride) as usize] = ((c_ceil(inReal[i])) as f64);
             i += 1;
             outIdx += 1;
         }
@@ -436,7 +436,7 @@ impl CeilStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let outReal = &mut outReal;
-            (*outReal) = (inReal).ceil();
+            (*outReal) = c_ceil(inReal);
         }
         Ok(outReal)
     }

@@ -194,6 +194,9 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Period 1: ema.c's explicit copy arm, kept here for the same reason it
         // exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
         // which returns x only while consecutive closes stay within a factor of

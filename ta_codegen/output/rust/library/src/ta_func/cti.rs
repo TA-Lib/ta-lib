@@ -148,6 +148,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         (*outBegIdx) = startIdx;
         trailingIdx = startIdx - lookbackTotal;
         dPeriod = optInTimePeriod as f64;

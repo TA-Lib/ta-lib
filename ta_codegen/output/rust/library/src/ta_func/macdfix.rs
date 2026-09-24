@@ -210,6 +210,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Everything is computed in a single lockstep pass: each bar
         // advances the fast and slow EMA (two independent recursions),
         // their difference is the MACD line, and each MACD-line value

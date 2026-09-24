@@ -190,6 +190,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - lookbackTotal;

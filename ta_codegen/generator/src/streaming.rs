@@ -8133,7 +8133,7 @@ pub fn temps_used(temps: &[(String, VarType)], body: &[Statement]) -> Vec<(Strin
 /// The expressions a statement evaluates itself, without the ones its nested
 /// bodies do — [`nested_bodies`] reaches those, and a caller that must treat a
 /// nested statement differently needs the two apart.
-fn walk_stmt_own_exprs(s: &Statement, f: &mut dyn FnMut(&Expr)) {
+pub(crate) fn walk_stmt_own_exprs(s: &Statement, f: &mut dyn FnMut(&Expr)) {
     match s {
         Statement::VarDecl { init: Some(e), .. }
         | Statement::Return { value: Some(e) }

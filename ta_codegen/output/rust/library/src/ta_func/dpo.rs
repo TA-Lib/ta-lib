@@ -143,6 +143,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         periodTotal = 0.0;
         trailingIdx = startIdx - (((optInTimePeriod - 1)) as usize);
         dispIdx = startIdx - (((optInTimePeriod / 2 + 1)) as usize);

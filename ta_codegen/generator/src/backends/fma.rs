@@ -67,7 +67,6 @@ pub const INDEX_PARAM_SEEDS: [&str; 4] = ["startIdx", "endIdx", "outBegIdx", "ou
 pub const GUARDED_INDEX_SEEDS: [&str; 2] = ["startIdx", "endIdx"];
 
 /// Borrowing view of the variable-type name-sets the fusion predicate consults.
-/// Rust builds this from its `RustRenderCtx`; C/Java from an owned [`FmaVarSets`].
 pub struct FmaCtx<'a> {
     pub real_vars: &'a HashSet<String>,
     pub index_vars: &'a HashSet<String>,
@@ -76,17 +75,15 @@ pub struct FmaCtx<'a> {
     pub sentinel_vars: &'a HashSet<String>,
 }
 
-/// Owned name-sets for the backends (C, Java) that do not otherwise track
-/// per-variable types (they emit typed declarations and let the compiler infer
-/// arithmetic types). Built by [`build_fma_var_sets`].
+/// Owned name-sets, for a renderer that does not otherwise track per-variable
+/// types. Built by [`build_fma_var_sets`].
 pub struct FmaVarSets {
     pub real_vars: HashSet<String>,
     pub index_vars: HashSet<String>,
     pub real_array_vars: HashSet<String>,
     pub int_output_names: HashSet<String>,
     pub sentinel_vars: HashSet<String>,
-    /// Read by the C# renderer only: [`super::select_chain::recurrent_select_targets`]
-    /// of the same body.
+    /// [`super::select_chain::recurrent_select_targets`] of the same body.
     pub recurrent_select_targets: HashSet<String>,
 }
 

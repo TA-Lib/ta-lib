@@ -200,6 +200,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // No smoothing at period of 1: the output is a copy of the input
         // (same convention as TA_MA for every MAType). Explicit because the
         // 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA

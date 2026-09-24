@@ -646,7 +646,7 @@ jobs:
   # warn-level lints (and rustc warnings) to errors too; the generated crate stays
   # green because its scaffolding emits a crate-level #![allow(clippy::all,
   # clippy::pedantic)] — its machine output is verified bit-exact against the C
-  # reference, not linted (rewriting emitted comparisons would change NaN semantics).
+  # reference (rewriting emitted comparisons would change NaN semantics).
   # That "(and rustc warnings)" is load-bearing for one lint on purpose: the crate
   # sets #![warn(missing_docs)] (#179 D7), and `-D warnings` here is the only thing
   # that turns an undocumented public item into a failure rather than a warning
@@ -713,11 +713,9 @@ jobs:
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
       # This step is the ONLY thing anywhere that EXECUTES the crate's
-      # hand-written test modules (templates/rust/, copied in by `generate`):
-      # types.rs's Core/CoreBuilder API tests (#144), and the four #[cfg(test)]
-      # ones -- scratch_election (#146), stream_finite, stream_out_range (#241)
-      # and div_zero (#249). clippy --all-targets only COMPILES the test target
-      # and --doc skips it, so narrowing this step silently retires all five.
+      # hand-written test modules (templates/rust/, copied in by `generate`).
+      # clippy --all-targets only COMPILES the test target and --doc skips it,
+      # so narrowing this step silently retires them.
       #
       # `--tests`, not `--lib`: the latter excludes tests/, which is where
       # nullable_outputs.rs (#262) lives. The generated phantom-I/O sweep was
@@ -802,11 +800,11 @@ jobs:
         shell: bash
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
-  # The two publishable crates declare `rust-version = "1.86"`, and nothing
-  # else here compiles them at it -- every other Rust step runs on the pinned
-  # toolchain from rust-toolchain.toml (1.97.0), so a post-1.86 API reaching
-  # the generated crate is green everywhere and breaks only for a consumer on
-  # an older toolchain, after publish, in a version that cannot be edited.
+  # The two publishable crates declare a `rust-version`, and only this job
+  # compiles the pair at ta-lib's -- every other Rust step runs on the pinned
+  # toolchain from rust-toolchain.toml (1.97.0), so a newer API reaching the
+  # generated crate is green everywhere and breaks only for a consumer on an
+  # older toolchain, after publish, in a version that cannot be edited.
   #
   # Nightly, not the PR gate: pr-codegen-gate.yml stays fast and lightweight
   # by design (#298 discussion), and an extra toolchain install of unmeasured
@@ -818,8 +816,8 @@ jobs:
   #
   # The floor is READ from the manifests, not written here: bumping it in
   # ta_codegen/generator/src/main.rs moves this gate with it, and the two
-  # reads are also the job's non-vacuity guard -- a missing or disagreeing
-  # rust-version fails before any toolchain is installed.
+  # reads are also the job's non-vacuity guard -- a missing floor, or a ta-lib
+  # floor below ta-lib-dispatch's, fails before any toolchain is installed.
   #
   # Rust-only and self-contained, so like clippy above it is deliberately NOT
   # gated on the C hero 'test' job.
@@ -847,11 +845,14 @@ jobs:
             echo "::error::A publishable crate declares no rust-version (ta-lib='$lib', ta-lib-dispatch='$dispatch'), so this job has no floor to compile against. Both manifests are generated — restore the literal in ta_codegen/generator/src/main.rs and re-run 'scripts/build.py generate'."
             exit 1
           fi
-          if [ "$lib" != "$dispatch" ]; then
-            echo "::error::The publishable crates declare different floors (ta-lib='$lib', ta-lib-dispatch='$dispatch'). ta-lib pins ta-lib-dispatch with '=', so the two ship as a pair and only one floor is meaningful. Both literals live in ta_codegen/generator/src/main.rs."
+          # ta-lib pins ta-lib-dispatch with '=', so the pair builds only as
+          # far back as the higher floor. ta-lib's may sit above dispatch's:
+          # a published dispatch keeps the floor it was published with.
+          if [ "$(printf '%s\n%s\n' "$dispatch" "$lib" | sort -V | tail -n 1)" != "$lib" ]; then
+            echo "::error::ta-lib declares a lower floor ('$lib') than the ta-lib-dispatch it pins ('$dispatch'), which cannot be true of the pair. Both literals live in ta_codegen/generator/src/main.rs."
             exit 1
           fi
-          echo "Declared MSRV: $lib"
+          echo "Declared MSRV: $lib (ta-lib-dispatch alone: $dispatch)"
           echo "msrv=$lib" >> "$GITHUB_OUTPUT"
 
       # rustup is preinstalled on ubuntu-latest. `+<version>` overrides
@@ -865,7 +866,7 @@ jobs:
         shell: bash
         run: |
           if ! cargo "+${{ steps.floor.outputs.msrv }}" check -p ta-lib -p ta-lib-dispatch --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml; then
-            echo "::error::The publishable crates do not compile on their own declared MSRV (${{ steps.floor.outputs.msrv }}). Either the code reached for something newer -- a 'use of unstable library feature' or 'stable since 1.NN' note names it -- in which case fix the generator that emits it, or the floor genuinely has to rise, in which case raise rust-version in ta_codegen/generator/src/main.rs (both crates) and say why in the commit. Reproduce locally: rustup toolchain install ${{ steps.floor.outputs.msrv }} && cargo +${{ steps.floor.outputs.msrv }} check -p ta-lib -p ta-lib-dispatch --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml"
+            echo "::error::The publishable crates do not compile on ta-lib's declared MSRV (${{ steps.floor.outputs.msrv }}). Either the code reached for something newer -- a 'use of unstable library feature' or 'stable since 1.NN' note names it -- in which case fix the generator that emits it, or the floor genuinely has to rise, in which case raise rust-version in ta_codegen/generator/src/main.rs and say why in the commit. Reproduce locally: rustup toolchain install ${{ steps.floor.outputs.msrv }} && cargo +${{ steps.floor.outputs.msrv }} check -p ta-lib -p ta-lib-dispatch --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml"
             exit 1
           fi
 

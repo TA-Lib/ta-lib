@@ -165,6 +165,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // wAlpha is derived FROM wBeta, never the reverse: only that order makes
         // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
         // measures closer to the exact recursion than the 1/period-first spelling

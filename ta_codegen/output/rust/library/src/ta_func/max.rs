@@ -152,6 +152,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the input and
         // output to be the same buffer.
@@ -173,7 +174,7 @@ impl Core {
         trailingIdx = startIdx - nbInitialElementNeeded;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            sufHighest = &mut local_sufHighest;
+            sufHighest = &mut local_sufHighest[..(optInTimePeriod) as usize];
         } else {
             heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufHighest = &mut heap_sufHighest;
@@ -182,7 +183,7 @@ impl Core {
         sufHighest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            preHighest = &mut local_preHighest;
+            preHighest = &mut local_preHighest[..(optInTimePeriod) as usize];
         } else {
             heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             preHighest = &mut heap_preHighest;
@@ -202,9 +203,7 @@ impl Core {
             while i > blockStart {
                 i -= 1;
                 tmp = inReal[i];
-                if tmp > highest {
-                    highest = tmp;
-                }
+                highest = c_max(tmp, highest);
                 sufHighest[i - blockStart] = highest;
             }
             highest = sufHighest[0];
@@ -226,9 +225,7 @@ impl Core {
                 i = 1;
                 while i < nAvail {
                     tmp = inReal[(blockStart + ((optInTimePeriod) as usize) + i) as usize];
-                    if tmp > highest {
-                        highest = tmp;
-                    }
+                    highest = c_max(tmp, highest);
                     preHighest[i] = highest;
                     i += 1;
                 }
@@ -237,9 +234,7 @@ impl Core {
                 m = 1;
                 while m <= nAvail {
                     highest = sufHighest[m];
-                    if preHighest[m - 1] > highest {
-                        highest = preHighest[m - 1];
-                    }
+                    highest = c_max(preHighest[m - 1], highest);
                     outReal[outIdx] = highest;
                     outIdx += 1;
                     m += 1;

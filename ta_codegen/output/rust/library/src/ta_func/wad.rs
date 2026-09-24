@@ -150,15 +150,11 @@ impl Core {
             close = inClose[i];
             if close > prevClose {
                 trueExtreme = inLow[i];
-                if prevClose < trueExtreme {
-                    trueExtreme = prevClose;
-                }
+                trueExtreme = c_min(prevClose, trueExtreme);
                 sum += close - trueExtreme;
             } else if close < prevClose {
                 trueExtreme = inHigh[i];
-                if prevClose > trueExtreme {
-                    trueExtreme = prevClose;
-                }
+                trueExtreme = c_max(prevClose, trueExtreme);
                 sum += close - trueExtreme;
             }
             outReal[outIdx] = sum;
@@ -335,15 +331,11 @@ impl Core {
         close = inClose;
         if close > sp.prevClose {
             trueExtreme = inLow;
-            if sp.prevClose < trueExtreme {
-                trueExtreme = sp.prevClose;
-            }
+            trueExtreme = c_min(sp.prevClose, trueExtreme);
             sp.sum += close - trueExtreme;
         } else if close < sp.prevClose {
             trueExtreme = inHigh;
-            if sp.prevClose > trueExtreme {
-                trueExtreme = sp.prevClose;
-            }
+            trueExtreme = c_max(sp.prevClose, trueExtreme);
             sp.sum += close - trueExtreme;
         }
         (*outReal) = sp.sum;
@@ -424,15 +416,11 @@ impl Core {
             close = inClose[i];
             if close > prevClose {
                 trueExtreme = inLow[i];
-                if prevClose < trueExtreme {
-                    trueExtreme = prevClose;
-                }
+                trueExtreme = c_min(prevClose, trueExtreme);
                 sum += close - trueExtreme;
             } else if close < prevClose {
                 trueExtreme = inHigh[i];
-                if prevClose > trueExtreme {
-                    trueExtreme = prevClose;
-                }
+                trueExtreme = c_max(prevClose, trueExtreme);
                 sum += close - trueExtreme;
             }
             outReal[(outIdx * outStride) as usize] = sum;
@@ -632,15 +620,11 @@ impl WadStream {
             close = inClose;
             if close > sp.prevClose {
                 trueExtreme = inLow;
-                if sp.prevClose < trueExtreme {
-                    trueExtreme = sp.prevClose;
-                }
+                trueExtreme = c_min(sp.prevClose, trueExtreme);
                 sum += close - trueExtreme;
             } else if close < sp.prevClose {
                 trueExtreme = inHigh;
-                if sp.prevClose > trueExtreme {
-                    trueExtreme = sp.prevClose;
-                }
+                trueExtreme = c_max(sp.prevClose, trueExtreme);
                 sum += close - trueExtreme;
             }
             (*outReal) = sum;

@@ -201,6 +201,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         // No smoothing at a period of 1: the output is the raw Force Index.
         // Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
         // exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x

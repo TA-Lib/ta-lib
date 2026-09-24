@@ -168,6 +168,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal0 = &inReal0[..=endIdx];
+        let inReal1 = &inReal1[..=endIdx];
         (*outBegIdx) = startIdx;
         trailingIdx = startIdx - lookbackTotal;
         // Measure both series against a shift near the window, exactly as TA_VAR

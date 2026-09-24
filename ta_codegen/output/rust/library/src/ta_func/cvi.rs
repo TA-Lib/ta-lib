@@ -199,9 +199,11 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         if optInROCPeriod < 1 { return RetCode::InternalError; }
         if (optInROCPeriod) as usize <= 32usize {
-            emaRing = &mut local_emaRing;
+            emaRing = &mut local_emaRing[..(optInROCPeriod) as usize];
         } else {
             heap_emaRing = vec![0.0_f64; (optInROCPeriod) as usize];
             emaRing = &mut heap_emaRing;

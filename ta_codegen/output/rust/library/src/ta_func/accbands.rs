@@ -163,6 +163,9 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Each band is a simple moving average maintained as a running sum over a
         // shared trailing window (all three share optInTimePeriod, so one trailing
         // index walks all three windows in lockstep):

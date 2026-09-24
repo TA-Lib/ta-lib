@@ -159,6 +159,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Calculate Momentum:
         //    Just substract the value from 'period' ago from
         //    current value.

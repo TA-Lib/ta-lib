@@ -200,6 +200,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // wAlpha is derived FROM wBeta, never the reverse (rma.c): only that order
         // makes the pair sum to exactly 1, and TA_RMA over this function's two legs
         // has to be bit for bit what the fused step below computes.

@@ -134,6 +134,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         outIdx = 0;
         today = startIdx;
         while today <= endIdx {
@@ -151,12 +152,8 @@ impl Core {
                 tempReal = inReal[today - i];
                 if i < ((optInTimePeriod) as usize) {
                     sumChange += (tempReal - prev).abs();
-                    if tempReal > highest {
-                        highest = tempReal;
-                    }
-                    if tempReal < lowest {
-                        lowest = tempReal;
-                    }
+                    highest = c_max(tempReal, highest);
+                    lowest = c_min(tempReal, lowest);
                 }
                 prev = tempReal;
                 if i == 0 { break; }
@@ -339,12 +336,8 @@ impl Core {
             tempReal = sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
             if i < ((sp.optInTimePeriod) as usize) {
                 sumChange += (tempReal - prev).abs();
-                if tempReal > highest {
-                    highest = tempReal;
-                }
-                if tempReal < lowest {
-                    lowest = tempReal;
-                }
+                highest = c_max(tempReal, highest);
+                lowest = c_min(tempReal, lowest);
             }
             prev = tempReal;
             if i == 0 { break; }
@@ -428,12 +421,8 @@ impl Core {
                 tempReal = inReal[today - i];
                 if i < ((optInTimePeriod) as usize) {
                     sumChange += (tempReal - prev).abs();
-                    if tempReal > highest {
-                        highest = tempReal;
-                    }
-                    if tempReal < lowest {
-                        lowest = tempReal;
-                    }
+                    highest = c_max(tempReal, highest);
+                    lowest = c_min(tempReal, lowest);
                 }
                 prev = tempReal;
                 if i == 0 { break; }
@@ -658,12 +647,8 @@ impl VhfStream {
                 tempReal = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
                 if i < ((sp.optInTimePeriod) as usize) {
                     sumChange += (tempReal - prev).abs();
-                    if tempReal > highest {
-                        highest = tempReal;
-                    }
-                    if tempReal < lowest {
-                        lowest = tempReal;
-                    }
+                    highest = c_max(tempReal, highest);
+                    lowest = c_min(tempReal, lowest);
                 }
                 prev = tempReal;
                 if i == 0 { break; }

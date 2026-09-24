@@ -2311,14 +2311,15 @@ fn csharp_test_tfms(test_dir: &Path) -> Vec<String> {
 
 /// The hand-written Rust library sources that ship inside the generated crate,
 /// copied verbatim from `ta_codegen/generator/templates/rust/`. `types.rs` holds
-/// `Core`/`CoreBuilder` and its API tests (issue #144); the rest are
+/// `Core`/`CoreBuilder` and its API tests (issue #144); `c_math.rs` the C-exact
+/// `max`/`min`/`floor`/`ceil` the bodies call (issue #438); the rest are
 /// `#[cfg(test)]`-only modules — DIV's zero-divisor result (issue #249), the
 /// batch bodies' scratch-buffer election (issue #146), the streaming tier's
 /// non-finite input rejection, and a handle's `OutRange` against batch (issue
 /// #241). All are listed in the Rust backend's `clean_keep`, so `generate` never
 /// deletes them.
 const RUST_TEMPLATE_MODULES: &[&str] =
-    &["types", "div_zero", "scratch_election", "stream_finite", "stream_out_range"];
+    &["types", "c_math", "div_zero", "scratch_election", "stream_finite", "stream_out_range"];
 
 /// Of [`RUST_TEMPLATE_MODULES`], the ones that exist only for `cargo test` and so
 /// are declared `#[cfg(test)]` in the generated `mod.rs`.
@@ -2640,11 +2641,11 @@ macro_rules! dispatch_fma {
 
     // --- library/Cargo.toml (the published `ta-lib` crate — no bin; one
     //     internal dep: the dispatch macro crate, exact-pinned) ---
-    // rust-version: safe #[target_feature] (the FMA dispatch clones)
-    // stabilized in 1.86 — declare the floor so pre-1.86 toolchains get a
-    // clear MSRV message instead of an opaque E0658.
+    // rust-version: `std::hint::select_unpredictable` (1.88), without which
+    // LLVM leaves some C selects as data-dependent branches (#438). The
+    // dispatch crate's own floor stays at its published 1.86.
     let lib_toml_head = format!(
-        "[package]\nname = \"ta-lib\"\nversion = \"{crate_version}\"\nedition = \"2021\"\nrust-version = \"1.86\"\n\
+        "[package]\nname = \"ta-lib\"\nversion = \"{crate_version}\"\nedition = \"2021\"\nrust-version = \"1.88\"\n\
          description = \"Technical analysis library: 200+ indicators (SMA, EMA, RSI, MACD, \
          Bollinger Bands, ATR, Stochastic, candlestick patterns) — the official Rust port of \
          TA-Lib, verified against the C reference.\""
@@ -2683,6 +2684,22 @@ path = "src/lib.rs"
     )
     .unwrap();
     println!("  Scaffolding -> {}", lib_cargo_path.display());
+
+    // Denied in lib.rs. A float max/min the emitter misreads as an integer one
+    // renders as the f64 method and would otherwise compile.
+    let clippy_toml_path = lib_dir.join("clippy.toml");
+    write_if_changed(
+        &clippy_toml_path,
+        r#"disallowed-methods = [
+    { path = "f64::max", reason = "C's max() is `a > b ? a : b`; use c_max" },
+    { path = "f64::min", reason = "C's min() is `a < b ? a : b`; use c_min" },
+    { path = "f64::floor", reason = "a libm call without SSE4.1; use c_floor" },
+    { path = "f64::ceil", reason = "a libm call without SSE4.1; use c_ceil" },
+]
+"#,
+    )
+    .unwrap();
+    println!("  Scaffolding -> {}", clippy_toml_path.display());
 
     // --- tools/Cargo.toml (server/bench crate; depends on the library) ---
     //
@@ -2825,6 +2842,7 @@ $FUNC_INDEX
 // than applied. `too_many_arguments` is inherent to the C API arity.
 #![allow(clippy::all, clippy::pedantic)]
 #![allow(clippy::approx_constant)] // PI (180/3.141592653589793) is copied verbatim from the C source.
+#![deny(clippy::disallowed_methods)] // clippy.toml: the f64 methods that are not C's.
 // Private, so every public type has exactly one path. `ta_func` is the C source
 // directory's name, and `ta_lib::ta_func::Core` would stutter; the glob below is
 // the only way in (#179 C5).
@@ -2956,6 +2974,8 @@ BSD-3-Clause — see [LICENSE](https://github.com/TA-Lib/ta-lib/blob/main/LICENS
 // Types and Core struct are in types.rs (hand-written, not generated).
 mod types;
 pub use types::*;
+mod c_math;
+pub(crate) use c_math::*;
 "#,
     );
 

@@ -192,8 +192,8 @@ fn rust_circbuf_runtime_init_renders_the_crossover_guard() {
         "CCI: crossover guard sits at the static size, matching C's macro"
     );
     assert!(
-        batch.contains("circBuffer = &mut local_circBuffer;"),
-        "CCI: fits ⇒ bind the stack array, no allocation"
+        batch.contains("circBuffer = &mut local_circBuffer[..(optInTimePeriod) as usize];"),
+        "CCI: fits ⇒ bind the stack array, no allocation, at the runtime size"
     );
     assert!(
         batch.contains("heap_circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];")
@@ -261,8 +261,8 @@ fn rust_circbuf_class_layout_shares_one_crossover_guard() {
     );
     let guard = extract_section(&batch, "if (optInTimePeriod3) as usize <= 32usize {", "maxIdx_term =");
     assert!(
-        guard.contains("term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow;")
-            && guard.contains("term_trueRange = &mut local_term_trueRange;"),
+        guard.contains("term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow[..(optInTimePeriod3) as usize];")
+            && guard.contains("term_trueRange = &mut local_term_trueRange[..(optInTimePeriod3) as usize];"),
         "ULTOSC: both fields bind the stack arrays in the fits arm"
     );
     assert!(

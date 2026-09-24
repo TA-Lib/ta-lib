@@ -254,6 +254,9 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Do the K calculation:
         //
         //    Kt = 100 x ((Ct-Lt)/(Ht-Lt))

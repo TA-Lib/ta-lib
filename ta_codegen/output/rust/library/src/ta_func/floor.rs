@@ -98,7 +98,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            outReal[outIdx] = (((inReal[i]).floor()) as f64);
+            outReal[outIdx] = ((c_floor(inReal[i])) as f64);
             i += 1;
             outIdx += 1;
         }
@@ -227,7 +227,7 @@ struct FloorStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn floor_step_impl(sp: &mut FloorStreamState, inReal: f64, outReal: &mut f64) {
-        (*outReal) = (inReal).floor();
+        (*outReal) = c_floor(inReal);
         sp.cur_outReal = (*outReal);
     }
 
@@ -258,7 +258,7 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            outReal[(outIdx * outStride) as usize] = (((inReal[i]).floor()) as f64);
+            outReal[(outIdx * outStride) as usize] = ((c_floor(inReal[i])) as f64);
             i += 1;
             outIdx += 1;
         }
@@ -434,7 +434,7 @@ impl FloorStream {
         let mut outReal: f64 = 0.0_f64;
         {
             let outReal = &mut outReal;
-            (*outReal) = (inReal).floor();
+            (*outReal) = c_floor(inReal);
         }
         Ok(outReal)
     }

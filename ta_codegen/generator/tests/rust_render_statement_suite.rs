@@ -2428,3 +2428,98 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
 }
 
 // ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Slice lengths LLVM can bound an index by (#438). Nothing reads them but the
+// optimizer, so losing one changes no value, only the checks per bar.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn rust_batch_body_reslices_its_inputs_past_the_empty_range_exit() {
+    let (func, enums) = load_indicator("sma");
+    let rust_out = backends::rust_lang::generate(&func, &enums, &make_registry(), &make_helpers());
+    let body = rust_out.split("fn sma_impl(").nth(1).expect("sma_impl");
+    let exit = body.find("if startIdx > endIdx {").expect("the empty-range exit");
+    let reslice = body.find("let inReal = &inReal[..=endIdx];").expect("the input reslice");
+    // Before the exit a sub-lookback call may hold a shorter input, and the
+    // reslice would panic where the call must succeed.
+    assert!(reslice > exit, "the reslice must follow the exit: {body}");
+}
+
+/// SMA's declaration rendered over `body`, streaming off; the batch body.
+fn sma_impl_over(body: Vec<ir::Statement>) -> String {
+    let (mut func, enums) = load_indicator("sma");
+    func.body = body.clone();
+    func.private_body = body;
+    func.streaming = false;
+    let rust_out = backends::rust_lang::generate(&func, &enums, &make_registry(), &make_helpers());
+    rust_out.split("fn sma_impl(").nth(1).expect("sma_impl").to_string()
+}
+
+#[test]
+fn rust_keeps_an_initializer_read_before_a_plain_store() {
+    use ir::{Expr, Statement, VarType};
+    let var = |n: &str| Expr::Var(n.to_string());
+    let store = |t: Expr, v: Expr| Statement::Assign { target: t, value: v, compound: false };
+    let decl = |n: &str, init: Option<Expr>| Statement::VarDecl { var_type: VarType::Real, name: n.into(), init };
+    let out0 = || Expr::ArrayAccess("outReal".into(), Box::new(Expr::IntLiteral(0)));
+    // Read by an earlier statement, then overwritten.
+    let a = sma_impl_over(vec![
+        decl("lim", Some(Expr::Literal(1000.0))),
+        store(out0(), var("lim")),
+        store(var("lim"), Expr::Literal(2.0)),
+    ]);
+    assert!(a.contains("lim = 1000"), "read first, so the initializer stays: {a}");
+    // Read by another local's initializer, which runs ahead of the body.
+    let b = sma_impl_over(vec![
+        decl("lim", Some(Expr::Literal(1000.0))),
+        decl("cap", Some(var("lim"))),
+        store(var("lim"), Expr::Literal(2.0)),
+        store(out0(), var("cap")),
+    ]);
+    assert!(b.contains("lim = 1000"), "read by cap's initializer: {b}");
+    // Control: a plain store before any read still drops the dead initializer.
+    let c = sma_impl_over(vec![
+        decl("lim", Some(Expr::Literal(1000.0))),
+        store(var("lim"), Expr::Literal(2.0)),
+        store(out0(), var("lim")),
+    ]);
+    assert!(!c.contains("lim = 1000"), "overwritten before any read: {c}");
+}
+
+#[test]
+fn rust_keeps_the_initializer_of_a_local_read_before_it_is_overwritten() {
+    use ir::{BinOp, Expr, Statement, VarType};
+    let (mut func, enums) = load_indicator("sma");
+    let var = |n: &str| Expr::Var(n.to_string());
+    // `double lim = 1000.0; v = inReal[startIdx]; if( v < lim ) lim = v;`: the
+    // strict extreme becomes a top-level `lim = min(v, lim)`, which reads lim.
+    let body = vec![
+        Statement::VarDecl { var_type: VarType::Real, name: "lim".into(), init: Some(Expr::Literal(1000.0)) },
+        Statement::VarDecl { var_type: VarType::Real, name: "v".into(), init: None },
+        Statement::Assign {
+            target: var("v"),
+            value: Expr::ArrayAccess("inReal".into(), Box::new(var("startIdx"))),
+            compound: false,
+        },
+        Statement::If {
+            condition: Expr::BinOp(Box::new(var("v")), BinOp::Less, Box::new(var("lim"))),
+            then_body: vec![Statement::Assign { target: var("lim"), value: var("v"), compound: false }],
+            else_body: vec![],
+            cond_comments: vec![],
+        },
+        Statement::Assign {
+            target: Expr::ArrayAccess("outReal".into(), Box::new(Expr::IntLiteral(0))),
+            value: var("lim"),
+            compound: false,
+        },
+    ];
+    func.body = body.clone();
+    func.private_body = body;
+    func.streaming = false;
+    let rust_out = backends::rust_lang::generate(&func, &enums, &make_registry(), &make_helpers());
+    let body = rust_out.split("fn sma_impl(").nth(1).expect("sma_impl");
+    let init = body.find("lim = 1000").expect("lim's initializer was dropped");
+    let min = body.find("lim = c_min(v, lim);").expect("the extreme");
+    assert!(init < min, "the initializer must come first: {body}");
+}

@@ -131,6 +131,7 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         outIdx = 0;
         today = startIdx;
         while today <= endIdx {

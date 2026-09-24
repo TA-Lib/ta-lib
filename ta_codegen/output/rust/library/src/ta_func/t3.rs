@@ -213,6 +213,7 @@ impl Core {
             (*outBegIdx) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // No smoothing at period of 1: the output is a copy of the input
         // (same convention as TA_MA for every MAType). Explicit because the
         // coefficients below sum to 1 only in real arithmetic; going through

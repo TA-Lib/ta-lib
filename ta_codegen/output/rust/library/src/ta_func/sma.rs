@@ -136,6 +136,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Do the MA calculation using tight loops.
         // Add-up the initial period, except for the last value.
         periodTotal = 0.0;

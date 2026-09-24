@@ -35,6 +35,7 @@ pub mod rust_doc;
 pub mod rust_enums;
 pub mod rust_lang;
 pub mod rust_phantom_io;
+pub mod rust_respell;
 pub mod rust_stream;
 pub mod stmt_walk;
 pub mod stream_frame;
@@ -280,6 +281,7 @@ impl LanguageBackend for RustBackend {
         // indicator (`RUST_GENERATED_TEST_MODULES`).
         &[
             "types.rs",
+            "c_math.rs",
             "div_zero.rs",
             "scratch_election.rs",
             "stream_finite.rs",

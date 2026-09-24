@@ -198,6 +198,9 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // wAlpha is derived FROM wBeta, never the reverse: only that order makes
         // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
         // measures closer to the exact recursion than the 1/period-first spelling
@@ -240,13 +243,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             periodTotal += greatest;
             today += 1;
         }
@@ -261,13 +260,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
@@ -286,13 +281,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             outReal[outIdx] = prevATR;
             outIdx += 1;
@@ -465,13 +456,9 @@ impl Core {
         greatest = tempHT - tempLT;
         // val1
         val2 = (tempCY - tempHT).abs();
-        if val2 > greatest {
-            greatest = val2;
-        }
+        greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
-        if val3 > greatest {
-            greatest = val3;
-        }
+        greatest = c_max(val3, greatest);
         sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
         (*outReal) = sp.prevATR;
         sp.cur_outReal = (*outReal);
@@ -584,13 +571,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             periodTotal += greatest;
             today += 1;
         }
@@ -605,13 +588,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
@@ -630,13 +609,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevATR;
             today += 1;
@@ -844,13 +819,9 @@ impl AtrStream {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
             (*outReal) = prevATR;
         }

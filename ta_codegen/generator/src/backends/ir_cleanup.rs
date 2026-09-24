@@ -338,7 +338,7 @@ fn renders_nothing(body: &[Statement]) -> bool {
 }
 
 /// Apply `pass` to every nested body, leaving this statement's own shape alone.
-fn recurse(s: &Statement, pass: &dyn Fn(&[Statement]) -> Vec<Statement>) -> Statement {
+pub(crate) fn recurse(s: &Statement, pass: &dyn Fn(&[Statement]) -> Vec<Statement>) -> Statement {
     match s {
         Statement::While { condition, body } => {
             Statement::While { condition: condition.clone(), body: pass(body) }

@@ -162,8 +162,8 @@ impl Core {
         // Id, Type, Static Size
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 50usize {
-            mflow_positive = &mut local_mflow_positive;
-            mflow_negative = &mut local_mflow_negative;
+            mflow_positive = &mut local_mflow_positive[..(optInTimePeriod) as usize];
+            mflow_negative = &mut local_mflow_negative[..(optInTimePeriod) as usize];
         } else {
             heap_mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
             mflow_positive = &mut heap_mflow_positive;
@@ -183,6 +183,10 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         outIdx = 0;
         // Index into the output.
         // Accumulate the positive and negative money flow
@@ -224,7 +228,7 @@ impl Core {
             // indicator body over.
             moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
             posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
-            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
             posSumMF += posFlow;
@@ -282,7 +286,7 @@ impl Core {
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
             moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
             posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
-            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
             posSumMF += posFlow;
@@ -493,7 +497,7 @@ impl Core {
         tempValue1 *= inVolume;
         moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
         posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
-        negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+        negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
         sp.cb_mflow_positive[sp.mflow_Idx] = posFlow;
         sp.cb_mflow_negative[sp.mflow_Idx] = negFlow;
         sp.posSumMF += posFlow;
@@ -624,7 +628,7 @@ impl Core {
             // indicator body over.
             moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
             posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
-            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
             posSumMF += posFlow;
@@ -680,7 +684,7 @@ impl Core {
             tempValue1 *= inVolume[{ let _v = today; today += 1; _v }];
             moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
             posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
-            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             mflow_positive[mflow_Idx] = posFlow;
             mflow_negative[mflow_Idx] = negFlow;
             posSumMF += posFlow;
@@ -927,7 +931,7 @@ impl MfiStream {
             tempValue1 *= inVolume;
             moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
             posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
-            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            negFlow = f64::from_bits(f64::to_bits(0.0) ^ f64::to_bits(moneyFlow) ^ f64::to_bits(posFlow));
             posSumMF += posFlow;
             negSumMF += negFlow;
             nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });

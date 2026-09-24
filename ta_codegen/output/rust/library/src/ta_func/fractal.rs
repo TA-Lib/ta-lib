@@ -155,6 +155,8 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         outIdx = 0;
         today = startIdx;
         while today <= endIdx {
@@ -176,26 +178,14 @@ impl Core {
                     otherHigh = tempHigh;
                     otherLow = tempLow;
                 } else {
-                    if tempHigh > otherHigh {
-                        otherHigh = tempHigh;
-                    }
-                    if tempLow < otherLow {
-                        otherLow = tempLow;
-                    }
+                    otherHigh = c_max(tempHigh, otherHigh);
+                    otherLow = c_min(tempLow, otherLow);
                 }
                 if i == 0 { break; }
                 i -= 1;
             }
-            if pivotHigh > otherHigh {
-                outSwingHigh[outIdx] = 100;
-            } else {
-                outSwingHigh[outIdx] = 0;
-            }
-            if pivotLow < otherLow {
-                outSwingLow[outIdx] = 100;
-            } else {
-                outSwingLow[outIdx] = 0;
-            }
+            outSwingHigh[outIdx] = (if pivotHigh > otherHigh { 100 } else { 0 });
+            outSwingLow[outIdx] = (if pivotLow < otherLow { 100 } else { 0 });
             outIdx += 1;
             today += 1;
         }
@@ -410,12 +400,8 @@ impl Core {
                 otherHigh = tempHigh;
                 otherLow = tempLow;
             } else {
-                if tempHigh > otherHigh {
-                    otherHigh = tempHigh;
-                }
-                if tempLow < otherLow {
-                    otherLow = tempLow;
-                }
+                otherHigh = c_max(tempHigh, otherHigh);
+                otherLow = c_min(tempLow, otherLow);
             }
             if i == 0 { break; }
             i -= 1;
@@ -513,26 +499,14 @@ impl Core {
                     otherHigh = tempHigh;
                     otherLow = tempLow;
                 } else {
-                    if tempHigh > otherHigh {
-                        otherHigh = tempHigh;
-                    }
-                    if tempLow < otherLow {
-                        otherLow = tempLow;
-                    }
+                    otherHigh = c_max(tempHigh, otherHigh);
+                    otherLow = c_min(tempLow, otherLow);
                 }
                 if i == 0 { break; }
                 i -= 1;
             }
-            if pivotHigh > otherHigh {
-                outSwingHigh[(outIdx * outStride) as usize] = 100;
-            } else {
-                outSwingHigh[(outIdx * outStride) as usize] = 0;
-            }
-            if pivotLow < otherLow {
-                outSwingLow[(outIdx * outStride) as usize] = 100;
-            } else {
-                outSwingLow[(outIdx * outStride) as usize] = 0;
-            }
+            outSwingHigh[(outIdx * outStride) as usize] = (if pivotHigh > otherHigh { 100 } else { 0 });
+            outSwingLow[(outIdx * outStride) as usize] = (if pivotLow < otherLow { 100 } else { 0 });
             outIdx += 1;
             today += 1;
         }
@@ -772,12 +746,8 @@ impl FractalStream {
                     otherHigh = tempHigh;
                     otherLow = tempLow;
                 } else {
-                    if tempHigh > otherHigh {
-                        otherHigh = tempHigh;
-                    }
-                    if tempLow < otherLow {
-                        otherLow = tempLow;
-                    }
+                    otherHigh = c_max(tempHigh, otherHigh);
+                    otherLow = c_min(tempLow, otherLow);
                 }
                 if i == 0 { break; }
                 i -= 1;

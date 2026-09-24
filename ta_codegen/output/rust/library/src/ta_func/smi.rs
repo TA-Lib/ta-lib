@@ -252,6 +252,9 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         (*outBegIdx) = startIdx;
         // Blau's pipeline in one pass. A composed form is not available: the
         // streaming producer model carries exactly one intermediate series

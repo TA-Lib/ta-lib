@@ -185,6 +185,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // G2, the sample-adjusted Fisher excess kurtosis. The coefficients are
         // computed in double: at the top of the parameter range coefA's denominator
         // (n-1)(n-2)(n-3) is ~1e12, far past what an int holds.
@@ -233,12 +234,8 @@ impl Core {
             total2 += dev2;
             total3 += dev2 * dev;
             total4 += dev2 * dev2;
-            if total2 > peak2 {
-                peak2 = total2;
-            }
-            if total4 > peak4 {
-                peak4 = total4;
-            }
+            peak2 = c_max(total2, peak2);
+            peak4 = c_max(total4, peak4);
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
@@ -510,12 +507,8 @@ impl Core {
         sp.total2 += dev2;
         sp.total3 += dev2 * dev;
         sp.total4 += dev2 * dev2;
-        if sp.total2 > sp.peak2 {
-            sp.peak2 = sp.total2;
-        }
-        if sp.total4 > sp.peak4 {
-            sp.peak4 = sp.total4;
-        }
+        sp.peak2 = c_max(sp.total2, sp.peak2);
+        sp.peak4 = c_max(sp.total4, sp.peak4);
         residue = sp.total1 * sp.invPeriod;
         residueSq = residue * residue;
         moment2 = sp.total2 - sp.dPeriod * residueSq;
@@ -720,12 +713,8 @@ impl Core {
             total2 += dev2;
             total3 += dev2 * dev;
             total4 += dev2 * dev2;
-            if total2 > peak2 {
-                peak2 = total2;
-            }
-            if total4 > peak4 {
-                peak4 = total4;
-            }
+            peak2 = c_max(total2, peak2);
+            peak4 = c_max(total4, peak4);
             residue = total1 * invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - dPeriod * residueSq;
@@ -1051,12 +1040,8 @@ impl KurtosisStream {
             total2 += dev2;
             total3 += dev2 * dev;
             total4 += dev2 * dev2;
-            if total2 > peak2 {
-                peak2 = total2;
-            }
-            if total4 > peak4 {
-                peak4 = total4;
-            }
+            peak2 = c_max(total2, peak2);
+            peak4 = c_max(total4, peak4);
             residue = total1 * sp.invPeriod;
             residueSq = residue * residue;
             moment2 = total2 - sp.dPeriod * residueSq;

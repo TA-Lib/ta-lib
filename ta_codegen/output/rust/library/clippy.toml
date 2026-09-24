@@ -1,0 +1,6 @@
+disallowed-methods = [
+    { path = "f64::max", reason = "C's max() is `a > b ? a : b`; use c_max" },
+    { path = "f64::min", reason = "C's min() is `a < b ? a : b`; use c_min" },
+    { path = "f64::floor", reason = "a libm call without SSE4.1; use c_floor" },
+    { path = "f64::ceil", reason = "a libm call without SSE4.1; use c_ceil" },
+]

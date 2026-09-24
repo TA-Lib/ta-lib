@@ -4,6 +4,8 @@
 // Types and Core struct are in types.rs (hand-written, not generated).
 mod types;
 pub use types::*;
+mod c_math;
+pub(crate) use c_math::*;
 
 /// Moving-average type selected by an `optInMAType` parameter.
 ///

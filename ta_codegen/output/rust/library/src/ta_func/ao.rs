@@ -182,6 +182,8 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         sumFast = 0.0;
         sumSlow = 0.0;
         trailingFastIdx = startIdx - ((optInFastPeriod - 1) as usize);

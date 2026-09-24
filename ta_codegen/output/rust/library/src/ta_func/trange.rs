@@ -129,6 +129,9 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         outIdx = 0;
         today = startIdx;
         while today <= endIdx {
@@ -139,13 +142,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             outReal[outIdx] = greatest;
             outIdx += 1;
             today += 1;
@@ -309,13 +308,9 @@ impl Core {
         greatest = tempHT - tempLT;
         // val1
         val2 = (tempCY - tempHT).abs();
-        if val2 > greatest {
-            greatest = val2;
-        }
+        greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
-        if val3 > greatest {
-            greatest = val3;
-        }
+        greatest = c_max(val3, greatest);
         (*outReal) = greatest;
         sp.cur_outReal = (*outReal);
         sp.lag1_inClose = inClose;
@@ -386,13 +381,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = greatest;
             today += 1;
         }
@@ -594,13 +585,9 @@ impl TrangeStream {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             (*outReal) = greatest;
         }
         Ok(outReal)

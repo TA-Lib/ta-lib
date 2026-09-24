@@ -210,6 +210,9 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // The Average True Range is carried inline rather than taken from a call,
         // because the band and the ratchet advance together one bar at a time and a
         // whole-range buffer between them would not stream.
@@ -231,13 +234,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             periodTotal += greatest;
             today += 1;
         }
@@ -252,13 +251,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
@@ -286,13 +281,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((optInMultiplier) as f64) * prevATR;
@@ -540,13 +531,9 @@ impl Core {
         greatest = tempHT - tempLT;
         // val1
         val2 = (tempCY - tempHT).abs();
-        if val2 > greatest {
-            greatest = val2;
-        }
+        greatest = c_max(val2, greatest);
         val3 = (tempCY - tempLT).abs();
-        if val3 > greatest {
-            greatest = val3;
-        }
+        greatest = c_max(val3, greatest);
         sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
         medianPrice = (tempHT + tempLT) / 2.0;
         band = ((sp.optInMultiplier) as f64) * sp.prevATR;
@@ -680,13 +667,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             periodTotal += greatest;
             today += 1;
         }
@@ -701,13 +684,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
@@ -735,13 +714,9 @@ impl Core {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((optInMultiplier) as f64) * prevATR;
@@ -1012,13 +987,9 @@ impl SupertrendStream {
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
+            greatest = c_max(val2, greatest);
             val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
+            greatest = c_max(val3, greatest);
             prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((sp.optInMultiplier) as f64) * prevATR;

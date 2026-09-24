@@ -235,10 +235,13 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         if optInTimePeriod3 < 1 { return RetCode::InternalError; }
         if (optInTimePeriod3) as usize <= 32usize {
-            term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow;
-            term_trueRange = &mut local_term_trueRange;
+            term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow[..(optInTimePeriod3) as usize];
+            term_trueRange = &mut local_term_trueRange[..(optInTimePeriod3) as usize];
         } else {
             heap_term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
             term_closeMinusTrueLow = &mut heap_term_closeMinusTrueLow;
@@ -279,17 +282,13 @@ impl Core {
             tempLT = inLow[i];
             tempHT = inHigh[i];
             tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
+            trueLow = c_min(tempLT, tempCY);
             closeMinusTrueLow = inClose[i] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
@@ -330,17 +329,13 @@ impl Core {
             tempLT = inLow[today];
             tempHT = inHigh[today];
             tempCY = inClose[today - 1];
-            trueLow = (tempLT).min(tempCY);
+            trueLow = c_min(tempLT, tempCY);
             closeMinusTrueLow = inClose[today] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
             a1Total += closeMinusTrueLow;
@@ -602,17 +597,13 @@ impl Core {
         tempLT = inLow;
         tempHT = inHigh;
         tempCY = sp.lag1_inClose;
-        trueLow = (tempLT).min(tempCY);
+        trueLow = c_min(tempLT, tempCY);
         closeMinusTrueLow = inClose - trueLow;
         trueRange = tempHT - tempLT;
         tempDouble = (tempCY - tempHT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
+        trueRange = c_max(tempDouble, trueRange);
         tempDouble = (tempCY - tempLT).abs();
-        if tempDouble > trueRange {
-            trueRange = tempDouble;
-        }
+        trueRange = c_max(tempDouble, trueRange);
         sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow;
         sp.cb_term_trueRange[sp.term_Idx] = trueRange;
         sp.a1Total += closeMinusTrueLow;
@@ -841,17 +832,13 @@ impl Core {
             tempLT = inLow[i];
             tempHT = inHigh[i];
             tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
+            trueLow = c_min(tempLT, tempCY);
             closeMinusTrueLow = inClose[i] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
@@ -892,17 +879,13 @@ impl Core {
             tempLT = inLow[today];
             tempHT = inHigh[today];
             tempCY = inClose[today - 1];
-            trueLow = (tempLT).min(tempCY);
+            trueLow = c_min(tempLT, tempCY);
             closeMinusTrueLow = inClose[today] - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
             a1Total += closeMinusTrueLow;
@@ -1208,17 +1191,13 @@ impl UltoscStream {
             tempLT = inLow;
             tempHT = inHigh;
             tempCY = sp.lag1_inClose;
-            trueLow = (tempLT).min(tempCY);
+            trueLow = c_min(tempLT, tempCY);
             closeMinusTrueLow = inClose - trueLow;
             trueRange = tempHT - tempLT;
             tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
+            trueRange = c_max(tempDouble, trueRange);
             pkSlot0 = term_Idx as usize;
             pkVal0 = closeMinusTrueLow;
             pkSlot1 = term_Idx as usize;

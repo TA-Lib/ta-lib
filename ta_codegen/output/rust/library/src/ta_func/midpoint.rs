@@ -171,6 +171,7 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        let inReal = &inReal[..=endIdx];
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the input and
         // output to be the same buffer.
@@ -193,7 +194,7 @@ impl Core {
         trailingIdx = startIdx - nbInitialElementNeeded;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            sufHighest = &mut local_sufHighest;
+            sufHighest = &mut local_sufHighest[..(optInTimePeriod) as usize];
         } else {
             heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufHighest = &mut heap_sufHighest;
@@ -202,7 +203,7 @@ impl Core {
         sufHighest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            preHighest = &mut local_preHighest;
+            preHighest = &mut local_preHighest[..(optInTimePeriod) as usize];
         } else {
             heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             preHighest = &mut heap_preHighest;
@@ -211,7 +212,7 @@ impl Core {
         preHighest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            sufLowest = &mut local_sufLowest;
+            sufLowest = &mut local_sufLowest[..(optInTimePeriod) as usize];
         } else {
             heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufLowest = &mut heap_sufLowest;
@@ -220,7 +221,7 @@ impl Core {
         sufLowest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
-            preLowest = &mut local_preLowest;
+            preLowest = &mut local_preLowest[..(optInTimePeriod) as usize];
         } else {
             heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             preLowest = &mut heap_preLowest;
@@ -242,12 +243,8 @@ impl Core {
             while i > blockStart {
                 i -= 1;
                 tmpHigh = inReal[i];
-                if tmpHigh > highest {
-                    highest = tmpHigh;
-                }
-                if tmpHigh < lowest {
-                    lowest = tmpHigh;
-                }
+                highest = c_max(tmpHigh, highest);
+                lowest = c_min(tmpHigh, lowest);
                 sufHighest[i - blockStart] = highest;
                 sufLowest[i - blockStart] = lowest;
             }
@@ -272,12 +269,8 @@ impl Core {
                 i = 1;
                 while i < nAvail {
                     tmpHigh = inReal[blockNext + i];
-                    if tmpHigh > highest {
-                        highest = tmpHigh;
-                    }
-                    if tmpHigh < lowest {
-                        lowest = tmpHigh;
-                    }
+                    highest = c_max(tmpHigh, highest);
+                    lowest = c_min(tmpHigh, lowest);
                     preHighest[i] = highest;
                     preLowest[i] = lowest;
                     i += 1;
@@ -287,13 +280,9 @@ impl Core {
                 m = 1;
                 while m <= nAvail {
                     highest = sufHighest[m];
-                    if preHighest[m - 1] > highest {
-                        highest = preHighest[m - 1];
-                    }
+                    highest = c_max(preHighest[m - 1], highest);
                     lowest = sufLowest[m];
-                    if preLowest[m - 1] < lowest {
-                        lowest = preLowest[m - 1];
-                    }
+                    lowest = c_min(preLowest[m - 1], lowest);
                     outReal[outIdx] = (highest + lowest) / 2.0;
                     outIdx += 1;
                     m += 1;

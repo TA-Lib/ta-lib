@@ -589,6 +589,8 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         *body = ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
         *body = ir_cleanup::drop_deallocation(body);
         *body = ir_cleanup::drop_inert_guards(body);
+        let sets = super::fma::build_fma_var_sets(body, &func.outputs, &super::fma::INDEX_PARAM_SEEDS);
+        *body = super::rust_respell::rewrite(body, &sets.view(), helpers, &sets.recurrent_select_targets);
     }
     let func = &elected;
 
@@ -1248,18 +1250,7 @@ fn gen_guarded_func(
             out.push_str(&emit_rust_unpacking(&candle_used, 8));
         }
 
-        // Body-assigned vars (for skipping VarDecl inits that get overwritten)
-        let g_body_assigned: std::collections::HashSet<String> = func
-            .body
-            .iter()
-            .filter_map(|s| {
-                if let Statement::Assign { target: Expr::Var(name), .. } = s {
-                    Some(name.clone())
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let g_body_assigned = overwritten_before_read(&func.body);
 
         // VarDecl initializations (only when not body-assigned)
         for stmt in &func.body {
@@ -1269,7 +1260,7 @@ fn gen_guarded_func(
                 }
                 let mut hoisted = Vec::new();
                 let mut cnt = g_inline_counter.get();
-                let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, &[]);
+                let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, KEPT_INLINE);
                 g_inline_counter.set(cnt);
                 out.push_str(&render_hoisted_blocks(
                     &hoisted, 8, &g_ctx, &g_for_loop_vars, &g_var_inits,
@@ -1299,10 +1290,93 @@ fn gen_guarded_func(
                 stmt, 8, &g_ctx, &g_for_loop_vars, &g_var_inits,
                 &g_output_names, &g_opt_real_params, enums, registry, helpers, &g_inline_counter,
             ));
+            if is_empty_range_exit(stmt) {
+                let indexed = indexed_arrays(&func.body);
+                for input in func.inputs.iter().filter(|i| indexed.contains(&i.name)) {
+                    out.push_str(&format!("        let {0} = &{0}[..=endIdx];\n", input.name));
+                }
+            }
         }
     }
     out.push_str("    }\n");
 
+    out
+}
+
+/// The body's `if( startIdx > endIdx ) { ..; return ..; }`. Past it every
+/// input is read, if at all, at or below `endIdx`, which the preamble asserted
+/// in bounds once the body raised `startIdx` to its lookback. Reslicing each leg
+/// to `..=endIdx` there gives all legs one length LLVM knows, so a read at the
+/// loop index needs no check and the legs' checks merge.
+fn is_empty_range_exit(stmt: &Statement) -> bool {
+    let Statement::If { condition: Expr::BinOp(l, BinOp::Greater, r), then_body, else_body, .. } = stmt else {
+        return false;
+    };
+    matches!((l.as_ref(), r.as_ref()), (Expr::Var(s), Expr::Var(e)) if s == "startIdx" && e == "endIdx")
+        && else_body.is_empty()
+        && matches!(then_body.last(), Some(Statement::Return { .. }))
+}
+
+/// Every array `body` indexes, at any depth.
+fn indexed_arrays(body: &[Statement]) -> std::collections::HashSet<String> {
+    let found = std::cell::RefCell::new(std::collections::HashSet::new());
+    crate::streaming::rewrite_stmts(
+        body,
+        &|e| {
+            if let Expr::ArrayAccess(n, _) = &e {
+                found.borrow_mut().insert(n.clone());
+            }
+            e
+        },
+        &|s| Some(s),
+    );
+    found.into_inner()
+}
+
+/// Locals whose declared initializer the body overwrites before reading: the
+/// first top-level statement to name one is a plain store of a value that does
+/// not read it. The renderers skip that initializer and emit every other one.
+pub(crate) fn overwritten_before_read(body: &[Statement]) -> std::collections::HashSet<String> {
+    let mut read = std::collections::HashSet::new();
+    let mut out = std::collections::HashSet::new();
+    for s in body {
+        match s {
+            // Emitted ahead of the body, so what one reads is read first.
+            Statement::VarDecl { init: Some(init), .. } => read.extend(var_names(std::slice::from_ref(&Statement::Expr(init.clone())))),
+            Statement::VarDecl { .. } => {}
+            _ => {
+                if let Statement::Assign { target: Expr::Var(n), value, compound: false } = s {
+                    let value_reads = var_names(std::slice::from_ref(&Statement::Expr(value.clone())));
+                    if !read.contains(n) && !value_reads.contains(n) {
+                        out.insert(n.clone());
+                    }
+                }
+                read.extend(var_names(std::slice::from_ref(s)));
+            }
+        }
+    }
+    out
+}
+
+/// Every name `stmts` reads or writes, at any depth: variables, arrays,
+/// pointers, and circular-buffer sizes.
+fn var_names(stmts: &[Statement]) -> std::collections::HashSet<String> {
+    fn visit(stmts: &[Statement], out: &mut std::collections::HashSet<String>) {
+        for s in stmts {
+            crate::streaming::walk_stmt_own_exprs(s, &mut |e| {
+                crate::streaming::walk_expr(e, &mut |x| {
+                    if let Expr::Var(n) | Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) = x {
+                        out.insert(n.clone());
+                    }
+                });
+            });
+            for body in crate::streaming::nested_bodies(s).0 {
+                visit(body, out);
+            }
+        }
+    }
+    let mut out = std::collections::HashSet::new();
+    visit(stmts, &mut out);
     out
 }
 
@@ -1543,21 +1617,7 @@ fn gen_private_func_inner(
     // (int_output_names tracked via ctx.int_output_names for i32 array cast detection)
 
     // Collect variables that have both VarDecl init AND a body assignment
-    let body_assigned: std::collections::HashSet<String> = func
-        .body
-        .iter()
-        .filter_map(|s| {
-            if let Statement::Assign {
-                target: Expr::Var(name),
-                ..
-            } = s
-            {
-                Some(name.clone())
-            } else {
-                None
-            }
-        })
-        .collect();
+    let body_assigned = overwritten_before_read(&func.body);
 
     let inline_counter = Cell::new(0);
 
@@ -1582,7 +1642,7 @@ fn gen_private_func_inner(
             // Hoist multi-statement helpers from init expressions
             let mut hoisted = Vec::new();
             let mut cnt = inline_counter.get();
-            let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, &[]);
+            let new_init = hoist_block_helpers(init, helpers, &mut hoisted, &mut cnt, KEPT_INLINE);
             inline_counter.set(cnt);
             out.push_str(&render_hoisted_blocks(
                 &hoisted, 8, ctx, &for_loop_vars, &var_inits,
@@ -2790,9 +2850,12 @@ impl StatementEmitter for RustStmt<'_, '_> {
                     s.push_str(&format!(
                         "{pad}if ({sz}) as usize <= {static_size}usize {{\n"
                     ));
+                    // Exactly `size` long, as the heap arm is: one length for
+                    // LLVM to bound every index by, where the whole stack array
+                    // would leave two (#438).
                     for (storage, _) in circbuf_storage(id, layout) {
                         s.push_str(&format!(
-                            "{pad}    {storage} = &mut local_{storage};\n"
+                            "{pad}    {storage} = &mut local_{storage}[..({sz}) as usize];\n"
                         ));
                     }
                     s.push_str(&format!("{pad}}} else {{\n"));
@@ -2964,7 +3027,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         let mut hoisted = Vec::new();
         let mut cnt = self.inline_counter.get();
         let new_value = hoist_block_helpers(
-            value, self.helpers, &mut hoisted, &mut cnt, &[],
+            value, self.helpers, &mut hoisted, &mut cnt, KEPT_INLINE,
         );
         // Canonicalize accumulator recurrences so all backends fuse the same
         // product regardless of operand order (cross-language / batch-vs-stream).
@@ -4843,6 +4906,11 @@ fn decompose_rust_array_ref(
 // runtime method calls (`self.ta_candlerange` / `self.ta_candleaverage`)
 // which dispatch on the actual rangeType value.
 
+/// Helpers rendered by [`render_func_call`] rather than hoisted from their C
+/// body: the C divides `ta_candleaverage` by a selected 2.0 or 1.0, which LLVM
+/// keeps as a DIVSD, where the inline rendering multiplies.
+pub(crate) const KEPT_INLINE: &[&str] = &["ta_candleaverage"];
+
 /// The `match` arms of `ta_candlerange`, shared by the two sites that inline it
 /// (`ta_candlerange` itself and the `avgPeriod == 0` fallback inside
 /// `ta_candleaverage`).
@@ -4858,13 +4926,20 @@ fn decompose_rust_array_ref(
 /// through to `0`, so folding it into the Shadows arm would answer an
 /// out-of-range rangeType differently than C does.
 fn candle_range_arms(open: &str, high: &str, low: &str, close: &str) -> String {
-    format!(
-        "0 => (({close}) - ({open})).abs(), \
-         1 => ({high}) - ({low}), \
-         2 => (({high}) - (if ({close}) >= ({open}) {{ ({close}) }} else {{ ({open}) }})) \
-            + ((if ({close}) >= ({open}) {{ ({open}) }} else {{ ({close}) }}) - ({low})), \
-         _ => 0.0"
-    )
+    let [real_body, high_low, shadows] = candle_range_arm_exprs(open, high, low, close);
+    format!("0 => {real_body}, 1 => {high_low}, 2 => {shadows}, _ => 0.0")
+}
+
+/// The RealBody, HighLow and Shadows arms of [`candle_range_arms`].
+fn candle_range_arm_exprs(open: &str, high: &str, low: &str, close: &str) -> [String; 3] {
+    [
+        format!("(({close}) - ({open})).abs()"),
+        format!("({high}) - ({low})"),
+        format!(
+            "(({high}) - (if ({close}) >= ({open}) {{ ({close}) }} else {{ ({open}) }})) \
+            + ((if ({close}) >= ({open}) {{ ({open}) }} else {{ ({close}) }}) - ({low}))"
+        ),
+    ]
 }
 
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
@@ -4983,23 +5058,41 @@ fn render_func_call(
         } else {
             format!("{call}.unwrap_or(usize::MAX)")
         }
+    } else if fname == super::rust_respell::CANDLE_RANGE_DIFF && args.len() == 9 {
+        let r: Vec<String> = args.iter().map(|a| render_expr(a, ctx, opt_real_params, registry, helpers)).collect();
+        let a = candle_range_arm_exprs(&r[1], &r[2], &r[3], &r[4]);
+        let b = candle_range_arm_exprs(&r[5], &r[6], &r[7], &r[8]);
+        // `_`: C's range is 0 for an unknown type, and 0 - 0 is +0.0.
+        format!(
+            "(match {} {{ 0 => ({}) - ({}), 1 => ({}) - ({}), 2 => ({}) - ({}), _ => 0.0 }})",
+            r[0], a[0], b[0], a[1], b[1], a[2], b[2]
+        )
+    } else if fname == super::rust_respell::SELECT_OTHER && args.len() == 3 {
+        let r: Vec<String> = args.iter().map(|a| render_expr(a, ctx, opt_real_params, registry, helpers)).collect();
+        format!("f64::from_bits(f64::to_bits({}) ^ f64::to_bits({}) ^ f64::to_bits({}))", r[0], r[1], r[2])
     } else if let Some(mf) = MathFn::from_name(fname) {
         // Math functions take priority over the indicator registry.
         // `atan(x)` in source means the C math function, not a cross-indicator call.
         //
-        // 2-arg: max/fmax → a.max(b), min/fmin → a.min(b)
-        // 1-arg: ABS/fabs → .ta_abs() (generic) or .abs() (concrete)
-        // 1-arg: all others → .ta_{fname}() (generic) or .{fname}() (concrete)
+        // f64::max/min/floor/ceil are not C's: the first two answer NaN
+        // differently, the last two are libm calls without SSE4.1. The crate's
+        // clippy.toml disallows all four, so a float site misread as an integer
+        // one fails the lint.
         match mf {
-            MathFn::Max if args.len() >= 2 => {
+            MathFn::Max | MathFn::Min if args.len() >= 2 => {
                 let a = render_expr(&args[0], ctx, opt_real_params, registry, helpers);
                 let b = render_expr(&args[1], ctx, opt_real_params, registry, helpers);
-                return format!("({a}).max({b})");
-            }
-            MathFn::Min if args.len() >= 2 => {
-                let a = render_expr(&args[0], ctx, opt_real_params, registry, helpers);
-                let b = render_expr(&args[1], ctx, opt_real_params, registry, helpers);
-                return format!("({a}).min({b})");
+                let m = if matches!(mf, MathFn::Max) { "max" } else { "min" };
+                let fs = ctx.fma_view();
+                let int = |e: &Expr| expr_is_i32_typed_ctx(e, ctx) || super::fma::is_definitely_integer(e, &fs);
+                let real = !ctx.is_lookback
+                    && args.iter().any(|e| super::fma::expr_is_float_typed(e, Some(&fs)))
+                    && !args.iter().any(int);
+                if !real {
+                    return format!("({a}).{m}({b})");
+                }
+                let lit = |e: &Expr, r: String| if let Expr::IntLiteral(v) = e { format!("{v}_f64") } else { r };
+                return format!("c_{m}({}, {})", lit(&args[0], a), lit(&args[1], b));
             }
             _ => {}
         }
@@ -5022,6 +5115,9 @@ fn render_func_call(
             } else {
                 x
             };
+            if matches!(mf, MathFn::Floor | MathFn::Ceil) {
+                return format!("c_{method}({x_wrapped})");
+            }
             return format!("({x_wrapped}).{method}()");
         }
         format!("{fname}()")
@@ -5126,11 +5222,12 @@ fn render_func_call(
             .collect();
         let (rt, ap, factor, sum) = (&r[0], &r[1], &r[2], &r[3]);
         let (open, high, low, close) = (&r[4], &r[5], &r[6], &r[7]);
-        // Single expression: factor * (if ap!=0 { sum/ap } else { candlerange }) / (if rt==2 { 2.0 } else { 1.0 })
+        // C divides by `rt == 2 ? 2.0 : 1.0`; halving is exact, so multiplying
+        // by 0.5 gives its bits without a DIVSD.
         format!(
             "(({factor}) * (if ({ap}) != 0 {{ ({sum}) / ({ap} as f64) }} else {{ \
              match {rt} {{ {} }} \
-             }}) / (if ({rt}) == 2 {{ 2.0 }} else {{ 1.0 }}))",
+             }}) * (if ({rt}) == 2 {{ 0.5 }} else {{ 1.0 }}))",
             candle_range_arms(open, high, low, close)
         )
     } else if registry.contains(fname) || fname.ends_with("_private") {

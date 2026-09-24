@@ -385,6 +385,7 @@
 // than applied. `too_many_arguments` is inherent to the C API arity.
 #![allow(clippy::all, clippy::pedantic)]
 #![allow(clippy::approx_constant)] // PI (180/3.141592653589793) is copied verbatim from the C source.
+#![deny(clippy::disallowed_methods)] // clippy.toml: the f64 methods that are not C's.
 // Private, so every public type has exactly one path. `ta_func` is the C source
 // directory's name, and `ta_lib::ta_func::Core` would stutter; the glob below is
 // the only way in (#179 C5).
