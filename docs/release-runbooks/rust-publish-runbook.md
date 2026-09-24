@@ -145,6 +145,8 @@ lag — retry in a minute. It is not a manifest problem.
   `website/src/api/rust/README.md` and `website/src/api/rust/stream/README.md`. The site
   deploys from `main` on push.
 (RP6) **`cargo owner --list`** on both crates if the maintainer set changed.
+(RP7) **First publish only:** add `cargo-semver-checks` to the dev nightly against the
+  version just published (#179 E7). It had no baseline before this release.
 
 ## Known, not covered here
 

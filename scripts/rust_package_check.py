@@ -13,8 +13,9 @@ published release that does not build.
 This gate runs the real packaging step and then checks the tarball itself:
 
   1. `cargo package -p ta-lib-dispatch -p ta-lib`. The pair, not `-p ta-lib`
-     alone: the library pins `ta-lib-dispatch = "=0.1.2"`, which is not on
-     crates.io yet, so packaged on its own it cannot resolve. Packaging both
+     alone: the library pins dispatch exactly, and whenever dispatch changes
+     that version is not on crates.io yet, so packaged on its own the library
+     cannot resolve. Packaging both
      makes cargo build a temporary registry from the sibling (the manifest
      comment on that dependency says the same). Cargo's own verification pass
      then COMPILES each crate from its unpacked tarball -- that is what catches

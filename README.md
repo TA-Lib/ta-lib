@@ -3,7 +3,8 @@
 [![main nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/main-nightly-tests.yml) [![dev nightly tests](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml/badge.svg)](https://github.com/TA-Lib/ta-lib/actions/workflows/dev-nightly-tests.yml)
 
 # TA-Lib - Technical Analysis Library
-This is the official home for TA-Lib Core.
+This is the official home for TA-Lib Core: the C/C++ library and the native Java, C# and
+Rust implementations generated from the same source.
 
 More info [https://ta-lib.org](https://ta-lib.org)
 
