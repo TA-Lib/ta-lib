@@ -44,6 +44,7 @@
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #368).
  *  092226 MF,CC  Legs across the scan/binary threshold and the float tiers (issue #435).
+ *  092326 MF,CC  Leg 10 across every size threshold, on trend corpora (issue #435).
  */
 
 /* Description:
@@ -92,12 +93,20 @@
  *        test_abstract.c only compares C against each server, so a flag dropped
  *        on both sides is invisible there: 0 == 0 passes. PERCENTILE is the
  *        flag's first user, so this is the only check that it is set at all.
- *    10. Windows either side of the 256-value threshold where the scans turn
- *        into binary searches, BITWISE against leg 4's stable re-sort, over a
- *        tick-grid walk and a series of -0.0, 0.0 and +-1: the order inside a
- *        run of equal values reaches the output only as the sign of a zero.
- *        Routed to the language servers, through the C stream tier, and
- *        through every single-precision tier, which is a separate body.
+ *    10. Windows of one retained value, either side of every other size a body
+ *        switches strategy at (32, 64, 100, 256, 300 and 2048), and of 113,
+ *        where a merge-sorted first window ends in a run of one, BITWISE
+ *        against a fresh sort of each window keyed on (value, age), over a
+ *        tick-grid walk, a series of -0.0, 0.0 and +-1, a rising and a falling
+ *        trend made of strict runs, noise and flats, a strict fall and a
+ *        strict rise through six zeros of alternating sign, trends of random
+ *        length and slope, and a first window of zeros of both signs: the
+ *        order inside a run of equal values reaches the output only as the
+ *        sign of a zero, and the trends are what reach the monotone and ring
+ *        paths. Routed to the language servers, also from a later anchor and
+ *        over a range too short to output, through the C stream tier, also
+ *        opened on a later bar, and through every single-precision tier,
+ *        which is a separate body.
  *
  *   Cross-language value coverage comes from server_verify in legs 1, 2 and
  *   10, --codegen and --xlang-hash. All three compare against this library,
@@ -106,6 +115,7 @@
 
 /**** Headers ****/
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
@@ -122,9 +132,9 @@ extern double gDataClose[];
 #define PCTL_GD_NB   1000
 #define PCTL_SYN_NB  2000
 #define PCTL_BIG_NB  1150   /* enough for one period-1000 block, cheap to re-sort */
-#define PCTL_WIDE_NB 1400
-#define PCTL_WIDE_CMP        20050
-#define PCTL_WIDE_STREAM_CMP 11490
+#define PCTL_WIDE_NB (2049+400)
+#define PCTL_WIDE_CMP        267792
+#define PCTL_WIDE_STREAM_CMP 264096
 
 typedef struct { int period; double pct; int bar; double want; } PercentileGolden;
 
@@ -1064,8 +1074,6 @@ static ErrorNumber test_percentile_edges( void )
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
 
-   /* The top of the period range is 10000: every bar scans and shifts its
-    * sorted window, so the cost grows with the period. */
    g_pctlEdgeCmp++;
    if( TA_PERCENTILE_Lookback( 10000, 50.0 ) != 9999
        || TA_PERCENTILE_Lookback( 10001, 50.0 ) != -1 )
@@ -1187,18 +1195,20 @@ static ErrorNumber test_percentile_range( const TA_Real *in )
                          (void *)&param, 1, 0 );
 }
 
-/* (10) Across the scan / binary-search threshold. */
-static const int pctlWideN[] = { 255, 256, 257, 258, 1000 };
+/* (10) Across the size thresholds. */
+static const int pctlWideN[] = { 2, 32, 33, 64, 65, 100, 101, 114, 256, 257,
+                                 300, 301, 2048, 2049 };
 static const double pctlWideP[] = { 0.0, 7.0, 50.0, 90.0, 100.0 };
 #define NB_PCTL_WIDE_N ((int)(sizeof(pctlWideN)/sizeof(int)))
 #define NB_PCTL_WIDE_P ((int)(sizeof(pctlWideP)/sizeof(double)))
+#define NB_PCTL_WIDE_CORPORA 8
 
-static void pctlBuildWide( int which, double *x )
+static void pctlBuildWide( int which, int n, double *x )
 {
    static const double pm[4] = { 0.0, -0.0, 1.0, -1.0 };
    unsigned int seed = 377u;
-   double v = 100.0;
-   int i;
+   double v = 100.0, slope = 0.0;
+   int i, k, leg, left = 0;
 
    for( i = 0; i < PCTL_WIDE_NB; i++ )
    {
@@ -1208,9 +1218,124 @@ static void pctlBuildWide( int which, double *x )
          v += 0.25 * (double)((int)((seed >> 8) % 5u) - 2);
          x[i] = v;
       }
-      else
+      else if( which == 1 )
          x[i] = pm[(seed >> 8) & 3u];
+      else if( which < 4 )
+      {
+         /* Cycles of 150 bars: 70 strictly up, 40 of noise, 25 strictly down,
+          * 15 flat. Corpus 3 is corpus 2 negated, a falling trend. */
+         leg = i % 150;
+         if( leg < 70 )
+            v += 0.25;
+         else if( leg < 110 )
+            v += 0.25 * (double)((int)((seed >> 8) % 3u) - 1);
+         else if( leg < 135 )
+            v -= 0.25;
+         x[i] = ( which == 2 ) ? v : -v;
+      }
+      else if( which < 6 )
+      {
+         /* A strict fall that bottoms out, 30 bars after the first window, in
+          * six zeros of alternating sign, then keeps falling: a new value tied
+          * with the window's minimum mid-trend. Corpus 5 is its mirror. */
+         k = i - (n+30);
+         if( k < 0 )
+            x[i] = 0.25 * (double)(-k);
+         else if( k < 6 )
+            x[i] = ( k & 1 ) ? -0.0 : 0.0;
+         else
+            x[i] = -0.25 * (double)(k-5);
+         if( which == 5 )
+            x[i] = -x[i];
+      }
+      else if( which == 6 )
+      {
+         /* A first window of zeros whose sign flips every two bars, with a -1
+          * at bar 19 and at its end, then corpus 1: a merge-sorted first window
+          * meets equal and opposite-signed zeros at its run boundaries. */
+         if( i < n-1 )
+            x[i] = ( i == 19 || i == n-2 ) ? -1.0 : ( ( i & 2 ) ? -0.0 : 0.0 );
+         else
+            x[i] = pm[(seed >> 8) & 3u];
+      }
+      else
+      {
+         /* Trends of random length and slope under tick noise. These constants
+          * are what wraps the ring's search and head at 300 retained values:
+          * re-measure coverage before changing one. */
+         if( left == 0 )
+         {
+            left = 2 + (int)((seed >> 8) % (unsigned)n);
+            slope = 0.25 * (double)((int)((seed >> 6) % 3u) - 1);
+         }
+         left--;
+         v += slope + 0.25 * (double)((int)((seed >> 12) % 3u) - 1);
+         x[i] = v;
+      }
    }
+}
+
+/* Ties broken by index make the order total, so qsort's instability cannot
+ * matter, and a tie by index is a tie by age: the order the body keeps.
+ */
+static const TA_Real *g_pctlKeyIn;
+static int pctlKeyCmp( const void *a, const void *b )
+{
+   int i = *(const int *)a, j = *(const int *)b;
+
+   if( g_pctlKeyIn[i] < g_pctlKeyIn[j] )
+      return -1;
+   if( g_pctlKeyIn[i] > g_pctlKeyIn[j] )
+      return 1;
+   return (i > j) - (i < j);
+}
+
+static void pctlSortWindowKeyed( const TA_Real *in, int t, int period, double *dest )
+{
+   static int idx[PCTL_WIDE_NB];
+   int i;
+
+   for( i = 0; i < period; i++ )
+      idx[i] = t-period+1+i;
+   g_pctlKeyIn = in;
+   qsort( idx, (size_t)period, sizeof(int), pctlKeyCmp );
+   for( i = 0; i < period; i++ )
+      dest[i] = in[idx[i]];
+}
+
+/* One leg-10 call replayed on the servers, through their single-precision tier
+ * when isFloat is set. */
+static ErrorNumber pctlWideRoute( const TA_Real *x, int startIdx, int endIdx,
+                                  int nbBars, int n, double pct, int isFloat,
+                                  TA_RetCode retCode, TA_Integer begIdx,
+                                  TA_Integer nbElement, const TA_Real *out )
+{
+   double optIn[2];
+   ErrorNumber e;
+   int cmpBefore;
+
+   if( !( isFloat ? server_verify_float_active() : server_verify_active() ) )
+      return TA_TEST_PASS;
+
+   optIn[0] = (double)n;
+   optIn[1] = pct;
+   cmpBefore = server_verify_comparisons();
+   server_verify_set_float( isFloat );
+   e = server_verify( "PERCENTILE", startIdx, endIdx, nbBars,
+                      retCode, begIdx, nbElement,
+                      (const TA_Real*[]){ x, NULL }, optIn, 2,
+                      (const TA_Real*[]){ out, NULL }, NULL );
+   server_verify_set_float( 0 );
+   if( e != TA_TEST_PASS )
+      return e;
+   if( server_verify_comparisons() == cmpBefore )
+   {
+      printf( "PERCENTILE wide%s [N=%d P=%g range %d..%d]: compared no server "
+              "despite live pipes\n", isFloat ? " float" : "", n, pct,
+              startIdx, endIdx );
+      return TA_PERCENTILE_VACUOUS;
+   }
+   return TA_TEST_PASS;
 }
 
 static ErrorNumber test_percentile_wide( void )
@@ -1221,19 +1346,20 @@ static ErrorNumber test_percentile_wide( void )
    TA_PERCENTILE_Stream *s;
    TA_Integer begIdx, nbElement;
    TA_RetCode retCode;
-   int which, q, p, t, n, nbBars, rank;
+   ErrorNumber e;
+   int which, q, p, t, k, n, nbBars, rank, isFloat, startIdx, endIdx;
+   int *cmp;
    double peeked, updated, first;
 
-   for( which = 0; which < 2; which++ )
+   for( which = 0; which < NB_PCTL_WIDE_CORPORA; which++ )
    {
-      pctlBuildWide( which, x );
-      for( t = 0; t < PCTL_WIDE_NB; t++ )
-         xf[t] = (float)x[t];
-
       for( q = 0; q < NB_PCTL_WIDE_N; q++ )
       {
          n = pctlWideN[q];
          nbBars = n + 400;
+         pctlBuildWide( which, n, x );
+         for( t = 0; t < nbBars; t++ )
+            xf[t] = (float)x[t];
 
          for( p = 0; p < NB_PCTL_WIDE_P; p++ )
          {
@@ -1247,32 +1373,15 @@ static ErrorNumber test_percentile_wide( void )
                        begIdx, nbElement );
                return TA_TESTUTIL_TFRR_BAD_BEGIDX;
             }
-            if( server_verify_active() )
-            {
-               double optIn[2];
-               ErrorNumber e;
-               int cmpBefore = server_verify_comparisons();
-
-               optIn[0] = (double)n;
-               optIn[1] = pctlWideP[p];
-               e = server_verify( "PERCENTILE", 0, nbBars-1, nbBars,
-                                  retCode, begIdx, nbElement,
-                                  (const TA_Real*[]){ x, NULL }, optIn, 2,
-                                  (const TA_Real*[]){ out[p], NULL }, NULL );
-               if( e != TA_TEST_PASS )
-                  return e;
-               if( server_verify_comparisons() == cmpBefore )
-               {
-                  printf( "PERCENTILE wide [N=%d P=%g]: compared no server "
-                          "despite live pipes\n", n, pctlWideP[p] );
-                  return TA_PERCENTILE_VACUOUS;
-               }
-            }
+            e = pctlWideRoute( x, 0, nbBars-1, nbBars, n, pctlWideP[p], 0,
+                               retCode, begIdx, nbElement, out[p] );
+            if( e != TA_TEST_PASS )
+               return e;
          }
 
          for( t = n-1; t < nbBars; t++ )
          {
-            pctlSortWindow( x, t, n, win );
+            pctlSortWindowKeyed( x, t, n, win );
             for( p = 0; p < NB_PCTL_WIDE_P; p++ )
             {
                rank = pctlRankFp( n, pctlWideP[p] );
@@ -1287,7 +1396,7 @@ static ErrorNumber test_percentile_wide( void )
             }
          }
 
-         /* Both corpora are float-exact, so TA_S_PERCENTILE must return the
+         /* Every corpus is float-exact, so TA_S_PERCENTILE must return the
           * same doubles. */
          for( p = 0; p < NB_PCTL_WIDE_P; p++ )
          {
@@ -1301,29 +1410,10 @@ static ErrorNumber test_percentile_wide( void )
                        begIdx, nbElement );
                return TA_TESTUTIL_TFRR_BAD_BEGIDX;
             }
-            if( server_verify_float_active() )
-            {
-               double optIn[2];
-               ErrorNumber e;
-               int cmpBefore = server_verify_comparisons();
-
-               optIn[0] = (double)n;
-               optIn[1] = pctlWideP[p];
-               server_verify_set_float( 1 );
-               e = server_verify( "PERCENTILE", 0, nbBars-1, nbBars,
-                                  retCode, begIdx, nbElement,
-                                  (const TA_Real*[]){ x, NULL }, optIn, 2,
-                                  (const TA_Real*[]){ outS, NULL }, NULL );
-               server_verify_set_float( 0 );
-               if( e != TA_TEST_PASS )
-                  return e;
-               if( server_verify_comparisons() == cmpBefore )
-               {
-                  printf( "PERCENTILE wide float [N=%d P=%g]: compared no server "
-                          "despite live pipes\n", n, pctlWideP[p] );
-                  return TA_PERCENTILE_VACUOUS;
-               }
-            }
+            e = pctlWideRoute( x, 0, nbBars-1, nbBars, n, pctlWideP[p], 1,
+                               retCode, begIdx, nbElement, outS );
+            if( e != TA_TEST_PASS )
+               return e;
             for( t = 0; t < nbElement; t++ )
             {
                g_pctlWideFloatCmp++;
@@ -1337,22 +1427,101 @@ static ErrorNumber test_percentile_wide( void )
             }
          }
 
-         /* The stream tier: Open over a warm-up, then Peek and Update every
-          * later bar, each bitwise against the batch value. */
+         /* A later anchor primes from a window of its own and must land on the
+          * same values; a range one bar short of the lookback outputs none. */
+         for( k = 0; k < 4; k++ )
+         {
+            isFloat = k & 1;
+            cmp = isFloat ? &g_pctlWideFloatCmp : &g_pctlWideCmp;
+            startIdx = ( k < 2 ) ? n+16 : 0;
+            endIdx = ( k < 2 ) ? nbBars-1 : n-2;
+            retCode = isFloat
+               ? TA_S_PERCENTILE( startIdx, endIdx, xf, n, pctlWideP[2], &begIdx,
+                                  &nbElement, outS )
+               : TA_PERCENTILE( startIdx, endIdx, x, n, pctlWideP[2], &begIdx,
+                                &nbElement, outS );
+            (*cmp)++;
+            if( retCode != TA_SUCCESS || begIdx != ( k < 2 ? n+16 : 0 )
+                || nbElement != ( k < 2 ? nbBars-n-16 : 0 ) )
+            {
+               printf( "PERCENTILE wide range Fail [corpus %d N=%d %d..%d%s]: "
+                       "rc=%d (%d,%d)\n", which, n, startIdx, endIdx,
+                       isFloat ? " float" : "", (int)retCode, begIdx, nbElement );
+               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            }
+            for( t = 0; t < nbElement; t++ )
+            {
+               (*cmp)++;
+               if( memcmp( &outS[t], &out[2][t+17], sizeof(double) ) != 0 )
+               {
+                  printf( "PERCENTILE wide range Fail [corpus %d N=%d%s] bar %d: "
+                          "%.17g from anchor %d, %.17g from 0\n", which, n,
+                          isFloat ? " float" : "", t + n+16, outS[t], n+16,
+                          out[2][t+17] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+            e = pctlWideRoute( x, startIdx, endIdx, nbBars, n, pctlWideP[2],
+                               isFloat, retCode, begIdx, nbElement, outS );
+            if( e != TA_TEST_PASS )
+               return e;
+         }
+
+         /* The stream tier: OpenAndFill over every bar, then Open over a
+          * warm-up with Peek and Update every later bar, each bitwise against
+          * the batch value. Open and OpenAndFill run their own copy of the
+          * first window and the loop. */
          for( p = 0; p < NB_PCTL_WIDE_P; p += 2 )
          {
+            retCode = TA_PERCENTILE_OpenAndFill( &s, x, nbBars, n, pctlWideP[p],
+                                                 &begIdx, &nbElement, outS );
+            if( retCode != TA_SUCCESS || begIdx != n-1
+                || nbElement != nbBars - n + 1 )
+            {
+               printf( "PERCENTILE wide fill Fail [corpus %d N=%d P=%g]: rc=%d "
+                       "(%d,%d)\n", which, n, pctlWideP[p], (int)retCode, begIdx,
+                       nbElement );
+               if( retCode == TA_SUCCESS )
+                  TA_PERCENTILE_Close( s );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            TA_PERCENTILE_Close( s );
+            for( t = 0; t < nbElement; t++ )
+            {
+               g_pctlWideStreamCmp++;
+               if( memcmp( &outS[t], &out[p][t], sizeof(double) ) != 0 )
+               {
+                  printf( "PERCENTILE wide fill Fail [corpus %d N=%d P=%g] bar %d: "
+                          "%.17g, batch %.17g\n", which, n, pctlWideP[p],
+                          t + n-1, outS[t], out[p][t] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+
             retCode = TA_PERCENTILE_Open( &s, x, n + 17, n, pctlWideP[p], &first );
             if( retCode != TA_SUCCESS )
             {
-               printf( "PERCENTILE wide stream Fail [N=%d P=%g]: Open rc=%d\n",
-                       n, pctlWideP[p], (int)retCode );
+               printf( "PERCENTILE wide stream Fail [corpus %d N=%d P=%g]: Open "
+                       "rc=%d\n", which, n, pctlWideP[p], (int)retCode );
                return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            g_pctlWideStreamCmp++;
+            if( memcmp( &first, &out[p][17], sizeof(double) ) != 0 )
+            {
+               printf( "PERCENTILE wide stream Fail [corpus %d N=%d P=%g]: Open "
+                       "%.17g, batch %.17g\n", which, n, pctlWideP[p], first,
+                       out[p][17] );
+               TA_PERCENTILE_Close( s );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
             for( t = n + 17; t < nbBars; t++ )
             {
                if( TA_PERCENTILE_Peek( s, x[t], &peeked ) != TA_SUCCESS
                    || TA_PERCENTILE_Update( s, x[t], &updated ) != TA_SUCCESS )
                {
+                  printf( "PERCENTILE wide stream Fail [corpus %d N=%d P=%g] "
+                          "bar %d: Peek or Update rejected\n", which, n,
+                          pctlWideP[p], t );
                   TA_PERCENTILE_Close( s );
                   return TA_TESTUTIL_TFRR_BAD_RETCODE;
                }
@@ -1369,6 +1538,24 @@ static ErrorNumber test_percentile_wide( void )
                }
             }
             TA_PERCENTILE_Close( s );
+
+            /* Opened 17 bars in, the first window is a later one of its own. */
+            retCode = TA_PERCENTILE_Open( &s, x+17, n, n, pctlWideP[p], &first );
+            if( retCode != TA_SUCCESS )
+            {
+               printf( "PERCENTILE wide stream Fail [corpus %d N=%d P=%g]: late "
+                       "Open rc=%d\n", which, n, pctlWideP[p], (int)retCode );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            TA_PERCENTILE_Close( s );
+            g_pctlWideStreamCmp++;
+            if( memcmp( &first, &out[p][17], sizeof(double) ) != 0 )
+            {
+               printf( "PERCENTILE wide stream Fail [corpus %d N=%d P=%g]: late "
+                       "Open %.17g, batch %.17g\n", which, n, pctlWideP[p], first,
+                       out[p][17] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
          }
       }
    }
