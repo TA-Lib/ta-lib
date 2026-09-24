@@ -105611,6 +105611,7 @@ class Core {
      *  071326 MF,CC  Fix #112: an all-flat window (every close==open) leaves
      *                upsum==downsum==0, so 100*(0/0) emitted NaN from a *successful*
      *                call. Guard the divide, returning IMI's neutral center 50.0.
+     *  092426 MF,CC  #440 ratio once per bar, not per element; branch-free split.
      */
 
        /**
@@ -105674,19 +105675,20 @@ class Core {
              double downsum = 0.0;
              int i;
              for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-                double close = inClose[i];
-                double open = inOpen[i];
-                if( close > open ) {
-                   upsum += close - open;
-                } else {
-                   downsum += open - close;
-                }
-                /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-                 * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-                 * oscillator, so no up/down bias returns its neutral center, 50.0.
+                double diff = inClose[i] - inOpen[i];
+                /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+                 * A ternary or if/else retires fewer instructions but branches (Java
+                 * always) and mispredicts on random data.
                  */
-                outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+                double up = (diff + Math.abs(diff)) * 0.5;
+                upsum += up;
+                downsum += up - diff;
              }
+             /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+              * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+              * oscillator, so no up/down bias returns its neutral center, 50.0.
+              */
+             outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              startIdx += 1;
              outIdx += 1;
           }
@@ -105731,15 +105733,12 @@ class Core {
              double downsum = 0.0;
              int i;
              for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-                double close = (double)inClose[i];
-                double open = (double)inOpen[i];
-                if( close > open ) {
-                   upsum += close - open;
-                } else {
-                   downsum += open - close;
-                }
-                outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+                double diff = (double)inClose[i] - (double)inOpen[i];
+                double up = (diff + Math.abs(diff)) * 0.5;
+                upsum += up;
+                downsum += up - diff;
              }
+             outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              startIdx += 1;
              outIdx += 1;
           }
@@ -105987,9 +105986,9 @@ class Core {
              double upsum = 0.0;
              double downsum = 0.0;
              int i = 0;
-             double close = 0.0;
-             double open = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double diff = 0.0;
+             double up = 0.0;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              int pkSlot1 = -1;
@@ -106001,19 +106000,20 @@ class Core {
              upsum = 0.0;
              downsum = 0.0;
              for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
-                close = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1;
-                open = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
-                if( close > open ) {
-                   upsum += close - open;
-                } else {
-                   downsum += open - close;
-                }
-                /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-                 * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-                 * oscillator, so no up/down bias returns its neutral center, 50.0.
+                diff = ((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1) - ((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0);
+                /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+                 * A ternary or if/else retires fewer instructions but branches (Java
+                 * always) and mispredicts on random data.
                  */
-                cur_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+                up = (diff + Math.abs(diff)) * 0.5;
+                upsum += up;
+                downsum += up - diff;
              }
+             /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+              * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+              * oscillator, so no up/down bias returns its neutral center, 50.0.
+              */
+             cur_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              return cur_outReal;
           }
 
@@ -106048,26 +106048,27 @@ class Core {
           double upsum = 0.0;
           double downsum = 0.0;
           int i = 0;
-          double close = 0.0;
-          double open = 0.0;
+          double diff = 0.0;
+          double up = 0.0;
           sp.win_i_inOpen[sp.winPos_i] = inOpen;
           sp.win_i_inClose[sp.winPos_i] = inClose;
           upsum = 0.0;
           downsum = 0.0;
           for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
-             close = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-             open = sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
-             if( close > open ) {
-                upsum += close - open;
-             } else {
-                downsum += open - close;
-             }
-             /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-              * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-              * oscillator, so no up/down bias returns its neutral center, 50.0.
+             diff = sp.win_i_inClose[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - sp.win_i_inOpen[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+             /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+              * A ternary or if/else retires fewer instructions but branches (Java
+              * always) and mispredicts on random data.
               */
-             sp.cur_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+             up = (diff + Math.abs(diff)) * 0.5;
+             upsum += up;
+             downsum += up - diff;
           }
+          /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+           * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+           * oscillator, so no up/down bias returns its neutral center, 50.0.
+           */
+          sp.cur_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
           sp.winPos_i = sp.winPos_i + 1;
           if( sp.winPos_i >= sp.winCap_i ) {
              sp.winPos_i = 0;
@@ -106115,19 +106116,20 @@ class Core {
              double downsum = 0.0;
              int i;
              for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-                double close = inClose[i];
-                double open = inOpen[i];
-                if( close > open ) {
-                   upsum += close - open;
-                } else {
-                   downsum += open - close;
-                }
-                /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-                 * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-                 * oscillator, so no up/down bias returns its neutral center, 50.0.
+                double diff = inClose[i] - inOpen[i];
+                /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+                 * A ternary or if/else retires fewer instructions but branches (Java
+                 * always) and mispredicts on random data.
                  */
-                outReal[outIdx * outStride] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+                double up = (diff + Math.abs(diff)) * 0.5;
+                upsum += up;
+                downsum += up - diff;
              }
+             /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+              * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+              * oscillator, so no up/down bias returns its neutral center, 50.0.
+              */
+             outReal[outIdx * outStride] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
              startIdx += 1;
              outIdx += 1;
           }
@@ -186796,7 +186798,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "b8ed062dc13e88bc";
+    static final String SPLICED_GENCODE_DIGEST = "c91fe0ee24e0c76b";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

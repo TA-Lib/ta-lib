@@ -10581,8 +10581,7 @@ mod tests {
         ]));
     }
 
-    /// IMI's shape, and the one seed the corpus still carries: the sole store
-    /// sits in the period loop, and a loop body is not provably entered.
+    /// The sole store sits in a loop body, which is not provably entered.
     #[test]
     fn a_write_only_a_loop_body_makes_keeps_the_seed() {
         assert!(!dead(vec![

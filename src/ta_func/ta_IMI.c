@@ -63,6 +63,7 @@
  *  071326 MF,CC  Fix #112: an all-flat window (every close==open) leaves
  *                upsum==downsum==0, so 100*(0/0) emitted NaN from a *successful*
  *                call. Guard the divide, returning IMI's neutral center 50.0.
+ *  092426 MF,CC  #440 ratio once per bar, not per element; branch-free split.
  */
 
 TA_LIB_API int TA_IMI_Lookback( int optInTimePeriod )
@@ -125,21 +126,20 @@ TA_LIB_API TA_RetCode TA_IMI( int    startIdx,
       int i;
       for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
-         double close = inClose[i];
-         double open = inOpen[i];
-         if( close > open )
-         {
-            upsum += close - open;
-         } else 
-         {
-            downsum += open - close;
-         }
-         /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-          * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-          * oscillator, so no up/down bias returns its neutral center, 50.0.
+         double diff = inClose[i] - inOpen[i];
+         /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+          * A ternary or if/else retires fewer instructions but branches (Java
+          * always) and mispredicts on random data.
           */
-         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+         double up = (diff + fabs(diff)) * 0.5;
+         upsum += up;
+         downsum += up - diff;
       }
+      /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+       * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+       * oscillator, so no up/down bias returns its neutral center, 50.0.
+       */
+      outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
       startIdx += 1;
       outIdx += 1;
    }
@@ -197,17 +197,12 @@ TA_RetCode TA_S_IMI( int    startIdx,
       int i;
       for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
       {
-         double close = (double)inClose[i];
-         double open = (double)inOpen[i];
-         if( close > open )
-         {
-            upsum += close - open;
-         } else 
-         {
-            downsum += open - close;
-         }
-         outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+         double diff = (double)inClose[i] - (double)inOpen[i];
+         double up = (diff + fabs(diff)) * 0.5;
+         upsum += up;
+         downsum += up - diff;
       }
+      outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
       startIdx += 1;
       outIdx += 1;
    }
@@ -245,8 +240,8 @@ static void TA_IMI_StepImpl( struct TA_IMI_Stream *sp, double inOpen, double inC
    double upsum;
    double downsum;
    int i;
-   double close;
-   double open;
+   double diff;
+   double up;
 
    sp->win_i_inOpen[sp->winPos_i] = inOpen;
    sp->win_i_inClose[sp->winPos_i] = inClose;
@@ -254,21 +249,20 @@ static void TA_IMI_StepImpl( struct TA_IMI_Stream *sp, double inOpen, double inC
    downsum = 0.0;
    for( i = sp->optInTimePeriod - 1; i >= 0; i -= 1 )
    {
-      close = sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
-      open = sp->win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
-      if( close > open )
-      {
-         upsum += close - open;
-      } else 
-      {
-         downsum += open - close;
-      }
-      /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-       * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-       * oscillator, so no up/down bias returns its neutral center, 50.0.
+      diff = sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] - sp->win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i];
+      /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+       * A ternary or if/else retires fewer instructions but branches (Java
+       * always) and mispredicts on random data.
        */
-      *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+      up = (diff + fabs(diff)) * 0.5;
+      upsum += up;
+      downsum += up - diff;
    }
+   /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+    * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+    * oscillator, so no up/down bias returns its neutral center, 50.0.
+    */
+   *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
    sp->cur_outReal = *outReal;
    sp->winPos_i = sp->winPos_i + 1;
    if( sp->winPos_i >= sp->winCap_i )
@@ -323,21 +317,20 @@ static TA_RetCode TA_IMI_OpenImpl( struct TA_IMI_Stream **stream, const double i
          int i;
          for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 )
          {
-            double close = inClose[i];
-            double open = inOpen[i];
-            if( close > open )
-            {
-               upsum += close - open;
-            } else 
-            {
-               downsum += open - close;
-            }
-            /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-             * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-             * oscillator, so no up/down bias returns its neutral center, 50.0.
+            double diff = inClose[i] - inOpen[i];
+            /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+             * A ternary or if/else retires fewer instructions but branches (Java
+             * always) and mispredicts on random data.
              */
-            outReal[outIdx * outStride] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+            double up = (diff + fabs(diff)) * 0.5;
+            upsum += up;
+            downsum += up - diff;
          }
+         /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+          * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+          * oscillator, so no up/down bias returns its neutral center, 50.0.
+          */
+         outReal[outIdx * outStride] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
          startIdx += 1;
          outIdx += 1;
       }
@@ -425,8 +418,8 @@ TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, d
    double upsum;
    double downsum;
    int i;
-   double close;
-   double open;
+   double diff;
+   double up;
    double *win_i_inClose;
    double *win_i_inOpen;
    int pkSlot0 = -1;
@@ -446,21 +439,20 @@ TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, d
    downsum = 0.0;
    for( i = sp->optInTimePeriod - 1; i >= 0; i -= 1 )
    {
-      close = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot1) ? win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal1;
-      open = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0;
-      if( close > open )
-      {
-         upsum += close - open;
-      } else 
-      {
-         downsum += open - close;
-      }
-      /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-       * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-       * oscillator, so no up/down bias returns its neutral center, 50.0.
+      diff = ((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot1) ? win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal1) - ((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0);
+      /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+       * A ternary or if/else retires fewer instructions but branches (Java
+       * always) and mispredicts on random data.
        */
-      *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+      up = (diff + fabs(diff)) * 0.5;
+      upsum += up;
+      downsum += up - diff;
    }
+   /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+    * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+    * oscillator, so no up/down bias returns its neutral center, 50.0.
+    */
+   *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
    return TA_SUCCESS;
 }
 

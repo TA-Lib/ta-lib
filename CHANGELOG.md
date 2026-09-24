@@ -20,6 +20,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Faster
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
 - ~1.2x to 17x: PERCENTILE, more on a trending series and on the first output of a long window (#435)
+- ~1.4x to 6.4x: IMI (#440)
 
 ### Changed
 - (#411) CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR optimization with some

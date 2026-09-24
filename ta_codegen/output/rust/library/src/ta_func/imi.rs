@@ -61,6 +61,7 @@
  *  071326 MF,CC  Fix #112: an all-flat window (every close==open) leaves
  *                upsum==downsum==0, so 100*(0/0) emitted NaN from a *successful*
  *                call. Guard the divide, returning IMI's neutral center 50.0.
+ *  092426 MF,CC  #440 ratio once per bar, not per element; branch-free split.
  */
 
 // Import types from parent module
@@ -147,19 +148,19 @@ impl Core {
             let mut downsum: f64 = 0.0;
             let mut i: usize = 0_usize;
             for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
-                let mut close: f64 = inClose[i];
-                let mut open: f64 = inOpen[i];
-                if close > open {
-                    upsum += close - open;
-                } else {
-                    downsum += open - close;
-                }
-                // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-                // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-                // oscillator, so no up/down bias returns its neutral center, 50.0.
-                outReal[outIdx] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+                let mut diff: f64 = inClose[i] - inOpen[i];
+                // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+                // A ternary or if/else retires fewer instructions but branches (Java
+                // always) and mispredicts on random data.
+                let mut up: f64 = (diff + (diff).abs()) * 0.5;
+                upsum += up;
+                downsum += up - diff;
             }
             i = (startIdx as usize) + 1;
+            // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+            // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+            // oscillator, so no up/down bias returns its neutral center, 50.0.
+            outReal[outIdx] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
             startIdx += 1;
             outIdx += 1;
         }
@@ -311,8 +312,8 @@ impl Core {
         let mut upsum: f64 = 0.0_f64;
         let mut downsum: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
-        let mut close: f64 = 0.0_f64;
-        let mut open: f64 = 0.0_f64;
+        let mut diff: f64 = 0.0_f64;
+        let mut up: f64 = 0.0_f64;
         sp.win_i_inOpen[sp.winPos_i] = inOpen;
         sp.win_i_inClose[sp.winPos_i] = inClose;
         upsum = 0.0;
@@ -320,20 +321,20 @@ impl Core {
         // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
         i = (sp.optInTimePeriod - 1) as usize;
         loop {
-            close = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-            open = sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
-            if close > open {
-                upsum += close - open;
-            } else {
-                downsum += open - close;
-            }
-            // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-            // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-            // oscillator, so no up/down bias returns its neutral center, 50.0.
-            (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+            diff = sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] - sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize];
+            // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+            // A ternary or if/else retires fewer instructions but branches (Java
+            // always) and mispredicts on random data.
+            up = (diff + (diff).abs()) * 0.5;
+            upsum += up;
+            downsum += up - diff;
             if i == 0 { break; }
             i -= 1;
         }
+        // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+        // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+        // oscillator, so no up/down bias returns its neutral center, 50.0.
+        (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
         sp.cur_outReal = (*outReal);
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
@@ -389,19 +390,19 @@ impl Core {
             let mut downsum: f64 = 0.0;
             let mut i: usize = 0_usize;
             for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
-                let mut close: f64 = inClose[i];
-                let mut open: f64 = inOpen[i];
-                if close > open {
-                    upsum += close - open;
-                } else {
-                    downsum += open - close;
-                }
-                // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-                // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-                // oscillator, so no up/down bias returns its neutral center, 50.0.
-                outReal[(outIdx * outStride) as usize] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+                let mut diff: f64 = inClose[i] - inOpen[i];
+                // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+                // A ternary or if/else retires fewer instructions but branches (Java
+                // always) and mispredicts on random data.
+                let mut up: f64 = (diff + (diff).abs()) * 0.5;
+                upsum += up;
+                downsum += up - diff;
             }
             i = (startIdx as usize) + 1;
+            // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+            // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+            // oscillator, so no up/down bias returns its neutral center, 50.0.
+            outReal[(outIdx * outStride) as usize] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
             startIdx += 1;
             outIdx += 1;
         }
@@ -606,8 +607,8 @@ impl ImiStream {
             let mut upsum: f64 = 0.0_f64;
             let mut downsum: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
-            let mut close: f64 = 0.0_f64;
-            let mut open: f64 = 0.0_f64;
+            let mut diff: f64 = 0.0_f64;
+            let mut up: f64 = 0.0_f64;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
@@ -621,20 +622,20 @@ impl ImiStream {
             // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
             i = (sp.optInTimePeriod - 1) as usize;
             loop {
-                close = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
-                open = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
-                if close > open {
-                    upsum += close - open;
-                } else {
-                    downsum += open - close;
-                }
-                // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-                // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-                // oscillator, so no up/down bias returns its neutral center, 50.0.
-                (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+                diff = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 }) - (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
+                // max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+                // A ternary or if/else retires fewer instructions but branches (Java
+                // always) and mispredicts on random data.
+                up = (diff + (diff).abs()) * 0.5;
+                upsum += up;
+                downsum += up - diff;
                 if i == 0 { break; }
                 i -= 1;
             }
+            // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+            // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+            // oscillator, so no up/down bias returns its neutral center, 50.0.
+            (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
         }
         Ok(outReal)
     }

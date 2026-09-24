@@ -95,11 +95,8 @@ fn body_of(src: &str, needle: &str) -> String {
 /// and the seed was one dead field load per output per call. Swept over both
 /// managed backends: C writes the output through an out-param and has no such
 /// local, and Rust deletes the wholly dead local outright — declaration and
-/// stores together (issue #353, gated in rust_stream_suite). Exact-set in both
-/// directions: a frame that grows a seed back fails, and so does a change
-/// that silently drops the one seed the analysis deliberately keeps — IMI,
-/// whose sole store sits inside the period loop, and the IR cannot prove a
-/// loop body runs.
+/// stores together (issue #353, gated in rust_stream_suite). No frame in the
+/// corpus keeps a seed, so one that grows back fails.
 #[test]
 fn no_managed_peek_seeds_a_dead_output_local() {
     for (lang, needle) in [("java", " peek("), ("csharp", " Peek(")] {
@@ -131,10 +128,9 @@ fn no_managed_peek_seeds_a_dead_output_local() {
         // emitter that re-grew every seed would zero `seedless`.
         assert!(swept >= 200, "{lang}: swept only {swept} peek frames");
         assert!(seedless >= 200, "{lang}: only {seedless} seed-free frames");
-        let expected: BTreeSet<String> = ["imi".to_string()].into_iter().collect();
-        assert_eq!(
-            seeded, expected,
-            "{lang}: peek frames seeding an output local from the handle"
+        assert!(
+            seeded.is_empty(),
+            "{lang}: peek frames seeding an output local from the handle: {seeded:?}"
         );
     }
 }

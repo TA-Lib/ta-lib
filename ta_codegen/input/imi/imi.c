@@ -19,6 +19,7 @@
  *  071326 MF,CC  Fix #112: an all-flat window (every close==open) leaves
  *                upsum==downsum==0, so 100*(0/0) emitted NaN from a *successful*
  *                call. Guard the divide, returning IMI's neutral center 50.0.
+ *  092426 MF,CC  #440 ratio once per bar, not per element; branch-free split.
  */
 
 int imi_lookback(int optInTimePeriod)
@@ -54,20 +55,20 @@ TA_RetCode imi(int startIdx, int endIdx,
       int i;
 
       for (i = startIdx - (optInTimePeriod - 1); i <= startIdx; i++) {
-         double close = inClose[i];
-         double open = inOpen[i];
+         double diff = inClose[i] - inOpen[i];
+         /* max(diff, 0) spelled with fabs: every backend compiles it branch-free.
+          * A ternary or if/else retires fewer instructions but branches (Java
+          * always) and mispredicts on random data. */
+         double up = (diff + fabs(diff)) * 0.5;
 
-         if (close > open) {
-            upsum += (close - open);
-         } else {
-            downsum += (open - close);
-         }
-
-         /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-          * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-          * oscillator, so no up/down bias returns its neutral center, 50.0. */
-         outReal[outIdx] = (upsum + downsum) == 0.0 ? 50.0 : 100.0*(upsum/(upsum + downsum));
+         upsum += up;
+         downsum += up - diff;
       }
+
+      /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+       * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+       * oscillator, so no up/down bias returns its neutral center, 50.0. */
+      outReal[outIdx] = (upsum + downsum) == 0.0 ? 50.0 : 100.0*(upsum/(upsum + downsum));
 
       startIdx++;
       outIdx++;
