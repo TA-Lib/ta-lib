@@ -131,15 +131,12 @@ fn test_c_ma_dispatch_stream_section() {
 
 /// `cond ? 1 : 0` collapses to the bare condition in Java and C#, and that is
 /// only valid where a boolean is wanted. C has no booleans, so the destination
-/// of an assignment never is — `outInteger[i] = a > b;` does not compile in
-/// either language.
+/// of an assignment never is — `outInteger[i] = a > b;` and `n += a > b;` do
+/// not compile in either language.
 ///
-/// Unreachable from the corpus: its four `? 1 : 0` are all
-/// `return (...) ? 1 : 0;` inside helper predicates, inlined into an `if`, where
-/// the collapse is right. A synthetic fixture storing a flag is what found it
-/// (#262), so the control below matters as much as the assertion — the collapse
-/// must still happen in boolean position, or this "fix" would churn every
-/// candlestick into `(x) != 0`.
+/// The control below matters as much as the assertions: the collapse must still
+/// happen in boolean position, or this would churn every candlestick into
+/// `(x) != 0`.
 #[test]
 fn test_a_stored_bool_ternary_keeps_its_int_form() {
     let (func, enums) = load_indicator("minmaxindex");
@@ -173,6 +170,16 @@ fn test_a_stored_bool_ternary_keeps_its_int_form() {
         value: flag(),
         compound: false,
     });
+    // Added to an integer through a compound assignment: same rule.
+    stored.body.push(ir::Statement::Assign {
+        target: ir::Expr::Var("outIdx".to_string()),
+        value: ir::Expr::BinOp(
+            Box::new(ir::Expr::Var("outIdx".to_string())),
+            ir::BinOp::Add,
+            Box::new(flag()),
+        ),
+        compound: true,
+    });
     for (lang, text) in [
         ("Java", backends::java::generate(&stored, &enums, &registry, &helpers)),
         ("C#", backends::csharp::generate(&stored, &enums, &registry, &helpers)),
@@ -184,6 +191,14 @@ fn test_a_stored_bool_ternary_keeps_its_int_form() {
         assert!(
             !text.contains(&format!("{out}[outIdx] = today > 0;")),
             "{lang}: the collapsed form does not compile — the destination is an int"
+        );
+        assert!(
+            text.contains("outIdx += (today > 0) ? 1 : 0;"),
+            "{lang}: a flag added to an integer must keep `? 1 : 0`"
+        );
+        assert!(
+            !text.contains("outIdx += today > 0;"),
+            "{lang}: the collapsed operand does not compile, since it is added to an int"
         );
     }
 

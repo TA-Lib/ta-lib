@@ -1582,7 +1582,7 @@ impl StatementEmitter for JavaStmt<'_> {
                                 pad,
                                 target_str,
                                 op_str,
-                                render_expr(right, self.ctx, self.registry, self.helpers)
+                                render_assign_value(right, self.ctx, self.registry, self.helpers)
                             ));
                             return out;
                         }
@@ -2239,21 +2239,14 @@ impl ExprEmitter for JavaExpr<'_> {
 }
 
 
-/// Render `value` as the whole right-hand side of an assignment.
+/// Render `value` as the whole right-hand side of an assignment, or as the
+/// operand of a compound one (`x += c ? 1 : 0`).
 ///
 /// Identical to [`render_expr`] except that a `cond ? 1 : 0` keeps its ternary
 /// form instead of collapsing to the bare condition. The collapse is only valid
 /// where a boolean is wanted, and the destination of an assignment never is: C
 /// has no booleans, so every such destination is an `int`, and
 /// `outInteger[i] = a > b;` does not compile in Java or C#.
-///
-/// Nothing in the corpus reached this. Its four `? 1 : 0` are all
-/// `return (...) ? 1 : 0;` inside helper predicates, inlined into an `if` — a
-/// boolean position, where the collapse is right. A synthetic fixture storing a
-/// flag is what found it (#262). A collapsible ternary nested INSIDE a larger
-/// right-hand side is still collapsed and would still be wrong; that shape is
-/// equally unreachable today, and catching it needs the render context this
-/// deliberately does without.
 pub(crate) fn render_assign_value(
     value: &Expr,
     ctx: &JavaRenderCtx,

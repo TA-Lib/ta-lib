@@ -1325,7 +1325,7 @@ impl StatementEmitter for CsStmt<'_> {
                                 pad,
                                 target_str,
                                 op_str,
-                                render_expr(right, self.ctx, self.registry, self.helpers)
+                                render_assign_value(right, self.ctx, self.registry, self.helpers)
                             ));
                             return out;
                         }
@@ -2059,9 +2059,9 @@ impl ExprEmitter for CsExpr<'_> {
     }
 }
 
-/// Render `value` as the whole right-hand side of an assignment — see the Java
-/// twin, [`super::java::render_assign_value`], for why a `cond ? 1 : 0` must
-/// keep its ternary form here and collapse everywhere else.
+/// Render `value` as an assignment's right-hand side or a compound assignment's
+/// operand — see the Java twin, [`super::java::render_assign_value`], for why a
+/// `cond ? 1 : 0` must keep its ternary form here and collapse everywhere else.
 pub(crate) fn render_assign_value(
     value: &Expr,
     ctx: &CsRenderCtx,
