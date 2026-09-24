@@ -36,6 +36,28 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
 
+# -falign-functions=64 -falign-loops=64 (issue #437) — mirrors CMakeLists.txt,
+# x86 only: a function's code layout depends only on its own code after inlining,
+# and a hot loop gcc enters by falling through starts a 64-byte line. No value
+# changes.
+case "$host_cpu" in
+  x86_64|amd64|i?86)
+    # Any warning counts as a no: clang before 14 accepts -falign-loops, ignores
+    # it and warns on every file.
+    save_werror="$ac_c_werror_flag"
+    ac_c_werror_flag=yes
+    for ta_align in -falign-functions=64 -falign-loops=64; do
+      save_CFLAGS="$CFLAGS"
+      CFLAGS="$CFLAGS $ta_align"
+      AC_MSG_CHECKING([whether $CC accepts $ta_align])
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
+        [AC_MSG_RESULT([yes])],
+        [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
+    done
+    ac_c_werror_flag="$save_werror"
+    ;;
+esac
+
 # Symbol visibility — mirrors CMakeLists.txt's C_VISIBILITY_PRESET. Without it
 # every non-static symbol lands in the shared library's dynamic table, so
 # TA_LIB_API is inert on ELF and a prototype that forgets it is caught only by a

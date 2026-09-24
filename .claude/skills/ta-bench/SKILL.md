@@ -56,7 +56,7 @@ same build. Measured `.text` on x86-64 gcc:
 | autotools `libta-lib` | libtool | separate TUs, no LTO | not built here |
 
 
-3.9x between the extremes, from identical source. The two build flags that
+3.9x between the extremes, from identical source. The build flags that
 all three build systems must keep in step are stated in the root `CLAUDE.md`.
 
 Which tool measures which:

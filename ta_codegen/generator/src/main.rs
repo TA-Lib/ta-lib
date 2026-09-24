@@ -992,6 +992,16 @@ const COMMON_GCC_FLAGS: &[&str] = &[
     "-Wno-parentheses-equality",
 ];
 
+/// `-falign-functions=64 -falign-loops=64` on x86 hosts, as the CMake and autotools
+/// builds add them (issue #437), so these builds align code the way the library
+/// does. Clang drops `-falign-loops` under `-flto`: where `gcc` is clang they keep
+/// its default loop alignment.
+const X86_GCC_FLAGS: &[&str] = if cfg!(any(target_arch = "x86_64", target_arch = "x86")) {
+    &["-falign-functions=64", "-falign-loops=64"]
+} else {
+    &[]
+};
+
 /// Verify the hand-maintained Rust `FuncUnstId` enum matches enums.yaml.
 ///
 /// enums.yaml is the source of truth for `FuncUnstId`; the C enum (`ta_defs.h`)
@@ -1144,6 +1154,7 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                         &format!("-I{}", ta_regtest_dir.to_str().unwrap()),
                     ])
                     .args(COMMON_GCC_FLAGS)
+                    .args(X86_GCC_FLAGS)
                     .status()
                 {
                     Ok(s) if s.success() => println!("OK"),
@@ -1175,6 +1186,7 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                             &format!("-I{}", ta_common_dir.to_str().unwrap()),
                         ])
                         .args(COMMON_GCC_FLAGS)
+                        .args(X86_GCC_FLAGS)
                         .status()
                     {
                         Ok(s) if s.success() => println!("OK"),
@@ -1207,6 +1219,7 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                             &format!("-I{}", ta_common_dir.to_str().unwrap()),
                         ])
                         .args(COMMON_GCC_FLAGS)
+                        .args(X86_GCC_FLAGS)
                         .status()
                     {
                         Ok(s) if s.success() => println!("OK"),

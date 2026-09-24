@@ -103,6 +103,23 @@ if(NOT MSVC)
     endif()
 endif()
 
+# -falign-functions=64 -falign-loops=64 (issue #437): every function, and every
+# hot loop gcc enters by falling through, starts a 64-byte line. A function's code
+# layout then depends only on its own code after inlining, so a relink no longer
+# moves it; without the flags a relink alone moves a small-window scan by up to
+# 45%. Performance knobs that change no value. They pin
+# each function at one layout, not always the fastest one, and grow .text ~8%.
+# x86 only, where they were measured. Clang drops -falign-loops under LTO.
+if(NOT MSVC AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64|x86|i[3-6]86")
+    foreach(flag -falign-functions=64 -falign-loops=64)
+        string(MAKE_C_IDENTIFIER "TA_HAS${flag}" has_flag)
+        check_c_compiler_flag(${flag} ${has_flag})
+        if(${has_flag})
+            add_compile_options(${flag})
+        endif()
+    endforeach()
+endif()
+
 # Default to Release config
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)

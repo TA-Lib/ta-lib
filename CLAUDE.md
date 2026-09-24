@@ -268,11 +268,11 @@ changed. It stops if public API that shipped was removed or changed: put it back
 or run `scripts/sync.py --accept-break` when the break is intended, and the soname
 changes at the next release.
 
-## Two build flags that must stay in step
+## Build flags that must stay in step
 
-The generator's flags live in one place (`COMMON_GCC_FLAGS`, `main.rs`); two are
-set by all three build systems (CMake, autotools, the generator) and must stay in
-step:
+The generator's flags live in one place (`COMMON_GCC_FLAGS` and `X86_GCC_FLAGS`,
+`main.rs`); four are set by all three build systems (CMake, autotools, the
+generator) and must stay in step:
 
 - `-ffp-contract=off` — load-bearing for the FMA contract, **not** a performance
   knob.
@@ -283,6 +283,13 @@ step:
   vectorize and raise `FE_INVALID` on lanes the scalar guard skipped (values
   unaffected). That, and why clamping the radicand does not fix it, are in
   `CMakeLists.txt` next to the flag.
+- `-falign-functions=64 -falign-loops=64`, x86 only — performance knobs that
+  change no value. Every function, and every hot loop gcc enters by falling
+  through, starts a 64-byte line, so a function's code layout depends only on
+  its own code after inlining, and a relink no longer moves it. That makes a
+  link-shift sweep a no-op: to separate layout from an algorithm change, shift
+  function entries instead (`-fpatchable-function-entry=K,K`), which models an
+  edit at the top of every function.
 
 ## Benchmarking
 
