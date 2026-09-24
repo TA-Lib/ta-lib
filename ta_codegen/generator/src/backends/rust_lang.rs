@@ -2770,7 +2770,71 @@ struct RustStmt<'a, 'e> {
     inline_counter: &'a Cell<usize>,
 }
 
+/// `while( v < e ) { a[v] = a[v+1]; v++; }` or its mirror `while( v > e ) {
+/// a[v] = a[v-1]; v--; }`: returns `(a, forward)`. `e` must name neither `a` nor
+/// `v` and be side-effect free, so evaluating it once, before the move, is the
+/// loop's own semantics.
+fn pure_shift<'x>(condition: &Expr, body: &'x [Statement]) -> Option<(&'x str, bool)> {
+    fn pure_bound(bound: &Expr, index: &str, arr: &str) -> bool {
+        match bound {
+            Expr::IntLiteral(_) => true,
+            Expr::Var(name) => name != index && name != arr,
+            Expr::BinOp(lhs, BinOp::Add | BinOp::Sub, rhs) => {
+                pure_bound(lhs, index, arr) && pure_bound(rhs, index, arr)
+            }
+            _ => false,
+        }
+    }
+    let Expr::BinOp(lhs, cmp, bound) = condition else { return None };
+    let Expr::Var(v) = lhs.as_ref() else { return None };
+    let (forward, step) = match cmp {
+        BinOp::Less => (true, BinOp::Add),
+        BinOp::Greater => (false, BinOp::Sub),
+        _ => return None,
+    };
+    let is_v_step = |e: &Expr| {
+        matches!(e, Expr::BinOp(l, op, r)
+            if *op == step && matches!(l.as_ref(), Expr::Var(n) if n == v)
+                && matches!(r.as_ref(), Expr::IntLiteral(1)))
+    };
+    let [Statement::Assign { target: Expr::ArrayAccess(a, dst), value: Expr::ArrayAccess(a2, src), compound: false },
+        Statement::Assign { target: Expr::Var(v2), value: inc, .. }] = body
+    else {
+        return None;
+    };
+    let dst_is_v = matches!(dst.as_ref(), Expr::Var(n) if n == v);
+    (a == a2 && v2 == v && dst_is_v && is_v_step(src) && is_v_step(inc) && pure_bound(bound, v, a))
+        .then_some((a.as_str(), forward))
+}
+
 impl RustStmt<'_, '_> {
+    /// A pure shift as one `copy_within` (a memmove). Element by element it keeps
+    /// two bounds checks per slot and never becomes a memmove; both leave `v == e`.
+    /// `None` unless the rendered loop indexes `a` by the bare `v` and compares it
+    /// as `v < e` / `v > e`, which is what makes `v` and `e` usize here.
+    fn shift_as_copy_within(&self, condition: &Expr, body: &[Statement], pad: &str) -> Option<String> {
+        let (arr, forward) = pure_shift(condition, body)?;
+        let Expr::BinOp(lhs, _, _) = condition else { return None };
+        let r = |e: &Expr| render_expr(e, self.ctx, self.opt_real_params, self.registry, self.helpers);
+        let v = r(lhs);
+        let access = r(&Expr::ArrayAccess(arr.to_string(), lhs.clone()));
+        let buf = access.strip_suffix(&format!("[{v}]"))?;
+        let cond = render_condition(condition, self.ctx, self.opt_real_params, self.registry, self.helpers);
+        let op = if forward { " < " } else { " > " };
+        let end = cond.strip_prefix(&format!("{v}{op}"))?;
+        let simple = end.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '.');
+        let copy = if forward {
+            format!("{buf}.copy_within({v} + 1..={end}, {v});")
+        } else if let Ok(n) = end.parse::<u64>() {
+            format!("{buf}.copy_within({end}..{v}, {});", n + 1)
+        } else if simple {
+            format!("{buf}.copy_within({end}..{v}, {end} + 1);")
+        } else {
+            format!("{buf}.copy_within({end}..{v}, ({end}) + 1);")
+        };
+        Some(format!("{pad}if {cond} {{\n{pad}    {copy}\n{pad}    {v} = {end};\n{pad}}}\n"))
+    }
+
     /// Shared `if` tail (then-body + else branch with `} else if` collapse) used
     /// by both the flat and multi-line-condition rendering paths.
     fn render_if_tail(&self, then_body: &[Statement], else_body: &[Statement], indent: usize) -> String {
@@ -3380,6 +3444,9 @@ impl StatementEmitter for RustStmt<'_, '_> {
 
     fn while_loop(&self, condition: &Expr, while_body: &[Statement], indent: usize) -> String {
         let pad = " ".repeat(indent);
+        if let Some(out) = self.shift_as_copy_within(condition, while_body, &pad) {
+            return out;
+        }
         if let Expr::BinOp(left, BinOp::LessEq, right) = condition {
             if let Expr::Var(iter_name) = left.as_ref() {
                 if self.ctx.for_range_lowering && self.for_loop_vars.contains(iter_name) {
@@ -3564,6 +3631,12 @@ impl StatementEmitter for RustStmt<'_, '_> {
     #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn for_c(&self, init: &Statement, condition: &Expr, update: &Statement, for_body: &[Statement], indent: usize) -> String {
         let pad = " ".repeat(indent);
+        if let [one] = for_body {
+            let as_while = [one.clone(), update.clone()];
+            if let Some(shift) = self.shift_as_copy_within(condition, &as_while, &pad) {
+                return self.walk_stmt(init, indent) + &shift;
+            }
+        }
         // Range-iteration fast path: for(i=start; i<=end; i++) → for i in start..(end+1)
         // Uses exclusive range (not ..=) because LLVM vectorizes exclusive ranges
         // but generates suboptimal cinc+double-compare for inclusive ranges.

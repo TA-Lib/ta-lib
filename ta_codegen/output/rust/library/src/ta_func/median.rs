@@ -200,9 +200,9 @@ impl Core {
                     }
                 }
                 j = nbSorted;
-                while j > lo {
-                    sorted[j] = sorted[j - 1];
-                    j -= 1;
+                if j > lo {
+                    sorted.copy_within(lo..j, lo + 1);
+                    j = lo;
                 }
             }
             sorted[j] = newValue;
@@ -297,15 +297,15 @@ impl Core {
             // Evict oldValue and place newValue with one shift of the slots between
             // them.
             if j < pos {
-                while j < pos - 1 {
-                    sorted[j] = sorted[j + 1];
-                    j += 1;
+                if j < pos - 1 {
+                    sorted.copy_within(j + 1..=pos - 1, j);
+                    j = pos - 1;
                 }
                 sorted[pos - 1] = newValue;
             } else {
-                while j > pos {
-                    sorted[j] = sorted[j - 1];
-                    j -= 1;
+                if j > pos {
+                    sorted.copy_within(pos..j, pos + 1);
+                    j = pos;
                 }
                 sorted[pos] = newValue;
             }
@@ -556,15 +556,15 @@ impl Core {
         // Evict oldValue and place newValue with one shift of the slots between
         // them.
         if j < pos {
-            while j < pos - 1 {
-                cb_sorted[j] = cb_sorted[j + 1];
-                j += 1;
+            if j < pos - 1 {
+                cb_sorted.copy_within(j + 1..=pos - 1, j);
+                j = pos - 1;
             }
             cb_sorted[pos - 1] = newValue;
         } else {
-            while j > pos {
-                cb_sorted[j] = cb_sorted[j - 1];
-                j -= 1;
+            if j > pos {
+                cb_sorted.copy_within(pos..j, pos + 1);
+                j = pos;
             }
             cb_sorted[pos] = newValue;
         }
@@ -665,9 +665,9 @@ impl Core {
                     }
                 }
                 j = nbSorted;
-                while j > lo {
-                    sorted[j] = sorted[j - 1];
-                    j -= 1;
+                if j > lo {
+                    sorted.copy_within(lo..j, lo + 1);
+                    j = lo;
                 }
             }
             sorted[j] = newValue;
@@ -762,15 +762,15 @@ impl Core {
             // Evict oldValue and place newValue with one shift of the slots between
             // them.
             if j < pos {
-                while j < pos - 1 {
-                    sorted[j] = sorted[j + 1];
-                    j += 1;
+                if j < pos - 1 {
+                    sorted.copy_within(j + 1..=pos - 1, j);
+                    j = pos - 1;
                 }
                 sorted[pos - 1] = newValue;
             } else {
-                while j > pos {
-                    sorted[j] = sorted[j - 1];
-                    j -= 1;
+                if j > pos {
+                    sorted.copy_within(pos..j, pos + 1);
+                    j = pos;
                 }
                 sorted[pos] = newValue;
             }

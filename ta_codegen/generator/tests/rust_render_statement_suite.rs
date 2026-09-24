@@ -2523,3 +2523,170 @@ fn rust_keeps_the_initializer_of_a_local_read_before_it_is_overwritten() {
     let min = body.find("lim = c_min(v, lim);").expect("the extreme");
     assert!(init < min, "the initializer must come first: {body}");
 }
+
+// ---------------------------------------------------------------------------
+// Pure shift loops lower to `copy_within` (issue #437)
+// ---------------------------------------------------------------------------
+
+fn sv(n: &str) -> ir::Expr {
+    ir::Expr::Var(n.to_string())
+}
+
+fn sb(l: ir::Expr, op: ir::BinOp, r: ir::Expr) -> ir::Expr {
+    ir::Expr::BinOp(Box::new(l), op, Box::new(r))
+}
+
+fn sa(a: &str, i: ir::Expr) -> ir::Expr {
+    ir::Expr::ArrayAccess(a.to_string(), Box::new(i))
+}
+
+/// `dst[v] = src[v <read> 1]; v <step>= 1;` as the parser desugars it.
+fn shift_body(dst: &str, src: &str, v: &str, read: ir::BinOp, step: ir::BinOp) -> Vec<ir::Statement> {
+    vec![
+        ir::Statement::Assign {
+            target: sa(dst, sv(v)),
+            value: sa(src, sb(sv(v), read, ir::Expr::IntLiteral(1))),
+            compound: false,
+        },
+        ir::Statement::Assign {
+            target: sv(v),
+            value: sb(sv(v), step, ir::Expr::IntLiteral(1)),
+            compound: true,
+        },
+    ]
+}
+
+fn shift_while(cond: ir::Expr, body: Vec<ir::Statement>) -> String {
+    render_rust_stmt(&ir::Statement::While { condition: cond, body })
+}
+
+#[test]
+fn rust_forward_shift_while_is_one_copy_within() {
+    let out = shift_while(
+        sb(sv("j"), ir::BinOp::Less, sb(sv("pos"), ir::BinOp::Sub, ir::Expr::IntLiteral(1))),
+        shift_body("sorted", "sorted", "j", ir::BinOp::Add, ir::BinOp::Add),
+    );
+    assert!(!out.contains("while"), "{out}");
+    assert!(out.contains("if j < pos - 1 {"), "{out}");
+    assert!(out.contains("sorted.copy_within(j + 1..=pos - 1, j);"), "{out}");
+    assert!(out.contains("j = pos - 1;"), "the loop leaves j at its bound: {out}");
+}
+
+#[test]
+fn rust_backward_shift_while_is_one_copy_within() {
+    let out = shift_while(
+        sb(sv("j"), ir::BinOp::Greater, sv("pos")),
+        shift_body("sorted", "sorted", "j", ir::BinOp::Sub, ir::BinOp::Sub),
+    );
+    assert!(!out.contains("while"), "{out}");
+    assert!(out.contains("sorted.copy_within(pos..j, pos + 1);"), "{out}");
+    assert!(out.contains("j = pos;"), "{out}");
+    let lit = shift_while(
+        sb(sv("j"), ir::BinOp::Greater, ir::Expr::IntLiteral(0)),
+        shift_body("sorted", "sorted", "j", ir::BinOp::Sub, ir::BinOp::Sub),
+    );
+    assert!(lit.contains("sorted.copy_within(0..j, 1);"), "{lit}");
+    let compound = shift_while(
+        sb(sv("j"), ir::BinOp::Greater, sb(sv("a"), ir::BinOp::Sub, sv("b"))),
+        shift_body("sorted", "sorted", "j", ir::BinOp::Sub, ir::BinOp::Sub),
+    );
+    assert!(compound.contains("sorted.copy_within(a - b..j, (a - b) + 1);"), "{compound}");
+}
+
+#[test]
+fn rust_shift_for_loop_keeps_its_init_then_copies() {
+    let mut body = shift_body("sorted", "sorted", "j", ir::BinOp::Add, ir::BinOp::Add);
+    let update = body.pop().unwrap();
+    let out = render_rust_stmt(&ir::Statement::ForC {
+        init: Box::new(ir::Statement::Assign { target: sv("j"), value: sv("slot"), compound: false }),
+        condition: sb(sv("j"), ir::BinOp::Less, sv("e")),
+        update: Box::new(update),
+        body,
+    });
+    assert!(!out.contains("while"), "{out}");
+    let init = out.find("j = slot;").expect(&out);
+    let copy = out.find("sorted.copy_within(j + 1..=e, j);").expect(&out);
+    assert!(init < copy, "{out}");
+    assert!(out.contains("j = e;"), "{out}");
+}
+
+#[test]
+fn rust_loops_that_are_not_pure_shifts_stay_loops() {
+    let bwd = || shift_body("sorted", "sorted", "j", ir::BinOp::Sub, ir::BinOp::Sub);
+    let cases = [
+        // An insertion step exits on the data, not on a bound.
+        (
+            sb(
+                sb(sv("j"), ir::BinOp::Greater, ir::Expr::IntLiteral(0)),
+                ir::BinOp::And,
+                sb(sa("sorted", sb(sv("j"), ir::BinOp::Sub, ir::Expr::IntLiteral(1))), ir::BinOp::Greater, sv("x")),
+            ),
+            bwd(),
+        ),
+        // A bound read from the buffer being moved.
+        (sb(sv("j"), ir::BinOp::Greater, sa("sorted", ir::Expr::IntLiteral(0))), bwd()),
+        // A bound that names the index.
+        (sb(sv("j"), ir::BinOp::Greater, sb(sv("j"), ir::BinOp::Sub, sv("n"))), bwd()),
+        // Two arrays: a copy, not a shift within one.
+        (
+            sb(sv("j"), ir::BinOp::Greater, sv("pos")),
+            shift_body("sorted", "ring", "j", ir::BinOp::Sub, ir::BinOp::Sub),
+        ),
+        // Reads ahead while walking back.
+        (
+            sb(sv("j"), ir::BinOp::Greater, sv("pos")),
+            shift_body("sorted", "sorted", "j", ir::BinOp::Add, ir::BinOp::Sub),
+        ),
+        // The store lands on a fixed slot, not on the index.
+        (
+            sb(sv("j"), ir::BinOp::Less, sv("e")),
+            vec![
+                ir::Statement::Assign {
+                    target: sa("sorted", sv("e")),
+                    value: sa("sorted", sb(sv("j"), ir::BinOp::Add, ir::Expr::IntLiteral(1))),
+                    compound: false,
+                },
+                shift_body("sorted", "sorted", "j", ir::BinOp::Add, ir::BinOp::Add).remove(1),
+            ],
+        ),
+        // A stride of two moves every other slot.
+        (
+            sb(sv("j"), ir::BinOp::Greater, sv("pos")),
+            vec![
+                shift_body("sorted", "sorted", "j", ir::BinOp::Sub, ir::BinOp::Sub).remove(0),
+                ir::Statement::Assign {
+                    target: sv("j"),
+                    value: sb(sv("j"), ir::BinOp::Sub, ir::Expr::IntLiteral(2)),
+                    compound: true,
+                },
+            ],
+        ),
+        // The step writes another variable, so `j` never reaches the bound.
+        (
+            sb(sv("j"), ir::BinOp::Greater, sv("pos")),
+            vec![
+                shift_body("sorted", "sorted", "j", ir::BinOp::Sub, ir::BinOp::Sub).remove(0),
+                ir::Statement::Assign {
+                    target: sv("i"),
+                    value: sb(sv("j"), ir::BinOp::Sub, ir::Expr::IntLiteral(1)),
+                    compound: false,
+                },
+            ],
+        ),
+        // An index the renderer casts (`k` is not a known index name) is not a usize range.
+        (
+            sb(sv("k"), ir::BinOp::Greater, sv("pos")),
+            shift_body("sorted", "sorted", "k", ir::BinOp::Sub, ir::BinOp::Sub),
+        ),
+        // `<=` runs one slot further than `e`.
+        (
+            sb(sv("j"), ir::BinOp::LessEq, sv("pos")),
+            shift_body("sorted", "sorted", "j", ir::BinOp::Add, ir::BinOp::Add),
+        ),
+    ];
+    for (cond, body) in cases {
+        let out = shift_while(cond, body);
+        assert!(!out.contains("copy_within"), "{out}");
+        assert!(out.contains("while"), "{out}");
+    }
+}

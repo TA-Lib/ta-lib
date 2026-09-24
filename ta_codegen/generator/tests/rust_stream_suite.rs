@@ -564,12 +564,15 @@ fn only_a_step_storing_a_buffer_in_a_loop_splits_its_state() {
             .iter()
             .map(|(b, _)| b.as_str())
             .filter(|b| {
-                loop_blocks(&step).iter().any(|l| {
-                    l.lines().any(|x| {
-                        let x = x.trim_start();
-                        x.starts_with(&format!("{b}[")) || x.starts_with(&format!("sp.{b}["))
+                // A pure shift loop renders as `copy_within` (#437): still a
+                // store into the buffer over a range, just not a visible loop.
+                step.contains(&format!("{b}.copy_within("))
+                    || loop_blocks(&step).iter().any(|l| {
+                        l.lines().any(|x| {
+                            let x = x.trim_start();
+                            x.starts_with(&format!("{b}[")) || x.starts_with(&format!("sp.{b}["))
+                        })
                     })
-                })
             })
             .collect();
         for (b, _) in heap_buffer_fields(&handle) {

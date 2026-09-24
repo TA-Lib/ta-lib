@@ -571,19 +571,17 @@ impl Core {
                 if layout != 0 {
                     if layout == 2 {
                         if pendDel < pendPos {
-                            // for( k = pendDel; k < pendPos - 1; k += 1 )
                             k = pendDel;
-                            while k < pendPos - 1 {
-                                sorted[k] = sorted[k + 1];
-                                k += 1;
+                            if k < pendPos - 1 {
+                                sorted.copy_within(k + 1..=pendPos - 1, k);
+                                k = pendPos - 1;
                             }
                             sorted[pendPos - 1] = pendNew;
                         } else {
-                            // for( k = pendDel; k > pendPos; k -= 1 )
                             k = pendDel;
-                            while k > pendPos {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > pendPos {
+                                sorted.copy_within(pendPos..k, pendPos + 1);
+                                k = pendPos;
                             }
                             sorted[pendPos] = pendNew;
                         }
@@ -663,53 +661,47 @@ impl Core {
                             room = lookbackTotal - slot;
                             if cnt <= room {
                                 e = slot + cnt;
-                                // for( k = slot; k < e; k += 1 )
                                 k = slot;
-                                while k < e {
-                                    sorted[k] = sorted[k + 1];
-                                    k += 1;
+                                if k < e {
+                                    sorted.copy_within(k + 1..=e, k);
+                                    k = e;
                                 }
                                 slot = e;
                             } else {
-                                // for( k = slot; k < lookbackTotal; k += 1 )
                                 k = slot;
-                                while k < lookbackTotal {
-                                    sorted[k] = sorted[k + 1];
-                                    k += 1;
+                                if k < lookbackTotal {
+                                    sorted.copy_within(k + 1..=lookbackTotal, k);
+                                    k = lookbackTotal;
                                 }
                                 sorted[lookbackTotal] = sorted[0];
                                 e = cnt - room - 1;
-                                // for( k = 0; k < e; k += 1 )
                                 k = 0;
-                                while k < e {
-                                    sorted[k] = sorted[k + 1];
-                                    k += 1;
+                                if k < e {
+                                    sorted.copy_within(k + 1..=e, k);
+                                    k = e;
                                 }
                                 slot = e;
                             }
                         } else if cnt <= slot {
                             e = slot - cnt;
-                            // for( k = slot; k > e; k -= 1 )
                             k = slot;
-                            while k > e {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > e {
+                                sorted.copy_within(e..k, e + 1);
+                                k = e;
                             }
                             slot = e;
                         } else {
-                            // for( k = slot; k > 0; k -= 1 )
                             k = slot;
-                            while k > 0 {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > 0 {
+                                sorted.copy_within(0..k, 1);
+                                k = 0;
                             }
                             sorted[0] = sorted[lookbackTotal];
                             e = lookbackTotal - (cnt - slot - 1);
-                            // for( k = lookbackTotal; k > e; k -= 1 )
                             k = lookbackTotal;
-                            while k > e {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > e {
+                                sorted.copy_within(e..k, e + 1);
+                                k = e;
                             }
                             slot = e;
                         }
@@ -795,19 +787,17 @@ impl Core {
                     pos = (if pos < lookbackTotal { pos } else { lookbackTotal });
                     del = (if del < lookbackTotal { del } else { lookbackTotal });
                     if pendDel < pendPos {
-                        // for( k = pendDel; k < pendPos - 1; k += 1 )
                         k = pendDel;
-                        while k < pendPos - 1 {
-                            sorted[k] = sorted[k + 1];
-                            k += 1;
+                        if k < pendPos - 1 {
+                            sorted.copy_within(k + 1..=pendPos - 1, k);
+                            k = pendPos - 1;
                         }
                         sorted[pendPos - 1] = pendNew;
                     } else {
-                        // for( k = pendDel; k > pendPos; k -= 1 )
                         k = pendDel;
-                        while k > pendPos {
-                            sorted[k] = sorted[k - 1];
-                            k -= 1;
+                        if k > pendPos {
+                            sorted.copy_within(pendPos..k, pendPos + 1);
+                            k = pendPos;
                         }
                         sorted[pendPos] = pendNew;
                     }
@@ -1210,19 +1200,17 @@ impl Core {
             if sp.layout != 0 {
                 if sp.layout == 2 {
                     if sp.pendDel < sp.pendPos {
-                        // for( k = sp.pendDel; k < sp.pendPos - 1; k += 1 )
                         k = sp.pendDel;
-                        while k < sp.pendPos - 1 {
-                            cb_sorted[k] = cb_sorted[k + 1];
-                            k += 1;
+                        if k < sp.pendPos - 1 {
+                            cb_sorted.copy_within(k + 1..=sp.pendPos - 1, k);
+                            k = sp.pendPos - 1;
                         }
                         cb_sorted[sp.pendPos - 1] = sp.pendNew;
                     } else {
-                        // for( k = sp.pendDel; k > sp.pendPos; k -= 1 )
                         k = sp.pendDel;
-                        while k > sp.pendPos {
-                            cb_sorted[k] = cb_sorted[k - 1];
-                            k -= 1;
+                        if k > sp.pendPos {
+                            cb_sorted.copy_within(sp.pendPos..k, sp.pendPos + 1);
+                            k = sp.pendPos;
                         }
                         cb_sorted[sp.pendPos] = sp.pendNew;
                     }
@@ -1302,53 +1290,47 @@ impl Core {
                         room = sp.lookbackTotal - slot;
                         if cnt <= room {
                             e = slot + cnt;
-                            // for( k = slot; k < e; k += 1 )
                             k = slot;
-                            while k < e {
-                                cb_sorted[k] = cb_sorted[k + 1];
-                                k += 1;
+                            if k < e {
+                                cb_sorted.copy_within(k + 1..=e, k);
+                                k = e;
                             }
                             slot = e;
                         } else {
-                            // for( k = slot; k < sp.lookbackTotal; k += 1 )
                             k = slot;
-                            while k < sp.lookbackTotal {
-                                cb_sorted[k] = cb_sorted[k + 1];
-                                k += 1;
+                            if k < sp.lookbackTotal {
+                                cb_sorted.copy_within(k + 1..=sp.lookbackTotal, k);
+                                k = sp.lookbackTotal;
                             }
                             cb_sorted[sp.lookbackTotal] = cb_sorted[0];
                             e = cnt - room - 1;
-                            // for( k = 0; k < e; k += 1 )
                             k = 0;
-                            while k < e {
-                                cb_sorted[k] = cb_sorted[k + 1];
-                                k += 1;
+                            if k < e {
+                                cb_sorted.copy_within(k + 1..=e, k);
+                                k = e;
                             }
                             slot = e;
                         }
                     } else if cnt <= slot {
                         e = slot - cnt;
-                        // for( k = slot; k > e; k -= 1 )
                         k = slot;
-                        while k > e {
-                            cb_sorted[k] = cb_sorted[k - 1];
-                            k -= 1;
+                        if k > e {
+                            cb_sorted.copy_within(e..k, e + 1);
+                            k = e;
                         }
                         slot = e;
                     } else {
-                        // for( k = slot; k > 0; k -= 1 )
                         k = slot;
-                        while k > 0 {
-                            cb_sorted[k] = cb_sorted[k - 1];
-                            k -= 1;
+                        if k > 0 {
+                            cb_sorted.copy_within(0..k, 1);
+                            k = 0;
                         }
                         cb_sorted[0] = cb_sorted[sp.lookbackTotal];
                         e = sp.lookbackTotal - (cnt - slot - 1);
-                        // for( k = sp.lookbackTotal; k > e; k -= 1 )
                         k = sp.lookbackTotal;
-                        while k > e {
-                            cb_sorted[k] = cb_sorted[k - 1];
-                            k -= 1;
+                        if k > e {
+                            cb_sorted.copy_within(e..k, e + 1);
+                            k = e;
                         }
                         slot = e;
                     }
@@ -1434,19 +1416,17 @@ impl Core {
                 pos = (if pos < sp.lookbackTotal { pos } else { sp.lookbackTotal });
                 del = (if del < sp.lookbackTotal { del } else { sp.lookbackTotal });
                 if sp.pendDel < sp.pendPos {
-                    // for( k = sp.pendDel; k < sp.pendPos - 1; k += 1 )
                     k = sp.pendDel;
-                    while k < sp.pendPos - 1 {
-                        cb_sorted[k] = cb_sorted[k + 1];
-                        k += 1;
+                    if k < sp.pendPos - 1 {
+                        cb_sorted.copy_within(k + 1..=sp.pendPos - 1, k);
+                        k = sp.pendPos - 1;
                     }
                     cb_sorted[sp.pendPos - 1] = sp.pendNew;
                 } else {
-                    // for( k = sp.pendDel; k > sp.pendPos; k -= 1 )
                     k = sp.pendDel;
-                    while k > sp.pendPos {
-                        cb_sorted[k] = cb_sorted[k - 1];
-                        k -= 1;
+                    if k > sp.pendPos {
+                        cb_sorted.copy_within(sp.pendPos..k, sp.pendPos + 1);
+                        k = sp.pendPos;
                     }
                     cb_sorted[sp.pendPos] = sp.pendNew;
                 }
@@ -1949,19 +1929,17 @@ impl Core {
                 if layout != 0 {
                     if layout == 2 {
                         if pendDel < pendPos {
-                            // for( k = pendDel; k < pendPos - 1; k += 1 )
                             k = pendDel;
-                            while k < pendPos - 1 {
-                                sorted[k] = sorted[k + 1];
-                                k += 1;
+                            if k < pendPos - 1 {
+                                sorted.copy_within(k + 1..=pendPos - 1, k);
+                                k = pendPos - 1;
                             }
                             sorted[pendPos - 1] = pendNew;
                         } else {
-                            // for( k = pendDel; k > pendPos; k -= 1 )
                             k = pendDel;
-                            while k > pendPos {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > pendPos {
+                                sorted.copy_within(pendPos..k, pendPos + 1);
+                                k = pendPos;
                             }
                             sorted[pendPos] = pendNew;
                         }
@@ -2041,53 +2019,47 @@ impl Core {
                             room = lookbackTotal - slot;
                             if cnt <= room {
                                 e = slot + cnt;
-                                // for( k = slot; k < e; k += 1 )
                                 k = slot;
-                                while k < e {
-                                    sorted[k] = sorted[k + 1];
-                                    k += 1;
+                                if k < e {
+                                    sorted.copy_within(k + 1..=e, k);
+                                    k = e;
                                 }
                                 slot = e;
                             } else {
-                                // for( k = slot; k < lookbackTotal; k += 1 )
                                 k = slot;
-                                while k < lookbackTotal {
-                                    sorted[k] = sorted[k + 1];
-                                    k += 1;
+                                if k < lookbackTotal {
+                                    sorted.copy_within(k + 1..=lookbackTotal, k);
+                                    k = lookbackTotal;
                                 }
                                 sorted[lookbackTotal] = sorted[0];
                                 e = cnt - room - 1;
-                                // for( k = 0; k < e; k += 1 )
                                 k = 0;
-                                while k < e {
-                                    sorted[k] = sorted[k + 1];
-                                    k += 1;
+                                if k < e {
+                                    sorted.copy_within(k + 1..=e, k);
+                                    k = e;
                                 }
                                 slot = e;
                             }
                         } else if cnt <= slot {
                             e = slot - cnt;
-                            // for( k = slot; k > e; k -= 1 )
                             k = slot;
-                            while k > e {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > e {
+                                sorted.copy_within(e..k, e + 1);
+                                k = e;
                             }
                             slot = e;
                         } else {
-                            // for( k = slot; k > 0; k -= 1 )
                             k = slot;
-                            while k > 0 {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > 0 {
+                                sorted.copy_within(0..k, 1);
+                                k = 0;
                             }
                             sorted[0] = sorted[lookbackTotal];
                             e = lookbackTotal - (cnt - slot - 1);
-                            // for( k = lookbackTotal; k > e; k -= 1 )
                             k = lookbackTotal;
-                            while k > e {
-                                sorted[k] = sorted[k - 1];
-                                k -= 1;
+                            if k > e {
+                                sorted.copy_within(e..k, e + 1);
+                                k = e;
                             }
                             slot = e;
                         }
@@ -2173,19 +2145,17 @@ impl Core {
                     pos = (if pos < lookbackTotal { pos } else { lookbackTotal });
                     del = (if del < lookbackTotal { del } else { lookbackTotal });
                     if pendDel < pendPos {
-                        // for( k = pendDel; k < pendPos - 1; k += 1 )
                         k = pendDel;
-                        while k < pendPos - 1 {
-                            sorted[k] = sorted[k + 1];
-                            k += 1;
+                        if k < pendPos - 1 {
+                            sorted.copy_within(k + 1..=pendPos - 1, k);
+                            k = pendPos - 1;
                         }
                         sorted[pendPos - 1] = pendNew;
                     } else {
-                        // for( k = pendDel; k > pendPos; k -= 1 )
                         k = pendDel;
-                        while k > pendPos {
-                            sorted[k] = sorted[k - 1];
-                            k -= 1;
+                        if k > pendPos {
+                            sorted.copy_within(pendPos..k, pendPos + 1);
+                            k = pendPos;
                         }
                         sorted[pendPos] = pendNew;
                     }
