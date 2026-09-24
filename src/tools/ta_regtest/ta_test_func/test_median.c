@@ -789,9 +789,12 @@ static ErrorNumber test_median_large_windows( void )
                     begM, nbM );
             return TA_TESTUTIL_TFRR_BAD_RETCODE;
          }
-         server_verify_set_float( 1 );
-         MEDIAN_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begM, nbM, x, n, medS );
-         server_verify_set_float( 0 );
+         if( server_verify_float_active() )
+         {
+            server_verify_set_float( 1 );
+            MEDIAN_SERVER_VERIFY( 0, nbBars-1, nbBars, retCode, begM, nbM, x, n, medS );
+            server_verify_set_float( 0 );
+         }
          for( i = 0; i < nbM; i++ )
          {
             g_medFloatCmp++;

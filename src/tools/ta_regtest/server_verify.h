@@ -68,6 +68,10 @@ int server_verify_value_comparisons(void);
  * skipped; a server that does not acknowledge the float path fails. */
 void server_verify_set_float(int on);
 
+/* 1 if a live pipe serves the single-precision tier. A float-mode call asserts
+ * it compared something only under this, not under server_verify_active(). */
+int server_verify_float_active(void);
+
 ErrorNumber server_verify(
     const char       *funcName,
     TA_Integer        startIdx,

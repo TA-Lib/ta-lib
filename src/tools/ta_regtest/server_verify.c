@@ -444,6 +444,20 @@ void server_verify_set_float(int on)
     g_svFloat = on;
 }
 
+/* Rust has no single-precision surface. */
+static int sv_serves_float(const char *lang)
+{
+    return !(lang && strcmp(lang, "rust") == 0);
+}
+
+int server_verify_float_active(void)
+{
+    for( int p = 0; p < g_nbPipes; p++ )
+        if( sv_serves_float(g_pipeLang[p]) )
+            return 1;
+    return 0;
+}
+
 static int build_request(const char *funcName,
                          TA_Integer startIdx, TA_Integer endIdx,
                          int nbBars,
@@ -751,7 +765,7 @@ ErrorNumber server_verify(
         int bitwise = !g_svFloat
                       && !(codegen_lang_needs_transcendental_tol(lang) && isTranscendental);
 
-        if( g_svFloat && lang && strcmp(lang, "rust") == 0 )
+        if( g_svFloat && !sv_serves_float(lang) )
             continue;
 
         /* Sync global state (unstable periods + candle settings) */

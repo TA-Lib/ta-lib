@@ -1301,7 +1301,7 @@ static ErrorNumber test_percentile_wide( void )
                        begIdx, nbElement );
                return TA_TESTUTIL_TFRR_BAD_BEGIDX;
             }
-            if( server_verify_active() )
+            if( server_verify_float_active() )
             {
                double optIn[2];
                ErrorNumber e;
