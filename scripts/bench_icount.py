@@ -18,9 +18,10 @@ repeats or discards a measurement.
 
 The number is not a time. Valgrind charges every instruction the same, so
 out-of-order execution, port pressure and dependency-chain latency are all
-invisible, and it over-charges branchy code: a branchless rewrite can read here
-as a regression. Use it for the algorithmic class (a lost fast path, an extra
-pass over the window, an un-inlined call); never quote a percentage from it.
+invisible, and a mispredicted branch counts as one instruction: a branchless
+rewrite can read here as a regression. Use it for the algorithmic class (a lost
+fast path, an extra pass over the window, an un-inlined call); never quote a
+percentage from it.
 
 The baseline only ever moves DOWN. A passing run lowers a row it beat and leaves
 every row it did not, so a regression under the threshold is never absorbed:

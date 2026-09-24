@@ -138,8 +138,8 @@ all concede that ground: `--max-spread=25`, `--no-signal=1.20`,
 What a count cannot see, and where it actively misleads:
 
 - Out-of-order execution, port pressure, dependency-chain latency: all free.
-- Valgrind over-charges branches, so a branchless rewrite can read here as a
-  regression while being a win on hardware.
+- A mispredicted branch counts as one instruction, so a branchless rewrite can
+  read here as a regression while being a win on hardware.
 - **A percentage from this tool is not a speed figure and never goes in a
   release note.** Use it for the algorithmic class (a lost fast path, an extra
   pass over the window, an un-inlined call) and the devbox for magnitudes.

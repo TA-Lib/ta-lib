@@ -1516,8 +1516,8 @@ jobs:
   # It counts retired instructions under callgrind rather than timing anything:
   # exact, byte-identical across runs on a loaded box, which is what lets a 10%
   # threshold mean anything on a shared vCPU. It is blind to out-of-order
-  # execution and over-charges branches, so a percentage from it is never a
-  # quoted performance figure.
+  # execution and to what a mispredicted branch costs, so a percentage from it
+  # is never a quoted performance figure.
   icount:
     name: Instruction counts (x86_64)
     runs-on: ubuntu-latest
