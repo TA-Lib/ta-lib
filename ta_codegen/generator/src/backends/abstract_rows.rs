@@ -40,8 +40,9 @@ use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType, PriceCompo
 
 /// A function's group. Closed set: the YAML `group:` field may name nothing else.
 ///
-/// The discriminants are the C# `FunctionGroup` values, frozen once published:
-/// a new group takes the next unused number, wherever it sorts in [`Group::ALL`].
+/// The discriminants are the C# `FunctionGroup` and Rust `Group` values, frozen
+/// once published: a new group takes the next unused number, wherever it sorts
+/// in [`Group::ALL`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Group {
     CycleIndicators = 0,

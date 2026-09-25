@@ -556,10 +556,10 @@ TA_RetCode max( int    startIdx,
 
 // ---------------------------------------------------------------------------
 
-/// The C# `FunctionGroup` values freeze at the first publish, and a consumer's
-/// build copies them in.
+/// The C# `FunctionGroup` and Rust `Group` values freeze at the first publish,
+/// and a consumer's build copies them in.
 #[test]
-fn csharp_function_group_values_are_pinned() {
+fn function_group_values_are_pinned() {
     use ta_codegen_lib::backends::abstract_rows::Group;
     let pinned = [
         (Group::CycleIndicators, 0),
@@ -573,14 +573,19 @@ fn csharp_function_group_values_are_pinned() {
         (Group::VolatilityIndicators, 8),
         (Group::VolumeIndicators, 9),
     ];
-    let emitted = std::fs::read_to_string(
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../output/csharp/library/src/metadata/Vocabulary.g.cs"),
-    )
-    .expect("Vocabulary.g.cs");
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../output");
+    let emitted: Vec<(&str, String)> = [
+        "csharp/library/src/metadata/Vocabulary.g.cs",
+        "rust/library/src/abstract_api.rs",
+    ]
+    .iter()
+    .map(|rel| (*rel, std::fs::read_to_string(root.join(rel)).expect(rel)))
+    .collect();
     for (g, value) in pinned {
-        assert_eq!(g as u32, value, "FunctionGroup.{} moved", g.ident());
+        assert_eq!(g as u32, value, "Group::{} moved", g.ident());
         let decl = format!("    {} = {value},\n", g.ident());
-        assert!(emitted.contains(&decl), "Vocabulary.g.cs lacks `{}`", decl.trim());
+        for (rel, text) in &emitted {
+            assert!(text.contains(&decl), "{rel} lacks `{}`", decl.trim());
+        }
     }
 }
