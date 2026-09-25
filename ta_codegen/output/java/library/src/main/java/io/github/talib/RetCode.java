@@ -83,8 +83,7 @@ public enum RetCode
     }
 
     /**
-     * This code's {@code TA_RetCode} integer — the value C returns for the same
-     * condition ({@code include/ta_defs.h}).
+     * This code's {@code TA_RetCode} number.
      *
      * <p>Carried on the member rather than derived by a {@code switch}, so a new
      * member cannot reach the wire as whatever a {@code default:} arm said.

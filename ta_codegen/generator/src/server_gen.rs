@@ -3406,10 +3406,6 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("}\n\n");
 
-    // Helper: RetCode to integer. Delegates to the library, whose match is total
-    // -- re-spelling it here would need a `_` arm (`RetCode` is `#[non_exhaustive]`
-    // and this is a downstream crate), and a new variant would then be reported to
-    // the driver as whatever that arm said instead of failing to compile.
     s.push_str("fn retcode_to_int(rc: RetCode) -> i32 {\n");
     s.push_str("    rc.as_c_int()\n");
     s.push_str("}\n\n");

@@ -1,4 +1,5 @@
-/// Return codes for TA-Lib function calls.
+/// Return codes for TA-Lib function calls. Each value is C's `TA_RetCode`
+/// number for the same condition.
 ///
 /// `#[must_use]` because a `RetCode` is the whole report of what a call did: a
 /// rejected parameter writes no output and leaves whatever was already in the
@@ -10,23 +11,23 @@
 #[non_exhaustive]
 pub enum RetCode {
     /// Function completed successfully.
-    Success,
+    Success = 0,
     /// One or more parameters are invalid.
-    BadParam,
-    /// The start index is out of range.
-    OutOfRangeStartIndex,
-    /// The end index is out of range or less than start index.
-    OutOfRangeEndIndex,
+    BadParam = 2,
     /// C parity only, never returned here: an allocation failure terminates the process (#178).
-    AllocErr,
-    /// Internal error occurred.
-    InternalError,
+    AllocErr = 3,
+    /// The start index is out of range.
+    OutOfRangeStartIndex = 12,
+    /// The end index is out of range or less than start index.
+    OutOfRangeEndIndex = 13,
     /// The history given to a stream opener is shorter than `lookback + 1` bars.
     ///
     /// The library's one **recoverable** condition: accumulate more bars and
     /// retry, rather than fix the call. Streaming only — the batch tier answers
     /// a range shorter than its lookback with `Ok` and a zero count.
-    InsufficientHistory,
+    InsufficientHistory = 17,
+    /// Internal error occurred.
+    InternalError = 5000,
 }
 
 /// Where a successful call's output starts and how many values it wrote.
@@ -56,24 +57,9 @@ impl OutRange {
 }
 
 impl RetCode {
-    /// This code's `TA_RetCode` integer — the value C returns for the same
-    /// condition (`include/ta_defs.h`).
-    ///
-    /// It lives here, and not in whichever crate needs to serialize it, because
-    /// `#[non_exhaustive]` does not apply inside the defining crate: the match
-    /// below must stay total, so a new variant is a compile error. Downstream the
-    /// same match would need a wildcard arm, and a new variant would silently
-    /// report as whatever that arm says.
+    /// This code's `TA_RetCode` number.
     pub const fn as_c_int(self) -> i32 {
-        match self {
-            RetCode::Success => 0,
-            RetCode::BadParam => 2,
-            RetCode::AllocErr => 3,
-            RetCode::OutOfRangeStartIndex => 12,
-            RetCode::OutOfRangeEndIndex => 13,
-            RetCode::InsufficientHistory => 17,
-            RetCode::InternalError => 5000,
-        }
+        self as i32
     }
 }
 

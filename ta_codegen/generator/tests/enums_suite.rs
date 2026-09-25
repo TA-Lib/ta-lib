@@ -670,4 +670,84 @@ fn java_funcunstid_count_is_not_public() {
     );
 }
 
+/// C's `TA_RetCode` holds every number; a backend declares only the codes it
+/// uses, each with C's number.
+#[test]
+fn every_backend_retcode_member_carries_c_s_number() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let read = |rel: &str| std::fs::read_to_string(root.join(rel)).expect(rel);
+    let block = |text: &str, open: &str, close: &str| -> String {
+        let at = text.find(open).unwrap_or_else(|| panic!("no `{open}`"));
+        let rest = &text[at + open.len()..];
+        rest[..rest.find(close).unwrap_or_else(|| panic!("no `{close}` after `{open}`"))].to_string()
+    };
+    let screaming = |pascal: &str| {
+        let mut out = String::new();
+        for (i, ch) in pascal.chars().enumerate() {
+            if ch.is_ascii_uppercase() && i > 0 {
+                out.push('_');
+            }
+            out.push(ch.to_ascii_uppercase());
+        }
+        out
+    };
+    let number = |v: &str| {
+        let v = v.trim();
+        v.strip_prefix("0x")
+            .map_or_else(|| v.parse::<i64>(), |h| i64::from_str_radix(h, 16))
+            .unwrap_or_else(|_| panic!("not a number: {v}"))
+    };
+
+    let mut c = std::collections::HashMap::new();
+    let c_text = read("include/ta_defs.h");
+    let c_enum = &c_text[..c_text.find("} TA_RetCode;").expect("TA_RetCode")];
+    let c_enum = &c_enum[c_enum.rfind("typedef enum").expect("typedef enum")..];
+    for line in c_enum.lines() {
+        if let Some((name, rest)) = line.trim().strip_prefix("TA_").and_then(|l| l.split_once('=')) {
+            let value = rest.split([',', '/']).next().unwrap();
+            c.insert(name.trim().to_string(), number(value));
+        }
+    }
+    assert!(c.len() >= 17, "parsed only {} TA_RetCode members", c.len());
+
+    fn member(line: &str) -> Option<(&str, &str)> {
+        let line = line.trim().trim_end_matches(',');
+        if !line.is_empty() && line.chars().all(|ch| ch.is_ascii_alphanumeric()) {
+            panic!("RetCode {line} has no explicit value");
+        }
+        let (name, value) = line.split_once(" = ")?;
+        name.chars().all(|ch| ch.is_ascii_alphanumeric()).then_some((name, value))
+    }
+    // (backend, member name as C spells it, value)
+    let mut members: Vec<(&str, String, i64)> = Vec::new();
+    let rust = read("ta_codegen/generator/templates/rust/types.rs");
+    for (name, value) in block(&rust, "pub enum RetCode {", "\n}").lines().filter_map(member) {
+        members.push(("Rust", screaming(name), number(value)));
+    }
+    let csharp = read("ta_codegen/output/csharp/library/RetCode.cs");
+    for (name, value) in block(&csharp, "public enum RetCode", "\n}").lines().filter_map(member) {
+        members.push(("C#", screaming(name), number(value)));
+    }
+    let java = read("ta_codegen/output/java/library/src/main/java/io/github/talib/RetCode.java");
+    for line in block(&java, "public enum RetCode", ");").lines() {
+        let line = line.trim().trim_end_matches(',').trim_end_matches(')');
+        if let Some((name, value)) = line.split_once('(') {
+            if name.chars().all(|ch| ch.is_ascii_uppercase() || ch == '_') {
+                members.push(("Java", name.to_string(), number(value)));
+            }
+        }
+    }
+    for (backend, floor) in [("Rust", 7), ("C#", 9), ("Java", 7)] {
+        let n = members.iter().filter(|m| m.0 == backend).count();
+        assert!(n >= floor, "parsed only {n} {backend} RetCode members");
+    }
+    for (backend, name, value) in &members {
+        assert_eq!(
+            c.get(name),
+            Some(value),
+            "{backend} RetCode {name} = {value} is not C's TA_{name}"
+        );
+    }
+}
+
 // ---------------------------------------------------------------------------

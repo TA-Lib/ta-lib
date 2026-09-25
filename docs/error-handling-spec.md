@@ -85,6 +85,10 @@ initialisation (`TA_LIB_NOT_INITIALIZE`), and four of them —
 `TA_UNKNOWN_ERR` — are returned from nowhere in the tree at all. Appendix C
 defers the abstract tier, so no rule below produces any of the thirteen.
 
+**Numbering.** C's enum holds every number: a code any backend needs is added to
+C first, even if C never returns it, and every other backend's member carries
+C's number.
+
 *A buffer is too short* has no member of its own. Where it is detected it is
 reported as `TA_BAD_PARAM` (rule B5) — raised rather than returned, in the
 backends that raise (Appendix A); Rust returns it — and the ⚠️ on the code says C
