@@ -453,6 +453,32 @@ TA_LIB_API TA_RetCode TA_RMA_Close( TA_RMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_RMA_StepTape( struct TA_RMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   (void)tape;
+   (void)tapeBase;
+   (void)tapeMask;
+   TA_RMA_StepImpl( sp, inReal, outReal );
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_RMA_PeekTape( const struct TA_RMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   (void)tape;
+   (void)tapeBase;
+   (void)tapeMask;
+   (void)TA_RMA_Peek( sp, inReal, outReal );
+}
+
+/* Private function, not in public API. */
+int TA_RMA_TapeDetach( struct TA_RMA_Stream *sp )
+{
+   (void)sp;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_RMA_Value( const TA_RMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

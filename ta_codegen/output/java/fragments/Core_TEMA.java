@@ -866,3 +866,17 @@
       MInteger outNBElement = new MInteger();
       return temaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
+   private double temaStepTape( TemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      temaStepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+   private double temaPeekTape( TemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.peek(inReal);
+   }
+   private int temaTapeDetach( TemaStream sp )
+   {
+      return 0;
+   }

@@ -1939,6 +1939,334 @@ TA_LIB_API TA_RetCode TA_HMA_Close( TA_HMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   if( sp->optInTimePeriod == 2 || sp->optInTimePeriod == 3 )
+   {
+      double tempReal;
+      double fullOut;
+      int jFull;
+      int rw;
+      double tempReal2;
+
+      tempReal = inReal;
+      sp->periodSubFull += tempReal;
+      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSumFull += tempReal * sp->optInTimePeriod;
+      sp->barsSinceReseedFull -= 1;
+      if( sp->barsSinceReseedFull <= 0 )
+      {
+         sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         sp->periodSubFull = 0.0;
+         sp->periodSumFull = 0.0;
+         rw = 1;
+         for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
+         {
+            tempReal2 = tape[(tapeBase - jFull) & tapeMask];
+            sp->periodSubFull += tempReal2;
+            sp->periodSumFull += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      sp->trailingFull = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
+      fullOut = sp->periodSumFull / sp->dividerFull;
+      sp->periodSumFull -= sp->periodSubFull;
+      *outReal= 2.0 * tempReal - fullOut;
+      sp->cur_outReal = *outReal;
+   }
+   else
+   {
+      double tempReal;
+      double fullOut;
+      double halfOut;
+      double diffReal;
+      int jFull;
+      int jHalf;
+      int q;
+      int rw;
+      int ringWalk;
+      double tempReal2;
+      double periodSubSqrt;
+      double periodSumSqrt;
+
+      periodSubSqrt = sp->periodSubSqrt;
+      periodSumSqrt = sp->periodSumSqrt;
+      tempReal = inReal;
+      sp->periodSubFull += tempReal;
+      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSumFull += tempReal * sp->optInTimePeriod;
+      sp->barsSinceReseedFull -= 1;
+      if( sp->barsSinceReseedFull <= 0 )
+      {
+         sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         sp->periodSubFull = 0.0;
+         sp->periodSumFull = 0.0;
+         rw = 1;
+         for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
+         {
+            tempReal2 = tape[(tapeBase - jFull) & tapeMask];
+            sp->periodSubFull += tempReal2;
+            sp->periodSumFull += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      sp->trailingFull = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
+      fullOut = sp->periodSumFull / sp->dividerFull;
+      sp->periodSumFull -= sp->periodSubFull;
+      sp->periodSubHalf += tempReal;
+      sp->periodSubHalf -= sp->trailingHalf;
+      sp->periodSumHalf += tempReal * sp->halfPeriod;
+      sp->barsSinceReseedHalf -= 1;
+      if( sp->barsSinceReseedHalf <= 0 )
+      {
+         sp->barsSinceReseedHalf = 8 * sp->halfPeriod;
+         sp->periodSubHalf = 0.0;
+         sp->periodSumHalf = 0.0;
+         rw = 1;
+         for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
+         {
+            tempReal2 = tape[(tapeBase - jHalf) & tapeMask];
+            sp->periodSubHalf += tempReal2;
+            sp->periodSumHalf += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      sp->trailingHalf = tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask];
+      halfOut = sp->periodSumHalf / sp->dividerHalf;
+      sp->periodSumHalf -= sp->periodSubHalf;
+      diffReal = 2.0 * halfOut - fullOut;
+      periodSubSqrt += diffReal;
+      periodSubSqrt -= sp->trailingSqrt;
+      periodSumSqrt += diffReal * sp->sqrtPeriod;
+      /* The outer WMA consumes a DERIVED series that is never
+       * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+       * the oldest slot (the one about to expire) and diffReal is the
+       * newest value, which together are the whole window. Oldest first,
+       * weight counting up from 1 -- the priming order above.
+       */
+      sp->barsSinceReseedSqrt -= 1;
+      if( sp->barsSinceReseedSqrt <= 0 )
+      {
+         sp->barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
+         periodSubSqrt = 0.0;
+         periodSumSqrt = 0.0;
+         rw = 1;
+         ringWalk = sp->dRing_Idx;
+         for( q = 0; q < sp->ringSize; q += 1 )
+         {
+            tempReal2 = sp->cb_dRing[ringWalk];
+            periodSubSqrt += tempReal2;
+            periodSumSqrt += tempReal2 * rw;
+            rw += 1;
+            ringWalk += 1;
+            if( ringWalk >= sp->ringSize )
+            {
+               ringWalk = 0;
+            }
+         }
+         periodSubSqrt += diffReal;
+         periodSumSqrt += diffReal * sp->sqrtPeriod;
+      }
+      sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
+      sp->cb_dRing[sp->dRing_Idx] = diffReal;
+      sp->dRing_Idx = sp->dRing_Idx + 1;
+      if( sp->dRing_Idx > sp->maxIdx_dRing )
+      {
+         sp->dRing_Idx = 0;
+      }
+      *outReal= periodSumSqrt / sp->dividerSqrt;
+      periodSumSqrt -= periodSubSqrt;
+      sp->cur_outReal = *outReal;
+      sp->periodSubSqrt = periodSubSqrt;
+      sp->periodSumSqrt = periodSumSqrt;
+   }
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   if( sp->optInTimePeriod == 2 || sp->optInTimePeriod == 3 )
+   {
+      double tempReal;
+      double fullOut;
+      int jFull;
+      int rw;
+      double tempReal2;
+      int barsSinceReseedFull;
+      double periodSubFull;
+      double periodSumFull;
+      double trailingFull;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+
+      barsSinceReseedFull = sp->barsSinceReseedFull;
+      periodSubFull = sp->periodSubFull;
+      periodSumFull = sp->periodSumFull;
+      trailingFull = sp->trailingFull;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      tempReal = inReal;
+      periodSubFull += tempReal;
+      periodSubFull -= trailingFull;
+      periodSumFull += tempReal * sp->optInTimePeriod;
+      barsSinceReseedFull -= 1;
+      if( barsSinceReseedFull <= 0 )
+      {
+         barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         periodSubFull = 0.0;
+         periodSumFull = 0.0;
+         rw = 1;
+         for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
+         {
+            tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
+            periodSubFull += tempReal2;
+            periodSumFull += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      trailingFull = (((tapeBase - sp->ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+      fullOut = periodSumFull / sp->dividerFull;
+      periodSumFull -= periodSubFull;
+      *outReal= 2.0 * tempReal - fullOut;
+   }
+   else
+   {
+      double tempReal;
+      double fullOut;
+      double halfOut;
+      double diffReal;
+      int jFull;
+      int jHalf;
+      int q;
+      int rw;
+      int ringWalk;
+      double tempReal2;
+      int barsSinceReseedFull;
+      int barsSinceReseedHalf;
+      int barsSinceReseedSqrt;
+      int dRing_Idx;
+      double periodSubFull;
+      double periodSubHalf;
+      double periodSumFull;
+      double periodSumHalf;
+      double periodSumSqrt;
+      double trailingFull;
+      double trailingHalf;
+      double *cb_dRing;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+
+      barsSinceReseedFull = sp->barsSinceReseedFull;
+      barsSinceReseedHalf = sp->barsSinceReseedHalf;
+      barsSinceReseedSqrt = sp->barsSinceReseedSqrt;
+      dRing_Idx = sp->dRing_Idx;
+      periodSubFull = sp->periodSubFull;
+      periodSubHalf = sp->periodSubHalf;
+      periodSumFull = sp->periodSumFull;
+      periodSumHalf = sp->periodSumHalf;
+      periodSumSqrt = sp->periodSumSqrt;
+      trailingFull = sp->trailingFull;
+      trailingHalf = sp->trailingHalf;
+      cb_dRing = sp->cb_dRing;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      tempReal = inReal;
+      periodSubFull += tempReal;
+      periodSubFull -= trailingFull;
+      periodSumFull += tempReal * sp->optInTimePeriod;
+      barsSinceReseedFull -= 1;
+      if( barsSinceReseedFull <= 0 )
+      {
+         barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         periodSubFull = 0.0;
+         periodSumFull = 0.0;
+         rw = 1;
+         for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
+         {
+            tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
+            periodSubFull += tempReal2;
+            periodSumFull += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      trailingFull = (((tapeBase - sp->ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+      fullOut = periodSumFull / sp->dividerFull;
+      periodSumFull -= periodSubFull;
+      periodSubHalf += tempReal;
+      periodSubHalf -= trailingHalf;
+      periodSumHalf += tempReal * sp->halfPeriod;
+      barsSinceReseedHalf -= 1;
+      if( barsSinceReseedHalf <= 0 )
+      {
+         barsSinceReseedHalf = 8 * sp->halfPeriod;
+         periodSubHalf = 0.0;
+         periodSumHalf = 0.0;
+         rw = 1;
+         for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
+         {
+            tempReal2 = (((tapeBase - jHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - jHalf) & tapeMask] : pkVal0;
+            periodSubHalf += tempReal2;
+            periodSumHalf += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      trailingHalf = (((tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask] : pkVal0;
+      halfOut = periodSumHalf / sp->dividerHalf;
+      periodSumHalf -= periodSubHalf;
+      diffReal = 2.0 * halfOut - fullOut;
+      periodSumSqrt += diffReal * sp->sqrtPeriod;
+      /* The outer WMA consumes a DERIVED series that is never
+       * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+       * the oldest slot (the one about to expire) and diffReal is the
+       * newest value, which together are the whole window. Oldest first,
+       * weight counting up from 1 -- the priming order above.
+       */
+      barsSinceReseedSqrt -= 1;
+      if( barsSinceReseedSqrt <= 0 )
+      {
+         barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
+         periodSumSqrt = 0.0;
+         rw = 1;
+         ringWalk = dRing_Idx;
+         for( q = 0; q < sp->ringSize; q += 1 )
+         {
+            tempReal2 = cb_dRing[ringWalk];
+            periodSumSqrt += tempReal2 * rw;
+            rw += 1;
+            ringWalk += 1;
+            if( ringWalk >= sp->ringSize )
+            {
+               ringWalk = 0;
+            }
+         }
+         periodSumSqrt += diffReal * sp->sqrtPeriod;
+      }
+      dRing_Idx = dRing_Idx + 1;
+      if( dRing_Idx > sp->maxIdx_dRing )
+      {
+         dRing_Idx = 0;
+      }
+      *outReal= periodSumSqrt / sp->dividerSqrt;
+   }
+}
+
+/* Private function, not in public API. */
+int TA_HMA_TapeDetach( struct TA_HMA_Stream *sp )
+{
+   int reach = 0;
+   if( sp->ring_trailingIdxFull_inReal ) { TA_Free( sp->ring_trailingIdxFull_inReal ); sp->ring_trailingIdxFull_inReal = NULL; }
+   if( sp->ringCap_trailingIdxFull > reach ) reach = sp->ringCap_trailingIdxFull;
+   if( sp->win_jFull_inReal ) { TA_Free( sp->win_jFull_inReal ); sp->win_jFull_inReal = NULL; }
+   if( sp->winCap_jFull - 1 > reach ) reach = sp->winCap_jFull - 1;
+   if( sp->ring_trailingIdxHalf_inReal ) { TA_Free( sp->ring_trailingIdxHalf_inReal ); sp->ring_trailingIdxHalf_inReal = NULL; }
+   if( sp->ringCap_trailingIdxHalf > reach ) reach = sp->ringCap_trailingIdxHalf;
+   if( sp->win_jHalf_inReal ) { TA_Free( sp->win_jHalf_inReal ); sp->win_jHalf_inReal = NULL; }
+   if( sp->winCap_jHalf - 1 > reach ) reach = sp->winCap_jHalf - 1;
+   return reach;
+}
+
 TA_LIB_API TA_RetCode TA_HMA_Value( const TA_HMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

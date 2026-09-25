@@ -756,3 +756,31 @@
       MInteger outNBElement = new MInteger();
       return zlemaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
+   private double zlemaStepTape( ZlemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      sp.prevMA = Math.fma(2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.cur_outReal = sp.prevMA;
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+   private double zlemaPeekTape( ZlemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double cur_outReal = 0.0;
+      double prevMA = sp.prevMA;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      prevMA = Math.fma(2.0 * inReal - ((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0) - prevMA, sp.optInK_1, prevMA);
+      cur_outReal = prevMA;
+      return cur_outReal;
+   }
+   private int zlemaTapeDetach( ZlemaStream sp )
+   {
+      int reach = 0;
+      sp.ring_trailingIdx_inReal = new double[0];
+      if( sp.ringCap_trailingIdx > reach ) {
+         reach = sp.ringCap_trailingIdx;
+      }
+      return reach;
+   }

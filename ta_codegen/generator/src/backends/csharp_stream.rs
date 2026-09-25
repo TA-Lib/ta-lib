@@ -239,6 +239,54 @@ impl streaming::NameMap for CsStreamNames {
     }
 }
 
+/// [`CsStreamNames`] for a tape frame (#445).
+struct CsTapeNames(streaming::TapeNames);
+
+impl streaming::NameMap for CsTapeNames {
+    fn state(&self, name: &str) -> String {
+        streaming::NameMap::state(&CsStreamNames, name)
+    }
+    fn bar(&self, array: &str) -> String {
+        streaming::NameMap::bar(&CsStreamNames, array)
+    }
+    fn output(&self, name: &str) -> Expr {
+        streaming::NameMap::output(&CsStreamNames, name)
+    }
+    fn ring_buf(&self, var: &str, array: &str) -> String {
+        streaming::NameMap::ring_buf(&CsStreamNames, var, array)
+    }
+    fn ring_pos(&self, var: &str) -> String {
+        streaming::NameMap::ring_pos(&CsStreamNames, var)
+    }
+    fn ring_lag(&self, var: &str) -> String {
+        streaming::NameMap::ring_lag(&CsStreamNames, var)
+    }
+    fn ring_cap(&self, var: &str) -> String {
+        streaming::NameMap::ring_cap(&CsStreamNames, var)
+    }
+    fn win_buf(&self, var: &str, array: &str) -> String {
+        streaming::NameMap::win_buf(&CsStreamNames, var, array)
+    }
+    fn win_pos(&self, var: &str) -> String {
+        streaming::NameMap::win_pos(&CsStreamNames, var)
+    }
+    fn win_cap(&self, var: &str) -> String {
+        streaming::NameMap::win_cap(&CsStreamNames, var)
+    }
+    fn circ_buf(&self, storage: &str) -> String {
+        streaming::NameMap::circ_buf(&CsStreamNames, storage)
+    }
+    fn extrema_buf(&self, array: &str) -> String {
+        streaming::NameMap::extrema_buf(&CsStreamNames, array)
+    }
+    fn extrema_mask(&self) -> String {
+        streaming::NameMap::extrema_mask(&CsStreamNames)
+    }
+    fn tape(&self) -> Option<streaming::TapeNames> {
+        Some(self.0.clone())
+    }
+}
+
 // ---------------------------------------------------------------------------
 // State fields
 // ---------------------------------------------------------------------------
@@ -449,15 +497,30 @@ pub fn generate(
     if let Some(m) = func.alt_marker(crate::ir::Tier::Stream, crate::ir::Lang::CSharp) {
         let _ = writeln!(o, "   /* {m} */\n");
     }
+    let taped = registry.in_tape_set(&func.name.to_lowercase());
     match &plan {
         StreamPlan::Loop(model) => {
             emit_loop(&mut o, func, model, &stream_fma, enums, registry, helpers, &counter);
+            if taped {
+                emit_tape_entries(
+                    &mut o, func, &[model], None, &stream_fma, enums, registry, helpers, &counter,
+                );
+            }
         }
         StreamPlan::DualMode(dmp) => {
             emit_dual_mode(&mut o, func, dmp, &stream_fma, enums, registry, helpers, &counter);
+            if taped {
+                emit_tape_entries(
+                    &mut o, func, &[&dmp.mode_a, &dmp.mode_b], Some(dmp), &stream_fma, enums,
+                    registry, helpers, &counter,
+                );
+            }
         }
         StreamPlan::Dispatch(dp) => {
             emit_dispatch(&mut o, func, dp, &stream_fma, enums, registry, helpers, &counter);
+            if taped {
+                emit_dispatch_tape(&mut o, func, dp, &stream_fma, enums, registry, helpers, &counter);
+            }
         }
         StreamPlan::PeriodBank(pb) => {
             emit_period_bank(&mut o, func, pb, registry, helpers, enums);
@@ -1378,60 +1441,76 @@ fn build_dispatch_peek_frame(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    let arms: Vec<&streaming::DispatchArm> = dp.arms.iter().filter(|a| a.supported).collect();
+    dispatch_peek_frame_with(
+        func, dp, &arms, outputs, ctx, enums, registry, helpers, 9,
+        &|cls: &str, _: &streaming::DispatchArm| format!("(({cls}) sp.sub!).Peek({bar_args})"),
+    )
+}
+
+/// [`build_dispatch_peek_frame`] over `arms` at `indent`, each arm's value
+/// coming from `call` (given the callee's handle class).
+#[allow(clippy::too_many_arguments)]
+fn dispatch_peek_frame_with(
+    func: &FuncDef,
+    dp: &streaming::DispatchPlan,
+    arms: &[&streaming::DispatchArm],
+    outputs: &[String],
+    ctx: &CsRenderCtx,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    indent: usize,
+    call: &dyn Fn(&str, &streaming::DispatchArm) -> String,
+) -> String {
+    let p = " ".repeat(indent);
     let mut f = String::new();
     for out in &func.outputs {
         let cty = out_cs_type(func, &out.name);
         let zero = if cty == "int" { "0" } else { "0.0" };
-        let _ = writeln!(f, "         {cty} cur_{} = {zero};", out.name);
+        let _ = writeln!(f, "{p}{cty} cur_{} = {zero};", out.name);
     }
     if let Some(idp) = &dp.identity {
         let cond = params_on_state(func, &idp.condition);
         let cond = render_predicate(&cond, ctx, registry, helpers);
-        let _ = writeln!(f, "         if( {cond} ) {{");
+        let _ = writeln!(f, "{p}if( {cond} ) {{");
         for (out, inp) in &idp.pairs {
-            let _ = writeln!(f, "            cur_{out} = {inp};");
+            let _ = writeln!(f, "{p}   cur_{out} = {inp};");
         }
-        let _ = writeln!(f, "            return {};", fresh_value_expr(func, ""));
-        let _ = writeln!(f, "         }}");
+        let _ = writeln!(f, "{p}   return {};", fresh_value_expr(func, ""));
+        let _ = writeln!(f, "{p}}}");
     }
-    let _ = writeln!(f, "         switch( sp.{} )", dp.param);
-    let _ = writeln!(f, "         {{");
-    for arm in dp.arms.iter().filter(|a| a.supported) {
+    let _ = writeln!(f, "{p}switch( sp.{} )", dp.param);
+    let _ = writeln!(f, "{p}{{");
+    for arm in arms {
         let label = render_csharp_switch_label(&arm.label, enums);
         let cls = callee_stream_class(registry, &arm.callee);
-        let _ = writeln!(f, "         case {label}: {{");
+        let _ = writeln!(f, "{p}case {label}: {{");
         if arm.out_map.len() == 1 {
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
                 panic!("single-output arm cannot discard its only slot")
             };
-            let _ = writeln!(
-                f,
-                "            cur_{} = (({cls}) sp.sub!).Peek({bar_args});",
-                outputs[k]
-            );
+            let _ = writeln!(f, "{p}   cur_{} = {};", outputs[k], call(&cls, arm));
         } else {
             let vt = callee_value_type(registry, &arm.callee);
-            let _ = writeln!(
-                f,
-                "            {vt} subValue = (({cls}) sp.sub!).Peek({bar_args});"
-            );
+            let _ = writeln!(f, "{p}   {vt} subValue = {};", call(&cls, arm));
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
                     let _ = writeln!(
                         f,
-                        "            cur_{} = subValue.{};",
+                        "{p}   cur_{} = subValue.{};",
                         outputs[*k],
                         callee_value_member(registry, &arm.callee, i)
                     );
                 }
             }
         }
-        let _ = writeln!(f, "            break;");
-        let _ = writeln!(f, "         }}");
+        let _ = writeln!(f, "{p}   break;");
+        let _ = writeln!(f, "{p}}}");
     }
-    let _ = writeln!(f, "         default:");
-    let _ = writeln!(f, "            break; /* unreachable: open rejects arms without a sub-stream */");
-    let _ = writeln!(f, "         }}");
+    let _ = writeln!(f, "{p}default:");
+    let _ = writeln!(f, "{p}   break; /* unreachable: open rejects arms without a sub-stream */");
+    let _ = writeln!(f, "{p}}}");
     f
 }
 
@@ -1477,7 +1556,12 @@ fn peek_frame_arm_named(
 ) -> Option<String> {
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, names).ok()?;
-    let pt = streaming::peek_transition_widest(model, names, &transition, None).ok()?;
+    let pt = if names.tape().is_some() {
+        streaming::tape_peek_transition(model, names, &transition, None)
+    } else {
+        streaming::peek_transition_widest(model, names, &transition, None)
+    }
+    .ok()?;
     let bufs = streaming::transition_buffers(model, names);
     let (locals, body_ir) = localize_state_writes(func, &pt.body, &[], &bufs)?;
     // The transition's own early exit — the param-degenerate identity
@@ -1565,7 +1649,8 @@ fn emit_step(
 ) {
     emit_step_sig(o, func);
     emit_step_body(
-        o, func, model, step_settings, stream_fma, enums, registry, helpers, counter, 6,
+        o, func, model, &CsStreamNames, step_settings, stream_fma, enums, registry, helpers,
+        counter, 6,
     );
     let _ = writeln!(o, "   }}");
 }
@@ -1587,6 +1672,7 @@ fn emit_step_body(
     o: &mut String,
     _func: &FuncDef,
     model: &StreamModel,
+    names: &dyn streaming::NameMap,
     step_settings: &BTreeSet<String>,
     stream_fma: &FmaVarSets,
     enums: &HashMap<String, EnumDef>,
@@ -1612,7 +1698,7 @@ fn emit_step_body(
         let _ = writeln!(o, "{pad}double {s}_factor = sp.cs_{s}_factor;");
     }
 
-    let transition = streaming::build_transition(model, &CsStreamNames)
+    let transition = streaming::build_transition(model, names)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
@@ -3125,9 +3211,15 @@ fn emit_dual_mode(
     let pred_sp = params_on_state(func, &dmp.predicate);
     let pred_sp = render_predicate(&pred_sp, &ctx, registry, helpers);
     let _ = writeln!(o, "      if( {pred_sp} ) {{");
-    emit_step_body(o, func, ma, &step_settings, stream_fma, enums, registry, helpers, counter, 9);
+    emit_step_body(
+        o, func, ma, &CsStreamNames, &step_settings, stream_fma, enums, registry, helpers, counter,
+        9,
+    );
     let _ = writeln!(o, "      }} else {{");
-    emit_step_body(o, func, mb, &step_settings, stream_fma, enums, registry, helpers, counter, 9);
+    emit_step_body(
+        o, func, mb, &CsStreamNames, &step_settings, stream_fma, enums, registry, helpers, counter,
+        9,
+    );
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "   }}");
 
@@ -3245,6 +3337,53 @@ fn dispatch_store_sub(
     }
 }
 
+/// A dispatch step's switch: each arm's committed value, from `call` (given the
+/// callee's handle class), routed into the handle's outputs.
+fn emit_dispatch_step_switch(
+    o: &mut String,
+    dp: &streaming::DispatchPlan,
+    arms: &[&streaming::DispatchArm],
+    outputs: &[String],
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    call: &dyn Fn(&str, &streaming::DispatchArm) -> String,
+) {
+    let _ = writeln!(o, "      switch( sp.{} )", dp.param);
+    let _ = writeln!(o, "      {{");
+    for arm in arms {
+        let label = render_csharp_switch_label(&arm.label, enums);
+        let cls = callee_stream_class(registry, &arm.callee);
+        let _ = writeln!(o, "      case {label}: {{");
+        // Route callee output slots through the arm's OutSlot map: Forward(k)
+        // lands in the dispatch func's output k, Discard drops the slot (the
+        // nullable FAMA when MA routes only the MAMA line, #125).
+        if arm.out_map.len() == 1 {
+            let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
+                panic!("single-output arm cannot discard its only slot");
+            };
+            let _ = writeln!(o, "         sp.cur_{} = {};", outputs[k], call(&cls, arm));
+        } else {
+            let vt = callee_value_type(registry, &arm.callee);
+            let _ = writeln!(o, "         {vt} subValue = {};", call(&cls, arm));
+            for (i, slot) in arm.out_map.iter().enumerate() {
+                if let streaming::OutSlot::Forward(k) = slot {
+                    let _ = writeln!(
+                        o,
+                        "         sp.cur_{} = subValue.{};",
+                        outputs[*k],
+                        callee_value_member(registry, &arm.callee, i)
+                    );
+                }
+            }
+        }
+        let _ = writeln!(o, "         break;");
+        let _ = writeln!(o, "      }}");
+    }
+    let _ = writeln!(o, "      default:");
+    let _ = writeln!(o, "         break; /* unreachable: open rejects arms without a sub-stream */");
+    let _ = writeln!(o, "      }}");
+}
+
 #[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn emit_dispatch(
     o: &mut String,
@@ -3328,47 +3467,10 @@ fn emit_dispatch(
         let _ = writeln!(o, "         return;");
         let _ = writeln!(o, "      }}");
     }
-    let _ = writeln!(o, "      switch( sp.{} )", dp.param);
-    let _ = writeln!(o, "      {{");
-    for arm in dp.arms.iter().filter(|a| a.supported) {
-        let label = render_csharp_switch_label(&arm.label, enums);
-        let cls = callee_stream_class(registry, &arm.callee);
-        let _ = writeln!(o, "      case {label}: {{");
-        // Route callee output slots through the arm's OutSlot map: Forward(k)
-        // lands in the dispatch func's output k, Discard drops the slot (the
-        // nullable FAMA when MA routes only the MAMA line, #125).
-        if arm.out_map.len() == 1 {
-            let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
-                panic!("single-output arm cannot discard its only slot");
-            };
-            let _ = writeln!(
-                o,
-                "         sp.cur_{} = (({cls}) sp.sub!).Update({bar_args});",
-                outputs[k]
-            );
-        } else {
-            let vt = callee_value_type(registry, &arm.callee);
-            let _ = writeln!(
-                o,
-                "         {vt} subValue = (({cls}) sp.sub!).Update({bar_args});"
-            );
-            for (i, slot) in arm.out_map.iter().enumerate() {
-                if let streaming::OutSlot::Forward(k) = slot {
-                    let _ = writeln!(
-                        o,
-                        "         sp.cur_{} = subValue.{};",
-                        outputs[*k],
-                        callee_value_member(registry, &arm.callee, i)
-                    );
-                }
-            }
-        }
-        let _ = writeln!(o, "         break;");
-        let _ = writeln!(o, "      }}");
-    }
-    let _ = writeln!(o, "      default:");
-    let _ = writeln!(o, "         break; /* unreachable: open rejects arms without a sub-stream */");
-    let _ = writeln!(o, "      }}");
+    let arms: Vec<&streaming::DispatchArm> = dp.arms.iter().filter(|a| a.supported).collect();
+    emit_dispatch_step_switch(o, dp, &arms, &outputs, enums, registry, &|cls, _| {
+        format!("(({cls}) sp.sub!).Update({bar_args})")
+    });
     let _ = writeln!(o, "   }}");
 
     // --- open bodies (Scalar delegates to OpenInternal; Fill to OpenAndFill) -
@@ -3543,6 +3645,249 @@ fn emit_dispatch(
 }
 
 // ---------------------------------------------------------------------------
+// Tape frames (#445): the entries a period bank steps its slots through.
+// ---------------------------------------------------------------------------
+
+/// The tape frame's parameters, after the handle. Read-only: a peek must not
+/// store the bar it previews, and the bank writes each committed bar itself.
+const TAPE_PARAMS: &str = "ReadOnlySpan<double> tape, int tapeBase, int tapeMask";
+
+/// The one input a tape-set function's history is kept for.
+fn tape_input(func: &FuncDef) -> String {
+    let inputs = streaming::input_array_names(func);
+    assert!(
+        inputs.len() == 1,
+        "{}: a tape frame needs exactly one input, found {}",
+        func.name,
+        inputs.len()
+    );
+    inputs[0].clone()
+}
+
+/// `<N>StepTape` / `<N>PeekTape` / `<N>TapeDetach` of a Loop or DualMode
+/// function a period bank steps. The step does none of `Update`'s checks, which
+/// the bank has already made. A function none of whose models keeps history of
+/// the input delegates to its ordinary step and peek.
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+fn emit_tape_entries(
+    o: &mut String,
+    func: &FuncDef,
+    models: &[&StreamModel],
+    dual: Option<&streaming::DualModePlan>,
+    stream_fma: &FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let base = pascal_words(&base_name(func));
+    let class = stream_class_name(func);
+    let vt = value_surface_type(func);
+    let (sig_bars, fwd_bars) = bar_params(func);
+    let input = tape_input(func);
+    let tape = CsTapeNames(streaming::TapeNames::new(&input));
+    let mut detach: Vec<String> = Vec::new();
+    for m in models {
+        streaming::check_tape_eligible(m, &input).unwrap_or_else(|e| panic!("{e}"));
+        for r in streaming::tape_covered_rings(m, &input) {
+            let buf = streaming::NameMap::ring_buf(&CsStreamNames, &r.var, &input);
+            let cap = streaming::NameMap::ring_cap(&CsStreamNames, &r.var);
+            detach.push(format!("      {buf} = [];"));
+            detach.push(format!("      if( {cap} > reach ) {{\n         reach = {cap};\n      }}"));
+        }
+        for w in streaming::tape_covered_windows(m, &input) {
+            let buf = streaming::NameMap::win_buf(&CsStreamNames, &w.var, &input);
+            let cap = streaming::NameMap::win_cap(&CsStreamNames, &w.var);
+            detach.push(format!("      {buf} = [];"));
+            detach.push(format!(
+                "      if( {cap} - 1 > reach ) {{\n         reach = {cap} - 1;\n      }}"
+            ));
+        }
+    }
+    let mut seen = BTreeSet::new();
+    detach.retain(|l| seen.insert(l.clone()));
+
+    let mut step_settings = BTreeSet::new();
+    for m in models {
+        step_settings.extend(detect_candle_settings(&m.steady_stmts));
+    }
+    let fields = match dual {
+        Some(dmp) => {
+            let scalars = dual_scalar_union(func, &dmp.mode_a, &dmp.mode_b);
+            dual_union_fields(
+                func,
+                &state_fields_from(func, &dmp.mode_a, &scalars, &step_settings),
+                &state_fields_from(func, &dmp.mode_b, &scalars, &step_settings),
+            )
+        }
+        None => state_fields(func, models[0], &step_settings),
+    };
+    let empty = HashSet::new();
+    let ctx = stream_ctx(&empty, counter, stream_fma);
+    let pred = dual.map(|dmp| {
+        render_predicate(&params_on_state(func, &dmp.predicate), &ctx, registry, helpers)
+    });
+    let answer = fresh_value_expr(func, "");
+
+    // --- StepTape -----------------------------------------------------------
+    let _ = writeln!(
+        o,
+        "\n   private {vt} {base}StepTape( {class} sp, {TAPE_PARAMS}, {sig_bars} )\n   {{"
+    );
+    if detach.is_empty() {
+        let _ = writeln!(o, "      {base}StepImpl(sp, {fwd_bars});");
+    } else if let Some(pred) = &pred {
+        let _ = writeln!(o, "      if( {pred} ) {{");
+        for (k, m) in models.iter().enumerate() {
+            if k == 1 {
+                let _ = writeln!(o, "      }} else {{");
+            }
+            emit_step_body(
+                o, func, m, &tape, &step_settings, stream_fma, enums, registry, helpers, counter,
+                9,
+            );
+        }
+        let _ = writeln!(o, "      }}");
+    } else {
+        emit_step_body(
+            o, func, models[0], &tape, &step_settings, stream_fma, enums, registry, helpers,
+            counter, 6,
+        );
+    }
+    let _ = writeln!(o, "      sp.outRangeCount++;");
+    let _ = writeln!(o, "      return {};\n   }}", fresh_value_expr(func, "sp"));
+
+    // --- PeekTape -----------------------------------------------------------
+    let _ = writeln!(
+        o,
+        "\n   private {vt} {base}PeekTape( {class} sp, {TAPE_PARAMS}, {sig_bars} )\n   {{"
+    );
+    let frame = |m: &StreamModel, indent: usize, predeclared: &BTreeSet<String>| {
+        peek_frame_arm_named(
+            func, m, &tape, &fields, &step_settings, stream_fma, enums, registry, helpers, counter,
+            indent, predeclared,
+        )
+        .unwrap_or_else(|| panic!("{}: no tape peek frame", func.name))
+    };
+    if detach.is_empty() {
+        let _ = writeln!(o, "      return sp.Peek({fwd_bars});\n   }}");
+    } else if let Some(pred) = &pred {
+        let outs: BTreeSet<String> =
+            func.outputs.iter().map(|x| format!("cur_{}", x.name)).collect();
+        for out in &func.outputs {
+            let cty = out_cs_type(func, &out.name);
+            let zero = if cty == "int" { "0" } else { "0.0" };
+            let _ = writeln!(o, "      {cty} cur_{} = {zero};", out.name);
+        }
+        let _ = writeln!(o, "      if( {pred} ) {{");
+        o.push_str(&frame(models[0], 9, &outs));
+        let _ = writeln!(o, "      }} else {{");
+        o.push_str(&frame(models[1], 9, &outs));
+        let _ = writeln!(o, "      }}");
+        let _ = writeln!(o, "      return {answer};\n   }}");
+    } else {
+        o.push_str(&frame(models[0], 6, &BTreeSet::new()));
+        let _ = writeln!(o, "      return {answer};\n   }}");
+    }
+
+    // --- TapeDetach ---------------------------------------------------------
+    let _ = writeln!(o, "\n   private int {base}TapeDetach( {class} sp )\n   {{");
+    if detach.is_empty() {
+        let _ = writeln!(o, "      return 0;\n   }}");
+    } else {
+        let _ = writeln!(o, "      int reach = 0;");
+        for l in &detach {
+            let _ = writeln!(o, "{l}");
+        }
+        let _ = writeln!(o, "      return reach;\n   }}");
+    }
+}
+
+/// A dispatcher's tape entries (#445): route each to the arm's own, and answer
+/// the identity path here, which is why the arms' tape frames drop theirs.
+#[allow(clippy::too_many_arguments)]
+fn emit_dispatch_tape(
+    o: &mut String,
+    func: &FuncDef,
+    dp: &streaming::DispatchPlan,
+    stream_fma: &FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let base = pascal_words(&base_name(func));
+    let class = stream_class_name(func);
+    let vt = value_surface_type(func);
+    let (sig_bars, bar_args) = bar_params(func);
+    let outputs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let empty = HashSet::new();
+    let mut ctx = stream_ctx(&empty, counter, stream_fma);
+    ctx.matype_map = build_matype_map(enums);
+    let arms: Vec<&streaming::DispatchArm> =
+        dp.arms.iter().filter(|a| a.supported && !a.callee.is_empty()).collect();
+    let identity = dp.identity.as_ref().map(|idp| {
+        let cond = render_predicate(&params_on_state(func, &idp.condition), &ctx, registry, helpers);
+        (cond, &idp.pairs)
+    });
+    let callee_base = |arm: &streaming::DispatchArm| pascal_words(&registry.name_of(&arm.callee));
+
+    // --- StepTape -----------------------------------------------------------
+    let _ = writeln!(
+        o,
+        "\n   private {vt} {base}StepTape( {class} sp, {TAPE_PARAMS}, {sig_bars} )\n   {{"
+    );
+    let ret = fresh_value_expr(func, "sp");
+    if let Some((cond, pairs)) = &identity {
+        let _ = writeln!(o, "      if( {cond} ) {{");
+        for (out, inp) in *pairs {
+            let _ = writeln!(o, "         sp.cur_{out} = {inp};");
+        }
+        let _ = writeln!(o, "         sp.outRangeCount++;");
+        let _ = writeln!(o, "         return {ret};");
+        let _ = writeln!(o, "      }}");
+    }
+    emit_dispatch_step_switch(o, dp, &arms, &outputs, enums, registry, &|cls, arm| {
+        format!(
+            "{}StepTape(({cls}) sp.sub!, tape, tapeBase, tapeMask, {bar_args})",
+            callee_base(arm)
+        )
+    });
+    let _ = writeln!(o, "      sp.outRangeCount++;");
+    let _ = writeln!(o, "      return {ret};\n   }}");
+
+    // --- PeekTape -----------------------------------------------------------
+    let _ = writeln!(
+        o,
+        "\n   private {vt} {base}PeekTape( {class} sp, {TAPE_PARAMS}, {sig_bars} )\n   {{"
+    );
+    o.push_str(&dispatch_peek_frame_with(
+        func, dp, &arms, &outputs, &ctx, enums, registry, helpers, 6,
+        &|cls: &str, arm: &streaming::DispatchArm| {
+            format!(
+                "{}PeekTape(({cls}) sp.sub!, tape, tapeBase, tapeMask, {bar_args})",
+                callee_base(arm)
+            )
+        },
+    ));
+    let _ = writeln!(o, "      return {};\n   }}", fresh_value_expr(func, ""));
+
+    // --- TapeDetach ---------------------------------------------------------
+    let _ = writeln!(o, "\n   private int {base}TapeDetach( {class} sp )\n   {{");
+    if let Some((cond, _)) = &identity {
+        let _ = writeln!(o, "      if( {cond} ) {{\n         return 0;\n      }}");
+    }
+    let _ = writeln!(o, "      switch( sp.{} )\n      {{", dp.param);
+    for arm in &arms {
+        let label = render_csharp_switch_label(&arm.label, enums);
+        let cls = callee_stream_class(registry, &arm.callee);
+        let _ = writeln!(o, "      case {label}:");
+        let _ = writeln!(o, "         return {}TapeDetach(({cls}) sp.sub!);", callee_base(arm));
+    }
+    let _ = writeln!(o, "      default:\n         return 0;\n      }}\n   }}");
+}
+
+// ---------------------------------------------------------------------------
 // Period-bank tier (MAVP): a bank of sub-MA streams advanced in lockstep,
 // selected per bar by the clamped variable period.
 // ---------------------------------------------------------------------------
@@ -3558,6 +3903,7 @@ fn emit_period_bank(
 ) {
     let _ = helpers;
     let callee = plan.callee.as_str();
+    let base = pascal_words(&base_name(func));
     let callee_pascal = pascal_words(&registry.name_of(callee));
     let subty = callee_stream_class(registry, callee);
     let callee_out0 = registry.callee_outputs(callee)[0].clone();
@@ -3582,8 +3928,26 @@ fn emit_period_bank(
     let lb_args = opts_of(max);
     let open_opts = opts_of(&format!("{min} + bankIdx"));
 
+    let push_bar = |o: &mut String, pad: &str, bar: &str| {
+        let _ = writeln!(o, "{pad}sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;");
+        let _ = writeln!(o, "{pad}sp.tape[sp.tapePos] = {bar};");
+        let _ = writeln!(o, "{pad}int tapeBase = sp.tapePos + sp.tapeMask + 1;");
+    };
+    let step_tape = |bar: &str| {
+        format!("{callee_pascal}StepTape(bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, {bar})")
+    };
+    let track_reach = |o: &mut String, pad: &str, slot: &str| {
+        let _ = writeln!(o, "{pad}int slotReach = {callee_pascal}TapeDetach({slot});");
+        let _ = writeln!(o, "{pad}if( slotReach > reach ) {{");
+        let _ = writeln!(o, "{pad}   reach = slotReach;");
+        let _ = writeln!(o, "{pad}}}");
+    };
+
     // --- handle class -------------------------------------------------------
-    let fields = base_fields(func);
+    let mut fields = base_fields(func);
+    fields.push(("tapeMask".into(), "int".into(), "0".into()));
+    fields.push(("tapePos".into(), "int".into(), "0".into()));
+    fields.push(("tape".into(), "double[]".into(), "[]".into()));
     let extra_members = format!(
         "      // One sub-{} stream per period in [{min}, {max}], advanced in lockstep.\n      internal {subty}[] bank = [];\n",
         callee.to_uppercase()
@@ -3609,7 +3973,10 @@ fn emit_period_bank(
     let _ = writeln!(bank_frame, "            cp = sp.{max};");
     let _ = writeln!(bank_frame, "         }}");
     let _ = writeln!(bank_frame, "         int slot = cp - sp.{min};");
-    let _ = writeln!(bank_frame, "         double cur_{out} = sp.bank[slot].Peek({price});");
+    let _ = writeln!(
+        bank_frame,
+        "         double cur_{out} = sp.core.{callee_pascal}PeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, {price});"
+    );
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&bank_frame));
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
@@ -3621,21 +3988,43 @@ fn emit_period_bank(
     let _ = writeln!(o, "         cp = sp.{max};");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int slot = cp - sp.{min};");
+    push_bar(o, "      ", price);
     // The one array hoist this emitter does. There is no general hoisting pass
     // (measured noise, 3.35–3.48 against 3.39–3.47 ns/bar); a COUNTED loop
     // bound is the exception, where it genuinely drops a bounds check per bar.
     let _ = writeln!(o, "      {subty}[] bank = sp.bank;");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < bank.Length; bankIdx++ ) {{");
-    let _ = writeln!(o, "         double subValue = bank[bankIdx].Update({price});");
+    let _ = writeln!(o, "         double subValue = {};", step_tape(price));
     let _ = writeln!(o, "         if( bankIdx == slot ) {{");
     let _ = writeln!(o, "            sp.cur_{out} = subValue;");
     let _ = writeln!(o, "         }}");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "   }}");
 
+    // --- TapeOpen -----------------------------------------------------------
+    let class = stream_class_name(func);
+    let _ = writeln!(
+        o,
+        "\n   private static void {base}TapeOpen( {class} sp, ReadOnlySpan<double> {price}, int reach )\n   {{"
+    );
+    // Strictly above: at size == reach the deepest read lands on the current
+    // bar's slot and returns the wrong bar with no other symptom.
+    let _ = writeln!(o, "      int size = 1;");
+    let _ = writeln!(o, "      while( size <= reach ) {{\n         size <<= 1;\n      }}");
+    let _ = writeln!(o, "      int historyLen = {price}.Length;");
+    let _ = writeln!(o, "      sp.tape = new double[size];");
+    let _ = writeln!(o, "      sp.tapeMask = size - 1;");
+    let _ = writeln!(
+        o,
+        "      for( int b = (historyLen > size)? historyLen - size : 0; b < historyLen; b++ ) {{"
+    );
+    let _ = writeln!(o, "         sp.tape[b & sp.tapeMask] = {price}[b];");
+    let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "      sp.tapePos = (historyLen - 1) & sp.tapeMask;");
+    let _ = writeln!(o, "   }}");
+
     // --- open body (Scalar) -------------------------------------------------
     let own_lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let base = pascal_words(&base_name(func));
     let own_lb_call = format!("{base}Lookback({})", own_lb_args.join(", "));
     emit_open_body_sig(o, func, OutMode::Scalar);
     let _ = writeln!(o, "      int historyLen = {price}.Length;");
@@ -3666,9 +4055,12 @@ fn emit_period_bank(
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
     let _ = writeln!(o, "      {subty}[] bank = new {subty}[nBank];");
+    let _ = writeln!(o, "      int reach = 0;");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
     let _ = writeln!(o, "         bank[bankIdx] = {callee_pascal}OpenInternal({price}, subStart, {open_opts});");
+    track_reach(o, "         ", "bank[bankIdx]");
     let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "      {base}TapeOpen(sp, {price}, reach);");
     let _ = writeln!(o, "      int cp = (int){period}[historyLen - 1];");
     let _ = writeln!(o, "      if( cp < {min} ) {{");
     let _ = writeln!(o, "         cp = {min};");
@@ -3709,11 +4101,14 @@ fn emit_period_bank(
     let _ = writeln!(o, "      double[] scratch = new double[nBank];");
     let _ = writeln!(o, "      double[] seedPrefix = new double[lookbackTotal + 1];");
     let _ = writeln!(o, "      {price}.Slice(0, lookbackTotal + 1).CopyTo(seedPrefix);");
+    let _ = writeln!(o, "      int reach = 0;");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
     let _ = writeln!(o, "         {subty} sub = {callee_pascal}OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
     let _ = writeln!(o, "         bank[bankIdx] = sub;");
     let _ = writeln!(o, "         scratch[bankIdx] = sub.cur_{callee_out0};");
+    track_reach(o, "         ", "sub");
     let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "      {base}TapeOpen(sp, seedPrefix, reach);");
     let _ = writeln!(o, "      /* First output bar (lookbackTotal), then replay the remaining history. */");
     let _ = writeln!(o, "      int cp = (int){period}[lookbackTotal];");
     let _ = writeln!(o, "      if( cp < {min} ) {{");
@@ -3723,8 +4118,9 @@ fn emit_period_bank(
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      {out}[0] = scratch[cp - {min}];");
     let _ = writeln!(o, "      for( int t = lookbackTotal + 1; t < historyLen; t++ ) {{");
+    push_bar(o, "         ", &format!("{price}[t]"));
     let _ = writeln!(o, "         for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
-    let _ = writeln!(o, "            scratch[bankIdx] = bank[bankIdx].Update({price}[t]);");
+    let _ = writeln!(o, "            scratch[bankIdx] = {};", step_tape(&format!("{price}[t]")));
     let _ = writeln!(o, "         }}");
     let _ = writeln!(o, "         cp = (int){period}[t];");
     let _ = writeln!(o, "         if( cp < {min} ) {{");

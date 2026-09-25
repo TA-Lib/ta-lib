@@ -1450,4 +1450,169 @@ public partial class Core
       }
       throw StreamFailure("MA", "openAndFill", retCode);
    }
+
+   private double MaStepTape( MaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+         sp.cur_outReal = inReal;
+         sp.outRangeCount++;
+         return sp.cur_outReal;
+      }
+      switch( sp.optInMAType )
+      {
+      case MAType.SMA: {
+         sp.cur_outReal = SmaStepTape((SmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.EMA: {
+         sp.cur_outReal = EmaStepTape((EmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.WMA: {
+         sp.cur_outReal = WmaStepTape((WmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.DEMA: {
+         sp.cur_outReal = DemaStepTape((DemaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.TEMA: {
+         sp.cur_outReal = TemaStepTape((TemaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.TRIMA: {
+         sp.cur_outReal = TrimaStepTape((TrimaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.KAMA: {
+         sp.cur_outReal = KamaStepTape((KamaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.MAMA: {
+         MamaValue subValue = MamaStepTape((MamaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         sp.cur_outReal = subValue.MAMA;
+         break;
+      }
+      case MAType.T3: {
+         sp.cur_outReal = T3StepTape((T3Stream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.HMA: {
+         sp.cur_outReal = HmaStepTape((HmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.ZLEMA: {
+         sp.cur_outReal = ZlemaStepTape((ZlemaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.RMA: {
+         sp.cur_outReal = RmaStepTape((RmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      default:
+         break; /* unreachable: open rejects arms without a sub-stream */
+      }
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double MaPeekTape( MaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double cur_outReal = 0.0;
+      if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+         cur_outReal = inReal;
+         return cur_outReal;
+      }
+      switch( sp.optInMAType )
+      {
+      case MAType.SMA: {
+         cur_outReal = SmaPeekTape((SmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.EMA: {
+         cur_outReal = EmaPeekTape((EmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.WMA: {
+         cur_outReal = WmaPeekTape((WmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.DEMA: {
+         cur_outReal = DemaPeekTape((DemaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.TEMA: {
+         cur_outReal = TemaPeekTape((TemaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.TRIMA: {
+         cur_outReal = TrimaPeekTape((TrimaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.KAMA: {
+         cur_outReal = KamaPeekTape((KamaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.MAMA: {
+         MamaValue subValue = MamaPeekTape((MamaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         cur_outReal = subValue.MAMA;
+         break;
+      }
+      case MAType.T3: {
+         cur_outReal = T3PeekTape((T3Stream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.HMA: {
+         cur_outReal = HmaPeekTape((HmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.ZLEMA: {
+         cur_outReal = ZlemaPeekTape((ZlemaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      case MAType.RMA: {
+         cur_outReal = RmaPeekTape((RmaStream) sp.sub!, tape, tapeBase, tapeMask, inReal);
+         break;
+      }
+      default:
+         break; /* unreachable: open rejects arms without a sub-stream */
+      }
+      return cur_outReal;
+   }
+
+   private int MaTapeDetach( MaStream sp )
+   {
+      if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+         return 0;
+      }
+      switch( sp.optInMAType )
+      {
+      case MAType.SMA:
+         return SmaTapeDetach((SmaStream) sp.sub!);
+      case MAType.EMA:
+         return EmaTapeDetach((EmaStream) sp.sub!);
+      case MAType.WMA:
+         return WmaTapeDetach((WmaStream) sp.sub!);
+      case MAType.DEMA:
+         return DemaTapeDetach((DemaStream) sp.sub!);
+      case MAType.TEMA:
+         return TemaTapeDetach((TemaStream) sp.sub!);
+      case MAType.TRIMA:
+         return TrimaTapeDetach((TrimaStream) sp.sub!);
+      case MAType.KAMA:
+         return KamaTapeDetach((KamaStream) sp.sub!);
+      case MAType.MAMA:
+         return MamaTapeDetach((MamaStream) sp.sub!);
+      case MAType.T3:
+         return T3TapeDetach((T3Stream) sp.sub!);
+      case MAType.HMA:
+         return HmaTapeDetach((HmaStream) sp.sub!);
+      case MAType.ZLEMA:
+         return ZlemaTapeDetach((ZlemaStream) sp.sub!);
+      case MAType.RMA:
+         return RmaTapeDetach((RmaStream) sp.sub!);
+      default:
+         return 0;
+      }
+   }
 }

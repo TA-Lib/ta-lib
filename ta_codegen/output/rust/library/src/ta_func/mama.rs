@@ -929,6 +929,187 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
+    fn mama_step_tape_impl(sp: &mut MamaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut adjustedPrevPeriod: f64 = 0.0_f64;
+        let mut smoothedValue: f64 = 0.0_f64;
+        let mut hilbertTempReal: f64 = 0.0_f64;
+        let mut detrender: f64 = 0.0_f64;
+        let mut Q1: f64 = 0.0_f64;
+        let mut jI: f64 = 0.0_f64;
+        let mut jQ: f64 = 0.0_f64;
+        let mut Q2: f64 = 0.0_f64;
+        let mut I2: f64 = 0.0_f64;
+        let mut todayValue: f64 = 0.0_f64;
+        adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
+        todayValue = inReal;
+        sp.periodWMASub += todayValue;
+        sp.periodWMASub -= sp.trailingWMAValue;
+        sp.periodWMASum += todayValue * 4.0;
+        sp.trailingWMAValue = tape[(tapeBase - sp.ringCap_trailingWMAIdx & tapeMask) as usize];
+        smoothedValue = sp.periodWMASum * 0.1;
+        sp.periodWMASum -= sp.periodWMASub;
+        if sp.streamParity == 0 {
+            // Do the Hilbert Transforms for even price bar
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0_f64 - sp.detrender_Even[sp.hilbertIdx];
+            sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= sp.prev_detrender_Even;
+            sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
+            detrender += sp.prev_detrender_Even;
+            sp.prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0_f64 - sp.Q1_Even[sp.hilbertIdx];
+            sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= sp.prev_Q1_Even;
+            sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
+            Q1 += sp.prev_Q1_Even;
+            sp.prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+            jI = 0_f64 - sp.jI_Even[sp.hilbertIdx];
+            sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= sp.prev_jI_Even;
+            sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
+            jI += sp.prev_jI_Even;
+            sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0_f64 - sp.jQ_Even[sp.hilbertIdx];
+            sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= sp.prev_jQ_Even;
+            sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
+            jQ += sp.prev_jQ_Even;
+            sp.prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if { sp.hilbertIdx += 1; sp.hilbertIdx } == 3 {
+                sp.hilbertIdx = 0;
+            }
+            Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = (0.2 as f64).mul_add(sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
+            // The variable I1 is the detrender delayed for
+            // 3 price bars.
+            //
+            // Save the current detrender value for being
+            // used by the "odd" logic later.
+            sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
+            sp.I1ForOddPrev2 = detrender;
+            // Put Alpha in tempReal2
+            if sp.I1ForEvenPrev3 != 0.0 {
+                tempReal2 = (Q1 / sp.I1ForEvenPrev3).atan() * sp.rad2Deg;
+            } else {
+                tempReal2 = 0.0;
+            }
+        } else {
+            // Do the Hilbert Transforms for odd price bar
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0_f64 - sp.detrender_Odd[sp.hilbertIdx];
+            sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= sp.prev_detrender_Odd;
+            sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
+            detrender += sp.prev_detrender_Odd;
+            sp.prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0_f64 - sp.Q1_Odd[sp.hilbertIdx];
+            sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= sp.prev_Q1_Odd;
+            sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
+            Q1 += sp.prev_Q1_Odd;
+            sp.prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+            jI = 0_f64 - sp.jI_Odd[sp.hilbertIdx];
+            sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= sp.prev_jI_Odd;
+            sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
+            jI += sp.prev_jI_Odd;
+            sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0_f64 - sp.jQ_Odd[sp.hilbertIdx];
+            sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= sp.prev_jQ_Odd;
+            sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
+            jQ += sp.prev_jQ_Odd;
+            sp.prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = (0.2 as f64).mul_add(sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
+            // The varaiable I1 is the detrender delayed for
+            // 3 price bars.
+            //
+            // Save the current detrender value for being
+            // used by the "odd" logic later.
+            sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
+            sp.I1ForEvenPrev2 = detrender;
+            // Put Alpha in tempReal2
+            if sp.I1ForOddPrev3 != 0.0 {
+                tempReal2 = (Q1 / sp.I1ForOddPrev3).atan() * sp.rad2Deg;
+            } else {
+                tempReal2 = 0.0;
+            }
+        }
+        // Put Delta Phase into tempReal
+        tempReal = sp.prevPhase - tempReal2;
+        sp.prevPhase = tempReal2;
+        if tempReal < 1.0 {
+            tempReal = 1.0;
+        }
+        // Put Alpha into tempReal
+        if tempReal > 1.0 {
+            tempReal = sp.optInFastLimit / tempReal;
+            tempReal = c_max(sp.optInSlowLimit, tempReal);
+        } else {
+            tempReal = sp.optInFastLimit;
+        }
+        // Calculate MAMA, FAMA
+        sp.mama = (1_f64 - tempReal as f64).mul_add(sp.mama, tempReal * todayValue);
+        tempReal *= 0.5;
+        sp.fama = (1_f64 - tempReal as f64).mul_add(sp.fama, tempReal * sp.mama);
+        // FAMA is nullable (issue #125): its write carries no outIdx advance so
+        // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+        (*outFAMA) = sp.fama;
+        (*outMAMA) = sp.mama;
+        // Adjust the period for next price bar
+        sp.Re = (0.8 as f64).mul_add(sp.Re, 0.2 * ((I2 as f64).mul_add(sp.prevI2, Q2 * sp.prevQ2)));
+        sp.Im = (0.8 as f64).mul_add(sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+        sp.prevQ2 = Q2;
+        sp.prevI2 = I2;
+        tempReal = sp.period;
+        if sp.Im != 0.0 && sp.Re != 0.0 {
+            sp.period = 360.0 / ((sp.Im / sp.Re).atan() * sp.rad2Deg);
+        }
+        tempReal2 = 1.5 * tempReal;
+        if sp.period > tempReal2 {
+            sp.period = tempReal2;
+        }
+        tempReal2 = 0.67 * tempReal;
+        if sp.period < tempReal2 {
+            sp.period = tempReal2;
+        }
+        if sp.period < 6_f64 {
+            sp.period = 6.0;
+        } else if sp.period > 50_f64 {
+            sp.period = 50.0;
+        }
+        sp.period = (0.2 as f64).mul_add(sp.period, 0.8 * tempReal);
+        // Ooof... let's do the next price bar now!
+        sp.cur_outMAMA = (*outMAMA);
+        sp.cur_outFAMA = sp.fama;
+        sp.streamParity = 1 - sp.streamParity;
+    }
+
     /// The single whole-history transcription behind [`Core::mama_open_internal`]
     /// (stride 0, scalar sink) and [`Core::mama_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn mama_open_impl(
@@ -1760,6 +1941,187 @@ impl MamaStream {
         }
         self.out.count += 1;
         Ok(())
+    }
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl MamaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> (f64, f64) {
+        let mut outMAMA: f64 = 0.0_f64;
+        let mut outFAMA: f64 = 0.0_f64;
+        Core::mama_step_tape_impl(&mut self.state, tape, tapeBase, tapeMask, inReal, &mut outMAMA, &mut outFAMA);
+        self.out.count += 1;
+        (outMAMA, outFAMA)
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<(f64, f64), RetCode> {
+        let mut outMAMA: f64 = 0.0_f64;
+        let mut outFAMA: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outMAMA = &mut outMAMA;
+            let outFAMA = &mut outFAMA;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut tempReal2: f64 = 0.0_f64;
+            let mut adjustedPrevPeriod: f64 = 0.0_f64;
+            let mut smoothedValue: f64 = 0.0_f64;
+            let mut hilbertTempReal: f64 = 0.0_f64;
+            let mut detrender: f64 = 0.0_f64;
+            let mut Q1: f64 = 0.0_f64;
+            let mut todayValue: f64 = 0.0_f64;
+            let mut I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+            let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+            let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
+            let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
+            let mut fama = sp.fama;
+            let mut hilbertIdx = sp.hilbertIdx;
+            let mut mama = sp.mama;
+            let mut periodWMASub = sp.periodWMASub;
+            let mut periodWMASum = sp.periodWMASum;
+            let mut prevPhase = sp.prevPhase;
+            let mut prev_Q1_Even = sp.prev_Q1_Even;
+            let mut prev_Q1_Odd = sp.prev_Q1_Odd;
+            let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
+            let mut prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+            let mut prev_detrender_Even = sp.prev_detrender_Even;
+            let mut prev_detrender_Odd = sp.prev_detrender_Odd;
+            let mut prev_detrender_input_Even = sp.prev_detrender_input_Even;
+            let mut prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+            let mut prev_jI_Even = sp.prev_jI_Even;
+            let mut prev_jI_Odd = sp.prev_jI_Odd;
+            let mut prev_jI_input_Even = sp.prev_jI_input_Even;
+            let mut prev_jI_input_Odd = sp.prev_jI_input_Odd;
+            let mut prev_jQ_Even = sp.prev_jQ_Even;
+            let mut prev_jQ_Odd = sp.prev_jQ_Odd;
+            let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
+            let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+            let mut trailingWMAValue = sp.trailingWMAValue;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            pkSlot0 = (tapeBase & tapeMask) as usize;
+            pkVal0 = inReal;
+            adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
+            todayValue = inReal;
+            periodWMASub += todayValue;
+            periodWMASub -= trailingWMAValue;
+            periodWMASum += todayValue * 4.0;
+            trailingWMAValue = (if ((tapeBase - sp.ringCap_trailingWMAIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingWMAIdx & tapeMask) as usize] } else { pkVal0 });
+            smoothedValue = periodWMASum * 0.1;
+            periodWMASum -= periodWMASub;
+            if sp.streamParity == 0 {
+                // Do the Hilbert Transforms for even price bar
+                hilbertTempReal = sp.a * smoothedValue;
+                detrender = 0_f64 - sp.detrender_Even[hilbertIdx];
+                detrender += hilbertTempReal;
+                detrender -= prev_detrender_Even;
+                prev_detrender_Even = sp.b * prev_detrender_input_Even;
+                detrender += prev_detrender_Even;
+                prev_detrender_input_Even = smoothedValue;
+                detrender *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * detrender;
+                Q1 = 0_f64 - sp.Q1_Even[hilbertIdx];
+                Q1 += hilbertTempReal;
+                Q1 -= prev_Q1_Even;
+                prev_Q1_Even = sp.b * prev_Q1_input_Even;
+                Q1 += prev_Q1_Even;
+                prev_Q1_input_Even = detrender;
+                Q1 *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * I1ForEvenPrev3;
+                prev_jI_Even = sp.b * prev_jI_input_Even;
+                prev_jI_input_Even = I1ForEvenPrev3;
+                hilbertTempReal = sp.a * Q1;
+                prev_jQ_Even = sp.b * prev_jQ_input_Even;
+                prev_jQ_input_Even = Q1;
+                if { hilbertIdx += 1; hilbertIdx } == 3 {
+                    hilbertIdx = 0;
+                }
+                // The variable I1 is the detrender delayed for
+                // 3 price bars.
+                //
+                // Save the current detrender value for being
+                // used by the "odd" logic later.
+                I1ForOddPrev3 = I1ForOddPrev2;
+                I1ForOddPrev2 = detrender;
+                // Put Alpha in tempReal2
+                if I1ForEvenPrev3 != 0.0 {
+                    tempReal2 = (Q1 / I1ForEvenPrev3).atan() * sp.rad2Deg;
+                } else {
+                    tempReal2 = 0.0;
+                }
+            } else {
+                // Do the Hilbert Transforms for odd price bar
+                hilbertTempReal = sp.a * smoothedValue;
+                detrender = 0_f64 - sp.detrender_Odd[hilbertIdx];
+                detrender += hilbertTempReal;
+                detrender -= prev_detrender_Odd;
+                prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+                detrender += prev_detrender_Odd;
+                prev_detrender_input_Odd = smoothedValue;
+                detrender *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * detrender;
+                Q1 = 0_f64 - sp.Q1_Odd[hilbertIdx];
+                Q1 += hilbertTempReal;
+                Q1 -= prev_Q1_Odd;
+                prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+                Q1 += prev_Q1_Odd;
+                prev_Q1_input_Odd = detrender;
+                Q1 *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * I1ForOddPrev3;
+                prev_jI_Odd = sp.b * prev_jI_input_Odd;
+                prev_jI_input_Odd = I1ForOddPrev3;
+                hilbertTempReal = sp.a * Q1;
+                prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+                prev_jQ_input_Odd = Q1;
+                // The varaiable I1 is the detrender delayed for
+                // 3 price bars.
+                //
+                // Save the current detrender value for being
+                // used by the "odd" logic later.
+                I1ForEvenPrev3 = I1ForEvenPrev2;
+                I1ForEvenPrev2 = detrender;
+                // Put Alpha in tempReal2
+                if I1ForOddPrev3 != 0.0 {
+                    tempReal2 = (Q1 / I1ForOddPrev3).atan() * sp.rad2Deg;
+                } else {
+                    tempReal2 = 0.0;
+                }
+            }
+            // Put Delta Phase into tempReal
+            tempReal = prevPhase - tempReal2;
+            prevPhase = tempReal2;
+            if tempReal < 1.0 {
+                tempReal = 1.0;
+            }
+            // Put Alpha into tempReal
+            if tempReal > 1.0 {
+                tempReal = sp.optInFastLimit / tempReal;
+                tempReal = c_max(sp.optInSlowLimit, tempReal);
+            } else {
+                tempReal = sp.optInFastLimit;
+            }
+            // Calculate MAMA, FAMA
+            mama = (1_f64 - tempReal as f64).mul_add(mama, tempReal * todayValue);
+            tempReal *= 0.5;
+            fama = (1_f64 - tempReal as f64).mul_add(fama, tempReal * mama);
+            // FAMA is nullable (issue #125): its write carries no outIdx advance so
+            // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+            (*outFAMA) = fama;
+            (*outMAMA) = mama;
+        }
+        Ok((outMAMA, outFAMA))
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        let mut reach: usize = 0;
+        self.state.ring_trailingWMAIdx_inReal = Vec::new();
+        if self.state.ringCap_trailingWMAIdx > reach {
+            reach = self.state.ringCap_trailingWMAIdx;
+        }
+        reach
     }
 }
 

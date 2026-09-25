@@ -980,3 +980,17 @@
       MInteger outNBElement = new MInteger();
       return t3OpenAndFillInternal(inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
    }
+   private double t3StepTape( T3Stream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      t3StepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+   private double t3PeekTape( T3Stream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.peek(inReal);
+   }
+   private int t3TapeDetach( T3Stream sp )
+   {
+      return 0;
+   }

@@ -81385,6 +81385,20 @@ class Core {
           MInteger outNBElement = new MInteger();
           return demaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
+       private double demaStepTape( DemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          demaStepImpl(sp, inReal);
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double demaPeekTape( DemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          return sp.peek(inReal);
+       }
+       private int demaTapeDetach( DemaStream sp )
+       {
+          return 0;
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -86407,6 +86421,20 @@ class Core {
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           return emaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+       private double emaStepTape( EmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          emaStepImpl(sp, inReal);
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double emaPeekTape( EmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          return sp.peek(inReal);
+       }
+       private int emaTapeDetach( EmaStream sp )
+       {
+          return 0;
        }
     /* List of contributors:
      *
@@ -93842,6 +93870,292 @@ class Core {
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           return hmaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+       private double hmaStepTape( HmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
+             double tempReal = 0.0;
+             double fullOut = 0.0;
+             int jFull = 0;
+             int rw = 0;
+             double tempReal2 = 0.0;
+             tempReal = inReal;
+             sp.periodSubFull += tempReal;
+             sp.periodSubFull -= sp.trailingFull;
+             sp.periodSumFull += tempReal * sp.optInTimePeriod;
+             sp.barsSinceReseedFull -= 1;
+             if( sp.barsSinceReseedFull <= 0 ) {
+                sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
+                sp.periodSubFull = 0.0;
+                sp.periodSumFull = 0.0;
+                rw = 1;
+                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                   tempReal2 = tape[(tapeBase - jFull) & tapeMask];
+                   sp.periodSubFull += tempReal2;
+                   sp.periodSumFull += tempReal2 * rw;
+                   rw += 1;
+                }
+             }
+             sp.trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask];
+             fullOut = sp.periodSumFull / sp.dividerFull;
+             sp.periodSumFull -= sp.periodSubFull;
+             sp.cur_outReal = 2.0 * tempReal - fullOut;
+          } else {
+             double tempReal = 0.0;
+             double fullOut = 0.0;
+             double halfOut = 0.0;
+             double diffReal = 0.0;
+             int jFull = 0;
+             int jHalf = 0;
+             int q = 0;
+             int rw = 0;
+             int ringWalk = 0;
+             double tempReal2 = 0.0;
+             tempReal = inReal;
+             sp.periodSubFull += tempReal;
+             sp.periodSubFull -= sp.trailingFull;
+             sp.periodSumFull += tempReal * sp.optInTimePeriod;
+             sp.barsSinceReseedFull -= 1;
+             if( sp.barsSinceReseedFull <= 0 ) {
+                sp.barsSinceReseedFull = 8 * sp.optInTimePeriod;
+                sp.periodSubFull = 0.0;
+                sp.periodSumFull = 0.0;
+                rw = 1;
+                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                   tempReal2 = tape[(tapeBase - jFull) & tapeMask];
+                   sp.periodSubFull += tempReal2;
+                   sp.periodSumFull += tempReal2 * rw;
+                   rw += 1;
+                }
+             }
+             sp.trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask];
+             fullOut = sp.periodSumFull / sp.dividerFull;
+             sp.periodSumFull -= sp.periodSubFull;
+             sp.periodSubHalf += tempReal;
+             sp.periodSubHalf -= sp.trailingHalf;
+             sp.periodSumHalf += tempReal * sp.halfPeriod;
+             sp.barsSinceReseedHalf -= 1;
+             if( sp.barsSinceReseedHalf <= 0 ) {
+                sp.barsSinceReseedHalf = 8 * sp.halfPeriod;
+                sp.periodSubHalf = 0.0;
+                sp.periodSumHalf = 0.0;
+                rw = 1;
+                for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
+                   tempReal2 = tape[(tapeBase - jHalf) & tapeMask];
+                   sp.periodSubHalf += tempReal2;
+                   sp.periodSumHalf += tempReal2 * rw;
+                   rw += 1;
+                }
+             }
+             sp.trailingHalf = tape[(tapeBase - sp.ringCap_trailingIdxHalf) & tapeMask];
+             halfOut = sp.periodSumHalf / sp.dividerHalf;
+             sp.periodSumHalf -= sp.periodSubHalf;
+             diffReal = 2.0 * halfOut - fullOut;
+             sp.periodSubSqrt += diffReal;
+             sp.periodSubSqrt -= sp.trailingSqrt;
+             sp.periodSumSqrt += diffReal * sp.sqrtPeriod;
+             /* The outer WMA consumes a DERIVED series that is never
+              * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+              * the oldest slot (the one about to expire) and diffReal is the
+              * newest value, which together are the whole window. Oldest first,
+              * weight counting up from 1 -- the priming order above.
+              */
+             sp.barsSinceReseedSqrt -= 1;
+             if( sp.barsSinceReseedSqrt <= 0 ) {
+                sp.barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+                sp.periodSubSqrt = 0.0;
+                sp.periodSumSqrt = 0.0;
+                rw = 1;
+                ringWalk = sp.dRing_Idx;
+                for( q = 0; q < sp.ringSize; q += 1 ) {
+                   tempReal2 = sp.cb_dRing[ringWalk];
+                   sp.periodSubSqrt += tempReal2;
+                   sp.periodSumSqrt += tempReal2 * rw;
+                   rw += 1;
+                   ringWalk += 1;
+                   if( ringWalk >= sp.ringSize ) {
+                      ringWalk = 0;
+                   }
+                }
+                sp.periodSubSqrt += diffReal;
+                sp.periodSumSqrt += diffReal * sp.sqrtPeriod;
+             }
+             sp.trailingSqrt = sp.cb_dRing[sp.dRing_Idx];
+             sp.cb_dRing[sp.dRing_Idx] = diffReal;
+             sp.dRing_Idx = sp.dRing_Idx + 1;
+             if( sp.dRing_Idx > sp.maxIdx_dRing ) {
+                sp.dRing_Idx = 0;
+             }
+             sp.cur_outReal = sp.periodSumSqrt / sp.dividerSqrt;
+             sp.periodSumSqrt -= sp.periodSubSqrt;
+          }
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double hmaPeekTape( HmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double cur_outReal = 0.0;
+          if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
+             double tempReal = 0.0;
+             double fullOut = 0.0;
+             int jFull = 0;
+             int rw = 0;
+             double tempReal2 = 0.0;
+             int barsSinceReseedFull = sp.barsSinceReseedFull;
+             double periodSubFull = sp.periodSubFull;
+             double periodSumFull = sp.periodSumFull;
+             double trailingFull = sp.trailingFull;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             pkSlot0 = tapeBase & tapeMask;
+             pkVal0 = inReal;
+             tempReal = inReal;
+             periodSubFull += tempReal;
+             periodSubFull -= trailingFull;
+             periodSumFull += tempReal * sp.optInTimePeriod;
+             barsSinceReseedFull -= 1;
+             if( barsSinceReseedFull <= 0 ) {
+                barsSinceReseedFull = 8 * sp.optInTimePeriod;
+                periodSubFull = 0.0;
+                periodSumFull = 0.0;
+                rw = 1;
+                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                   tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
+                   periodSubFull += tempReal2;
+                   periodSumFull += tempReal2 * rw;
+                   rw += 1;
+                }
+             }
+             trailingFull = (((tapeBase - sp.ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+             fullOut = periodSumFull / sp.dividerFull;
+             periodSumFull -= periodSubFull;
+             cur_outReal = 2.0 * tempReal - fullOut;
+          } else {
+             double tempReal = 0.0;
+             double fullOut = 0.0;
+             double halfOut = 0.0;
+             double diffReal = 0.0;
+             int jFull = 0;
+             int jHalf = 0;
+             int q = 0;
+             int rw = 0;
+             int ringWalk = 0;
+             double tempReal2 = 0.0;
+             int barsSinceReseedFull = sp.barsSinceReseedFull;
+             int barsSinceReseedHalf = sp.barsSinceReseedHalf;
+             int barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
+             int dRing_Idx = sp.dRing_Idx;
+             double periodSubFull = sp.periodSubFull;
+             double periodSubHalf = sp.periodSubHalf;
+             double periodSubSqrt = sp.periodSubSqrt;
+             double periodSumFull = sp.periodSumFull;
+             double periodSumHalf = sp.periodSumHalf;
+             double periodSumSqrt = sp.periodSumSqrt;
+             double trailingFull = sp.trailingFull;
+             double trailingHalf = sp.trailingHalf;
+             double trailingSqrt = sp.trailingSqrt;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             pkSlot0 = tapeBase & tapeMask;
+             pkVal0 = inReal;
+             tempReal = inReal;
+             periodSubFull += tempReal;
+             periodSubFull -= trailingFull;
+             periodSumFull += tempReal * sp.optInTimePeriod;
+             barsSinceReseedFull -= 1;
+             if( barsSinceReseedFull <= 0 ) {
+                barsSinceReseedFull = 8 * sp.optInTimePeriod;
+                periodSubFull = 0.0;
+                periodSumFull = 0.0;
+                rw = 1;
+                for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                   tempReal2 = (((tapeBase - jFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - jFull) & tapeMask] : pkVal0;
+                   periodSubFull += tempReal2;
+                   periodSumFull += tempReal2 * rw;
+                   rw += 1;
+                }
+             }
+             trailingFull = (((tapeBase - sp.ringCap_trailingIdxFull) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdxFull) & tapeMask] : pkVal0;
+             fullOut = periodSumFull / sp.dividerFull;
+             periodSumFull -= periodSubFull;
+             periodSubHalf += tempReal;
+             periodSubHalf -= trailingHalf;
+             periodSumHalf += tempReal * sp.halfPeriod;
+             barsSinceReseedHalf -= 1;
+             if( barsSinceReseedHalf <= 0 ) {
+                barsSinceReseedHalf = 8 * sp.halfPeriod;
+                periodSubHalf = 0.0;
+                periodSumHalf = 0.0;
+                rw = 1;
+                for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
+                   tempReal2 = (((tapeBase - jHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - jHalf) & tapeMask] : pkVal0;
+                   periodSubHalf += tempReal2;
+                   periodSumHalf += tempReal2 * rw;
+                   rw += 1;
+                }
+             }
+             trailingHalf = (((tapeBase - sp.ringCap_trailingIdxHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdxHalf) & tapeMask] : pkVal0;
+             halfOut = periodSumHalf / sp.dividerHalf;
+             periodSumHalf -= periodSubHalf;
+             diffReal = 2.0 * halfOut - fullOut;
+             periodSubSqrt += diffReal;
+             periodSubSqrt -= trailingSqrt;
+             periodSumSqrt += diffReal * sp.sqrtPeriod;
+             /* The outer WMA consumes a DERIVED series that is never
+              * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+              * the oldest slot (the one about to expire) and diffReal is the
+              * newest value, which together are the whole window. Oldest first,
+              * weight counting up from 1 -- the priming order above.
+              */
+             barsSinceReseedSqrt -= 1;
+             if( barsSinceReseedSqrt <= 0 ) {
+                barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+                periodSubSqrt = 0.0;
+                periodSumSqrt = 0.0;
+                rw = 1;
+                ringWalk = dRing_Idx;
+                for( q = 0; q < sp.ringSize; q += 1 ) {
+                   tempReal2 = sp.cb_dRing[ringWalk];
+                   periodSubSqrt += tempReal2;
+                   periodSumSqrt += tempReal2 * rw;
+                   rw += 1;
+                   ringWalk += 1;
+                   if( ringWalk >= sp.ringSize ) {
+                      ringWalk = 0;
+                   }
+                }
+                periodSubSqrt += diffReal;
+                periodSumSqrt += diffReal * sp.sqrtPeriod;
+             }
+             trailingSqrt = sp.cb_dRing[dRing_Idx];
+             dRing_Idx = dRing_Idx + 1;
+             if( dRing_Idx > sp.maxIdx_dRing ) {
+                dRing_Idx = 0;
+             }
+             cur_outReal = periodSumSqrt / sp.dividerSqrt;
+          }
+          return cur_outReal;
+       }
+       private int hmaTapeDetach( HmaStream sp )
+       {
+          int reach = 0;
+          sp.ring_trailingIdxFull_inReal = new double[0];
+          if( sp.ringCap_trailingIdxFull > reach ) {
+             reach = sp.ringCap_trailingIdxFull;
+          }
+          sp.win_jFull_inReal = new double[0];
+          if( sp.winCap_jFull - 1 > reach ) {
+             reach = sp.winCap_jFull - 1;
+          }
+          sp.ring_trailingIdxHalf_inReal = new double[0];
+          if( sp.ringCap_trailingIdxHalf > reach ) {
+             reach = sp.ringCap_trailingIdxHalf;
+          }
+          sp.win_jHalf_inReal = new double[0];
+          if( sp.winCap_jHalf - 1 > reach ) {
+             reach = sp.winCap_jHalf - 1;
+          }
+          return reach;
        }
     /* List of contributors:
      *
@@ -108230,6 +108544,130 @@ class Core {
           MInteger outNBElement = new MInteger();
           return kamaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
+       private double kamaStepTape( KamaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double tempReal = 0.0;
+          double tempReal2 = 0.0;
+          double periodROC = 0.0;
+          tempReal = inReal;
+          tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+          periodROC = tempReal - tempReal2;
+          /* Adjust sumROC1:
+           *  - Remove trailing ROC1
+           *  - Add new ROC1
+           */
+          sp.sumROC1 -= Math.abs(sp.trailingValue - tempReal2);
+          sp.sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
+          /* Once a whole window of flat bars has gone by, every 1-day change it
+           * spans is exactly zero, so the sum is known to be exactly zero and the
+           * residue can be dropped. That is what lets the efficiency ratio be
+           * decided by `sumROC1 <= periodROC` alone: a window that flat has
+           * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+           */
+          if( tempReal - sp.lag1_inReal == 0.0 ) {
+             sp.nullRun += 1;
+          } else {
+             sp.nullRun = 0;
+          }
+          if( sp.nullRun >= sp.optInTimePeriod ) {
+             sp.nullRun = sp.optInTimePeriod;
+             sp.sumROC1 = 0.0;
+          }
+          /* Save the trailing value. Do this because inReal
+           * and outReal can be pointers to the same buffer.
+           */
+          sp.trailingValue = tempReal2;
+          /* Calculate the efficiency ratio */
+          if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
+             tempReal = 1.0;
+          } else {
+             tempReal = Math.abs(periodROC / sp.sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
+          }
+          /* Calculate the smoothing constant */
+          tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
+          tempReal *= tempReal;
+          /* Calculate the KAMA like an EMA, using the
+           * smoothing constant as the adaptive factor.
+           */
+          sp.prevKAMA = Math.fma(inReal - sp.prevKAMA, tempReal, sp.prevKAMA);
+          sp.cur_outReal = sp.prevKAMA;
+          sp.lag1_inReal = inReal;
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double kamaPeekTape( KamaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double tempReal = 0.0;
+          double tempReal2 = 0.0;
+          double periodROC = 0.0;
+          double cur_outReal = 0.0;
+          int nullRun = sp.nullRun;
+          double prevKAMA = sp.prevKAMA;
+          double sumROC1 = sp.sumROC1;
+          double trailingValue = sp.trailingValue;
+          int pkSlot0 = -1;
+          double pkVal0 = 0.0;
+          pkSlot0 = tapeBase & tapeMask;
+          pkVal0 = inReal;
+          tempReal = inReal;
+          tempReal2 = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+          periodROC = tempReal - tempReal2;
+          /* Adjust sumROC1:
+           *  - Remove trailing ROC1
+           *  - Add new ROC1
+           */
+          sumROC1 -= Math.abs(trailingValue - tempReal2);
+          sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
+          /* Once a whole window of flat bars has gone by, every 1-day change it
+           * spans is exactly zero, so the sum is known to be exactly zero and the
+           * residue can be dropped. That is what lets the efficiency ratio be
+           * decided by `sumROC1 <= periodROC` alone: a window that flat has
+           * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+           */
+          if( tempReal - sp.lag1_inReal == 0.0 ) {
+             nullRun += 1;
+          } else {
+             nullRun = 0;
+          }
+          if( nullRun >= sp.optInTimePeriod ) {
+             nullRun = sp.optInTimePeriod;
+             sumROC1 = 0.0;
+          }
+          /* Save the trailing value. Do this because inReal
+           * and outReal can be pointers to the same buffer.
+           */
+          trailingValue = tempReal2;
+          /* Calculate the efficiency ratio */
+          if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+             tempReal = 1.0;
+          } else {
+             tempReal = Math.abs(periodROC / sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
+          }
+          /* Calculate the smoothing constant */
+          tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
+          tempReal *= tempReal;
+          /* Calculate the KAMA like an EMA, using the
+           * smoothing constant as the adaptive factor.
+           */
+          prevKAMA = Math.fma(inReal - prevKAMA, tempReal, prevKAMA);
+          cur_outReal = prevKAMA;
+          return cur_outReal;
+       }
+       private int kamaTapeDetach( KamaStream sp )
+       {
+          int reach = 0;
+          sp.ring_trailingIdx_inReal = new double[0];
+          if( sp.ringCap_trailingIdx > reach ) {
+             reach = sp.ringCap_trailingIdx;
+          }
+          return reach;
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -117763,6 +118201,144 @@ class Core {
           }
           throw streamFailure("MA openAndFill", retCode);
        }
+       private double maStepTape( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+             sp.cur_outReal = inReal;
+          } else {
+             switch( sp.optInMAType )
+             {
+             case SMA:
+                sp.cur_outReal = smaStepTape((SmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+                break;
+             case EMA:
+                sp.cur_outReal = emaStepTape((EmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+                break;
+             case WMA:
+                sp.cur_outReal = wmaStepTape((WmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+                break;
+             case DEMA:
+                sp.cur_outReal = demaStepTape((DemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+                break;
+             case TEMA:
+                sp.cur_outReal = temaStepTape((TemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+                break;
+             case TRIMA:
+                sp.cur_outReal = trimaStepTape((TrimaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+                break;
+             case KAMA:
+                sp.cur_outReal = kamaStepTape((KamaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+                break;
+             default:
+                sp.cur_outReal = maStepTapeRest(sp, tape, tapeBase, tapeMask, inReal);
+                break;
+             }
+          }
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double maStepTapeRest( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          switch( sp.optInMAType )
+          {
+          case MAMA: {
+             MamaStream sub = (MamaStream) sp.sub;
+             mamaStepTape(sub, tape, tapeBase, tapeMask, inReal);
+             return sub.cur_outMAMA;
+          }
+          case T3:
+             return t3StepTape((T3Stream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case HMA:
+             return hmaStepTape((HmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case ZLEMA:
+             return zlemaStepTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case RMA:
+             return rmaStepTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          default:
+             throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
+          }
+       }
+       private double maPeekTape( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+             return inReal;
+          }
+          switch( sp.optInMAType )
+          {
+          case SMA:
+             return smaPeekTape((SmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case EMA:
+             return emaPeekTape((EmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case WMA:
+             return wmaPeekTape((WmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case DEMA:
+             return demaPeekTape((DemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case TEMA:
+             return temaPeekTape((TemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case TRIMA:
+             return trimaPeekTape((TrimaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case KAMA:
+             return kamaPeekTape((KamaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          default:
+             return maPeekTapeRest(sp, tape, tapeBase, tapeMask, inReal);
+          }
+       }
+       private double maPeekTapeRest( MaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          switch( sp.optInMAType )
+          {
+          case MAMA: {
+             MamaOut subValue = new MamaOut();
+             mamaPeekTape((MamaStream) sp.sub, tape, tapeBase, tapeMask, inReal, subValue);
+             return subValue.mama;
+          }
+          case T3:
+             return t3PeekTape((T3Stream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case HMA:
+             return hmaPeekTape((HmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case ZLEMA:
+             return zlemaPeekTape((ZlemaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          case RMA:
+             return rmaPeekTape((RmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);
+          default:
+             throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
+          }
+       }
+       private int maTapeDetach( MaStream sp )
+       {
+          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+             return 0;
+          }
+          switch( sp.optInMAType )
+          {
+          case SMA:
+             return smaTapeDetach((SmaStream) sp.sub);
+          case EMA:
+             return emaTapeDetach((EmaStream) sp.sub);
+          case WMA:
+             return wmaTapeDetach((WmaStream) sp.sub);
+          case DEMA:
+             return demaTapeDetach((DemaStream) sp.sub);
+          case TEMA:
+             return temaTapeDetach((TemaStream) sp.sub);
+          case TRIMA:
+             return trimaTapeDetach((TrimaStream) sp.sub);
+          case KAMA:
+             return kamaTapeDetach((KamaStream) sp.sub);
+          case MAMA:
+             return mamaTapeDetach((MamaStream) sp.sub);
+          case T3:
+             return t3TapeDetach((T3Stream) sp.sub);
+          case HMA:
+             return hmaTapeDetach((HmaStream) sp.sub);
+          case ZLEMA:
+             return zlemaTapeDetach((ZlemaStream) sp.sub);
+          case RMA:
+             return rmaTapeDetach((RmaStream) sp.sub);
+          default:
+             return 0;
+          }
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -122966,6 +123542,358 @@ class Core {
           MInteger outNBElement = new MInteger();
           return mamaOpenAndFillInternal(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
        }
+       private void mamaStepTape( MamaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double tempReal = 0.0;
+          double tempReal2 = 0.0;
+          double adjustedPrevPeriod = 0.0;
+          double smoothedValue = 0.0;
+          double hilbertTempReal = 0.0;
+          double detrender = 0.0;
+          double Q1 = 0.0;
+          double jI = 0.0;
+          double jQ = 0.0;
+          double Q2 = 0.0;
+          double I2 = 0.0;
+          double todayValue = 0.0;
+          adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
+          todayValue = inReal;
+          sp.periodWMASub += todayValue;
+          sp.periodWMASub -= sp.trailingWMAValue;
+          sp.periodWMASum += todayValue * 4.0;
+          sp.trailingWMAValue = tape[(tapeBase - sp.ringCap_trailingWMAIdx) & tapeMask];
+          smoothedValue = sp.periodWMASum * 0.1;
+          sp.periodWMASum -= sp.periodWMASub;
+          if( sp.streamParity == 0 ) {
+             /* Do the Hilbert Transforms for even price bar */
+             hilbertTempReal = sp.a * smoothedValue;
+             detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+             sp.detrender_Even[sp.hilbertIdx] = hilbertTempReal;
+             detrender += hilbertTempReal;
+             detrender -= sp.prev_detrender_Even;
+             sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
+             detrender += sp.prev_detrender_Even;
+             sp.prev_detrender_input_Even = smoothedValue;
+             detrender *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * detrender;
+             Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+             sp.Q1_Even[sp.hilbertIdx] = hilbertTempReal;
+             Q1 += hilbertTempReal;
+             Q1 -= sp.prev_Q1_Even;
+             sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
+             Q1 += sp.prev_Q1_Even;
+             sp.prev_Q1_input_Even = detrender;
+             Q1 *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+             jI = 0 - sp.jI_Even[sp.hilbertIdx];
+             sp.jI_Even[sp.hilbertIdx] = hilbertTempReal;
+             jI += hilbertTempReal;
+             jI -= sp.prev_jI_Even;
+             sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
+             jI += sp.prev_jI_Even;
+             sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
+             jI *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * Q1;
+             jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+             sp.jQ_Even[sp.hilbertIdx] = hilbertTempReal;
+             jQ += hilbertTempReal;
+             jQ -= sp.prev_jQ_Even;
+             sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
+             jQ += sp.prev_jQ_Even;
+             sp.prev_jQ_input_Even = Q1;
+             jQ *= adjustedPrevPeriod;
+             if( ++sp.hilbertIdx == 3 ) {
+                sp.hilbertIdx = 0;
+             }
+             Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+             I2 = Math.fma(0.2, sp.I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
+             /* The variable I1 is the detrender delayed for
+              * 3 price bars.
+              *
+              * Save the current detrender value for being
+              * used by the "odd" logic later.
+              */
+             sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
+             sp.I1ForOddPrev2 = detrender;
+             /* Put Alpha in tempReal2 */
+             if( sp.I1ForEvenPrev3 != 0.0 ) {
+                tempReal2 = Math.atan(Q1 / sp.I1ForEvenPrev3) * sp.rad2Deg;
+             } else {
+                tempReal2 = 0.0;
+             }
+          } else {
+             /* Do the Hilbert Transforms for odd price bar */
+             hilbertTempReal = sp.a * smoothedValue;
+             detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+             sp.detrender_Odd[sp.hilbertIdx] = hilbertTempReal;
+             detrender += hilbertTempReal;
+             detrender -= sp.prev_detrender_Odd;
+             sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
+             detrender += sp.prev_detrender_Odd;
+             sp.prev_detrender_input_Odd = smoothedValue;
+             detrender *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * detrender;
+             Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+             sp.Q1_Odd[sp.hilbertIdx] = hilbertTempReal;
+             Q1 += hilbertTempReal;
+             Q1 -= sp.prev_Q1_Odd;
+             sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
+             Q1 += sp.prev_Q1_Odd;
+             sp.prev_Q1_input_Odd = detrender;
+             Q1 *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+             jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+             sp.jI_Odd[sp.hilbertIdx] = hilbertTempReal;
+             jI += hilbertTempReal;
+             jI -= sp.prev_jI_Odd;
+             sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
+             jI += sp.prev_jI_Odd;
+             sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
+             jI *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * Q1;
+             jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+             sp.jQ_Odd[sp.hilbertIdx] = hilbertTempReal;
+             jQ += hilbertTempReal;
+             jQ -= sp.prev_jQ_Odd;
+             sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
+             jQ += sp.prev_jQ_Odd;
+             sp.prev_jQ_input_Odd = Q1;
+             jQ *= adjustedPrevPeriod;
+             Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+             I2 = Math.fma(0.2, sp.I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
+             /* The varaiable I1 is the detrender delayed for
+              * 3 price bars.
+              *
+              * Save the current detrender value for being
+              * used by the "odd" logic later.
+              */
+             sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
+             sp.I1ForEvenPrev2 = detrender;
+             /* Put Alpha in tempReal2 */
+             if( sp.I1ForOddPrev3 != 0.0 ) {
+                tempReal2 = Math.atan(Q1 / sp.I1ForOddPrev3) * sp.rad2Deg;
+             } else {
+                tempReal2 = 0.0;
+             }
+          }
+          /* Put Delta Phase into tempReal */
+          tempReal = sp.prevPhase - tempReal2;
+          sp.prevPhase = tempReal2;
+          if( tempReal < 1.0 ) {
+             tempReal = 1.0;
+          }
+          /* Put Alpha into tempReal */
+          if( tempReal > 1.0 ) {
+             tempReal = sp.optInFastLimit / tempReal;
+             if( tempReal < sp.optInSlowLimit ) {
+                tempReal = sp.optInSlowLimit;
+             }
+          } else {
+             tempReal = sp.optInFastLimit;
+          }
+          /* Calculate MAMA, FAMA */
+          sp.mama = Math.fma(1 - tempReal, sp.mama, tempReal * todayValue);
+          tempReal *= 0.5;
+          sp.fama = Math.fma(1 - tempReal, sp.fama, tempReal * sp.mama);
+          /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+           * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+           */
+          sp.cur_outFAMA = sp.fama;
+          sp.cur_outMAMA = sp.mama;
+          /* Adjust the period for next price bar */
+          sp.Re = Math.fma(0.8, sp.Re, 0.2 * (Math.fma(I2, sp.prevI2, Q2 * sp.prevQ2)));
+          sp.Im = Math.fma(0.8, sp.Im, 0.2 * (I2 * sp.prevQ2 - Q2 * sp.prevI2));
+          sp.prevQ2 = Q2;
+          sp.prevI2 = I2;
+          tempReal = sp.period;
+          if( sp.Im != 0.0 && sp.Re != 0.0 ) {
+             sp.period = 360.0 / (Math.atan(sp.Im / sp.Re) * sp.rad2Deg);
+          }
+          tempReal2 = 1.5 * tempReal;
+          if( sp.period > tempReal2 ) {
+             sp.period = tempReal2;
+          }
+          tempReal2 = 0.67 * tempReal;
+          if( sp.period < tempReal2 ) {
+             sp.period = tempReal2;
+          }
+          if( sp.period < 6 ) {
+             sp.period = 6;
+          } else if( sp.period > 50 ) {
+             sp.period = 50;
+          }
+          sp.period = Math.fma(0.2, sp.period, 0.8 * tempReal);
+          /* Ooof... let's do the next price bar now! */
+          sp.streamParity = 1 - sp.streamParity;
+          sp.outRangeCount++;
+       }
+       private void mamaPeekTape( MamaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal, MamaOut out )
+       {
+          double tempReal = 0.0;
+          double tempReal2 = 0.0;
+          double adjustedPrevPeriod = 0.0;
+          double smoothedValue = 0.0;
+          double hilbertTempReal = 0.0;
+          double detrender = 0.0;
+          double Q1 = 0.0;
+          double todayValue = 0.0;
+          double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+          double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+          double I1ForOddPrev2 = sp.I1ForOddPrev2;
+          double I1ForOddPrev3 = sp.I1ForOddPrev3;
+          double cur_outFAMA = 0.0;
+          double cur_outMAMA = 0.0;
+          double fama = sp.fama;
+          int hilbertIdx = sp.hilbertIdx;
+          double mama = sp.mama;
+          double periodWMASub = sp.periodWMASub;
+          double periodWMASum = sp.periodWMASum;
+          double prevPhase = sp.prevPhase;
+          double prev_Q1_Even = sp.prev_Q1_Even;
+          double prev_Q1_Odd = sp.prev_Q1_Odd;
+          double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+          double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+          double prev_detrender_Even = sp.prev_detrender_Even;
+          double prev_detrender_Odd = sp.prev_detrender_Odd;
+          double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+          double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+          double prev_jI_Even = sp.prev_jI_Even;
+          double prev_jI_Odd = sp.prev_jI_Odd;
+          double prev_jI_input_Even = sp.prev_jI_input_Even;
+          double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+          double prev_jQ_Even = sp.prev_jQ_Even;
+          double prev_jQ_Odd = sp.prev_jQ_Odd;
+          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+          double trailingWMAValue = sp.trailingWMAValue;
+          int pkSlot0 = -1;
+          double pkVal0 = 0.0;
+          pkSlot0 = tapeBase & tapeMask;
+          pkVal0 = inReal;
+          adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
+          todayValue = inReal;
+          periodWMASub += todayValue;
+          periodWMASub -= trailingWMAValue;
+          periodWMASum += todayValue * 4.0;
+          trailingWMAValue = (((tapeBase - sp.ringCap_trailingWMAIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingWMAIdx) & tapeMask] : pkVal0;
+          smoothedValue = periodWMASum * 0.1;
+          periodWMASum -= periodWMASub;
+          if( sp.streamParity == 0 ) {
+             /* Do the Hilbert Transforms for even price bar */
+             hilbertTempReal = sp.a * smoothedValue;
+             detrender = 0 - sp.detrender_Even[hilbertIdx];
+             detrender += hilbertTempReal;
+             detrender -= prev_detrender_Even;
+             prev_detrender_Even = sp.b * prev_detrender_input_Even;
+             detrender += prev_detrender_Even;
+             prev_detrender_input_Even = smoothedValue;
+             detrender *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * detrender;
+             Q1 = 0 - sp.Q1_Even[hilbertIdx];
+             Q1 += hilbertTempReal;
+             Q1 -= prev_Q1_Even;
+             prev_Q1_Even = sp.b * prev_Q1_input_Even;
+             Q1 += prev_Q1_Even;
+             prev_Q1_input_Even = detrender;
+             Q1 *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * I1ForEvenPrev3;
+             prev_jI_Even = sp.b * prev_jI_input_Even;
+             prev_jI_input_Even = I1ForEvenPrev3;
+             hilbertTempReal = sp.a * Q1;
+             prev_jQ_Even = sp.b * prev_jQ_input_Even;
+             prev_jQ_input_Even = Q1;
+             if( ++hilbertIdx == 3 ) {
+                hilbertIdx = 0;
+             }
+             /* The variable I1 is the detrender delayed for
+              * 3 price bars.
+              *
+              * Save the current detrender value for being
+              * used by the "odd" logic later.
+              */
+             I1ForOddPrev3 = I1ForOddPrev2;
+             I1ForOddPrev2 = detrender;
+             /* Put Alpha in tempReal2 */
+             if( I1ForEvenPrev3 != 0.0 ) {
+                tempReal2 = Math.atan(Q1 / I1ForEvenPrev3) * sp.rad2Deg;
+             } else {
+                tempReal2 = 0.0;
+             }
+          } else {
+             /* Do the Hilbert Transforms for odd price bar */
+             hilbertTempReal = sp.a * smoothedValue;
+             detrender = 0 - sp.detrender_Odd[hilbertIdx];
+             detrender += hilbertTempReal;
+             detrender -= prev_detrender_Odd;
+             prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+             detrender += prev_detrender_Odd;
+             prev_detrender_input_Odd = smoothedValue;
+             detrender *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * detrender;
+             Q1 = 0 - sp.Q1_Odd[hilbertIdx];
+             Q1 += hilbertTempReal;
+             Q1 -= prev_Q1_Odd;
+             prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+             Q1 += prev_Q1_Odd;
+             prev_Q1_input_Odd = detrender;
+             Q1 *= adjustedPrevPeriod;
+             hilbertTempReal = sp.a * I1ForOddPrev3;
+             prev_jI_Odd = sp.b * prev_jI_input_Odd;
+             prev_jI_input_Odd = I1ForOddPrev3;
+             hilbertTempReal = sp.a * Q1;
+             prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+             prev_jQ_input_Odd = Q1;
+             /* The varaiable I1 is the detrender delayed for
+              * 3 price bars.
+              *
+              * Save the current detrender value for being
+              * used by the "odd" logic later.
+              */
+             I1ForEvenPrev3 = I1ForEvenPrev2;
+             I1ForEvenPrev2 = detrender;
+             /* Put Alpha in tempReal2 */
+             if( I1ForOddPrev3 != 0.0 ) {
+                tempReal2 = Math.atan(Q1 / I1ForOddPrev3) * sp.rad2Deg;
+             } else {
+                tempReal2 = 0.0;
+             }
+          }
+          /* Put Delta Phase into tempReal */
+          tempReal = prevPhase - tempReal2;
+          prevPhase = tempReal2;
+          if( tempReal < 1.0 ) {
+             tempReal = 1.0;
+          }
+          /* Put Alpha into tempReal */
+          if( tempReal > 1.0 ) {
+             tempReal = sp.optInFastLimit / tempReal;
+             if( tempReal < sp.optInSlowLimit ) {
+                tempReal = sp.optInSlowLimit;
+             }
+          } else {
+             tempReal = sp.optInFastLimit;
+          }
+          /* Calculate MAMA, FAMA */
+          mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
+          tempReal *= 0.5;
+          fama = Math.fma(1 - tempReal, fama, tempReal * mama);
+          /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+           * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+           */
+          cur_outFAMA = fama;
+          cur_outMAMA = mama;
+          out.mama = cur_outMAMA;
+          out.fama = cur_outFAMA;
+       }
+       private int mamaTapeDetach( MamaStream sp )
+       {
+          int reach = 0;
+          sp.ring_trailingWMAIdx_inReal = new double[0];
+          if( sp.ringCap_trailingWMAIdx > reach ) {
+             reach = sp.ringCap_trailingWMAIdx;
+          }
+          return reach;
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -125192,6 +126120,9 @@ class Core {
           private int optInMaxPeriod;
           private MAType optInMAType;
           private double cur_outReal;
+          private int tapeMask;
+          private int tapePos;
+          private double[] tape;
           // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
           private MaStream[] bank;
           private int outRangeBegIdx;
@@ -125239,6 +126170,9 @@ class Core {
              this.optInMaxPeriod = other.optInMaxPeriod;
              this.optInMAType = other.optInMAType;
              this.cur_outReal = other.cur_outReal;
+             this.tapeMask = other.tapeMask;
+             this.tapePos = other.tapePos;
+             this.tape = other.tape.clone();
              this.bank = new MaStream[other.bank.length];
              for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
                 this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
@@ -125296,7 +126230,7 @@ class Core {
                 cp = sp.optInMaxPeriod;
              }
              int slot = cp - sp.optInMinPeriod;
-             double cur_outReal = sp.bank[slot].peek(inReal);
+             double cur_outReal = core.maPeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, inReal);
              return cur_outReal;
           }
 
@@ -125335,12 +126269,28 @@ class Core {
              cp = sp.optInMaxPeriod;
           }
           int slot = cp - sp.optInMinPeriod;
+          sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+          sp.tape[sp.tapePos] = inReal;
+          int tapeBase = sp.tapePos + sp.tapeMask + 1;
           for( int bankIdx = 0; bankIdx < sp.bank.length; bankIdx++ ) {
-             double subValue = sp.bank[bankIdx].update(inReal);
+             double subValue = maStepTape(sp.bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, inReal);
              if( bankIdx == slot ) {
                 sp.cur_outReal = subValue;
              }
           }
+       }
+       private void mavpTapeOpen( MavpStream sp, double inReal[], int historyLen, int reach )
+       {
+          int size = 1;
+          while( size <= reach ) {
+             size <<= 1;
+          }
+          sp.tape = new double[size];
+          sp.tapeMask = size - 1;
+          for( int b = historyLen > size ? historyLen - size : 0; b < historyLen; b++ ) {
+             sp.tape[b & sp.tapeMask] = inReal[b];
+          }
+          sp.tapePos = (historyLen - 1) & sp.tapeMask;
        }
        private RetCode mavpOpenImpl( MavpStream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
        {
@@ -125386,8 +126336,13 @@ class Core {
           }
           int nBank = optInMaxPeriod - optInMinPeriod + 1;
           MaStream[] bank = new MaStream[nBank];
+          int reach = 0;
           for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
              bank[bankIdx] = maOpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
+             int slotReach = maTapeDetach(bank[bankIdx]);
+             if( slotReach > reach ) {
+                reach = slotReach;
+             }
           }
           int cp = (int)inPeriods[historyLen - 1];
           if( cp < optInMinPeriod ) {
@@ -125399,6 +126354,7 @@ class Core {
           sp.optInMaxPeriod = optInMaxPeriod;
           sp.optInMAType = optInMAType;
           sp.bank = bank;
+          mavpTapeOpen(sp, inReal, historyLen, reach);
           sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
           sp.outRangeBegIdx = subStart;
           sp.outRangeCount = historyLen - subStart;
@@ -125442,13 +126398,15 @@ class Core {
           }
           int nBank = optInMaxPeriod - optInMinPeriod + 1;
           /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
-          MaStream[] bank = new MaStream[nBank];
-          double[] scratch = new double[nBank];
           double[] seedPrefix = java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1);
+          MaStream[] bank = new MaStream[nBank];
+          int reach = 0;
           for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-             MaStream sub = maOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
-             bank[bankIdx] = sub;
-             scratch[bankIdx] = sub.cur_outReal;
+             bank[bankIdx] = maOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
+             int slotReach = maTapeDetach(bank[bankIdx]);
+             if( slotReach > reach ) {
+                reach = slotReach;
+             }
           }
           /* First output bar (lookbackTotal), then replay the remaining history. */
           int cp = (int)inPeriods[lookbackTotal];
@@ -125457,25 +126415,18 @@ class Core {
           } else if( cp > optInMaxPeriod ) {
              cp = optInMaxPeriod;
           }
-          outReal[0] = scratch[cp - optInMinPeriod];
-          for( int t = lookbackTotal + 1; t < historyLen; t++ ) {
-             for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-                scratch[bankIdx] = bank[bankIdx].update(inReal[t]);
-             }
-             cp = (int)inPeriods[t];
-             if( cp < optInMinPeriod ) {
-                cp = optInMinPeriod;
-             } else if( cp > optInMaxPeriod ) {
-                cp = optInMaxPeriod;
-             }
-             outReal[t - lookbackTotal] = scratch[cp - optInMinPeriod];
-          }
-          outBegIdx.value = lookbackTotal;
-          outNBElement.value = historyLen - lookbackTotal;
           sp.optInMinPeriod = optInMinPeriod;
           sp.optInMaxPeriod = optInMaxPeriod;
           sp.optInMAType = optInMAType;
           sp.bank = bank;
+          mavpTapeOpen(sp, seedPrefix, lookbackTotal + 1, reach);
+          outReal[0] = bank[cp - optInMinPeriod].cur_outReal;
+          for( int t = lookbackTotal + 1; t < historyLen; t++ ) {
+             mavpStepImpl(sp, inReal[t], inPeriods[t]);
+             outReal[t - lookbackTotal] = sp.cur_outReal;
+          }
+          outBegIdx.value = lookbackTotal;
+          outNBElement.value = historyLen - lookbackTotal;
           sp.cur_outReal = outReal[outNBElement.value - 1];
           return RetCode.SUCCESS;
        }
@@ -149507,6 +150458,20 @@ class Core {
           MInteger outNBElement = new MInteger();
           return rmaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
+       private double rmaStepTape( RmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          rmaStepImpl(sp, inReal);
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double rmaPeekTape( RmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          return sp.peek(inReal);
+       }
+       private int rmaTapeDetach( RmaStream sp )
+       {
+          return 0;
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -160434,6 +161399,40 @@ class Core {
           MInteger outNBElement = new MInteger();
           return smaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
+       private double smaStepTape( SmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double tempReal = 0.0;
+          sp.periodTotal += (double)inReal;
+          tempReal = sp.periodTotal;
+          sp.periodTotal -= (double)tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+          sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double smaPeekTape( SmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double tempReal = 0.0;
+          double cur_outReal = 0.0;
+          double periodTotal = sp.periodTotal;
+          int pkSlot0 = -1;
+          double pkVal0 = 0.0;
+          pkSlot0 = tapeBase & tapeMask;
+          pkVal0 = inReal;
+          periodTotal += (double)inReal;
+          tempReal = periodTotal;
+          periodTotal -= (double)((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0);
+          cur_outReal = tempReal / (double)sp.optInTimePeriod;
+          return cur_outReal;
+       }
+       private int smaTapeDetach( SmaStream sp )
+       {
+          int reach = 0;
+          sp.ring_trailingIdx_inReal = new double[0];
+          if( sp.ringCap_trailingIdx > reach ) {
+             reach = sp.ringCap_trailingIdx;
+          }
+          return reach;
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -169771,6 +170770,20 @@ class Core {
           MInteger outNBElement = new MInteger();
           return t3OpenAndFillInternal(inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
        }
+       private double t3StepTape( T3Stream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          t3StepImpl(sp, inReal);
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double t3PeekTape( T3Stream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          return sp.peek(inReal);
+       }
+       private int t3TapeDetach( T3Stream sp )
+       {
+          return 0;
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -171484,6 +172497,20 @@ class Core {
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           return temaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+       private double temaStepTape( TemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          temaStepImpl(sp, inReal);
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double temaPeekTape( TemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          return sp.peek(inReal);
+       }
+       private int temaTapeDetach( TemaStream sp )
+       {
+          return 0;
        }
     /* List of contributors:
      *
@@ -173511,6 +174538,111 @@ class Core {
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           return trimaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+       private double trimaStepTape( TrimaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          if( sp.optInTimePeriod % 2 == 1 ) {
+             /* Step (1) */
+             sp.numerator -= sp.numeratorSub;
+             sp.numeratorSub -= sp.tempReal;
+             sp.tempReal = tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask];
+             sp.numeratorSub += sp.tempReal;
+             /* Step (2) */
+             sp.numerator += sp.numeratorAdd;
+             sp.numeratorAdd -= sp.tempReal;
+             sp.tempReal = inReal;
+             sp.numeratorAdd += sp.tempReal;
+             /* Step (3) */
+             sp.numerator += sp.tempReal;
+             /* Step (4) */
+             sp.tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+             sp.cur_outReal = sp.numerator * sp.factor;
+          } else {
+             /* Step (1) */
+             sp.numerator -= sp.numeratorSub;
+             sp.numeratorSub -= sp.tempReal;
+             sp.tempReal = tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask];
+             sp.numeratorSub += sp.tempReal;
+             /* Step (2) */
+             sp.numeratorAdd -= sp.tempReal;
+             sp.numerator += sp.numeratorAdd;
+             sp.tempReal = inReal;
+             sp.numeratorAdd += sp.tempReal;
+             /* Step (3) */
+             sp.numerator += sp.tempReal;
+             /* Step (4) */
+             sp.tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+             sp.cur_outReal = sp.numerator * sp.factor;
+          }
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double trimaPeekTape( TrimaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double cur_outReal = 0.0;
+          if( sp.optInTimePeriod % 2 == 1 ) {
+             double numerator = sp.numerator;
+             double numeratorAdd = sp.numeratorAdd;
+             double numeratorSub = sp.numeratorSub;
+             double tempReal = sp.tempReal;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             pkSlot0 = tapeBase & tapeMask;
+             pkVal0 = inReal;
+             /* Step (1) */
+             numerator -= numeratorSub;
+             numeratorSub -= tempReal;
+             tempReal = (((tapeBase - sp.ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask] : pkVal0;
+             numeratorSub += tempReal;
+             /* Step (2) */
+             numerator += numeratorAdd;
+             numeratorAdd -= tempReal;
+             tempReal = inReal;
+             numeratorAdd += tempReal;
+             /* Step (3) */
+             numerator += tempReal;
+             /* Step (4) */
+             tempReal = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+             cur_outReal = numerator * sp.factor;
+          } else {
+             double numerator = sp.numerator;
+             double numeratorAdd = sp.numeratorAdd;
+             double numeratorSub = sp.numeratorSub;
+             double tempReal = sp.tempReal;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             pkSlot0 = tapeBase & tapeMask;
+             pkVal0 = inReal;
+             /* Step (1) */
+             numerator -= numeratorSub;
+             numeratorSub -= tempReal;
+             tempReal = (((tapeBase - sp.ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask] : pkVal0;
+             numeratorSub += tempReal;
+             /* Step (2) */
+             numeratorAdd -= tempReal;
+             numerator += numeratorAdd;
+             tempReal = inReal;
+             numeratorAdd += tempReal;
+             /* Step (3) */
+             numerator += tempReal;
+             /* Step (4) */
+             tempReal = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+             cur_outReal = numerator * sp.factor;
+          }
+          return cur_outReal;
+       }
+       private int trimaTapeDetach( TrimaStream sp )
+       {
+          int reach = 0;
+          sp.ring_middleIdx_inReal = new double[0];
+          if( sp.ringCap_middleIdx > reach ) {
+             reach = sp.ringCap_middleIdx;
+          }
+          sp.ring_trailingIdx_inReal = new double[0];
+          if( sp.ringCap_trailingIdx > reach ) {
+             reach = sp.ringCap_trailingIdx;
+          }
+          return reach;
        }
     /* List of contributors:
      *
@@ -186592,6 +187724,187 @@ class Core {
           MInteger outNBElement = new MInteger();
           return wmaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
+       private double wmaStepTape( WmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          int j = 0;
+          int rw = 0;
+          double tempReal = 0.0;
+          /* Add the current price bar to the sum
+           * who are carried through the iterations.
+           */
+          tempReal = inReal;
+          sp.periodSub += tempReal;
+          sp.periodSub -= sp.trailingValue;
+          sp.periodSum += tempReal * sp.optInTimePeriod;
+          /* Re-anchor: rebuild both totals from the window itself.
+           *
+           * periodSum and periodSub were running totals that were never
+           * recomputed, so each bar's rounding joined a residue no later bar
+           * could subtract, and its size was set by the largest value the totals
+           * had ever held rather than by the current window. That is the defect
+           * #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+           * below is the same weight-shifting identity as that family's
+           * `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+           * it and TA_SMA, whose output lives at its own sum's scale, does not.
+           * Measured before the fix: worst range disagreement 1.41e-08 at 200000
+           * bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+           * closes or ~1000 with one large print. After: 1.79e-12, flat in call
+           * length.
+           *
+           * ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+           * LINEARREG family also carries an OUTLIER trigger (rebuild when the
+           * departing value outweighs the window) because for a slope the
+           * interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+           * that position: its weights are bounded by `period` and its divider is
+           * period*(period+1)/2, which dilutes the residue enough that the
+           * interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+           * 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+           * is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+           * either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+           * here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+           * shorter interval buys most of the accuracy for ~1.1x instead.
+           *
+           * The rebuild walks the window OLDEST FIRST with the weight counting UP
+           * from 1 -- the priming scan's own order and weighting -- so a
+           * re-anchored bar is bit-identical to the same bar computed by a call
+           * that started there. That identity is what the range-stability
+           * contract measures, and what test_wma.c W2/W3 assert.
+           *
+           * The loop start is written INLINE rather than through a `windowStart`
+           * local: only that form is recognised as a rescan window, which is what
+           * keeps this on the stream classifier's primary path. See
+           * docs/ta_codegen_input_code.md.
+           *
+           * Reading the window is safe when outReal aliases inReal: the outputs
+           * written so far occupy [0, outIdx-1], and the window starts at
+           * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+           */
+          sp.barsSinceReseed -= 1;
+          if( sp.barsSinceReseed <= 0 ) {
+             sp.barsSinceReseed = 8 * sp.optInTimePeriod;
+             sp.periodSub = (double)0.0;
+             sp.periodSum = (double)0.0;
+             rw = 1;
+             for( j = sp.lookbackWin; j >= 0; j -= 1 ) {
+                tempReal = tape[(tapeBase - j) & tapeMask];
+                sp.periodSub += tempReal;
+                sp.periodSum += tempReal * rw;
+                rw += 1;
+             }
+          }
+          /* Save the trailing value for being substract at
+           * the next iteration.
+           * (must be saved here just in case outReal and
+           *  inReal are the same buffer).
+           */
+          sp.trailingValue = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+          /* Calculate the WMA for this price bar. */
+          sp.cur_outReal = sp.periodSum / sp.divider;
+          /* Prepare the periodSum for the next iteration. */
+          sp.periodSum -= sp.periodSub;
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double wmaPeekTape( WmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          int j = 0;
+          int rw = 0;
+          double tempReal = 0.0;
+          int barsSinceReseed = sp.barsSinceReseed;
+          double cur_outReal = 0.0;
+          double periodSub = sp.periodSub;
+          double periodSum = sp.periodSum;
+          double trailingValue = sp.trailingValue;
+          int pkSlot0 = -1;
+          double pkVal0 = 0.0;
+          pkSlot0 = tapeBase & tapeMask;
+          pkVal0 = inReal;
+          /* Add the current price bar to the sum
+           * who are carried through the iterations.
+           */
+          tempReal = inReal;
+          periodSub += tempReal;
+          periodSub -= trailingValue;
+          periodSum += tempReal * sp.optInTimePeriod;
+          /* Re-anchor: rebuild both totals from the window itself.
+           *
+           * periodSum and periodSub were running totals that were never
+           * recomputed, so each bar's rounding joined a residue no later bar
+           * could subtract, and its size was set by the largest value the totals
+           * had ever held rather than by the current window. That is the defect
+           * #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+           * below is the same weight-shifting identity as that family's
+           * `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+           * it and TA_SMA, whose output lives at its own sum's scale, does not.
+           * Measured before the fix: worst range disagreement 1.41e-08 at 200000
+           * bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+           * closes or ~1000 with one large print. After: 1.79e-12, flat in call
+           * length.
+           *
+           * ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+           * LINEARREG family also carries an OUTLIER trigger (rebuild when the
+           * departing value outweighs the window) because for a slope the
+           * interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+           * that position: its weights are bounded by `period` and its divider is
+           * period*(period+1)/2, which dilutes the residue enough that the
+           * interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+           * 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+           * is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+           * either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+           * here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+           * shorter interval buys most of the accuracy for ~1.1x instead.
+           *
+           * The rebuild walks the window OLDEST FIRST with the weight counting UP
+           * from 1 -- the priming scan's own order and weighting -- so a
+           * re-anchored bar is bit-identical to the same bar computed by a call
+           * that started there. That identity is what the range-stability
+           * contract measures, and what test_wma.c W2/W3 assert.
+           *
+           * The loop start is written INLINE rather than through a `windowStart`
+           * local: only that form is recognised as a rescan window, which is what
+           * keeps this on the stream classifier's primary path. See
+           * docs/ta_codegen_input_code.md.
+           *
+           * Reading the window is safe when outReal aliases inReal: the outputs
+           * written so far occupy [0, outIdx-1], and the window starts at
+           * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+           */
+          barsSinceReseed -= 1;
+          if( barsSinceReseed <= 0 ) {
+             barsSinceReseed = 8 * sp.optInTimePeriod;
+             periodSub = (double)0.0;
+             periodSum = (double)0.0;
+             rw = 1;
+             for( j = sp.lookbackWin; j >= 0; j -= 1 ) {
+                tempReal = (((tapeBase - j) & tapeMask) != pkSlot0) ? tape[(tapeBase - j) & tapeMask] : pkVal0;
+                periodSub += tempReal;
+                periodSum += tempReal * rw;
+                rw += 1;
+             }
+          }
+          /* Save the trailing value for being substract at
+           * the next iteration.
+           * (must be saved here just in case outReal and
+           *  inReal are the same buffer).
+           */
+          trailingValue = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+          /* Calculate the WMA for this price bar. */
+          cur_outReal = periodSum / sp.divider;
+          return cur_outReal;
+       }
+       private int wmaTapeDetach( WmaStream sp )
+       {
+          int reach = 0;
+          sp.ring_trailingIdx_inReal = new double[0];
+          if( sp.ringCap_trailingIdx > reach ) {
+             reach = sp.ringCap_trailingIdx;
+          }
+          sp.win_j_inReal = new double[0];
+          if( sp.winCap_j - 1 > reach ) {
+             reach = sp.winCap_j - 1;
+          }
+          return reach;
+       }
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -187350,11 +188663,39 @@ class Core {
           MInteger outNBElement = new MInteger();
           return zlemaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
        }
+       private double zlemaStepTape( ZlemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          sp.prevMA = Math.fma(2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] - sp.prevMA, sp.optInK_1, sp.prevMA);
+          sp.cur_outReal = sp.prevMA;
+          sp.outRangeCount++;
+          return sp.cur_outReal;
+       }
+       private double zlemaPeekTape( ZlemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+       {
+          double cur_outReal = 0.0;
+          double prevMA = sp.prevMA;
+          int pkSlot0 = -1;
+          double pkVal0 = 0.0;
+          pkSlot0 = tapeBase & tapeMask;
+          pkVal0 = inReal;
+          prevMA = Math.fma(2.0 * inReal - ((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0) - prevMA, sp.optInK_1, prevMA);
+          cur_outReal = prevMA;
+          return cur_outReal;
+       }
+       private int zlemaTapeDetach( ZlemaStream sp )
+       {
+          int reach = 0;
+          sp.ring_trailingIdx_inReal = new double[0];
+          if( sp.ringCap_trailingIdx > reach ) {
+             reach = sp.ringCap_trailingIdx;
+          }
+          return reach;
+       }
 }
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "973fd092ef22392a";
+    static final String SPLICED_GENCODE_DIGEST = "c39a123408884a38";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -222009,10 +223350,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.AcStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -222194,12 +223540,23 @@ public class TaCodegenServe {
                         Core.AccbandsOut uB = new Core.AccbandsOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.AccbandsStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.realUpperBand;
+                            if (svXtierNe(uB.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.realMiddleBand;
+                            if (svXtierNe(uB.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.realLowerBand;
+                            if (svXtierNe(uB.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realUpperBand, fk0[t]) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, fk1[t]) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, fk2[t]) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -222361,10 +223718,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.AcosStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -222513,10 +223875,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.AdStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -222665,10 +224032,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.AddStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -222820,10 +224192,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.AdoscStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -222978,10 +224355,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.AdrStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -223137,10 +224519,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AdxStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -223296,10 +224683,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AdxrStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -223455,10 +224847,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.AoStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -223626,10 +225023,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.ApoStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -223801,11 +225203,19 @@ public class TaCodegenServe {
                         Core.AroonOut uB = new Core.AroonOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
                         Core.AroonStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], uB);
+                            fk0[t] = uB.aroonDown;
+                            if (svXtierNe(uB.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.aroonUp;
+                            if (svXtierNe(uB.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], uA);
-                            sB.update(fz_h[t], fz_l[t], uB);
-                            if (svBne(uA.aroonDown, uB.aroonDown) || svXtierNe(uA.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.aroonUp, uB.aroonUp) || svXtierNe(uA.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.aroonDown, fk0[t]) || svXtierNe(uA.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.aroonUp, fk1[t]) || svXtierNe(uA.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -223965,10 +225375,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.AroonoscStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -224122,10 +225537,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.AsinStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -224274,10 +225694,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.AtanStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -224428,10 +225853,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AtrStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -224586,10 +226016,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.AvgdevStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -224743,10 +226178,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.AvgpriceStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -224937,12 +226377,23 @@ public class TaCodegenServe {
                         Core.BbandsOut uB = new Core.BbandsOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.BbandsStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.realUpperBand;
+                            if (svXtierNe(uB.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.realMiddleBand;
+                            if (svXtierNe(uB.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.realLowerBand;
+                            if (svXtierNe(uB.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realUpperBand, fk0[t]) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, fk1[t]) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, fk2[t]) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -225119,10 +226570,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.BbwStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -225277,10 +226733,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.BetaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -225434,10 +226895,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.BopStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -225587,10 +227053,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.CciStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -225747,10 +227218,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl2crowsStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -225902,10 +227378,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3blackcrowsStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -226057,10 +227538,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3insideStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -226212,10 +227698,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3linestrikeStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -226367,10 +227858,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3outsideStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -226522,10 +228018,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3starsinsouthStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -226677,10 +228178,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3whitesoldiersStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -226833,10 +228339,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlabandonedbabyStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -226988,10 +228499,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdladvanceblockStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -227143,10 +228659,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlbeltholdStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -227298,10 +228819,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlbreakawayStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -227453,10 +228979,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlclosingmarubozuStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -227608,10 +229139,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlconcealbabyswallStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -227763,10 +229299,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlcounterattackStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -227919,10 +229460,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldarkcloudcoverStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -228074,10 +229620,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldojiStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -228229,10 +229780,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldojistarStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -228384,10 +229940,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldragonflydojiStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -228539,10 +230100,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlengulfingStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -228695,10 +230261,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdleveningdojistarStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -228851,10 +230422,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdleveningstarStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -229006,10 +230582,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlgapsidesidewhiteStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -229161,10 +230742,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlgravestonedojiStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -229316,10 +230902,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhammerStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -229471,10 +231062,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhangingmanStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -229626,10 +231222,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlharamiStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -229781,10 +231382,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlharamicrossStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -229936,10 +231542,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhighwaveStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -230091,10 +231702,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhikkakeStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -230246,10 +231862,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhikkakemodStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -230401,10 +232022,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhomingpigeonStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -230556,10 +232182,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlidentical3crowsStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -230711,10 +232342,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlinneckStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -230866,10 +232502,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlinvertedhammerStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -231021,10 +232662,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlkickingStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -231176,10 +232822,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlkickingbylengthStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -231331,10 +232982,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlladderbottomStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -231486,10 +233142,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdllongleggeddojiStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -231641,10 +233302,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdllonglineStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -231796,10 +233462,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmarubozuStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -231951,10 +233622,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmatchinglowStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -232107,10 +233783,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmatholdStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -232263,10 +233944,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmorningdojistarStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -232419,10 +234105,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmorningstarStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -232574,10 +234265,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlonneckStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -232729,10 +234425,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlpiercingStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -232884,10 +234585,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlrickshawmanStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -233039,10 +234745,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlrisefall3methodsStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -233194,10 +234905,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlseparatinglinesStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -233349,10 +235065,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlshootingstarStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -233504,10 +235225,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlshortlineStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -233659,10 +235385,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlspinningtopStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -233814,10 +235545,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlstalledpatternStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -233969,10 +235705,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlsticksandwichStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -234124,10 +235865,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdltakuriStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -234279,10 +236025,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdltasukigapStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -234434,10 +236185,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlthrustingStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -234589,10 +236345,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdltristarStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -234744,10 +236505,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlunique3riverStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -234899,10 +236665,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlupsidegap2crowsStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -235054,10 +236825,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlxsidegap3methodsStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -235206,10 +236982,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CeilStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -235359,10 +237140,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.CmfStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -235518,10 +237304,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CmoStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -235676,10 +237467,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CmouStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -235836,10 +237632,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CoppockStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -235994,10 +237795,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.CorrelStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -236151,10 +237957,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CosStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -236303,10 +238114,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CoshStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -236459,10 +238275,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CrsiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -236617,10 +238438,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CtiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -236774,10 +238600,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.CumsumStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -236929,10 +238760,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.CviStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -237088,10 +238924,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.DemaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -237245,10 +239086,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.DivStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -237425,12 +239271,23 @@ public class TaCodegenServe {
                         Core.DonchianOut uB = new Core.DonchianOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
                         Core.DonchianStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], uB);
+                            fk0[t] = uB.realUpperBand;
+                            if (svXtierNe(uB.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.realMiddleBand;
+                            if (svXtierNe(uB.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.realLowerBand;
+                            if (svXtierNe(uB.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], uA);
-                            sB.update(fz_h[t], fz_l[t], uB);
-                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realUpperBand, fk0[t]) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, fk1[t]) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, fk2[t]) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -237593,10 +239450,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.DpoStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -237752,10 +239614,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.DxStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -237910,10 +239777,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.EfiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -238069,10 +239941,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.EmaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -238227,10 +240104,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.ErStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -238403,11 +240285,19 @@ public class TaCodegenServe {
                         Core.EriOut uB = new Core.EriOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.EriStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.bullPower;
+                            if (svXtierNe(uB.bullPower, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.bearPower;
+                            if (svXtierNe(uB.bearPower, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.bullPower, uB.bullPower) || svXtierNe(uA.bullPower, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.bearPower, uB.bearPower) || svXtierNe(uA.bearPower, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.bullPower, fk0[t]) || svXtierNe(uA.bullPower, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.bearPower, fk1[t]) || svXtierNe(uA.bearPower, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -238566,10 +240456,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.ExpStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -238718,10 +240613,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.FloorStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -238871,10 +240771,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.FoscStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -239045,11 +240950,19 @@ public class TaCodegenServe {
                         Core.FractalOut uB = new Core.FractalOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
                         Core.FractalStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        int[] fk1 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], uB);
+                            fk0[t] = uB.swingHigh;
+                            if (uB.swingHigh != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.swingLow;
+                            if (uB.swingLow != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], uA);
-                            sB.update(fz_h[t], fz_l[t], uB);
-                            if (uA.swingHigh != uB.swingHigh || uA.swingHigh != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.swingLow != uB.swingLow || uA.swingLow != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.swingHigh != fk0[t] || uA.swingHigh != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.swingLow != fk1[t] || uA.swingLow != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -239246,13 +241159,27 @@ public class TaCodegenServe {
                         Core.HaOut uB = new Core.HaOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.HaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        double[] fk3 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.haOpen;
+                            if (svXtierNe(uB.haOpen, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.haHigh;
+                            if (svXtierNe(uB.haHigh, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.haLow;
+                            if (svXtierNe(uB.haLow, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk3[t] = uB.haClose;
+                            if (svXtierNe(uB.haClose, b3[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.haOpen, uB.haOpen) || svXtierNe(uA.haOpen, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.haHigh, uB.haHigh) || svXtierNe(uA.haHigh, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.haLow, uB.haLow) || svXtierNe(uA.haLow, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.haClose, uB.haClose) || svXtierNe(uA.haClose, b3[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.haOpen, fk0[t]) || svXtierNe(uA.haOpen, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.haHigh, fk1[t]) || svXtierNe(uA.haHigh, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.haLow, fk2[t]) || svXtierNe(uA.haLow, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.haClose, fk3[t]) || svXtierNe(uA.haClose, b3[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -239408,10 +241335,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.HmaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -239566,10 +241498,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.HtDcperiodStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -239719,10 +241656,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.HtDcphaseStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -239889,11 +241831,19 @@ public class TaCodegenServe {
                         Core.HtPhasorOut uB = new Core.HtPhasorOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.HtPhasorStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.inPhase;
+                            if (svXtierNe(uB.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.quadrature;
+                            if (svXtierNe(uB.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.inPhase, uB.inPhase) || svXtierNe(uA.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.quadrature, uB.quadrature) || svXtierNe(uA.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.inPhase, fk0[t]) || svXtierNe(uA.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.quadrature, fk1[t]) || svXtierNe(uA.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -240062,11 +242012,19 @@ public class TaCodegenServe {
                         Core.HtSineOut uB = new Core.HtSineOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.HtSineStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.sine;
+                            if (svXtierNe(uB.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.leadSine;
+                            if (svXtierNe(uB.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.sine, uB.sine) || svXtierNe(uA.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.leadSine, uB.leadSine) || svXtierNe(uA.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.sine, fk0[t]) || svXtierNe(uA.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.leadSine, fk1[t]) || svXtierNe(uA.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -240218,10 +242176,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.HtTrendlineStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -240370,10 +242333,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.HtTrendmodeStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_c[t]);
-                            int uB = sB.update(fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -240523,10 +242491,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_c[t]);
                         Core.ImiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_o[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_c[t]);
-                            double uB = sB.update(fz_o[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -240682,10 +242655,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.KamaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -240871,12 +242849,23 @@ public class TaCodegenServe {
                         Core.KcOut uB = new Core.KcOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.KcStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.realUpperBand;
+                            if (svXtierNe(uB.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.realMiddleBand;
+                            if (svXtierNe(uB.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.realLowerBand;
+                            if (svXtierNe(uB.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realUpperBand, fk0[t]) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, fk1[t]) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, fk2[t]) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -241087,12 +243076,23 @@ public class TaCodegenServe {
                         Core.KdjOut uB = new Core.KdjOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.KdjStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.k;
+                            if (svXtierNe(uB.k, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.d;
+                            if (svXtierNe(uB.d, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.j;
+                            if (svXtierNe(uB.j, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.k, uB.k) || svXtierNe(uA.k, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.d, uB.d) || svXtierNe(uA.d, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.j, uB.j) || svXtierNe(uA.j, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.k, fk0[t]) || svXtierNe(uA.k, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.d, fk1[t]) || svXtierNe(uA.d, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.j, fk2[t]) || svXtierNe(uA.j, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -241255,10 +243255,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.KurtosisStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -241413,10 +243418,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.LinearregStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -241571,10 +243581,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.LinearregAngleStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -241729,10 +243744,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.LinearregInterceptStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -241887,10 +243907,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.LinearregSlopeStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -242044,10 +244069,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.LnStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -242196,10 +244226,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.Log10Stream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -242361,10 +244396,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -242549,12 +244589,23 @@ public class TaCodegenServe {
                         Core.MacdOut uB = new Core.MacdOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MacdStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.macd;
+                            if (svXtierNe(uB.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.macdSignal;
+                            if (svXtierNe(uB.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.macdHist;
+                            if (svXtierNe(uB.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macd, fk0[t]) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal, fk1[t]) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist, fk2[t]) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -242772,12 +244823,23 @@ public class TaCodegenServe {
                         Core.MacdextOut uB = new Core.MacdextOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MacdextStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.macd;
+                            if (svXtierNe(uB.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.macdSignal;
+                            if (svXtierNe(uB.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.macdHist;
+                            if (svXtierNe(uB.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macd, fk0[t]) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal, fk1[t]) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist, fk2[t]) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -242968,12 +245030,23 @@ public class TaCodegenServe {
                         Core.MacdfixOut uB = new Core.MacdfixOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MacdfixStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.macd;
+                            if (svXtierNe(uB.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.macdSignal;
+                            if (svXtierNe(uB.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.macdHist;
+                            if (svXtierNe(uB.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macd, fk0[t]) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal, fk1[t]) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist, fk2[t]) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -243155,11 +245228,19 @@ public class TaCodegenServe {
                         Core.MamaOut uB = new Core.MamaOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MamaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.mama;
+                            if (svXtierNe(uB.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.fama;
+                            if (svXtierNe(uB.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.mama, uB.mama) || svXtierNe(uA.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fama, uB.fama) || svXtierNe(uA.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.mama, fk0[t]) || svXtierNe(uA.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fama, fk1[t]) || svXtierNe(uA.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -243310,10 +245391,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_v[t]);
                         Core.MarketfiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_v[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -243465,10 +245551,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.MassiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -243637,10 +245728,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.MavpStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -243795,10 +245891,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MaxStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -243952,10 +246053,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MaxindexStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_c[t]);
-                            int uB = sB.update(fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -244110,10 +246216,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MedianStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -244267,10 +246378,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.MedpriceStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -244420,10 +246536,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.MfiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -244578,10 +246699,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MidpointStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -244736,10 +246862,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.MidpriceStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -244894,10 +247025,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MinStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -245051,10 +247187,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MinindexStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            int uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (uB != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_c[t]);
-                            int uB = sB.update(fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk0[t] || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -245226,11 +247367,19 @@ public class TaCodegenServe {
                         Core.MinmaxOut uB = new Core.MinmaxOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MinmaxStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.min;
+                            if (svXtierNe(uB.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.max;
+                            if (svXtierNe(uB.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.min, uB.min) || svXtierNe(uA.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.max, uB.max) || svXtierNe(uA.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.min, fk0[t]) || svXtierNe(uA.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.max, fk1[t]) || svXtierNe(uA.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -245405,11 +247554,19 @@ public class TaCodegenServe {
                         Core.MinmaxindexOut uB = new Core.MinmaxindexOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MinmaxindexStream sB = sA.clone();
+                        int[] fk0 = new int[svN];
+                        int[] fk1 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.minIdx;
+                            if (uB.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.maxIdx;
+                            if (uB.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (uA.minIdx != uB.minIdx || uA.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.maxIdx != uB.maxIdx || uA.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.minIdx != fk0[t] || uA.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.maxIdx != fk1[t] || uA.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -245570,10 +247727,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.MinusDiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -245729,10 +247891,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.MinusDmStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -245887,10 +248054,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.MomStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -246044,10 +248216,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.MultStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -246198,10 +248375,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.NatrStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -246355,10 +248537,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.NviStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -246507,10 +248694,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.ObvStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -246661,10 +248853,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.PercentileStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -246819,10 +249016,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.PercentrankStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -246978,10 +249180,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.PlusDiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -247137,10 +249344,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.PlusDmStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -247308,10 +249520,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.PpoStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -247465,10 +249682,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.PviStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -247631,10 +249853,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_v[t]);
                         Core.PvoStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_v[t]);
-                            double uB = sB.update(fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -247788,10 +250015,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.PvtStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -247941,10 +250173,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_c[t]);
                         Core.QstickStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_o[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_c[t]);
-                            double uB = sB.update(fz_o[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -248100,10 +250337,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.RmaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -248258,10 +250500,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.RocStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -248416,10 +250663,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.RocpStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -248574,10 +250826,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.RocrStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -248732,10 +250989,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.Rocr100Stream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -248891,10 +251153,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.RsiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -249051,10 +251318,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.RviStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -249211,10 +251483,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.RvirStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -249369,10 +251646,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_v[t]);
                         Core.RvolStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_v[t]);
-                            double uB = sB.update(fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -249528,10 +251810,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.SarStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -249688,10 +251975,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
                         Core.SarextStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -249840,10 +252132,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.SinStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -249992,10 +252289,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.SinhStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -250145,10 +252447,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.SmaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -250324,11 +252631,19 @@ public class TaCodegenServe {
                         Core.SmiOut uB = new Core.SmiOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.SmiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.smi;
+                            if (svXtierNe(uB.smi, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.smiSignal;
+                            if (svXtierNe(uB.smiSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.smi, uB.smi) || svXtierNe(uA.smi, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.smiSignal, uB.smiSignal) || svXtierNe(uA.smiSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.smi, fk0[t]) || svXtierNe(uA.smi, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.smiSignal, fk1[t]) || svXtierNe(uA.smiSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -250487,10 +252802,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.SqrtStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -250641,10 +252961,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.StddevStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -250837,11 +253162,19 @@ public class TaCodegenServe {
                         Core.StochOut uB = new Core.StochOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.StochStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.slowK;
+                            if (svXtierNe(uB.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.slowD;
+                            if (svXtierNe(uB.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.slowK, uB.slowK) || svXtierNe(uA.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.slowD, uB.slowD) || svXtierNe(uA.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.slowK, fk0[t]) || svXtierNe(uA.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.slowD, fk1[t]) || svXtierNe(uA.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -251031,11 +253364,19 @@ public class TaCodegenServe {
                         Core.StochfOut uB = new Core.StochfOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.StochfStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.fastK;
+                            if (svXtierNe(uB.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.fastD;
+                            if (svXtierNe(uB.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.fastK, uB.fastK) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fastD, uB.fastD) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastK, fk0[t]) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastD, fk1[t]) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -251227,11 +253568,19 @@ public class TaCodegenServe {
                         Core.StochrsiOut uB = new Core.StochrsiOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.StochrsiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_c[t], uB);
+                            fk0[t] = uB.fastK;
+                            if (svXtierNe(uB.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.fastD;
+                            if (svXtierNe(uB.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_c[t], uA);
-                            sB.update(fz_c[t], uB);
-                            if (svBne(uA.fastK, uB.fastK) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fastD, uB.fastD) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastK, fk0[t]) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastD, fk1[t]) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -251390,10 +253739,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.SubStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -251543,10 +253897,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.SumStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -251719,11 +254078,19 @@ public class TaCodegenServe {
                         Core.SupertrendOut uB = new Core.SupertrendOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.SupertrendStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        int[] fk1 = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.supertrend;
+                            if (svXtierNe(uB.supertrend, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.trend;
+                            if (uB.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.supertrend, uB.supertrend) || svXtierNe(uA.supertrend, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.trend != uB.trend || uA.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.supertrend, fk0[t]) || svXtierNe(uA.supertrend, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.trend != fk1[t] || uA.trend != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -251885,10 +254252,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.T3Stream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -252042,10 +254414,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.TanStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -252194,10 +254571,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.TanhStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -252348,10 +254730,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.TemaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -252505,10 +254892,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.TrangeStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -252658,10 +255050,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.TrimaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -252817,10 +255214,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.TrixStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -252975,10 +255377,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.TsfStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -253135,10 +255542,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.TsiStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -253292,10 +255704,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.TyppriceStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -253447,10 +255864,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.UltoscStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -253606,10 +256028,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.VarStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -253764,10 +256191,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.VhfStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -253939,11 +256371,19 @@ public class TaCodegenServe {
                         Core.VortexOut uB = new Core.VortexOut();
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.VortexStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.plusVI;
+                            if (svXtierNe(uB.plusVI, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.minusVI;
+                            if (svXtierNe(uB.minusVI, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
-                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
-                            if (svBne(uA.plusVI, uB.plusVI) || svXtierNe(uA.plusVI, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.minusVI, uB.minusVI) || svXtierNe(uA.minusVI, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.plusVI, fk0[t]) || svXtierNe(uA.plusVI, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.minusVI, fk1[t]) || svXtierNe(uA.minusVI, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -254102,10 +256542,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.VwapStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -254255,10 +256700,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
                         Core.VwmaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
-                            double uB = sB.update(fz_c[t], fz_v[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -254412,10 +256862,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.WadStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -254564,10 +257019,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.WclpriceStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -254717,10 +257177,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.WillrStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -254875,10 +257340,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.WmaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -255034,10 +257504,15 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
                         Core.ZlemaStream sB = sA.clone();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
-                            double uB = sB.update(fz_c[t]);
-                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;

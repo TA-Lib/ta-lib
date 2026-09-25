@@ -869,4 +869,35 @@ public partial class Core
       }
       return ZlemaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
+
+   private double ZlemaStepTape( ZlemaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      sp.prevMA = Math.FusedMultiplyAdd(2.0 * inReal - tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] - sp.prevMA, sp.optInK_1, sp.prevMA);
+      sp.cur_outReal = sp.prevMA;
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double ZlemaPeekTape( ZlemaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double cur_outReal = 0.0;
+      double prevMA = sp.prevMA;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      prevMA = Math.FusedMultiplyAdd(2.0 * inReal - ((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0) - prevMA, sp.optInK_1, prevMA);
+      cur_outReal = prevMA;
+      return cur_outReal;
+   }
+
+   private int ZlemaTapeDetach( ZlemaStream sp )
+   {
+      int reach = 0;
+      sp.ring_trailingIdx_inReal = [];
+      if( sp.ringCap_trailingIdx > reach ) {
+         reach = sp.ringCap_trailingIdx;
+      }
+      return reach;
+   }
 }

@@ -438,7 +438,7 @@ fn emit_rust_sv_prefix_sweep(
 
 /// Clone-independence leg (#287), the counterpart of Java's `copy()` leg and
 /// C#'s `Clone()` one: open at the earliest prefix, advance to mid, fork, drive
-/// both handles to the end.
+/// the fork to the end and then the original.
 ///
 /// Rust's fork is `#[derive(Clone)]` on the handle rather than a hand-emitted
 /// method, and nothing in the harness exercised it — so a refactor that put a
@@ -493,15 +493,48 @@ fn emit_rust_sv_clone_leg(
     s.push_str("                    let mut forked = true;\n");
     let _ = writeln!(s, "                    for t in p..mid {{ if sa.update({t_args}).is_err() {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyPreRejected\\\":{{}}\", t); }} break; }} }}");
     s.push_str("                    let mut sb = sa.clone();\n");
+    // The fork to the end, then the original. A buffer the two shared, written
+    // with each bar before it is read, would answer right on both in lockstep.
+    s.push_str("                    let mut fk = Vec::with_capacity(svN - mid);\n");
+    s.push_str("                    if forked {\n");
+    s.push_str("                    for t in mid..svN {\n");
+    let _ = writeln!(s, "                        let Ok(u_fork) = sb.update({t_args}) else {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyRejected\\\":{{}}\", t); }} break; }};");
+    let fork_parts = destructure("u_fork");
+    for (i, u_fork) in fork_parts.iter().enumerate() {
+        if out_is_int[i] {
+            let _ = writeln!(s, "                        if {u_fork} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
+        } else {
+            let _ = writeln!(s, "                        if sv_xtier_ne({u_fork}, b{i}[t - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
+        }
+    }
+    // Every accepted update refreshes `value()`, on the fork as much as on the
+    // original — the fork is the caller with no earlier call to have handed it one.
+    let value_check = |s: &mut String, handle: &str, got: &str| {
+        let got_parts = destructure(got);
+        let v_parts = destructure("v");
+        let _ = writeln!(s, "                        {{ let v = {handle}.value(); value_checked = 1; value_legs += 1;");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let cmp = if *is_int {
+                format!("{} != {}", v_parts[i], got_parts[i])
+            } else {
+                format!("{}.to_bits() != {}.to_bits()", v_parts[i], got_parts[i])
+            };
+            let _ = writeln!(s, "                          if {cmp} {{ value_ok = false; if diag.is_empty() {{ diag = \",\\\"valueAfterUpdate\\\":1\".to_string(); }} }}");
+        }
+        s.push_str("                        }\n");
+    };
+    value_check(s, "sb", "u_fork");
+    s.push_str("                        fk.push(u_fork);\n");
+    s.push_str("                    }\n");
+    s.push_str("                    }\n");
     s.push_str("                    if forked {\n");
     s.push_str("                    for t in mid..svN {\n");
     let _ = writeln!(s, "                        let Ok(u_src) = sa.update({t_args}) else {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyRejected\\\":{{}}\", t); }} break; }};");
-    let _ = writeln!(s, "                        let Ok(u_fork) = sb.update({t_args}) else {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyRejected\\\":{{}}\", t); }} break; }};");
+    s.push_str("                        let u_fork = fk[t - mid];\n");
     let src_parts = destructure("u_src");
-    let fork_parts = destructure("u_fork");
     for (i, (u_src, u_fork)) in src_parts.iter().zip(fork_parts.iter()).enumerate() {
         // Same-tier: the fork is the SAME computation, so it is a strict bit
-        // compare — the +/-0 tolerance the cross-tier compare carries has no
+        // compare; the +/-0 tolerance the cross-tier compare carries has no
         // business between two handles that ran the same arithmetic.
         if out_is_int[i] {
             let _ = writeln!(s, "                        if {u_src} != {u_fork} {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
@@ -511,25 +544,7 @@ fn emit_rust_sv_clone_leg(
             let _ = writeln!(s, "                        if sv_xtier_ne({u_src}, b{i}[t - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
         }
     }
-    // Every accepted update refreshes `value()`, on the fork as much as on the
-    // original — the fork is the caller with no earlier call to have handed it one.
-    {
-        let src = destructure("u_src");
-        let fork = destructure("u_fork");
-        let va = destructure("va");
-        let vb = destructure("vb");
-        s.push_str("                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;\n");
-        for (i, is_int) in out_is_int.iter().enumerate() {
-            let (ca, cb) = if *is_int {
-                (format!("{} != {}", va[i], src[i]), format!("{} != {}", vb[i], fork[i]))
-            } else {
-                (format!("{}.to_bits() != {}.to_bits()", va[i], src[i]),
-                 format!("{}.to_bits() != {}.to_bits()", vb[i], fork[i]))
-            };
-            let _ = writeln!(s, "                          if {ca} || {cb} {{ value_ok = false; if diag.is_empty() {{ diag = \",\\\"valueAfterUpdate\\\":1\".to_string(); }} }}");
-        }
-        s.push_str("                        }\n");
-    }
+    value_check(s, "sa", "u_src");
     s.push_str("                    }\n");
     s.push_str("                    }\n");
     // Both handles have consumed bars [p-1, svN-1] — the fork's own updates

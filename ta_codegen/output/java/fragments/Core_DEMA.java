@@ -796,3 +796,17 @@
       MInteger outNBElement = new MInteger();
       return demaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
+   private double demaStepTape( DemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      demaStepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+   private double demaPeekTape( DemaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.peek(inReal);
+   }
+   private int demaTapeDetach( DemaStream sp )
+   {
+      return 0;
+   }

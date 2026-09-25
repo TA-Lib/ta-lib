@@ -4797,6 +4797,10 @@ static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP
    }
    if( (a->scratch == NULL) != (b->scratch == NULL) ) { *w = "scratch"; return 1; }
    if( a->scratch ) for( k = 0; k < a->nBank; k++ ) if( sv_xtier_ne(a->scratch[k], b->scratch[k], z) ) { *w = "scratch"; return 1; }
+   if( a->tapeMask != b->tapeMask ) { *w = "tapeMask"; return 1; }
+   if( a->tapePos != b->tapePos ) { *w = "tapePos"; return 1; }
+   if( (a->tape == NULL) != (b->tape == NULL) ) { *w = "tape"; return 1; }
+   if( a->tape ) for( k = 0; k < a->tapeMask+1; k++ ) if( sv_xtier_ne(a->tape[k], b->tape[k], z) ) { *w = "tape"; return 1; }
    return 0;
 }
 
@@ -6487,6 +6491,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AC_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_AC_Open(&cA, sv_h, sv_l, cp0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -6503,14 +6508,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_AC_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_AC_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_AC_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_AC_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -6767,6 +6778,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ACCBANDS_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ACCBANDS_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -6785,20 +6799,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ACCBANDS_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ACCBANDS_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1, &ca2);
-                    TA_ACCBANDS_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -7033,6 +7059,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ACOS_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ACOS_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -7049,14 +7076,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ACOS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ACOS_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ACOS_Update(cA, sv_c[t], &ca0);
-                    TA_ACOS_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -7287,6 +7320,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AD_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_AD_Open(&cA, sv_h, sv_l, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -7303,14 +7337,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_AD_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_AD_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_AD_Update(cA, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &ca0);
-                    TA_AD_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -7541,6 +7581,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ADD_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ADD_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -7557,14 +7598,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ADD_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ADD_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ADD_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_ADD_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -7799,6 +7846,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ADOSC_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ADOSC_Open(&cA, sv_h, sv_l, sv_c, sv_v, cp0, optInFastPeriod, optInSlowPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -7815,14 +7863,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ADOSC_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ADOSC_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ADOSC_Update(cA, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &ca0);
-                    TA_ADOSC_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -8055,6 +8109,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ADR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ADR_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -8071,14 +8126,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ADR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ADR_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ADR_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_ADR_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -8312,6 +8373,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ADX_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ADX_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -8328,14 +8390,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ADX_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ADX_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ADX_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_ADX_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -8570,6 +8638,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ADXR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ADXR_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -8586,14 +8655,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ADXR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ADXR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ADXR_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_ADXR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -8827,6 +8902,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AO_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_AO_Open(&cA, sv_h, sv_l, cp0, optInFastPeriod, optInSlowPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -8843,14 +8919,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_AO_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_AO_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_AO_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_AO_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -9094,6 +9176,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_APO_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_APO_Open(&cA, sv_c, cp0, optInFastPeriod, optInSlowPeriod, optInMAType, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -9110,14 +9193,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_APO_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_APO_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_APO_Update(cA, sv_c[t], &ca0);
-                    TA_APO_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -9370,6 +9459,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AROON_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_AROON_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -9387,17 +9478,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_AROON_Update(cB, sv_h[t], sv_l[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_AROON_Update(cA, sv_h[t], sv_l[t], &ca0, &ca1);
-                    TA_AROON_Update(cB, sv_h[t], sv_l[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -9631,6 +9731,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AROONOSC_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_AROONOSC_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -9647,14 +9748,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_AROONOSC_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_AROONOSC_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_AROONOSC_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_AROONOSC_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -9885,6 +9992,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ASIN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ASIN_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -9901,14 +10009,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ASIN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ASIN_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ASIN_Update(cA, sv_c[t], &ca0);
-                    TA_ASIN_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -10139,6 +10253,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ATAN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ATAN_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -10155,14 +10270,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ATAN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ATAN_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ATAN_Update(cA, sv_c[t], &ca0);
-                    TA_ATAN_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -10396,6 +10517,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ATR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ATR_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -10412,14 +10534,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ATR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ATR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ATR_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_ATR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -10652,6 +10780,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AVGDEV_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_AVGDEV_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -10668,14 +10797,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_AVGDEV_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_AVGDEV_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_AVGDEV_Update(cA, sv_c[t], &ca0);
-                    TA_AVGDEV_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -10906,6 +11041,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_AVGPRICE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_AVGPRICE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -10922,14 +11058,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_AVGPRICE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_AVGPRICE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_AVGPRICE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_AVGPRICE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -11199,6 +11341,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_BBANDS_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_BBANDS_Open(&cA, sv_c, cp0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -11217,20 +11362,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_BBANDS_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_BBANDS_Update(cA, sv_c[t], &ca0, &ca1, &ca2);
-                    TA_BBANDS_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -11484,6 +11641,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_BBW_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_BBW_Open(&cA, sv_c, cp0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -11500,14 +11658,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_BBW_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_BBW_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_BBW_Update(cA, sv_c[t], &ca0);
-                    TA_BBW_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -11744,6 +11908,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_BETA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_BETA_Open(&cA, sv_c, sv_v, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -11760,14 +11925,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_BETA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_BETA_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_BETA_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_BETA_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -11998,6 +12169,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_BOP_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_BOP_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -12014,14 +12186,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_BOP_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_BOP_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_BOP_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_BOP_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -12253,6 +12431,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CCI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CCI_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -12269,14 +12448,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CCI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CCI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CCI_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CCI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -12508,6 +12693,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDL2CROWS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDL2CROWS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -12524,14 +12710,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDL2CROWS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDL2CROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDL2CROWS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDL2CROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -12765,6 +12957,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDL3BLACKCROWS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDL3BLACKCROWS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -12781,14 +12974,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDL3BLACKCROWS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDL3BLACKCROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDL3BLACKCROWS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDL3BLACKCROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -13022,6 +13221,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDL3INSIDE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDL3INSIDE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -13038,14 +13238,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDL3INSIDE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDL3INSIDE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDL3INSIDE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDL3INSIDE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -13279,6 +13485,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDL3LINESTRIKE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDL3LINESTRIKE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -13295,14 +13502,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDL3LINESTRIKE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDL3LINESTRIKE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDL3LINESTRIKE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDL3LINESTRIKE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -13536,6 +13749,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDL3OUTSIDE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDL3OUTSIDE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -13552,14 +13766,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDL3OUTSIDE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDL3OUTSIDE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDL3OUTSIDE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDL3OUTSIDE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -13793,6 +14013,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDL3STARSINSOUTH_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDL3STARSINSOUTH_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -13809,14 +14030,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDL3STARSINSOUTH_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDL3STARSINSOUTH_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDL3STARSINSOUTH_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDL3STARSINSOUTH_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -14050,6 +14277,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDL3WHITESOLDIERS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDL3WHITESOLDIERS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -14066,14 +14294,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDL3WHITESOLDIERS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDL3WHITESOLDIERS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDL3WHITESOLDIERS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDL3WHITESOLDIERS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -14308,6 +14542,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLABANDONEDBABY_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLABANDONEDBABY_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, optInPenetration, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -14324,14 +14559,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLABANDONEDBABY_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLABANDONEDBABY_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLABANDONEDBABY_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLABANDONEDBABY_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -14565,6 +14806,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLADVANCEBLOCK_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLADVANCEBLOCK_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -14581,14 +14823,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLADVANCEBLOCK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLADVANCEBLOCK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLADVANCEBLOCK_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLADVANCEBLOCK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -14822,6 +15070,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLBELTHOLD_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLBELTHOLD_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -14838,14 +15087,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLBELTHOLD_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLBELTHOLD_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLBELTHOLD_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLBELTHOLD_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -15079,6 +15334,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLBREAKAWAY_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLBREAKAWAY_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -15095,14 +15351,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLBREAKAWAY_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLBREAKAWAY_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLBREAKAWAY_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLBREAKAWAY_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -15336,6 +15598,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLCLOSINGMARUBOZU_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLCLOSINGMARUBOZU_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -15352,14 +15615,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLCLOSINGMARUBOZU_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLCLOSINGMARUBOZU_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLCLOSINGMARUBOZU_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLCLOSINGMARUBOZU_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -15593,6 +15862,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLCONCEALBABYSWALL_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLCONCEALBABYSWALL_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -15609,14 +15879,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLCONCEALBABYSWALL_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLCONCEALBABYSWALL_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLCONCEALBABYSWALL_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLCONCEALBABYSWALL_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -15850,6 +16126,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLCOUNTERATTACK_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLCOUNTERATTACK_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -15866,14 +16143,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLCOUNTERATTACK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLCOUNTERATTACK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLCOUNTERATTACK_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLCOUNTERATTACK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -16108,6 +16391,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLDARKCLOUDCOVER_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLDARKCLOUDCOVER_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, optInPenetration, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -16124,14 +16408,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLDARKCLOUDCOVER_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLDARKCLOUDCOVER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLDARKCLOUDCOVER_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLDARKCLOUDCOVER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -16365,6 +16655,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLDOJI_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLDOJI_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -16381,14 +16672,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLDOJI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLDOJI_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -16622,6 +16919,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLDOJISTAR_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLDOJISTAR_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -16638,14 +16936,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLDOJISTAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLDOJISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLDOJISTAR_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLDOJISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -16879,6 +17183,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLDRAGONFLYDOJI_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLDRAGONFLYDOJI_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -16895,14 +17200,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLDRAGONFLYDOJI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLDRAGONFLYDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLDRAGONFLYDOJI_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLDRAGONFLYDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -17136,6 +17447,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLENGULFING_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLENGULFING_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -17152,14 +17464,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLENGULFING_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLENGULFING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLENGULFING_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLENGULFING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -17394,6 +17712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLEVENINGDOJISTAR_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLEVENINGDOJISTAR_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, optInPenetration, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -17410,14 +17729,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLEVENINGDOJISTAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLEVENINGDOJISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLEVENINGDOJISTAR_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLEVENINGDOJISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -17652,6 +17977,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLEVENINGSTAR_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLEVENINGSTAR_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, optInPenetration, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -17668,14 +17994,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLEVENINGSTAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLEVENINGSTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLEVENINGSTAR_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLEVENINGSTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -17909,6 +18241,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLGAPSIDESIDEWHITE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLGAPSIDESIDEWHITE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -17925,14 +18258,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLGAPSIDESIDEWHITE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLGAPSIDESIDEWHITE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLGAPSIDESIDEWHITE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLGAPSIDESIDEWHITE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -18166,6 +18505,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLGRAVESTONEDOJI_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLGRAVESTONEDOJI_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -18182,14 +18522,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLGRAVESTONEDOJI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLGRAVESTONEDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLGRAVESTONEDOJI_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLGRAVESTONEDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -18423,6 +18769,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHAMMER_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHAMMER_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -18439,14 +18786,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHAMMER_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHAMMER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHAMMER_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHAMMER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -18680,6 +19033,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHANGINGMAN_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHANGINGMAN_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -18696,14 +19050,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHANGINGMAN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHANGINGMAN_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHANGINGMAN_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHANGINGMAN_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -18937,6 +19297,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHARAMI_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHARAMI_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -18953,14 +19314,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHARAMI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHARAMI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHARAMI_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHARAMI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -19194,6 +19561,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHARAMICROSS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHARAMICROSS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -19210,14 +19578,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHARAMICROSS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHARAMICROSS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHARAMICROSS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHARAMICROSS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -19451,6 +19825,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHIGHWAVE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHIGHWAVE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -19467,14 +19842,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHIGHWAVE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHIGHWAVE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHIGHWAVE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHIGHWAVE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -19708,6 +20089,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHIKKAKE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHIKKAKE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -19724,14 +20106,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHIKKAKE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHIKKAKE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHIKKAKE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHIKKAKE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -19965,6 +20353,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHIKKAKEMOD_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHIKKAKEMOD_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -19981,14 +20370,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHIKKAKEMOD_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHIKKAKEMOD_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHIKKAKEMOD_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHIKKAKEMOD_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -20222,6 +20617,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLHOMINGPIGEON_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLHOMINGPIGEON_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -20238,14 +20634,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLHOMINGPIGEON_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLHOMINGPIGEON_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLHOMINGPIGEON_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLHOMINGPIGEON_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -20479,6 +20881,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLIDENTICAL3CROWS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLIDENTICAL3CROWS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -20495,14 +20898,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLIDENTICAL3CROWS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLIDENTICAL3CROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLIDENTICAL3CROWS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLIDENTICAL3CROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -20736,6 +21145,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLINNECK_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLINNECK_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -20752,14 +21162,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLINNECK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLINNECK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLINNECK_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLINNECK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -20993,6 +21409,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLINVERTEDHAMMER_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLINVERTEDHAMMER_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -21009,14 +21426,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLINVERTEDHAMMER_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLINVERTEDHAMMER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLINVERTEDHAMMER_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLINVERTEDHAMMER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -21250,6 +21673,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLKICKING_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLKICKING_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -21266,14 +21690,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLKICKING_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLKICKING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLKICKING_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLKICKING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -21507,6 +21937,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLKICKINGBYLENGTH_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLKICKINGBYLENGTH_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -21523,14 +21954,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLKICKINGBYLENGTH_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLKICKINGBYLENGTH_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLKICKINGBYLENGTH_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLKICKINGBYLENGTH_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -21764,6 +22201,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLLADDERBOTTOM_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLLADDERBOTTOM_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -21780,14 +22218,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLLADDERBOTTOM_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLLADDERBOTTOM_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLLADDERBOTTOM_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLLADDERBOTTOM_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -22021,6 +22465,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLLONGLEGGEDDOJI_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLLONGLEGGEDDOJI_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -22037,14 +22482,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLLONGLEGGEDDOJI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLLONGLEGGEDDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLLONGLEGGEDDOJI_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLLONGLEGGEDDOJI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -22278,6 +22729,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLLONGLINE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLLONGLINE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -22294,14 +22746,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLLONGLINE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLLONGLINE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLLONGLINE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLLONGLINE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -22535,6 +22993,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLMARUBOZU_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLMARUBOZU_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -22551,14 +23010,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLMARUBOZU_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLMARUBOZU_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLMARUBOZU_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLMARUBOZU_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -22792,6 +23257,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLMATCHINGLOW_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLMATCHINGLOW_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -22808,14 +23274,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLMATCHINGLOW_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLMATCHINGLOW_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLMATCHINGLOW_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLMATCHINGLOW_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -23050,6 +23522,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLMATHOLD_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLMATHOLD_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, optInPenetration, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -23066,14 +23539,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLMATHOLD_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLMATHOLD_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLMATHOLD_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLMATHOLD_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -23308,6 +23787,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLMORNINGDOJISTAR_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLMORNINGDOJISTAR_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, optInPenetration, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -23324,14 +23804,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLMORNINGDOJISTAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLMORNINGDOJISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLMORNINGDOJISTAR_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLMORNINGDOJISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -23566,6 +24052,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLMORNINGSTAR_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLMORNINGSTAR_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, optInPenetration, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -23582,14 +24069,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLMORNINGSTAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLMORNINGSTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLMORNINGSTAR_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLMORNINGSTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -23823,6 +24316,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLONNECK_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLONNECK_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -23839,14 +24333,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLONNECK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLONNECK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLONNECK_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLONNECK_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -24080,6 +24580,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLPIERCING_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLPIERCING_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -24096,14 +24597,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLPIERCING_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLPIERCING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLPIERCING_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLPIERCING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -24337,6 +24844,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLRICKSHAWMAN_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLRICKSHAWMAN_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -24353,14 +24861,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLRICKSHAWMAN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLRICKSHAWMAN_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLRICKSHAWMAN_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLRICKSHAWMAN_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -24594,6 +25108,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLRISEFALL3METHODS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLRISEFALL3METHODS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -24610,14 +25125,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLRISEFALL3METHODS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLRISEFALL3METHODS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLRISEFALL3METHODS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLRISEFALL3METHODS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -24851,6 +25372,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLSEPARATINGLINES_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLSEPARATINGLINES_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -24867,14 +25389,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLSEPARATINGLINES_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLSEPARATINGLINES_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLSEPARATINGLINES_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLSEPARATINGLINES_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -25108,6 +25636,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLSHOOTINGSTAR_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLSHOOTINGSTAR_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -25124,14 +25653,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLSHOOTINGSTAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLSHOOTINGSTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLSHOOTINGSTAR_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLSHOOTINGSTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -25365,6 +25900,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLSHORTLINE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLSHORTLINE_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -25381,14 +25917,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLSHORTLINE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLSHORTLINE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLSHORTLINE_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLSHORTLINE_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -25622,6 +26164,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLSPINNINGTOP_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLSPINNINGTOP_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -25638,14 +26181,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLSPINNINGTOP_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLSPINNINGTOP_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLSPINNINGTOP_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLSPINNINGTOP_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -25879,6 +26428,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLSTALLEDPATTERN_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLSTALLEDPATTERN_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -25895,14 +26445,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLSTALLEDPATTERN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLSTALLEDPATTERN_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLSTALLEDPATTERN_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLSTALLEDPATTERN_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -26136,6 +26692,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLSTICKSANDWICH_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLSTICKSANDWICH_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -26152,14 +26709,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLSTICKSANDWICH_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLSTICKSANDWICH_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLSTICKSANDWICH_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLSTICKSANDWICH_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -26393,6 +26956,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLTAKURI_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLTAKURI_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -26409,14 +26973,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLTAKURI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLTAKURI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLTAKURI_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLTAKURI_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -26650,6 +27220,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLTASUKIGAP_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLTASUKIGAP_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -26666,14 +27237,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLTASUKIGAP_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLTASUKIGAP_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLTASUKIGAP_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLTASUKIGAP_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -26907,6 +27484,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLTHRUSTING_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLTHRUSTING_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -26923,14 +27501,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLTHRUSTING_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLTHRUSTING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLTHRUSTING_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLTHRUSTING_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -27164,6 +27748,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLTRISTAR_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLTRISTAR_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -27180,14 +27765,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLTRISTAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLTRISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLTRISTAR_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLTRISTAR_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -27421,6 +28012,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLUNIQUE3RIVER_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLUNIQUE3RIVER_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -27437,14 +28029,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLUNIQUE3RIVER_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLUNIQUE3RIVER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLUNIQUE3RIVER_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLUNIQUE3RIVER_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -27678,6 +28276,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLUPSIDEGAP2CROWS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLUPSIDEGAP2CROWS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -27694,14 +28293,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLUPSIDEGAP2CROWS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLUPSIDEGAP2CROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLUPSIDEGAP2CROWS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLUPSIDEGAP2CROWS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -27935,6 +28540,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CDLXSIDEGAP3METHODS_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CDLXSIDEGAP3METHODS_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -27951,14 +28557,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CDLXSIDEGAP3METHODS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CDLXSIDEGAP3METHODS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CDLXSIDEGAP3METHODS_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_CDLXSIDEGAP3METHODS_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -28191,6 +28803,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CEIL_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CEIL_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -28207,14 +28820,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CEIL_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CEIL_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CEIL_Update(cA, sv_c[t], &ca0);
-                    TA_CEIL_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -28446,6 +29065,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CMF_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CMF_Open(&cA, sv_h, sv_l, sv_c, sv_v, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -28462,14 +29082,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CMF_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CMF_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CMF_Update(cA, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &ca0);
-                    TA_CMF_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -28703,6 +29329,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CMO_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CMO_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -28719,14 +29346,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CMO_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CMO_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CMO_Update(cA, sv_c[t], &ca0);
-                    TA_CMO_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -28959,6 +29592,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CMOU_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CMOU_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -28975,14 +29609,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CMOU_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CMOU_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CMOU_Update(cA, sv_c[t], &ca0);
-                    TA_CMOU_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -29216,6 +29856,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_COPPOCK_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_COPPOCK_Open(&cA, sv_c, cp0, optInWMAPeriod, optInROC1Period, optInROC2Period, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -29232,14 +29873,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_COPPOCK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_COPPOCK_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_COPPOCK_Update(cA, sv_c[t], &ca0);
-                    TA_COPPOCK_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -29471,6 +30118,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CORREL_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CORREL_Open(&cA, sv_c, sv_v, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -29487,14 +30135,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CORREL_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CORREL_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CORREL_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_CORREL_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -29725,6 +30379,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_COS_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_COS_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -29741,14 +30396,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_COS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_COS_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_COS_Update(cA, sv_c[t], &ca0);
-                    TA_COS_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -29979,6 +30640,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_COSH_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_COSH_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -29995,14 +30657,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_COSH_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_COSH_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_COSH_Update(cA, sv_c[t], &ca0);
-                    TA_COSH_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -30238,6 +30906,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CRSI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CRSI_Open(&cA, sv_c, cp0, optInTimePeriod, optInStreakPeriod, optInRankPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -30254,14 +30923,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CRSI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CRSI_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CRSI_Update(cA, sv_c[t], &ca0);
-                    TA_CRSI_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -30494,6 +31169,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CTI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CTI_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -30510,14 +31186,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CTI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CTI_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CTI_Update(cA, sv_c[t], &ca0);
-                    TA_CTI_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -30748,6 +31430,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CUMSUM_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CUMSUM_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -30764,14 +31447,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CUMSUM_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CUMSUM_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CUMSUM_Update(cA, sv_c[t], &ca0);
-                    TA_CUMSUM_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -31006,6 +31695,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_CVI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_CVI_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, optInROCPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -31022,14 +31712,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_CVI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_CVI_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_CVI_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_CVI_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -31264,6 +31960,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_DEMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_DEMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -31280,14 +31977,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_DEMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_DEMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_DEMA_Update(cA, sv_c[t], &ca0);
-                    TA_DEMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -31519,6 +32222,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_DIV_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_DIV_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -31535,14 +32239,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_DIV_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_DIV_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_DIV_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_DIV_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -31799,6 +32509,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_DONCHIAN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_DONCHIAN_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -31817,20 +32530,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_DONCHIAN_Update(cB, sv_h[t], sv_l[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_DONCHIAN_Update(cA, sv_h[t], sv_l[t], &ca0, &ca1, &ca2);
-                    TA_DONCHIAN_Update(cB, sv_h[t], sv_l[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -32066,6 +32791,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_DPO_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_DPO_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -32082,14 +32808,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_DPO_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_DPO_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_DPO_Update(cA, sv_c[t], &ca0);
-                    TA_DPO_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -32323,6 +33055,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_DX_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_DX_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -32339,14 +33072,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_DX_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_DX_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_DX_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_DX_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -32579,6 +33318,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_EFI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_EFI_Open(&cA, sv_c, sv_v, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -32595,14 +33335,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_EFI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_EFI_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_EFI_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_EFI_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -32836,6 +33582,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_EMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_EMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -32852,14 +33599,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_EMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_EMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_EMA_Update(cA, sv_c[t], &ca0);
-                    TA_EMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -33092,6 +33845,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ER_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ER_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -33108,14 +33862,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ER_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ER_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ER_Update(cA, sv_c[t], &ca0);
-                    TA_ER_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -33365,6 +34125,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ERI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ERI_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -33382,17 +34144,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ERI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ERI_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1);
-                    TA_ERI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -33626,6 +34397,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_EXP_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_EXP_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -33642,14 +34414,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_EXP_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_EXP_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_EXP_Update(cA, sv_c[t], &ca0);
-                    TA_EXP_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -33880,6 +34658,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_FLOOR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_FLOOR_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -33896,14 +34675,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_FLOOR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_FLOOR_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_FLOOR_Update(cA, sv_c[t], &ca0);
-                    TA_FLOOR_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -34135,6 +34920,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_FOSC_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_FOSC_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -34151,14 +34937,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_FOSC_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_FOSC_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_FOSC_Update(cA, sv_c[t], &ca0);
-                    TA_FOSC_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -34400,6 +35192,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_FRACTAL_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int ca1 = 0; int cb0 = 0; int cb1 = 0; int cv0 = 0; int cv1 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
+            int *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_FRACTAL_Open(&cA, sv_h, sv_l, cp0, optInLeftBars, optInRightBars, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -34417,17 +35211,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (cv1 != ca1) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_FRACTAL_Update(cB, sv_h[t], sv_l[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( cb1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_FRACTAL_Update(cA, sv_h[t], sv_l[t], &ca0, &ca1);
-                    TA_FRACTAL_Update(cB, sv_h[t], sv_l[t], &cb0, &cb1);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( ca1 != cb1 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca1 != fk1[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -34696,6 +35499,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double ca3 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cb3 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0; double cv3 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
+            double *fk3 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HA_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0, &ca1, &ca2, &ca3) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -34715,23 +35522,38 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv3, ca3)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk3 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HA_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2, &cb3);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk3[t] = cb3;
+                    if( sv_xtier_ne(cb3, sv_b3[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HA_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1, &ca2, &ca3);
-                    TA_HA_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2, &cb3);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca3, cb3) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca3, fk3[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca3, sv_b3[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb3, sv_b3[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
+                free( fk3 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -34970,6 +35792,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -34986,14 +35809,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_HMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HMA_Update(cA, sv_c[t], &ca0);
-                    TA_HMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -35226,6 +36055,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_DCPERIOD_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HT_DCPERIOD_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -35242,14 +36072,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_HT_DCPERIOD_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HT_DCPERIOD_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HT_DCPERIOD_Update(cA, sv_c[t], &ca0);
-                    TA_HT_DCPERIOD_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -35483,6 +36319,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_DCPHASE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HT_DCPHASE_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -35499,14 +36336,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_HT_DCPHASE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HT_DCPHASE_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HT_DCPHASE_Update(cA, sv_c[t], &ca0);
-                    TA_HT_DCPHASE_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -35756,6 +36599,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_PHASOR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HT_PHASOR_Open(&cA, sv_c, cp0, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -35773,17 +36618,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HT_PHASOR_Update(cB, sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HT_PHASOR_Update(cA, sv_c[t], &ca0, &ca1);
-                    TA_HT_PHASOR_Update(cB, sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -36035,6 +36889,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_SINE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HT_SINE_Open(&cA, sv_c, cp0, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -36052,17 +36908,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HT_SINE_Update(cB, sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HT_SINE_Update(cA, sv_c[t], &ca0, &ca1);
-                    TA_HT_SINE_Update(cB, sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -36298,6 +37163,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_TRENDLINE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HT_TRENDLINE_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -36314,14 +37180,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_HT_TRENDLINE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HT_TRENDLINE_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HT_TRENDLINE_Update(cA, sv_c[t], &ca0);
-                    TA_HT_TRENDLINE_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -36548,6 +37420,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_HT_TRENDMODE_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_HT_TRENDMODE_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -36564,14 +37437,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_HT_TRENDMODE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HT_TRENDMODE_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_HT_TRENDMODE_Update(cA, sv_c[t], &ca0);
-                    TA_HT_TRENDMODE_Update(cB, sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -36804,6 +37683,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_IMI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_IMI_Open(&cA, sv_o, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -36820,14 +37700,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_IMI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_IMI_Update(cB, sv_o[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_IMI_Update(cA, sv_o[t], sv_c[t], &ca0);
-                    TA_IMI_Update(cB, sv_o[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -37061,6 +37947,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_KAMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_KAMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -37077,14 +37964,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_KAMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_KAMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_KAMA_Update(cA, sv_c[t], &ca0);
-                    TA_KAMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -37348,6 +38241,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_KC_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_KC_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, optInATRPeriod, optInNbDev, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -37366,20 +38262,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_KC_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_KC_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1, &ca2);
-                    TA_KC_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -37656,6 +38564,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_KDJ_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_KDJ_Open(&cA, sv_h, sv_l, sv_c, cp0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -37674,20 +38585,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_KDJ_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_KDJ_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1, &ca2);
-                    TA_KDJ_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -37928,6 +38851,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_KURTOSIS_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_KURTOSIS_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -37944,14 +38868,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_KURTOSIS_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_KURTOSIS_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_KURTOSIS_Update(cA, sv_c[t], &ca0);
-                    TA_KURTOSIS_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -38183,6 +39113,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_LINEARREG_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_LINEARREG_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -38199,14 +39130,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_LINEARREG_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_LINEARREG_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_LINEARREG_Update(cA, sv_c[t], &ca0);
-                    TA_LINEARREG_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -38438,6 +39375,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_LINEARREG_ANGLE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_LINEARREG_ANGLE_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -38454,14 +39392,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_LINEARREG_ANGLE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_LINEARREG_ANGLE_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_LINEARREG_ANGLE_Update(cA, sv_c[t], &ca0);
-                    TA_LINEARREG_ANGLE_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -38693,6 +39637,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_LINEARREG_INTERCEPT_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_LINEARREG_INTERCEPT_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -38709,14 +39654,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_LINEARREG_INTERCEPT_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_LINEARREG_INTERCEPT_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_LINEARREG_INTERCEPT_Update(cA, sv_c[t], &ca0);
-                    TA_LINEARREG_INTERCEPT_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -38948,6 +39899,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_LINEARREG_SLOPE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_LINEARREG_SLOPE_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -38964,14 +39916,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_LINEARREG_SLOPE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_LINEARREG_SLOPE_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_LINEARREG_SLOPE_Update(cA, sv_c[t], &ca0);
-                    TA_LINEARREG_SLOPE_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -39202,6 +40160,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_LN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_LN_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -39218,14 +40177,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_LN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_LN_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_LN_Update(cA, sv_c[t], &ca0);
-                    TA_LN_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -39456,6 +40421,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_LOG10_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_LOG10_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -39472,14 +40438,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_LOG10_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_LOG10_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_LOG10_Update(cA, sv_c[t], &ca0);
-                    TA_LOG10_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -39722,6 +40694,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MA_Open(&cA, sv_c, cp0, optInTimePeriod, optInMAType, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -39738,14 +40711,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MA_Update(cA, sv_c[t], &ca0);
-                    TA_MA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -40011,6 +40990,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MACD_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MACD_Open(&cA, sv_c, cp0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -40029,20 +41011,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MACD_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MACD_Update(cA, sv_c[t], &ca0, &ca1, &ca2);
-                    TA_MACD_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -40319,6 +41313,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MACDEXT_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MACDEXT_Open(&cA, sv_c, cp0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -40337,20 +41334,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MACDEXT_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MACDEXT_Update(cA, sv_c[t], &ca0, &ca1, &ca2);
-                    TA_MACDEXT_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -40618,6 +41627,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MACDFIX_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
+            double *fk2 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MACDFIX_Open(&cA, sv_c, cp0, optInSignalPeriod, &ca0, &ca1, &ca2) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -40636,20 +41648,32 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk2 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MACDFIX_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk2[t] = cb2;
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MACDFIX_Update(cA, sv_c[t], &ca0, &ca1, &ca2);
-                    TA_MACDFIX_Update(cB, sv_c[t], &cb0, &cb1, &cb2);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca2, fk2[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
+                free( fk2 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -40905,6 +41929,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MAMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MAMA_Open(&cA, sv_c, cp0, optInFastLimit, optInSlowLimit, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -40922,17 +41948,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MAMA_Update(cB, sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MAMA_Update(cA, sv_c[t], &ca0, &ca1);
-                    TA_MAMA_Update(cB, sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -41166,6 +42201,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MARKETFI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MARKETFI_Open(&cA, sv_h, sv_l, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -41182,14 +42218,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MARKETFI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MARKETFI_Update(cB, sv_h[t], sv_l[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MARKETFI_Update(cA, sv_h[t], sv_l[t], sv_v[t], &ca0);
-                    TA_MARKETFI_Update(cB, sv_h[t], sv_l[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -41424,6 +42466,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MASSI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MASSI_Open(&cA, sv_h, sv_l, cp0, optInFastPeriod, optInSlowPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -41440,14 +42483,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MASSI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MASSI_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MASSI_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_MASSI_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -41693,6 +42742,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MAVP_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MAVP_Open(&cA, sv_c, sv_v, cp0, optInMinPeriod, optInMaxPeriod, optInMAType, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -41709,14 +42759,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MAVP_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MAVP_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MAVP_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_MAVP_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -41953,6 +43009,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MAX_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MAX_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -41969,14 +43026,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MAX_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MAX_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MAX_Update(cA, sv_c[t], &ca0);
-                    TA_MAX_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -42201,6 +43264,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MAXINDEX_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MAXINDEX_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -42217,14 +43281,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MAXINDEX_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MAXINDEX_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MAXINDEX_Update(cA, sv_c[t], &ca0);
-                    TA_MAXINDEX_Update(cB, sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -42456,6 +43526,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MEDIAN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MEDIAN_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -42472,14 +43543,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MEDIAN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MEDIAN_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MEDIAN_Update(cA, sv_c[t], &ca0);
-                    TA_MEDIAN_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -42710,6 +43787,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MEDPRICE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MEDPRICE_Open(&cA, sv_h, sv_l, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -42726,14 +43804,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MEDPRICE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MEDPRICE_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MEDPRICE_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_MEDPRICE_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -42965,6 +44049,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MFI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MFI_Open(&cA, sv_h, sv_l, sv_c, sv_v, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -42981,14 +44066,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MFI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MFI_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MFI_Update(cA, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &ca0);
-                    TA_MFI_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -43220,6 +44311,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MIDPOINT_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MIDPOINT_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -43236,14 +44328,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MIDPOINT_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MIDPOINT_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MIDPOINT_Update(cA, sv_c[t], &ca0);
-                    TA_MIDPOINT_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -43475,6 +44573,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MIDPRICE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MIDPRICE_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -43491,14 +44590,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MIDPRICE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MIDPRICE_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MIDPRICE_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_MIDPRICE_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -43730,6 +44835,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MIN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MIN_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -43746,14 +44852,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MIN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MIN_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MIN_Update(cA, sv_c[t], &ca0);
-                    TA_MIN_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -43978,6 +45090,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MININDEX_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int cb0 = 0; int cv0 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MININDEX_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -43994,14 +45107,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MININDEX_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MININDEX_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MININDEX_Update(cA, sv_c[t], &ca0);
-                    TA_MININDEX_Update(cB, sv_c[t], &cb0);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -44249,6 +45368,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MINMAX_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MINMAX_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -44266,17 +45387,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MINMAX_Update(cB, sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MINMAX_Update(cA, sv_c[t], &ca0, &ca1);
-                    TA_MINMAX_Update(cB, sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -44519,6 +45649,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MINMAXINDEX_Stream *cA = NULL, *cB = NULL;
             int ca0 = 0; int ca1 = 0; int cb0 = 0; int cb1 = 0; int cv0 = 0; int cv1 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            int *fk0 = NULL;
+            int *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MINMAXINDEX_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -44536,17 +45668,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (cv1 != ca1) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MINMAXINDEX_Update(cB, sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( cb1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MINMAXINDEX_Update(cA, sv_c[t], &ca0, &ca1);
-                    TA_MINMAXINDEX_Update(cB, sv_c[t], &cb0, &cb1);
-                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != fk0[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( ca1 != cb1 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca1 != fk1[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -44782,6 +45923,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MINUS_DI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MINUS_DI_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -44798,14 +45940,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MINUS_DI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MINUS_DI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MINUS_DI_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_MINUS_DI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -45040,6 +46188,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MINUS_DM_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MINUS_DM_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -45056,14 +46205,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MINUS_DM_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MINUS_DM_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MINUS_DM_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_MINUS_DM_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -45296,6 +46451,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MOM_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MOM_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -45312,14 +46468,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MOM_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MOM_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MOM_Update(cA, sv_c[t], &ca0);
-                    TA_MOM_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -45550,6 +46712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_MULT_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_MULT_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -45566,14 +46729,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_MULT_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_MULT_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_MULT_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_MULT_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -45807,6 +46976,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_NATR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_NATR_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -45823,14 +46993,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_NATR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_NATR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_NATR_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_NATR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -46062,6 +47238,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_NVI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_NVI_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -46078,14 +47255,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_NVI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_NVI_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_NVI_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_NVI_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -46316,6 +47499,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_OBV_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_OBV_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -46332,14 +47516,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_OBV_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_OBV_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_OBV_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_OBV_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -46572,6 +47762,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PERCENTILE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PERCENTILE_Open(&cA, sv_c, cp0, optInTimePeriod, optInPercentile, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -46588,14 +47779,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PERCENTILE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PERCENTILE_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PERCENTILE_Update(cA, sv_c[t], &ca0);
-                    TA_PERCENTILE_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -46827,6 +48024,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PERCENTRANK_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PERCENTRANK_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -46843,14 +48041,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PERCENTRANK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PERCENTRANK_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PERCENTRANK_Update(cA, sv_c[t], &ca0);
-                    TA_PERCENTRANK_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -47084,6 +48288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PLUS_DI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PLUS_DI_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -47100,14 +48305,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PLUS_DI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PLUS_DI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PLUS_DI_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_PLUS_DI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -47342,6 +48553,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PLUS_DM_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PLUS_DM_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -47358,14 +48570,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PLUS_DM_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PLUS_DM_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PLUS_DM_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_PLUS_DM_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -47610,6 +48828,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PPO_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PPO_Open(&cA, sv_c, cp0, optInFastPeriod, optInSlowPeriod, optInMAType, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -47626,14 +48845,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PPO_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PPO_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PPO_Update(cA, sv_c[t], &ca0);
-                    TA_PPO_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -47869,6 +49094,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PVI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PVI_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -47885,14 +49111,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PVI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PVI_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PVI_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_PVI_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -48136,6 +49368,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PVO_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PVO_Open(&cA, sv_v, cp0, optInFastPeriod, optInSlowPeriod, optInMAType, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -48152,14 +49385,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PVO_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PVO_Update(cB, sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PVO_Update(cA, sv_v[t], &ca0);
-                    TA_PVO_Update(cB, sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -48395,6 +49634,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_PVT_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_PVT_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -48411,14 +49651,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_PVT_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PVT_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_PVT_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_PVT_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -48650,6 +49896,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_QSTICK_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_QSTICK_Open(&cA, sv_o, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -48666,14 +49913,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_QSTICK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_QSTICK_Update(cB, sv_o[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_QSTICK_Update(cA, sv_o[t], sv_c[t], &ca0);
-                    TA_QSTICK_Update(cB, sv_o[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -48907,6 +50160,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_RMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_RMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -48923,14 +50177,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_RMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_RMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_RMA_Update(cA, sv_c[t], &ca0);
-                    TA_RMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -49163,6 +50423,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ROC_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ROC_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -49179,14 +50440,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ROC_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ROC_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ROC_Update(cA, sv_c[t], &ca0);
-                    TA_ROC_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -49418,6 +50685,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ROCP_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ROCP_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -49434,14 +50702,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ROCP_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ROCP_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ROCP_Update(cA, sv_c[t], &ca0);
-                    TA_ROCP_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -49673,6 +50947,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ROCR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ROCR_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -49689,14 +50964,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ROCR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ROCR_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ROCR_Update(cA, sv_c[t], &ca0);
-                    TA_ROCR_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -49928,6 +51209,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ROCR100_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ROCR100_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -49944,14 +51226,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ROCR100_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ROCR100_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ROCR100_Update(cA, sv_c[t], &ca0);
-                    TA_ROCR100_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -50185,6 +51473,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_RSI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_RSI_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -50201,14 +51490,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_RSI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_RSI_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_RSI_Update(cA, sv_c[t], &ca0);
-                    TA_RSI_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -50444,6 +51739,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_RVI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_RVI_Open(&cA, sv_c, cp0, optInTimePeriod, optInStdDevPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -50460,14 +51756,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_RVI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_RVI_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_RVI_Update(cA, sv_c[t], &ca0);
-                    TA_RVI_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -50703,6 +52005,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_RVIR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_RVIR_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, optInStdDevPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -50719,14 +52022,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_RVIR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_RVIR_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_RVIR_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_RVIR_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -50959,6 +52268,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_RVOL_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_RVOL_Open(&cA, sv_v, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -50975,14 +52285,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_RVOL_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_RVOL_Update(cB, sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_RVOL_Update(cA, sv_v[t], &ca0);
-                    TA_RVOL_Update(cB, sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -51215,6 +52531,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SAR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SAR_Open(&cA, sv_h, sv_l, cp0, optInAcceleration, optInMaximum, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -51231,14 +52548,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SAR_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SAR_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_SAR_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -51477,6 +52800,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SAREXT_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SAREXT_Open(&cA, sv_h, sv_l, cp0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -51493,14 +52817,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SAREXT_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SAREXT_Update(cB, sv_h[t], sv_l[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SAREXT_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_SAREXT_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -51731,6 +53061,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SIN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SIN_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -51747,14 +53078,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SIN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SIN_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SIN_Update(cA, sv_c[t], &ca0);
-                    TA_SIN_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -51985,6 +53322,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SINH_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SINH_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -52001,14 +53339,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SINH_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SINH_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SINH_Update(cA, sv_c[t], &ca0);
-                    TA_SINH_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -52240,6 +53584,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -52256,14 +53601,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SMA_Update(cA, sv_c[t], &ca0);
-                    TA_SMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -52516,6 +53867,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SMI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SMI_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -52533,17 +53886,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SMI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SMI_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1);
-                    TA_SMI_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -52777,6 +54139,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SQRT_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SQRT_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -52793,14 +54156,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SQRT_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SQRT_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SQRT_Update(cA, sv_c[t], &ca0);
-                    TA_SQRT_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -53033,6 +54402,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_STDDEV_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_STDDEV_Open(&cA, sv_c, cp0, optInTimePeriod, optInNbDev, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -53049,14 +54419,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_STDDEV_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_STDDEV_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_STDDEV_Update(cA, sv_c[t], &ca0);
-                    TA_STDDEV_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -53318,6 +54694,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_STOCH_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_STOCH_Open(&cA, sv_h, sv_l, sv_c, cp0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -53335,17 +54713,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_STOCH_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_STOCH_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1);
-                    TA_STOCH_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -53612,6 +54999,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_STOCHF_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_STOCHF_Open(&cA, sv_h, sv_l, sv_c, cp0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -53629,17 +55018,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_STOCHF_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_STOCHF_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1);
-                    TA_STOCHF_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -53909,6 +55307,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_STOCHRSI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_STOCHRSI_Open(&cA, sv_c, cp0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -53926,17 +55326,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_STOCHRSI_Update(cB, sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_STOCHRSI_Update(cA, sv_c[t], &ca0, &ca1);
-                    TA_STOCHRSI_Update(cB, sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -54175,6 +55584,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SUB_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SUB_Open(&cA, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -54191,14 +55601,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SUB_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SUB_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SUB_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_SUB_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -54430,6 +55846,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SUM_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SUM_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -54446,14 +55863,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_SUM_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SUM_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SUM_Update(cA, sv_c[t], &ca0);
-                    TA_SUM_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -54697,6 +56120,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_SUPERTREND_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; int ca1 = 0; double cb0 = 0.0; int cb1 = 0; double cv0 = 0.0; int cv1 = 0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            int *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_SUPERTREND_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, optInMultiplier, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -54714,17 +56139,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (cv1 != ca1) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (int *)malloc( sizeof(int) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_SUPERTREND_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( cb1 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_SUPERTREND_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1);
-                    TA_SUPERTREND_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( ca1 != cb1 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca1 != fk1[t] ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( ca1 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( cb1 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -54962,6 +56396,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_T3_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_T3_Open(&cA, sv_c, cp0, optInTimePeriod, optInVFactor, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -54978,14 +56413,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_T3_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_T3_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_T3_Update(cA, sv_c[t], &ca0);
-                    TA_T3_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -55217,6 +56658,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TAN_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TAN_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -55233,14 +56675,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TAN_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TAN_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TAN_Update(cA, sv_c[t], &ca0);
-                    TA_TAN_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -55471,6 +56919,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TANH_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TANH_Open(&cA, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -55487,14 +56936,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TANH_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TANH_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TANH_Update(cA, sv_c[t], &ca0);
-                    TA_TANH_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -55728,6 +57183,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TEMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TEMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -55744,14 +57200,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TEMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TEMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TEMA_Update(cA, sv_c[t], &ca0);
-                    TA_TEMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -55983,6 +57445,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TRANGE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TRANGE_Open(&cA, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -55999,14 +57462,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TRANGE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TRANGE_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TRANGE_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_TRANGE_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -56238,6 +57707,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TRIMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TRIMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -56254,14 +57724,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TRIMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TRIMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TRIMA_Update(cA, sv_c[t], &ca0);
-                    TA_TRIMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -56495,6 +57971,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TRIX_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TRIX_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -56511,14 +57988,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TRIX_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TRIX_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TRIX_Update(cA, sv_c[t], &ca0);
-                    TA_TRIX_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -56751,6 +58234,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TSF_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TSF_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -56767,14 +58251,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TSF_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TSF_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TSF_Update(cA, sv_c[t], &ca0);
-                    TA_TSF_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -57009,6 +58499,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TSI_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TSI_Open(&cA, sv_c, cp0, optInFirstPeriod, optInSecondPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -57025,14 +58516,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TSI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TSI_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TSI_Update(cA, sv_c[t], &ca0);
-                    TA_TSI_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -57264,6 +58761,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_TYPPRICE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_TYPPRICE_Open(&cA, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -57280,14 +58778,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_TYPPRICE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_TYPPRICE_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_TYPPRICE_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_TYPPRICE_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -57521,6 +59025,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ULTOSC_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ULTOSC_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -57537,14 +59042,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ULTOSC_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ULTOSC_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ULTOSC_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_ULTOSC_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -57777,6 +59288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_VAR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_VAR_Open(&cA, sv_c, cp0, optInTimePeriod, optInNbDev, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -57793,14 +59305,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_VAR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_VAR_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_VAR_Update(cA, sv_c[t], &ca0);
-                    TA_VAR_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -58032,6 +59550,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_VHF_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_VHF_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -58048,14 +59567,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_VHF_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_VHF_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_VHF_Update(cA, sv_c[t], &ca0);
-                    TA_VHF_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -58303,6 +59828,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_VORTEX_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double ca1 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cv0 = 0.0; double cv1 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
+            double *fk1 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_VORTEX_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -58320,17 +59847,26 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                     if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                if( cOk && !(fk1 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_VORTEX_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    fk1[t] = cb1;
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_VORTEX_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1);
-                    TA_VORTEX_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca1, fk1[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
+                free( fk1 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -58563,6 +60099,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_VWAP_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_VWAP_Open(&cA, sv_h, sv_l, sv_c, sv_v, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -58579,14 +60116,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_VWAP_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_VWAP_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_VWAP_Update(cA, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &ca0);
-                    TA_VWAP_Update(cB, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -58818,6 +60361,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_VWMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_VWMA_Open(&cA, sv_c, sv_v, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -58834,14 +60378,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_VWMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_VWMA_Update(cB, sv_c[t], sv_v[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_VWMA_Update(cA, sv_c[t], sv_v[t], &ca0);
-                    TA_VWMA_Update(cB, sv_c[t], sv_v[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -59072,6 +60622,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_WAD_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_WAD_Open(&cA, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -59088,14 +60639,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_WAD_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_WAD_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_WAD_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_WAD_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -59326,6 +60883,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_WCLPRICE_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_WCLPRICE_Open(&cA, sv_h, sv_l, sv_c, cp0, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -59342,14 +60900,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_WCLPRICE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_WCLPRICE_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_WCLPRICE_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_WCLPRICE_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -59581,6 +61145,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_WILLR_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_WILLR_Open(&cA, sv_h, sv_l, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -59597,14 +61162,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_WILLR_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_WILLR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_WILLR_Update(cA, sv_h[t], sv_l[t], sv_c[t], &ca0);
-                    TA_WILLR_Update(cB, sv_h[t], sv_l[t], sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -59836,6 +61407,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_WMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_WMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -59852,14 +61424,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_WMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_WMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_WMA_Update(cA, sv_c[t], &ca0);
-                    TA_WMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )
@@ -60093,6 +61671,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             TA_ZLEMA_Stream *cA = NULL, *cB = NULL;
             double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
             int cp0 = lb + 1, cmid, t, cOk = 1;
+            double *fk0 = NULL;
             if( cp0 <= svN - 1 )
             {
                 if( TA_ZLEMA_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
@@ -60109,14 +61688,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                     if( TA_ZLEMA_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
                     if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
                 }
+                if( cOk && !(fk0 = (double *)malloc( sizeof(double) * (size_t)svN )) ) { cOk = 0; cloneBad = "no memory for the fork's outputs"; }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_ZLEMA_Update(cB, sv_c[t], &cb0);
+                    fk0[t] = cb0;
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
                 for( t = cmid; cOk && t < svN; t++ )
                 {
                     TA_ZLEMA_Update(cA, sv_c[t], &ca0);
-                    TA_ZLEMA_Update(cB, sv_c[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_bitne(ca0, fk0[t]) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
                     if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
                 }
+                free( fk0 );
                 cloneChecked = 1; cloneLegs++;
                 if( !cOk ) cloneOk = 0;
                 if( cOk )

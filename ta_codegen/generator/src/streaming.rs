@@ -606,9 +606,10 @@ pub enum PeriodBankArg {
 /// once and scatters; a stream cannot know future periods, so it maintains a
 /// BANK of `maxPeriod - minPeriod + 1` streaming sub-MAs (one per possible
 /// period), advances them all in lockstep every bar, and outputs the one the
-/// current bar's clamped period selects. Reuses the callee's (`ma`) public
-/// stream — so it streams exactly the MATypes the callee streams (MAType_MAMA
-/// rejects at Open, as it does through MA's dispatch).
+/// current bar's clamped period selects. Reuses the callee's (`ma`) stream, so
+/// it streams exactly the MATypes the callee streams. The slots read their
+/// price history from one tape the bank keeps (#445); every other state a slot
+/// carries, a derived series included, is its own.
 #[derive(Debug)]
 pub struct PeriodBankPlan<'a> {
     pub func: &'a FuncDef,
@@ -3946,6 +3947,126 @@ pub fn analyze_period_bank<'a>(
     })
 }
 
+/// Every function a period bank steps through a tape frame (#445), by dir-name:
+/// each bank's callee and, when that callee dispatches, its streaming arms.
+///
+/// Derived from the corpus rather than declared, because the answer lives in two
+/// other functions' bodies (the bank's call and the dispatcher's switch), and
+/// the callee's definitions have to agree with what the caller emits.
+///
+/// # Panics
+/// When a member is a tier the tape frame does not render, reads more than one
+/// input, or keeps history of it that is not a set of pure lags.
+#[must_use]
+pub fn tape_set(
+    base_dir: &std::path::Path,
+    dirs: &[String],
+    lookup: &dyn CalleeLookup,
+) -> BTreeSet<String> {
+    // Every Registry built in a process asks, and the input tree does not change
+    // under a running generator.
+    static CACHE: std::sync::OnceLock<
+        std::sync::Mutex<std::collections::HashMap<std::path::PathBuf, BTreeSet<String>>>,
+    > = std::sync::OnceLock::new();
+    let key = base_dir.canonicalize().unwrap_or_else(|_| base_dir.to_path_buf());
+    let cache = CACHE.get_or_init(Default::default);
+    if let Some(set) = cache.lock().expect("tape set cache").get(&key) {
+        return set.clone();
+    }
+    let set = tape_set_with(dirs, lookup, &|dir: &str| {
+        let yaml = base_dir.join(dir).join(format!("{dir}.yaml"));
+        let src = base_dir.join(dir).join(format!("{dir}.c"));
+        if !yaml.exists() || !src.exists() {
+            return None;
+        }
+        let mut func = crate::parser::yaml::parse_yaml(&yaml);
+        let parsed = crate::parser::c_source::parse_c_source(&src);
+        crate::parser::c_source::wire_parsed_source(&mut func, &parsed);
+        Some(func)
+    });
+    cache.lock().expect("tape set cache").insert(key, set.clone());
+    set
+}
+
+/// [`tape_set`] over already-loaded definitions.
+#[must_use]
+pub fn tape_set_of(funcs: &[FuncDef]) -> BTreeSet<String> {
+    let dirs: Vec<String> = funcs.iter().map(|f| f.name.to_lowercase()).collect();
+    tape_set_with(&dirs, &FuncsLookup(funcs), &|dir: &str| {
+        funcs.iter().find(|f| f.name.eq_ignore_ascii_case(dir)).cloned()
+    })
+}
+
+fn tape_set_with(
+    dirs: &[String],
+    lookup: &dyn CalleeLookup,
+    load: &dyn Fn(&str) -> Option<FuncDef>,
+) -> BTreeSet<String> {
+    let mut set = BTreeSet::new();
+    for dir in dirs {
+        // The bank's shape starts with its YAML; only candidates pay for a parse.
+        if !lookup
+            .callee(dir)
+            .is_some_and(|s| s.streaming && s.n_inputs == 2 && s.n_outputs == 1)
+        {
+            continue;
+        }
+        let Some(func) = load(dir) else { continue };
+        let Ok(plan) = analyze_period_bank(&func, lookup) else {
+            continue;
+        };
+        let callee = load(&plan.callee)
+            .unwrap_or_else(|| panic!("{}: bank callee `{}` has no definition", func.name, plan.callee));
+        set.insert(plan.callee.clone());
+        let members = match validate_streamable(&callee, lookup) {
+            Ok(StreamPlan::Dispatch(dp)) => dp
+                .arms
+                .iter()
+                .filter(|a| a.supported && !a.callee.is_empty())
+                .map(|a| a.callee.clone())
+                .collect(),
+            _ => vec![plan.callee.clone()],
+        };
+        for member in members {
+            let def = load(&member)
+                .unwrap_or_else(|| panic!("{}: tape member `{member}` has no definition", func.name));
+            check_tape_member(&def, lookup);
+            set.insert(member);
+        }
+    }
+    set
+}
+
+/// A function stepped through a tape frame must be one the frame renders: a
+/// loop or dual-mode stream over one input whose history is pure lags of it.
+fn check_tape_member(func: &FuncDef, lookup: &dyn CalleeLookup) {
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let func: &FuncDef = &resolved;
+    let inputs = input_array_names(func);
+    let [input] = inputs.as_slice() else {
+        panic!("{}: a tape frame needs exactly one input, found {}", func.name, inputs.len());
+    };
+    let refused = |e: String| panic!("{}: a tape frame cannot render it: {e}", func.name);
+    match validate_streamable(func, lookup) {
+        Ok(StreamPlan::Loop(m)) => check_tape_eligible(&m, input).unwrap_or_else(refused),
+        Ok(StreamPlan::DualMode(dm)) => {
+            check_tape_eligible(&dm.mode_a, input).unwrap_or_else(refused);
+            check_tape_eligible(&dm.mode_b, input).unwrap_or_else(refused);
+        }
+        other => refused(format!("{:?} tier", other.map(|p| plan_tier_name(&p)))),
+    }
+}
+
+fn plan_tier_name(plan: &StreamPlan) -> &'static str {
+    match plan {
+        StreamPlan::Loop(_) => "loop",
+        StreamPlan::Dispatch(_) => "dispatch",
+        StreamPlan::Composed(_) => "composed",
+        StreamPlan::DualMode(_) => "dual-mode",
+        StreamPlan::PeriodBank(_) => "period-bank",
+    }
+}
+
 /// Whether this function's tier emits an `OpenAndFillInternal` — the
 /// startIdx-anchored one-pass open+fill a composed caller fuses its sub-call
 /// into (issue #192).
@@ -6275,6 +6396,108 @@ pub trait NameMap {
             Box::new(Expr::Var(self.extrema_mask())),
         )
     }
+    /// Set only when rendering a tape frame (#445): the history of one input is
+    /// read from a tape the caller owns instead of from the handle's buffers.
+    fn tape(&self) -> Option<TapeNames> {
+        None
+    }
+}
+
+/// The names of a tape frame's extra parameters. The caller owns one power-of-two
+/// tape of an input's recent bars; bar `b` sits at slot `b & mask`, `base` is the
+/// current bar's slot plus the tape size (so `base - lag` never goes negative),
+/// and a read at lag `L` is `buf[(base - L) & mask]`.
+#[derive(Debug, Clone)]
+pub struct TapeNames {
+    pub input: String,
+    pub buf: String,
+    pub base: String,
+    pub mask: String,
+}
+
+impl TapeNames {
+    /// The spelling every backend uses; only the input varies.
+    #[must_use]
+    pub fn new(input: &str) -> Self {
+        TapeNames {
+            input: input.to_string(),
+            buf: "tape".to_string(),
+            base: "tapeBase".to_string(),
+            mask: "tapeMask".to_string(),
+        }
+    }
+
+    fn read(&self, lag: Expr) -> Expr {
+        Expr::ArrayAccess(
+            self.buf.clone(),
+            Box::new(Expr::BinOp(
+                Box::new(Expr::BinOp(
+                    Box::new(Expr::Var(self.base.clone())),
+                    BinOp::Sub,
+                    Box::new(lag),
+                )),
+                BinOp::BitwiseAnd,
+                Box::new(Expr::Var(self.mask.clone())),
+            )),
+        )
+    }
+
+    fn current_slot(&self) -> Expr {
+        Expr::BinOp(
+            Box::new(Expr::Var(self.base.clone())),
+            BinOp::BitwiseAnd,
+            Box::new(Expr::Var(self.mask.clone())),
+        )
+    }
+}
+
+/// The rings a tape replaces: every ring over `input`. [`check_tape_eligible`]
+/// has confirmed each is a plain oldest-slot ring over that input alone, so its
+/// one read is the bar `ringCap` behind the current one.
+#[must_use]
+pub fn tape_covered_rings<'m>(model: &'m StreamModel, input: &str) -> Vec<&'m RingSpec> {
+    model
+        .rings()
+        .iter()
+        .filter(|r| r.arrays.iter().any(|a| a == input))
+        .collect()
+}
+
+/// The rescan windows a tape replaces: a read at offset `w` is the bar `w` behind
+/// the current one.
+#[must_use]
+pub fn tape_covered_windows<'m>(model: &'m StreamModel, input: &str) -> Vec<&'m WindowSpec> {
+    model
+        .windows()
+        .iter()
+        .filter(|w| w.arrays.iter().any(|a| a == input))
+        .collect()
+}
+
+/// Refuse a model whose history of `input` is not a set of pure lags of it.
+///
+/// # Errors
+/// Names the construct: an extrema automaton, a ring or window mixing inputs, or
+/// a ring with a back or forward offset. The tape frame renders none of them.
+pub fn check_tape_eligible(model: &StreamModel, input: &str) -> Result<(), String> {
+    let name = &model.func.name;
+    if model.extrema().is_some() {
+        return Err(format!("{name}: a tape frame cannot render the extrema automaton"));
+    }
+    for r in tape_covered_rings(model, input) {
+        if r.arrays.len() != 1 || r.back != 0 || r.fwd != 0 {
+            return Err(format!(
+                "{name}: ring `{}` is not a plain oldest-slot ring over `{input}` alone",
+                r.var
+            ));
+        }
+    }
+    for w in tape_covered_windows(model, input) {
+        if w.arrays.len() != 1 {
+            return Err(format!("{name}: window `{}` reads more than `{input}`", w.var));
+        }
+    }
+    Ok(())
 }
 
 /// Drop the batch body's own identity branch from an Open transcription: the
@@ -6414,10 +6637,14 @@ fn identity_branch(model: &StreamModel, names: &dyn NameMap, retain: bool) -> Op
 pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<Statement>, String> {
     let dropped = model.dropped_vars();
     let state_names = transition_state_names(model);
+    let tape = names.tape();
+    if let Some(t) = &tape {
+        check_tape_eligible(model, &t.input)?;
+    }
 
     let rewritten = rewrite_stmts(
         &model.steady_stmts,
-        &|e| rewrite_expr_for_transition(e, model, names, &state_names),
+        &|e| rewrite_expr_for_transition(e, model, names, &state_names, tape.as_ref()),
         &|s| {
             // In-loop VarDecls: the flattened step declares all temps at the
             // top, so re-declaring here would shadow (and mid-body decls are
@@ -6442,7 +6669,8 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     // param==1 identity short-circuit, mirroring the batch's explicit path
     // (bit-exact: both sides copy the input). Skipped when the enclosing
     // surface emits it above this model — see [`StreamModel::identity_hoisted`].
-    let identity_branch = if model.identity_hoisted {
+    // A tape frame's caller is a dispatch that owns the identity path.
+    let identity_branch = if model.identity_hoisted || tape.is_some() {
         None
     } else {
         identity_step_branch(model, names)
@@ -6463,7 +6691,7 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     }
 
     let mut out = rewritten;
-    insert_transition_prologue(&mut out, model, names, identity_branch);
+    insert_transition_prologue(&mut out, model, names, identity_branch, tape.as_ref());
     // Previous-output feedback: refresh lastOut_* AFTER the body computed
     // this bar's output (reads of out[idx-1] were rewritten to the state
     // field, which still held the prior bar's value during the body).
@@ -6551,13 +6779,18 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     // position advances with the conditional-reset idiom (house style; a
     // modulo costs ~10 cycles on ARM). Order preserved vs the batch reads
     // above: reads happened on the OLD slot contents.
+    let taped = |arrays: &[String]| tape.as_ref().is_some_and(|t| arrays.contains(&t.input));
     for ring in model.rings() {
-        push_ring_advance(&mut out, ring, names);
+        if !taped(&ring.arrays) {
+            push_ring_advance(&mut out, ring, names);
+        }
     }
     // Rescan windows: the current bar was written at `pos` before the body;
     // advance the position for the next update.
     for win in model.windows() {
-        push_window_advance(&mut out, win, names);
+        if !taped(&win.arrays) {
+            push_window_advance(&mut out, win, names);
+        }
     }
     // Cursor-parity flip: this bar's `cursor % 2` was consumed by the branch
     // predicate; advance to the next bar's parity.
@@ -6631,7 +6864,9 @@ fn insert_transition_prologue(
     model: &StreamModel,
     names: &dyn NameMap,
     identity_branch: Option<Statement>,
+    tape: Option<&TapeNames>,
 ) {
+    let taped = |arrays: &[String]| tape.is_some_and(|t| arrays.contains(&t.input));
     if let Some(ex) = model.extrema() {
         for arr in ex.arrays.iter().rev() {
             out.insert(
@@ -6648,11 +6883,17 @@ fn insert_transition_prologue(
         }
     }
     for win in model.windows().iter().rev() {
+        if taped(&win.arrays) {
+            continue;
+        }
         for arr in win.arrays.iter().rev() {
             out.insert(0, window_prewrite(win, arr, names));
         }
     }
     for ring in model.rings().iter().rev() {
+        if taped(&ring.arrays) {
+            continue;
+        }
         if ring.back > 0 {
             // Absolute-mod layout: slot `pos` (== bar index % cap) holds the
             // current bar so the runtime-lag-0 case reads it through the
@@ -7342,6 +7583,7 @@ fn rewrite_expr_for_transition(
     model: &StreamModel,
     names: &dyn NameMap,
     state_names: &BTreeSet<String>,
+    tape: Option<&TapeNames>,
 ) -> Expr {
     match e {
         Expr::ArrayAccess(n, idx)
@@ -7371,6 +7613,7 @@ fn rewrite_expr_for_transition(
             window_slot_read(n, idx, model, names).unwrap_or(e)
         }
         Expr::ArrayAccess(n, idx) if model.bar_inputs.contains(&n) => {
+            let tape = tape.filter(|t| t.input == n);
             match classify_input_index(&idx, &model.cursor) {
                 InputIndex::Current => Expr::Var(names.bar(&n)),
                 InputIndex::Lag(k) => Expr::Var(names.state(&StreamModel::lag_field(&n, k))),
@@ -7378,7 +7621,9 @@ fn rewrite_expr_for_transition(
                     if model.rings().iter().any(|r| r.var == v) =>
                 {
                     let ring = model.rings().iter().find(|r| r.var == v).unwrap();
-                    if ring.back > 0 {
+                    if let Some(t) = tape {
+                        t.read(Expr::Var(names.ring_cap(&v)))
+                    } else if ring.back > 0 {
                         ring_offset_read(ring, &n, Some(0), None, names)
                     } else {
                         // Oldest slot of the trailing window: ring[pos].
@@ -7399,6 +7644,15 @@ fn rewrite_expr_for_transition(
                 {
                     let ring = model.rings().iter().find(|r| r.var == v).unwrap();
                     ring_offset_read(ring, &n, None, Some(Expr::Var(w)), names)
+                }
+                InputIndex::WindowVar(w0)
+                    if tape.is_some()
+                        && model
+                            .windows()
+                            .iter()
+                            .any(|w| w.var == w0 || names.state(&w.var) == w0) =>
+                {
+                    tape.unwrap().read(Expr::Var(w0))
                 }
                 InputIndex::WindowVar(w0) => match window_buf_read(model, &n, &w0, names) {
                     Some(read) => read,
@@ -7754,6 +8008,9 @@ pub fn transition_buffers(model: &StreamModel, names: &dyn NameMap) -> Vec<(Stri
             out.push((names.extrema_buf(arr), false));
         }
     }
+    if let Some(t) = names.tape() {
+        out.push((t.buf, false));
+    }
     out.sort();
     out.dedup();
     out
@@ -7814,6 +8071,32 @@ pub fn peek_transition_widest(
         &model.temps,
         slot_cast,
     )
+}
+
+/// The peek frame of a tape transition. The committing step reads the bar from
+/// the tape, where the caller stored it; a peek must not store, so the bar goes
+/// in as a shadowed prewrite and only a lag-0 read resolves to it.
+///
+/// # Errors
+/// As [`peek_transition_widest`].
+///
+/// # Panics
+/// When `names` is not a tape frame's.
+pub fn tape_peek_transition(
+    model: &StreamModel,
+    names: &dyn NameMap,
+    transition: &[Statement],
+    slot_cast: Option<VarType>,
+) -> Result<PeekTransition, String> {
+    let t = names.tape().expect("tape_peek_transition needs tape names");
+    let mut with_bar = Vec::with_capacity(transition.len() + 1);
+    with_bar.push(Statement::Assign {
+        target: Expr::ArrayAccess(t.buf.clone(), Box::new(t.current_slot())),
+        value: Expr::Var(names.bar(&t.input)),
+        compound: false,
+    });
+    with_bar.extend_from_slice(transition);
+    peek_transition_widest(model, names, &with_bar, slot_cast)
 }
 
 /// `transition` with every statement below its last store to an output sink

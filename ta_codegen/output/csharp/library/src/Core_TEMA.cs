@@ -974,4 +974,21 @@ public partial class Core
       }
       return TemaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
+
+   private double TemaStepTape( TemaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      TemaStepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double TemaPeekTape( TemaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.Peek(inReal);
+   }
+
+   private int TemaTapeDetach( TemaStream sp )
+   {
+      return 0;
+   }
 }

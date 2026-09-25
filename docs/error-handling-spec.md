@@ -372,9 +372,7 @@ them re-reads U4. It cannot fire there first, and that is load-bearing rather
 than incidental: every handle over one history satisfies
 `begIdx + count == historyLen` at open, an accepted `Update` moves a parent and
 its sub-handles together, and `Advance` moves the parent alone — so the parent is
-never behind, and its own guard answers before any sub-handle is stepped. Without
-that, MAVP's bank would be left with its leading slots stepped and the parent's
-count unmoved.
+never behind, and its own guard answers before any sub-handle is stepped.
 
 No cross-language gate can reach U4 — `stream_verify` runs 240 bars and
 `INDEX_MAX` is 100 000 000 — so it is pinned by one source gate and one runtime

@@ -1685,9 +1685,10 @@ fn test_c_mama_two_outputs_and_params() {
 /// Pin MAVP — the last function and the campaign's one genuinely-new tier: a
 /// moving average whose period varies per bar, streamed as a BANK of sub-MA
 /// streams. Open builds `maxPeriod - minPeriod + 1` sub-streams (each via the
-/// callee's OpenInternal) with all-freed-so-far OOM; Update advances the whole
-/// bank in lockstep and indexes by the clamped period; Peek previews only the
-/// selected slot; Close frees the bank.
+/// callee's OpenInternal) and detaches each from its own copy of the prices;
+/// Update writes the bar into the shared tape, advances the whole bank in
+/// lockstep and indexes by the clamped period; Peek previews only the selected
+/// slot; Close frees the bank and the tape.
 #[test]
 fn test_c_mavp_period_bank() {
     let s = ht_stream_section("mavp");
@@ -1704,11 +1705,16 @@ fn test_c_mavp_period_bank() {
     assert!(s.contains("subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;"), "clamp start to the shared anchor");
     // Open: bank loop opening each period's sub-stream at subStart, all-freed-so-far on OOM.
     assert!(s.contains("TA_MA_OpenInternal( &sp->bank[k], inReal, subStart, historyLen, optInMinPeriod + k, optInMAType,"), "sub-open per period at the shared anchor, MAType forwarded");
-    assert!(s.contains("for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );"), "frees sub-streams opened so far on failure");
+    assert!(s.contains("if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }"), "frees sub-streams opened so far on failure");
+    // Each slot drops its own copy of the prices as soon as it is open, and the
+    // tape is sized strictly above the deepest lag any slot reads (#445).
+    assert!(s.contains("slotReach = TA_MA_TapeDetach( sp->bank[k] );"), "every slot is detached from its own history");
+    assert!(s.contains("while( size <= reach ) size <<= 1;"), "the tape is longer than the deepest lag");
     // Update: lockstep advance + clamp-indexed output.
     let upd = s.split("TA_MAVP_Update").nth(1).unwrap();
     let upd = &upd[..upd.find("TA_MAVP_Peek").unwrap_or(upd.len())];
-    assert!(upd.contains("for( k = 0; k < stream->nBank; k++ )") && upd.contains("TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );"), "advances the whole bank in lockstep");
+    assert!(upd.contains("stream->tape[stream->tapePos] = inReal;"), "the bar enters the tape before any slot steps");
+    assert!(upd.contains("for( k = 0; k < stream->nBank; k++ )") && upd.contains("TA_MA_StepTape( stream->bank[k], stream->tape, tapeBase, stream->tapeMask, inReal, &stream->scratch[k] );"), "advances the whole bank in lockstep");
     // The clamp compares in the REAL domain and narrows only once inside the
     // window (35a35d4b4): `(int)cpReal` on a value already known to be within
     // [min, max] cannot overflow, where narrowing first and clamping after
@@ -1723,8 +1729,8 @@ fn test_c_mavp_period_bank() {
     // Bounded at the next entry point, so the negative below reads Peek's body
     // alone rather than everything to the end of the section.
     let peek = &peek[..peek.find("TA_MAVP_Close").unwrap_or(peek.len())];
-    assert!(peek.contains("TA_MA_Peek( stream->bank[cp - stream->optInMinPeriod], inReal, outReal );"), "peeks only the selected slot");
-    assert!(!peek.contains("TA_MA_Update"), "peek never advances the bank");
+    assert!(peek.contains("TA_MA_PeekTape( stream->bank[cp - stream->optInMinPeriod], stream->tape,"), "peeks only the selected slot");
+    assert!(!peek.contains("TA_MA_Update") && !peek.contains("StepTape") && !peek.contains("tape[stream->"), "peek never advances the bank or writes the tape");
     // Close frees every sub-stream + the arrays.
     assert!(s.contains("if( stream->bank[k] ) TA_MA_Close( stream->bank[k] );"), "close frees each sub-stream");
 }

@@ -904,4 +904,21 @@ public partial class Core
       }
       return DemaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
+
+   private double DemaStepTape( DemaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      DemaStepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double DemaPeekTape( DemaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.Peek(inReal);
+   }
+
+   private int DemaTapeDetach( DemaStream sp )
+   {
+      return 0;
+   }
 }

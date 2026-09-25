@@ -455,6 +455,11 @@ fn sv_ptr_roles(
                 "scratch".to_string(),
                 SvPtr::Slots { count: "nBank".to_string(), is_int: false, phase: None },
             );
+            // Bar b sits at slot b & tapeMask on every route, so slots compare raw.
+            roles.insert(
+                "tape".to_string(),
+                SvPtr::Slots { count: "tapeMask+1".to_string(), is_int: false, phase: None },
+            );
         }
     }
     (roles, phases)
@@ -978,9 +983,14 @@ fn emit_sv_value_probe(
 /// surfaces on the next bar. A leg that stopped early would read green on the
 /// defect it exists to catch.
 ///
+/// **Why the fork runs to the end before the original moves.** Fed in lockstep,
+/// a buffer the two share and each writes the bar into before reading (MAVP's
+/// tape) answers correctly on both, forever.
+///
 /// It also checks `TA_<N>_Value` on the fork, because a fork is the one caller
 /// that has no earlier call to have handed it a value — the case the accessor
 /// was added for.
+#[allow(clippy::too_many_lines)]
 fn emit_sv_clone_leg(
     s: &mut String,
     name: &str,
@@ -1022,6 +1032,10 @@ fn emit_sv_clone_leg(
     let _ = writeln!(s, "            {decl_a} {decl_b} {decl_v}");
     // The earliest prefix the opener accepts — the same one the prefix leg uses.
     s.push_str("            int cp0 = lb + 1, cmid, t, cOk = 1;\n");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let ty = if *is_int { "int" } else { "double" };
+        let _ = writeln!(s, "            {ty} *fk{i} = NULL;");
+    }
     s.push_str("            if( cp0 <= svN - 1 )\n            {\n");
     let _ = writeln!(
         s,
@@ -1045,20 +1059,20 @@ fn emit_sv_clone_leg(
         let _ = writeln!(s, "                    if( cOk && ({cmp}) ) {{ cOk = 0; cloneBad = \"the fork's Value is not the bar it forked at\"; }}");
     }
     s.push_str("                }\n");
-    // Drive both to the end. A shared buffer diverges here and nowhere earlier.
+    // The fork to the end, then the original. A shared buffer diverges here and
+    // nowhere earlier.
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let ty = if *is_int { "int" } else { "double" };
+        let _ = writeln!(
+            s,
+            "                if( cOk && !(fk{i} = ({ty} *)malloc( sizeof({ty}) * (size_t)svN )) ) {{ cOk = 0; cloneBad = \"no memory for the fork's outputs\"; }}"
+        );
+    }
     s.push_str("                for( t = cmid; cOk && t < svN; t++ )\n                {\n");
-    let _ = writeln!(s, "                    TA_{name}_Update(cA, {bar_args}{addr_a});");
     let _ = writeln!(s, "                    TA_{name}_Update(cB, {bar_args}{addr_b});");
     for (i, is_int) in out_is_int.iter().enumerate() {
-        let same = if *is_int { format!("ca{i} != cb{i}") } else { format!("sv_bitne(ca{i}, cb{i})") };
-        let _ = writeln!(s, "                    if( {same} ) {{ cOk = 0; cloneBad = \"the fork and the original disagree\"; }}");
+        let _ = writeln!(s, "                    fk{i}[t] = cb{i};");
         let b = &bbuf[i];
-        let cross = if *is_int {
-            format!("ca{i} != {b}[t - svBeg]")
-        } else {
-            format!("sv_xtier_ne(ca{i}, {b}[t - svBeg], &svZsign)")
-        };
-        let _ = writeln!(s, "                    if( {cross} ) {{ cOk = 0; cloneBad = \"the original left batch after the fork\"; }}");
         let cross_b = if *is_int {
             format!("cb{i} != {b}[t - svBeg]")
         } else {
@@ -1067,6 +1081,23 @@ fn emit_sv_clone_leg(
         let _ = writeln!(s, "                    if( {cross_b} ) {{ cOk = 0; cloneBad = \"the fork left batch\"; }}");
     }
     s.push_str("                }\n");
+    s.push_str("                for( t = cmid; cOk && t < svN; t++ )\n                {\n");
+    let _ = writeln!(s, "                    TA_{name}_Update(cA, {bar_args}{addr_a});");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let same = if *is_int { format!("ca{i} != fk{i}[t]") } else { format!("sv_bitne(ca{i}, fk{i}[t])") };
+        let _ = writeln!(s, "                    if( {same} ) {{ cOk = 0; cloneBad = \"the fork and the original disagree\"; }}");
+        let b = &bbuf[i];
+        let cross = if *is_int {
+            format!("ca{i} != {b}[t - svBeg]")
+        } else {
+            format!("sv_xtier_ne(ca{i}, {b}[t - svBeg], &svZsign)")
+        };
+        let _ = writeln!(s, "                    if( {cross} ) {{ cOk = 0; cloneBad = \"the original left batch after the fork\"; }}");
+    }
+    s.push_str("                }\n");
+    for i in 0..n {
+        let _ = writeln!(s, "                free( fk{i} );");
+    }
     s.push_str("                cloneChecked = 1; cloneLegs++;\n");
     s.push_str("                if( !cOk ) cloneOk = 0;\n");
     // Both consumed bars [cp0-1, svN-1], so both report the batch range. The

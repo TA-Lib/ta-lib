@@ -816,6 +816,141 @@ impl Core {
         }
     }
 
+    fn hma_step_tape_impl(sp: &mut HmaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
+            let mut tempReal: f64 = 0.0_f64;
+            let mut fullOut: f64 = 0.0_f64;
+            let mut jFull: usize = 0_usize;
+            let mut rw: usize = 0_usize;
+            let mut tempReal2: f64 = 0.0_f64;
+            tempReal = inReal;
+            sp.periodSubFull += tempReal;
+            sp.periodSubFull -= sp.trailingFull;
+            sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+            sp.barsSinceReseedFull -= 1;
+            if sp.barsSinceReseedFull <= 0 {
+                sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                sp.periodSubFull = 0.0;
+                sp.periodSumFull = 0.0;
+                rw = 1;
+                // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
+                jFull = sp.lookbackFull;
+                loop {
+                    tempReal2 = tape[(tapeBase - jFull & tapeMask) as usize];
+                    sp.periodSubFull += tempReal2;
+                    sp.periodSumFull += tempReal2 * ((rw) as f64);
+                    rw += 1;
+                    if jFull == 0 { break; }
+                    jFull -= 1;
+                }
+            }
+            sp.trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize];
+            fullOut = sp.periodSumFull / sp.dividerFull;
+            sp.periodSumFull -= sp.periodSubFull;
+            (*outReal) = 2.0 * tempReal - fullOut;
+            sp.cur_outReal = (*outReal);
+        } else {
+            let mut tempReal: f64 = 0.0_f64;
+            let mut fullOut: f64 = 0.0_f64;
+            let mut halfOut: f64 = 0.0_f64;
+            let mut diffReal: f64 = 0.0_f64;
+            let mut jFull: usize = 0_usize;
+            let mut jHalf: usize = 0_usize;
+            let mut q: usize = 0_usize;
+            let mut rw: usize = 0_usize;
+            let mut ringWalk: usize = 0_usize;
+            let mut tempReal2: f64 = 0.0_f64;
+            tempReal = inReal;
+            sp.periodSubFull += tempReal;
+            sp.periodSubFull -= sp.trailingFull;
+            sp.periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+            sp.barsSinceReseedFull -= 1;
+            if sp.barsSinceReseedFull <= 0 {
+                sp.barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                sp.periodSubFull = 0.0;
+                sp.periodSumFull = 0.0;
+                rw = 1;
+                // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
+                jFull = sp.lookbackFull;
+                loop {
+                    tempReal2 = tape[(tapeBase - jFull & tapeMask) as usize];
+                    sp.periodSubFull += tempReal2;
+                    sp.periodSumFull += tempReal2 * ((rw) as f64);
+                    rw += 1;
+                    if jFull == 0 { break; }
+                    jFull -= 1;
+                }
+            }
+            sp.trailingFull = tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize];
+            fullOut = sp.periodSumFull / sp.dividerFull;
+            sp.periodSumFull -= sp.periodSubFull;
+            sp.periodSubHalf += tempReal;
+            sp.periodSubHalf -= sp.trailingHalf;
+            sp.periodSumHalf += tempReal * ((sp.halfPeriod) as f64);
+            sp.barsSinceReseedHalf -= 1;
+            if sp.barsSinceReseedHalf <= 0 {
+                sp.barsSinceReseedHalf = 8 * sp.halfPeriod;
+                sp.periodSubHalf = 0.0;
+                sp.periodSumHalf = 0.0;
+                rw = 1;
+                // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
+                jHalf = sp.lookbackHalf;
+                loop {
+                    tempReal2 = tape[(tapeBase - jHalf & tapeMask) as usize];
+                    sp.periodSubHalf += tempReal2;
+                    sp.periodSumHalf += tempReal2 * ((rw) as f64);
+                    rw += 1;
+                    if jHalf == 0 { break; }
+                    jHalf -= 1;
+                }
+            }
+            sp.trailingHalf = tape[(tapeBase - sp.ringCap_trailingIdxHalf & tapeMask) as usize];
+            halfOut = sp.periodSumHalf / sp.dividerHalf;
+            sp.periodSumHalf -= sp.periodSubHalf;
+            diffReal = 2.0 * halfOut - fullOut;
+            sp.periodSubSqrt += diffReal;
+            sp.periodSubSqrt -= sp.trailingSqrt;
+            sp.periodSumSqrt += diffReal * ((sp.sqrtPeriod) as f64);
+            // The outer WMA consumes a DERIVED series that is never
+            // materialised, so its rescan walks the de-lag ring: dRing_Idx is
+            // the oldest slot (the one about to expire) and diffReal is the
+            // newest value, which together are the whole window. Oldest first,
+            // weight counting up from 1 -- the priming order above.
+            sp.barsSinceReseedSqrt -= 1;
+            if sp.barsSinceReseedSqrt <= 0 {
+                sp.barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+                sp.periodSubSqrt = 0.0;
+                sp.periodSumSqrt = 0.0;
+                rw = 1;
+                ringWalk = sp.dRing_Idx;
+                // for( q = 0; q < sp.ringSize; q += 1 )
+                q = 0;
+                while q < sp.ringSize {
+                    tempReal2 = sp.cb_dRing[ringWalk];
+                    sp.periodSubSqrt += tempReal2;
+                    sp.periodSumSqrt += tempReal2 * ((rw) as f64);
+                    rw += 1;
+                    ringWalk += 1;
+                    if ringWalk >= sp.ringSize {
+                        ringWalk = 0;
+                    }
+                    q += 1;
+                }
+                sp.periodSubSqrt += diffReal;
+                sp.periodSumSqrt += diffReal * ((sp.sqrtPeriod) as f64);
+            }
+            sp.trailingSqrt = sp.cb_dRing[sp.dRing_Idx];
+            sp.cb_dRing[sp.dRing_Idx] = diffReal;
+            sp.dRing_Idx = sp.dRing_Idx + 1;
+            if sp.dRing_Idx > sp.maxIdx_dRing {
+                sp.dRing_Idx = 0;
+            }
+            (*outReal) = sp.periodSumSqrt / sp.dividerSqrt;
+            sp.periodSumSqrt -= sp.periodSubSqrt;
+            sp.cur_outReal = (*outReal);
+        }
+    }
+
     /// The single whole-history transcription behind [`Core::hma_open_internal`]
     /// (stride 0, scalar sink) and [`Core::hma_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn hma_open_impl(
@@ -1847,6 +1982,203 @@ impl HmaStream {
         }
         self.out.count += 1;
         Ok(())
+    }
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl HmaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        Core::hma_step_tape_impl(&mut self.state, tape, tapeBase, tapeMask, inReal, &mut outReal);
+        self.out.count += 1;
+        outReal
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut fullOut: f64 = 0.0_f64;
+                let mut jFull: usize = 0_usize;
+                let mut rw: usize = 0_usize;
+                let mut tempReal2: f64 = 0.0_f64;
+                let mut barsSinceReseedFull = sp.barsSinceReseedFull;
+                let mut periodSubFull = sp.periodSubFull;
+                let mut periodSumFull = sp.periodSumFull;
+                let mut trailingFull = sp.trailingFull;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                pkSlot0 = (tapeBase & tapeMask) as usize;
+                pkVal0 = inReal;
+                tempReal = inReal;
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+                barsSinceReseedFull -= 1;
+                if barsSinceReseedFull <= 0 {
+                    barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                    periodSubFull = 0.0;
+                    periodSumFull = 0.0;
+                    rw = 1;
+                    // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
+                    jFull = sp.lookbackFull;
+                    loop {
+                        tempReal2 = (if ((tapeBase - jFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - jFull & tapeMask) as usize] } else { pkVal0 });
+                        periodSubFull += tempReal2;
+                        periodSumFull += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        if jFull == 0 { break; }
+                        jFull -= 1;
+                    }
+                }
+                trailingFull = (if ((tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize] } else { pkVal0 });
+                fullOut = periodSumFull / sp.dividerFull;
+                periodSumFull -= periodSubFull;
+                (*outReal) = 2.0 * tempReal - fullOut;
+            } else {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut fullOut: f64 = 0.0_f64;
+                let mut halfOut: f64 = 0.0_f64;
+                let mut diffReal: f64 = 0.0_f64;
+                let mut jFull: usize = 0_usize;
+                let mut jHalf: usize = 0_usize;
+                let mut q: usize = 0_usize;
+                let mut rw: usize = 0_usize;
+                let mut ringWalk: usize = 0_usize;
+                let mut tempReal2: f64 = 0.0_f64;
+                let mut barsSinceReseedFull = sp.barsSinceReseedFull;
+                let mut barsSinceReseedHalf = sp.barsSinceReseedHalf;
+                let mut barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
+                let mut dRing_Idx = sp.dRing_Idx;
+                let mut periodSubFull = sp.periodSubFull;
+                let mut periodSubHalf = sp.periodSubHalf;
+                let mut periodSubSqrt = sp.periodSubSqrt;
+                let mut periodSumFull = sp.periodSumFull;
+                let mut periodSumHalf = sp.periodSumHalf;
+                let mut periodSumSqrt = sp.periodSumSqrt;
+                let mut trailingFull = sp.trailingFull;
+                let mut trailingHalf = sp.trailingHalf;
+                let mut trailingSqrt = sp.trailingSqrt;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                pkSlot0 = (tapeBase & tapeMask) as usize;
+                pkVal0 = inReal;
+                tempReal = inReal;
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+                barsSinceReseedFull -= 1;
+                if barsSinceReseedFull <= 0 {
+                    barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                    periodSubFull = 0.0;
+                    periodSumFull = 0.0;
+                    rw = 1;
+                    // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
+                    jFull = sp.lookbackFull;
+                    loop {
+                        tempReal2 = (if ((tapeBase - jFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - jFull & tapeMask) as usize] } else { pkVal0 });
+                        periodSubFull += tempReal2;
+                        periodSumFull += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        if jFull == 0 { break; }
+                        jFull -= 1;
+                    }
+                }
+                trailingFull = (if ((tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdxFull & tapeMask) as usize] } else { pkVal0 });
+                fullOut = periodSumFull / sp.dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * ((sp.halfPeriod) as f64);
+                barsSinceReseedHalf -= 1;
+                if barsSinceReseedHalf <= 0 {
+                    barsSinceReseedHalf = 8 * sp.halfPeriod;
+                    periodSubHalf = 0.0;
+                    periodSumHalf = 0.0;
+                    rw = 1;
+                    // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
+                    jHalf = sp.lookbackHalf;
+                    loop {
+                        tempReal2 = (if ((tapeBase - jHalf & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - jHalf & tapeMask) as usize] } else { pkVal0 });
+                        periodSubHalf += tempReal2;
+                        periodSumHalf += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        if jHalf == 0 { break; }
+                        jHalf -= 1;
+                    }
+                }
+                trailingHalf = (if ((tapeBase - sp.ringCap_trailingIdxHalf & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdxHalf & tapeMask) as usize] } else { pkVal0 });
+                halfOut = periodSumHalf / sp.dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * ((sp.sqrtPeriod) as f64);
+                // The outer WMA consumes a DERIVED series that is never
+                // materialised, so its rescan walks the de-lag ring: dRing_Idx is
+                // the oldest slot (the one about to expire) and diffReal is the
+                // newest value, which together are the whole window. Oldest first,
+                // weight counting up from 1 -- the priming order above.
+                barsSinceReseedSqrt -= 1;
+                if barsSinceReseedSqrt <= 0 {
+                    barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+                    periodSubSqrt = 0.0;
+                    periodSumSqrt = 0.0;
+                    rw = 1;
+                    ringWalk = dRing_Idx;
+                    // for( q = 0; q < sp.ringSize; q += 1 )
+                    q = 0;
+                    while q < sp.ringSize {
+                        tempReal2 = sp.cb_dRing[ringWalk];
+                        periodSubSqrt += tempReal2;
+                        periodSumSqrt += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        ringWalk += 1;
+                        if ringWalk >= sp.ringSize {
+                            ringWalk = 0;
+                        }
+                        q += 1;
+                    }
+                    periodSubSqrt += diffReal;
+                    periodSumSqrt += diffReal * ((sp.sqrtPeriod) as f64);
+                }
+                trailingSqrt = sp.cb_dRing[dRing_Idx];
+                dRing_Idx = dRing_Idx + 1;
+                if dRing_Idx > sp.maxIdx_dRing {
+                    dRing_Idx = 0;
+                }
+                (*outReal) = periodSumSqrt / sp.dividerSqrt;
+            }
+        }
+        Ok(outReal)
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        let mut reach: usize = 0;
+        self.state.ring_trailingIdxFull_inReal = Vec::new();
+        if self.state.ringCap_trailingIdxFull > reach {
+            reach = self.state.ringCap_trailingIdxFull;
+        }
+        self.state.win_jFull_inReal = Vec::new();
+        if self.state.winCap_jFull > reach + 1 {
+            reach = self.state.winCap_jFull - 1;
+        }
+        self.state.ring_trailingIdxHalf_inReal = Vec::new();
+        if self.state.ringCap_trailingIdxHalf > reach {
+            reach = self.state.ringCap_trailingIdxHalf;
+        }
+        self.state.win_jHalf_inReal = Vec::new();
+        if self.state.winCap_jHalf > reach + 1 {
+            reach = self.state.winCap_jHalf - 1;
+        }
+        reach
     }
 }
 

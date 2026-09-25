@@ -269,6 +269,79 @@ public static class StreamApiTest
         Check(Bits(plain.Value) == Bits(s.Value), "both openers agree on the current value");
     }
 
+    /// <summary>MAVP's bank reads every slot's history from one shared tape: it
+    /// stays bit-identical to batch on every MAType, through Peek, OpenAndFill
+    /// and a Clone.</summary>
+    /// <remarks>The fork runs to the end before its original moves: fed in
+    /// lockstep, two handles sharing a tape both write each bar before reading
+    /// and never disagree. A band whose deepest lag is a power of two (SMA over
+    /// [5, 33], KAMA over [2, 32]) is the one a tape sized AT the lag rather
+    /// than above it gets wrong.</remarks>
+    private static void MavpBankMatchesBatchOnEveryMaType()
+    {
+        var core = new Core();
+        double[] closes = Closes(1200);
+        int n = closes.Length;
+        var periods = new double[n];
+        foreach (MAType ma in Enum.GetValues<MAType>())
+        {
+            if (ma == MAType.DEFAULT)
+            {
+                continue;
+            }
+            foreach (var (min, max) in new[] { (2, 8), (2, 32), (5, 33) })
+            {
+                for (int t = 0; t < n; t++)
+                {
+                    periods[t] = min + (t % (max - min + 3)) - 1;
+                }
+                var batch = new double[n];
+                OutRange r = core.Mavp(0, n - 1, closes, periods, min, max, ma, batch);
+                int lb = r.BegIdx;
+                string what = $"MAVP {ma} [{min}, {max}]";
+
+                bool Step(Core.MavpStream h, int t)
+                {
+                    double pk = h.Peek(closes[t], periods[t]);
+                    double up = h.Update(closes[t], periods[t]);
+                    return Bits(pk) == Bits(up) && Bits(up) == Bits(batch[t - lb]);
+                }
+
+                Core.MavpStream s = core.MavpOpen(closes[..(lb + 1)], periods[..(lb + 1)], min, max, ma);
+                bool ok = Bits(s.Value) == Bits(batch[0]);
+                int mid = (lb + 1 + n) / 2;
+                for (int t = lb + 1; ok && t < mid; t++)
+                {
+                    ok = Step(s, t);
+                }
+                Check(ok, what + ": Open, then Peek and Update, track batch");
+                Core.MavpStream fork = s.Clone();
+                for (int t = mid; ok && t < n; t++)
+                {
+                    ok = Step(fork, t);
+                }
+                Check(ok, what + ": the fork tracks batch");
+                for (int t = mid; ok && t < n; t++)
+                {
+                    ok = Step(s, t);
+                }
+                Check(ok, what + ": the original tracks batch after its fork ran ahead");
+
+                var filled = new double[r.Count];
+                Core.MavpStream f = core.MavpOpenAndFill(closes, periods, min, max, ma, filled);
+                bool same = Bits(f.Value) == Bits(batch[r.Count - 1]);
+                for (int i = 0; i < r.Count; i++)
+                {
+                    same &= Bits(filled[i]) == Bits(batch[i]);
+                }
+                Check(same, what + ": OpenAndFill is bit-identical to batch");
+                _mavpConfigs++;
+            }
+        }
+    }
+
+    private static int _mavpConfigs;
+
     /// <summary>#241: feed a stream N bars by any mixture of opener and updates
     /// and its <c>OutRange</c> is the batch range over those same N bars.</summary>
     private static void OutRangeTracksTheBatchRange()
@@ -1509,6 +1582,7 @@ public static class StreamApiTest
         PeekDoesNotCommit();
         CloneIsAnIndependentDeepCopy();
         OpenAndFillMatchesBatch();
+        MavpBankMatchesBatchOnEveryMaType();
         OutRangeTracksTheBatchRange();
         MisuseThrowsTheDocumentedException();
         OpenAndFillRejectsAliasing();
@@ -1521,6 +1595,7 @@ public static class StreamApiTest
         // rides its own method is deleted along with the call it guards.
         Check(_s5 >= 5, $"the fill-capacity gate ran fewer checks than it was written with ({_s5})");
         Check(_b6a >= 6, $"the declined-output gate ran fewer checks than it was written with ({_b6a})");
+        Check(_mavpConfigs >= 39, $"the MAVP bank sweep ran fewer configurations than it was written with ({_mavpConfigs})");
         IntegerSentinelSelectsTheDocumentedDefault();
         SettingsAreCapturedFromTheOpeningCore();
         UpdateDoesNotAllocate();

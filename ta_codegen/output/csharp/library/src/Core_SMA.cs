@@ -737,4 +737,41 @@ public partial class Core
       }
       return SmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
+
+   private double SmaStepTape( SmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double tempReal = 0.0;
+      sp.periodTotal += (double)inReal;
+      tempReal = sp.periodTotal;
+      sp.periodTotal -= (double)tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+      sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double SmaPeekTape( SmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double tempReal = 0.0;
+      double cur_outReal = 0.0;
+      double periodTotal = sp.periodTotal;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      periodTotal += (double)inReal;
+      tempReal = periodTotal;
+      periodTotal -= (double)((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0);
+      cur_outReal = tempReal / (double)sp.optInTimePeriod;
+      return cur_outReal;
+   }
+
+   private int SmaTapeDetach( SmaStream sp )
+   {
+      int reach = 0;
+      sp.ring_trailingIdx_inReal = [];
+      if( sp.ringCap_trailingIdx > reach ) {
+         reach = sp.ringCap_trailingIdx;
+      }
+      return reach;
+   }
 }

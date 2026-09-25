@@ -813,6 +813,28 @@ impl DemaStream {
     }
 }
 
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl DemaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        Core::dema_step_impl(&mut self.state, inReal, &mut outReal);
+        self.out.count += 1;
+        outReal
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+        self.peek(inReal)
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        0
+    }
+}
+
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
     _assert_auto::<DemaStream>();

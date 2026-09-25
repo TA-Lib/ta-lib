@@ -944,6 +944,148 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
    }
 }
 
+/* Private function, not in public API. */
+void TA_MA_StepTape( struct TA_MA_Stream *stream, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )
+   {
+      *outReal = inReal;
+      stream->cur_outReal = *outReal;
+      stream->outRangeCount++;
+      return;
+   }
+   switch( stream->optInMAType )
+   {
+   case TA_MAType_SMA:
+      TA_SMA_StepTape( (struct TA_SMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_EMA:
+      TA_EMA_StepTape( (struct TA_EMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_WMA:
+      TA_WMA_StepTape( (struct TA_WMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_DEMA:
+      TA_DEMA_StepTape( (struct TA_DEMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_TEMA:
+      TA_TEMA_StepTape( (struct TA_TEMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_TRIMA:
+      TA_TRIMA_StepTape( (struct TA_TRIMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_KAMA:
+      TA_KAMA_StepTape( (struct TA_KAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_MAMA:
+      TA_MAMA_StepTape( (struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, NULL );
+      break;
+   case TA_MAType_T3:
+      TA_T3_StepTape( (struct TA_T3_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_HMA:
+      TA_HMA_StepTape( (struct TA_HMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_ZLEMA:
+      TA_ZLEMA_StepTape( (struct TA_ZLEMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_RMA:
+      TA_RMA_StepTape( (struct TA_RMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   default:
+      /* Unreachable: Open rejects arms without a sub-stream. */
+      break;
+   }
+   stream->cur_outReal = *outReal;
+   stream->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_MA_PeekTape( const struct TA_MA_Stream *stream, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )
+   {
+      *outReal = inReal;
+      return;
+   }
+   switch( stream->optInMAType )
+   {
+   case TA_MAType_SMA:
+      TA_SMA_PeekTape( (const struct TA_SMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_EMA:
+      TA_EMA_PeekTape( (const struct TA_EMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_WMA:
+      TA_WMA_PeekTape( (const struct TA_WMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_DEMA:
+      TA_DEMA_PeekTape( (const struct TA_DEMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_TEMA:
+      TA_TEMA_PeekTape( (const struct TA_TEMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_TRIMA:
+      TA_TRIMA_PeekTape( (const struct TA_TRIMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_KAMA:
+      TA_KAMA_PeekTape( (const struct TA_KAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_MAMA:
+      TA_MAMA_PeekTape( (const struct TA_MAMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal, NULL );
+      break;
+   case TA_MAType_T3:
+      TA_T3_PeekTape( (const struct TA_T3_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_HMA:
+      TA_HMA_PeekTape( (const struct TA_HMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_ZLEMA:
+      TA_ZLEMA_PeekTape( (const struct TA_ZLEMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   case TA_MAType_RMA:
+      TA_RMA_PeekTape( (const struct TA_RMA_Stream *)stream->sub, tape, tapeBase, tapeMask, inReal, outReal );
+      break;
+   default:
+      break;
+   }
+}
+
+/* Private function, not in public API. */
+int TA_MA_TapeDetach( struct TA_MA_Stream *stream )
+{
+   if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED ) return 0;
+   switch( stream->optInMAType )
+   {
+   case TA_MAType_SMA:
+      return TA_SMA_TapeDetach( (struct TA_SMA_Stream *)stream->sub );
+   case TA_MAType_EMA:
+      return TA_EMA_TapeDetach( (struct TA_EMA_Stream *)stream->sub );
+   case TA_MAType_WMA:
+      return TA_WMA_TapeDetach( (struct TA_WMA_Stream *)stream->sub );
+   case TA_MAType_DEMA:
+      return TA_DEMA_TapeDetach( (struct TA_DEMA_Stream *)stream->sub );
+   case TA_MAType_TEMA:
+      return TA_TEMA_TapeDetach( (struct TA_TEMA_Stream *)stream->sub );
+   case TA_MAType_TRIMA:
+      return TA_TRIMA_TapeDetach( (struct TA_TRIMA_Stream *)stream->sub );
+   case TA_MAType_KAMA:
+      return TA_KAMA_TapeDetach( (struct TA_KAMA_Stream *)stream->sub );
+   case TA_MAType_MAMA:
+      return TA_MAMA_TapeDetach( (struct TA_MAMA_Stream *)stream->sub );
+   case TA_MAType_T3:
+      return TA_T3_TapeDetach( (struct TA_T3_Stream *)stream->sub );
+   case TA_MAType_HMA:
+      return TA_HMA_TapeDetach( (struct TA_HMA_Stream *)stream->sub );
+   case TA_MAType_ZLEMA:
+      return TA_ZLEMA_TapeDetach( (struct TA_ZLEMA_Stream *)stream->sub );
+   case TA_MAType_RMA:
+      return TA_RMA_TapeDetach( (struct TA_RMA_Stream *)stream->sub );
+   default:
+      return 0;
+   }
+}
+
 TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;

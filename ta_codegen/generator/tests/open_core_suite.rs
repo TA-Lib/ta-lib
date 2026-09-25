@@ -259,11 +259,11 @@ fn period_bank_keeps_two_bodies() {
     );
     assert!(src.contains("TA_MAVP_OpenInternal("));
     assert!(src.contains("TA_MAVP_OpenAndFill("));
-    // The fill arm's per-bar Update loop is what makes it a different algorithm.
+    // The fill arm's per-bar sub-step loop is what makes it a different algorithm.
     let fill = body_of(&src, "TA_RetCode TA_MAVP_OpenAndFill(");
     assert!(
-        fill.contains("_Update("),
-        "MAVP's fill drives sub-Updates per bar:\n{fill}"
+        fill.contains("_StepTape("),
+        "MAVP's fill steps every slot per bar:\n{fill}"
     );
 }
 

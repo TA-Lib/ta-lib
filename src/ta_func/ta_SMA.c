@@ -450,6 +450,45 @@ TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_SMA_StepTape( struct TA_SMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double tempReal;
+
+   sp->periodTotal += (double)inReal;
+   tempReal = sp->periodTotal;
+   sp->periodTotal -= (double)tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
+   *outReal= tempReal / (double)sp->optInTimePeriod;
+   sp->cur_outReal = *outReal;
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_SMA_PeekTape( const struct TA_SMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double tempReal;
+   double periodTotal;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+
+   periodTotal = sp->periodTotal;
+   pkSlot0 = tapeBase & tapeMask;
+   pkVal0 = inReal;
+   periodTotal += (double)inReal;
+   tempReal = periodTotal;
+   periodTotal -= (double)((((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0);
+   *outReal= tempReal / (double)sp->optInTimePeriod;
+}
+
+/* Private function, not in public API. */
+int TA_SMA_TapeDetach( struct TA_SMA_Stream *sp )
+{
+   int reach = 0;
+   if( sp->ring_trailingIdx_inReal ) { TA_Free( sp->ring_trailingIdx_inReal ); sp->ring_trailingIdx_inReal = NULL; }
+   if( sp->ringCap_trailingIdx > reach ) reach = sp->ringCap_trailingIdx;
+   return reach;
+}
+
 TA_LIB_API TA_RetCode TA_SMA_Value( const TA_SMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

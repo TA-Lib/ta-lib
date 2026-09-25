@@ -492,10 +492,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("            }\n");
 
     // copy() independence leg: open at the earliest prefix, advance to mid,
-    // copy, drive both to the end — both must match batch bitwise (a shallow
-    // sub-handle/bank/ring copy diverges here), and both must report the batch
-    // range (#287: a copy that carries every numeric field but drops the range
-    // pair produced identical values and was invisible here).
+    // copy, drive the fork to the end, then the original. Both must match batch
+    // bitwise and each other (a shallow sub-handle/bank/ring copy diverges
+    // here), and both must report the batch range (#287: a copy that carries
+    // every numeric field but drops the range pair produced identical values
+    // and was invisible here). Fed in lockstep, a buffer the two share and each
+    // writes the bar into before reading (MAVP's tape) answers correctly on
+    // both, forever.
     s.push_str("            {\n");
     s.push_str("                int p0 = lb + 1;\n");
     s.push_str("                if (p0 <= svN - 1) {\n");
@@ -514,26 +517,45 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t});");
     }
     let _ = writeln!(s, "                        Core.{class} sB = sA.clone();");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let ty = if *is_int { "int" } else { "double" };
+        let _ = writeln!(s, "                        {ty}[] fk{i} = new {ty}[svN];");
+    }
+    // A read of this bar's value from `u`, output `i`.
+    let val = |u: &str, i: usize| if multi { format!("{u}.{}", vfield[i]) } else { u.to_string() };
+    let diverged = |cond: String| {
+        format!("                            if ({cond}) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}\n")
+    };
+    let ne = |i: usize, a: String, b: String| {
+        if out_is_int[i] { format!("{a} != {b}") } else { format!("svBne({a}, {b})") }
+    };
+    let off_batch = |i: usize, a: String| {
+        if out_is_int[i] {
+            format!("{a} != b{i}[t - beg.value]")
+        } else {
+            format!("svXtierNe({a}, b{i}[t - beg.value], zsign)")
+        }
+    };
+    s.push_str("                        for (int t = mid; t < svN; t++) {\n");
+    if multi {
+        let _ = writeln!(s, "                            sB.update({bars_t}, uB);");
+    } else {
+        let _ = writeln!(s, "                            {up_ty}uB = sB.update({bars_t});");
+    }
+    for i in 0..n_out {
+        let _ = writeln!(s, "                            fk{i}[t] = {};", val("uB", i));
+        s.push_str(&diverged(off_batch(i, val("uB", i))));
+    }
+    s.push_str("                        }\n");
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
     if multi {
         let _ = writeln!(s, "                            sA.update({bars_t}, uA);");
-        let _ = writeln!(s, "                            sB.update({bars_t}, uB);");
     } else {
         let _ = writeln!(s, "                            {up_ty}uA = sA.update({bars_t});");
-        let _ = writeln!(s, "                            {up_ty}uB = sB.update({bars_t});");
     }
-    if multi {
-        for (i, f) in vfield.iter().enumerate() {
-            if out_is_int[i] {
-                let _ = writeln!(s, "                            if (uA.{f} != uB.{f} || uA.{f} != b{i}[t - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}");
-            } else {
-                let _ = writeln!(s, "                            if (svBne(uA.{f}, uB.{f}) || svXtierNe(uA.{f}, b{i}[t - beg.value], zsign)) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }}");
-            }
-        }
-    } else if out_is_int[0] {
-        s.push_str("                            if (uA != uB || uA != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
-    } else {
-        s.push_str("                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
+    for i in 0..n_out {
+        let cond = format!("{} || {}", ne(i, val("uA", i), format!("fk{i}[t]")), off_batch(i, val("uA", i)));
+        s.push_str(&diverged(cond));
     }
     s.push_str("                        }\n");
     // Both handles have now consumed bars [p0-1, svN-1] — the fork's own

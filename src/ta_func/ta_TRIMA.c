@@ -1267,6 +1267,128 @@ TA_LIB_API TA_RetCode TA_TRIMA_Close( TA_TRIMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_TRIMA_StepTape( struct TA_TRIMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   if( sp->optInTimePeriod % 2 == 1 )
+   {
+      /* Step (1) */
+      sp->numerator -= sp->numeratorSub;
+      sp->numeratorSub -= sp->tempReal;
+      sp->tempReal = tape[(tapeBase - sp->ringCap_middleIdx) & tapeMask];
+      sp->numeratorSub += sp->tempReal;
+      /* Step (2) */
+      sp->numerator += sp->numeratorAdd;
+      sp->numeratorAdd -= sp->tempReal;
+      sp->tempReal = inReal;
+      sp->numeratorAdd += sp->tempReal;
+      /* Step (3) */
+      sp->numerator += sp->tempReal;
+      /* Step (4) */
+      sp->tempReal = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
+      *outReal= sp->numerator * sp->factor;
+      sp->cur_outReal = *outReal;
+   }
+   else
+   {
+      /* Step (1) */
+      sp->numerator -= sp->numeratorSub;
+      sp->numeratorSub -= sp->tempReal;
+      sp->tempReal = tape[(tapeBase - sp->ringCap_middleIdx) & tapeMask];
+      sp->numeratorSub += sp->tempReal;
+      /* Step (2) */
+      sp->numeratorAdd -= sp->tempReal;
+      sp->numerator += sp->numeratorAdd;
+      sp->tempReal = inReal;
+      sp->numeratorAdd += sp->tempReal;
+      /* Step (3) */
+      sp->numerator += sp->tempReal;
+      /* Step (4) */
+      sp->tempReal = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
+      *outReal= sp->numerator * sp->factor;
+      sp->cur_outReal = *outReal;
+   }
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_TRIMA_PeekTape( const struct TA_TRIMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   if( sp->optInTimePeriod % 2 == 1 )
+   {
+      double numerator;
+      double numeratorAdd;
+      double numeratorSub;
+      double tempReal;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+
+      numerator = sp->numerator;
+      numeratorAdd = sp->numeratorAdd;
+      numeratorSub = sp->numeratorSub;
+      tempReal = sp->tempReal;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      /* Step (1) */
+      numerator -= numeratorSub;
+      numeratorSub -= tempReal;
+      tempReal = (((tapeBase - sp->ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_middleIdx) & tapeMask] : pkVal0;
+      numeratorSub += tempReal;
+      /* Step (2) */
+      numerator += numeratorAdd;
+      numeratorAdd -= tempReal;
+      tempReal = inReal;
+      numeratorAdd += tempReal;
+      /* Step (3) */
+      numerator += tempReal;
+      /* Step (4) */
+      tempReal = (((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0;
+      *outReal= numerator * sp->factor;
+   }
+   else
+   {
+      double numerator;
+      double numeratorAdd;
+      double numeratorSub;
+      double tempReal;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+
+      numerator = sp->numerator;
+      numeratorAdd = sp->numeratorAdd;
+      numeratorSub = sp->numeratorSub;
+      tempReal = sp->tempReal;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      /* Step (1) */
+      numerator -= numeratorSub;
+      numeratorSub -= tempReal;
+      tempReal = (((tapeBase - sp->ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_middleIdx) & tapeMask] : pkVal0;
+      numeratorSub += tempReal;
+      /* Step (2) */
+      numeratorAdd -= tempReal;
+      numerator += numeratorAdd;
+      tempReal = inReal;
+      numeratorAdd += tempReal;
+      /* Step (3) */
+      numerator += tempReal;
+      /* Step (4) */
+      tempReal = (((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0;
+      *outReal= numerator * sp->factor;
+   }
+}
+
+/* Private function, not in public API. */
+int TA_TRIMA_TapeDetach( struct TA_TRIMA_Stream *sp )
+{
+   int reach = 0;
+   if( sp->ring_middleIdx_inReal ) { TA_Free( sp->ring_middleIdx_inReal ); sp->ring_middleIdx_inReal = NULL; }
+   if( sp->ringCap_middleIdx > reach ) reach = sp->ringCap_middleIdx;
+   if( sp->ring_trailingIdx_inReal ) { TA_Free( sp->ring_trailingIdx_inReal ); sp->ring_trailingIdx_inReal = NULL; }
+   if( sp->ringCap_trailingIdx > reach ) reach = sp->ringCap_trailingIdx;
+   return reach;
+}
+
 TA_LIB_API TA_RetCode TA_TRIMA_Value( const TA_TRIMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

@@ -729,13 +729,33 @@ struct TA_MAVP_Stream {
    int nBank;
    struct TA_MA_Stream **bank;
    double *scratch;
+   int tapeMask;
+   int tapePos;
+   double *tape;
 };
+
+/* Private function, not in public API. */
+static TA_RetCode TA_MAVP_TapeOpen( struct TA_MAVP_Stream *sp, const double inReal[], int historyLen, int reach )
+{
+   int size, b;
+
+   size = 1;
+   while( size <= reach ) size <<= 1;
+   sp->tape = (double *)TA_Malloc( sizeof(double) * (size_t)size );
+   if( !sp->tape ) return TA_ALLOC_ERR;
+   memset( sp->tape, 0, sizeof(double) * (size_t)size );
+   sp->tapeMask = size - 1;
+   for( b = historyLen > size ? historyLen - size : 0; b < historyLen; b++ )
+      sp->tape[b & sp->tapeMask] = inReal[b];
+   sp->tapePos = (historyLen - 1) & sp->tapeMask;
+   return TA_SUCCESS;
+}
 
 /* Private function, not in public API. */
 TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int startIdx, int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, double *outReal )
 {
    struct TA_MAVP_Stream *sp;
-   int k, cp, lookbackTotal, subStart;
+   int k, cp, lookbackTotal, subStart, reach, slotReach;
    double cpReal;
    TA_RetCode retCode;
 
@@ -772,19 +792,18 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
    if( !sp->bank ) { TA_Free( sp ); return TA_ALLOC_ERR; }
    memset( sp->bank, 0, sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
    sp->scratch = (double *)TA_Malloc( sizeof(double) * (size_t)sp->nBank );
-   if( !sp->scratch ) { TA_Free( sp->bank ); TA_Free( sp ); return TA_ALLOC_ERR; }
+   if( !sp->scratch ) { TA_MAVP_Close( sp ); return TA_ALLOC_ERR; }
 
+   reach = 0;
    for( k = 0; k < sp->nBank; k++ )
    {
       retCode = TA_MA_OpenInternal( &sp->bank[k], inReal, subStart, historyLen, optInMinPeriod + k, optInMAType, &sp->scratch[k] );
-      if( retCode != TA_SUCCESS )
-      {
-         int j;
-         for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );
-         TA_Free( sp->scratch ); TA_Free( sp->bank ); TA_Free( sp );
-         return retCode;
-      }
+      if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
+      slotReach = TA_MA_TapeDetach( sp->bank[k] );
+      if( slotReach > reach ) reach = slotReach;
    }
+   retCode = TA_MAVP_TapeOpen( sp, inReal, historyLen, reach );
+   if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
 
    cpReal = inPeriods[historyLen - 1];
    if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
@@ -813,7 +832,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Open( TA_MAVP_Stream **stream, const double inReal
 TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
 {
    struct TA_MAVP_Stream *sp;
-   int k, cp, lookbackTotal, t;
+   int k, cp, lookbackTotal, t, reach, slotReach, tapeBase;
    double cpReal;
    TA_RetCode retCode;
 
@@ -855,19 +874,18 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
    if( !sp->bank ) { TA_Free( sp ); return TA_ALLOC_ERR; }
    memset( sp->bank, 0, sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
    sp->scratch = (double *)TA_Malloc( sizeof(double) * (size_t)sp->nBank );
-   if( !sp->scratch ) { TA_Free( sp->bank ); TA_Free( sp ); return TA_ALLOC_ERR; }
+   if( !sp->scratch ) { TA_MAVP_Close( sp ); return TA_ALLOC_ERR; }
 
+   reach = 0;
    for( k = 0; k < sp->nBank; k++ )
    {
       retCode = TA_MA_OpenInternal( &sp->bank[k], inReal, lookbackTotal, lookbackTotal + 1, optInMinPeriod + k, optInMAType, &sp->scratch[k] );
-      if( retCode != TA_SUCCESS )
-      {
-         int j;
-         for( j = 0; j < k; j++ ) TA_MA_Close( sp->bank[j] );
-         TA_Free( sp->scratch ); TA_Free( sp->bank ); TA_Free( sp );
-         return retCode;
-      }
+      if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
+      slotReach = TA_MA_TapeDetach( sp->bank[k] );
+      if( slotReach > reach ) reach = slotReach;
    }
+   retCode = TA_MAVP_TapeOpen( sp, inReal, lookbackTotal + 1, reach );
+   if( retCode != TA_SUCCESS ) { TA_MAVP_Close( sp ); return retCode; }
 
    cpReal = inPeriods[lookbackTotal];
    if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
@@ -877,8 +895,11 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
 
    for( t = lookbackTotal + 1; t < historyLen; t++ )
    {
+      sp->tapePos = (sp->tapePos + 1) & sp->tapeMask;
+      sp->tape[sp->tapePos] = inReal[t];
+      tapeBase = sp->tapePos + sp->tapeMask + 1;
       for( k = 0; k < sp->nBank; k++ )
-         TA_MA_Update( sp->bank[k], inReal[t], &sp->scratch[k] );
+         TA_MA_StepTape( sp->bank[k], sp->tape, tapeBase, sp->tapeMask, inReal[t], &sp->scratch[k] );
       cpReal = inPeriods[t];
       if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
       else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
@@ -897,15 +918,18 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
 
 TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )
 {
-   int k, cp;
+   int k, cp, tapeBase;
    double cpReal;
    if( !stream ) return TA_BAD_PARAM;
    if( stream->outRangeBegIdx + stream->outRangeCount > TA_INDEX_MAX )
       return TA_OUT_OF_RANGE_END_INDEX;
    if( !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
+   stream->tapePos = (stream->tapePos + 1) & stream->tapeMask;
+   stream->tape[stream->tapePos] = inReal;
+   tapeBase = stream->tapePos + stream->tapeMask + 1;
    for( k = 0; k < stream->nBank; k++ )
-      TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );
+      TA_MA_StepTape( stream->bank[k], stream->tape, tapeBase, stream->tapeMask, inReal, &stream->scratch[k] );
    cpReal = inPeriods;
    if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;
    else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
@@ -926,7 +950,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Peek( const TA_MAVP_Stream *stream, double inReal,
    if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;
    else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
    else cp = (int)cpReal;
-   TA_MA_Peek( stream->bank[cp - stream->optInMinPeriod], inReal, outReal );
+   TA_MA_PeekTape( stream->bank[cp - stream->optInMinPeriod], stream->tape, ((stream->tapePos + 1) & stream->tapeMask) + stream->tapeMask + 1, stream->tapeMask, inReal, outReal );
    return TA_SUCCESS;
 }
 
@@ -942,6 +966,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Close( TA_MAVP_Stream *stream )
          TA_Free( stream->bank );
       }
       if( stream->scratch ) TA_Free( stream->scratch );
+      if( stream->tape ) TA_Free( stream->tape );
       TA_Free( stream );
    }
    return TA_SUCCESS;
@@ -983,6 +1008,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Clone( const TA_MAVP_Stream *stream, TA_MAVP_Strea
    *sp = *stream;
    sp->bank = NULL;
    sp->scratch = NULL;
+   sp->tape = NULL;
    { int k;
      sp->bank = (struct TA_MA_Stream **)TA_Malloc( sizeof(struct TA_MA_Stream *) * (size_t)sp->nBank );
      if( !sp->bank ) { TA_MAVP_Close( sp ); return TA_ALLOC_ERR; }
@@ -998,6 +1024,11 @@ TA_LIB_API TA_RetCode TA_MAVP_Clone( const TA_MAVP_Stream *stream, TA_MAVP_Strea
      sp->scratch = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->scratch ) { TA_MAVP_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->scratch, stream->scratch, sizeof(double) * copyN ); }
+   if( stream->tape )
+   { size_t copyN = (size_t)sp->tapeMask + 1;
+     sp->tape = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->tape ) { TA_MAVP_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->tape, stream->tape, sizeof(double) * copyN ); }
    *clone = sp;
    return TA_SUCCESS;
 }

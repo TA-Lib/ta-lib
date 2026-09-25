@@ -30,6 +30,9 @@ pub struct Registry {
     /// Each indicator's YAML-level definition (no body), for renderers that
     /// need another function's signature, such as a C# `<seealso cref>`.
     defs: HashMap<String, crate::ir::FuncDef>,
+    /// The functions a period bank steps through a tape frame (#445), by dir-name;
+    /// see [`crate::streaming::tape_set`].
+    tape_set: std::collections::BTreeSet<String>,
 }
 
 impl Registry {
@@ -75,7 +78,22 @@ impl Registry {
         // Sort by descending length so longest-match wins (e.g. "stochrsi" before "stoch")
         indicators.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
 
-        Registry { indicators, names, callee_sigs, callee_out_names, defs }
+        let mut registry = Registry {
+            indicators,
+            names,
+            callee_sigs,
+            callee_out_names,
+            defs,
+            tape_set: std::collections::BTreeSet::new(),
+        };
+        registry.tape_set =
+            crate::streaming::tape_set(base_dir, &registry.indicators, &registry);
+        registry
+    }
+
+    /// Whether a period bank steps `key` (a dir-name) through a tape frame.
+    pub fn in_tape_set(&self, key: &str) -> bool {
+        self.tape_set.contains(key)
     }
 
     /// The YAML-level definition of an indicator dir-name, if known.

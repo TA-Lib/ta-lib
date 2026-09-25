@@ -757,4 +757,21 @@ public partial class Core
       }
       return EmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
+
+   private double EmaStepTape( EmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      EmaStepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double EmaPeekTape( EmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.Peek(inReal);
+   }
+
+   private int EmaTapeDetach( EmaStream sp )
+   {
+      return 0;
+   }
 }

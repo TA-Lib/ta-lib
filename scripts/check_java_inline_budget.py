@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""MA's two dispatch frames must stay inside HotSpot C2's inlining budget.
+"""MA's dispatch frames must stay inside HotSpot C2's inlining budget.
 
 `MaStream.peek` and `Core.maStepImpl` are switches over `MAType`, and they sit
 under every handle that holds an MA sub-handle -- APO, BBANDS, MACDEXT, MAVP,
-PPO, PVO, STOCH, STOCHF, and KDJ and STOCHRSI through those. C2 refuses to
+PPO, PVO, STOCH, STOCHF, and KDJ and STOCHRSI through those. `Core.maStepTape`
+and `Core.maPeekTape` are the same switches under every slot of an MAVP
+handle, which steps one per period in its range on every bar. C2 refuses to
 inline a hot method whose bytecode exceeds `FreqInlineSize`, so crossing that
 budget costs those callers roughly a third of their per-bar time, measured. It
 costs nothing visible: no test fails, no output changes.
@@ -26,9 +28,12 @@ import sys
 # `-XX:FreqInlineSize`, the HotSpot default for a hot call site.
 BUDGET = 325
 
+TAPE_SIG = r"\(io\.github\.talib\.Core\$MaStream, double\[\], int, int, double\);"
 FRAMES = [
-    ("Core$MaStream", re.compile(r"^\s+public double peek\(double\);")),
-    ("Core", re.compile(r"^\s+private void maStepImpl\(io\.github\.talib\.Core\$MaStream, double\);")),
+    ("Core$MaStream", "peek", re.compile(r"^\s+public double peek\(double\);")),
+    ("Core", "maStepImpl", re.compile(r"^\s+private void maStepImpl\(io\.github\.talib\.Core\$MaStream, double\);")),
+    ("Core", "maStepTape", re.compile(r"^\s+private double maStepTape" + TAPE_SIG)),
+    ("Core", "maPeekTape", re.compile(r"^\s+private double maPeekTape" + TAPE_SIG)),
 ]
 
 # A method's last instruction is always a 1-byte return or throw, so the final
@@ -44,15 +49,15 @@ def die(msg: str):
 
 
 def disassemble(classes: str) -> dict:
-    """One javap call for both frames -- two would be two JVM startups.
+    """One javap call for every frame -- one per class would be a JVM startup each.
 
-    Returned per class, NOT as one blob: the two signatures are distinct today
-    only by luck, and a search over the concatenation would happily answer for
+    Returned per class, NOT as one blob: the signatures are distinct across
+    classes today only by luck, and a search over the concatenation would happily answer for
     the wrong class. javap also exits 0 when only SOME of the named classes
     resolve, reporting the rest on stderr, so its status says nothing and the
     stderr has to be read.
     """
-    names = ["io.github.talib." + c for c, _ in FRAMES]
+    names = ["io.github.talib." + c for c in dict.fromkeys(c for c, _, _ in FRAMES)]
     try:
         p = subprocess.run(["javap", "-p", "-c", "-cp", classes] + names,
                            capture_output=True, text=True)
@@ -73,7 +78,7 @@ def disassemble(classes: str) -> dict:
             sections[cur] = []
         elif cur is not None:
             sections[cur].append(line)
-    for cls, _ in FRAMES:
+    for cls, _, _ in FRAMES:
         if cls not in sections:
             die("javap printed no section for io.github.talib.%s -- it was asked "
                 "for it and did not refuse, so the disassembly parse moved." % cls)
@@ -115,9 +120,9 @@ def main():
 
     sections = disassemble(classes)
     over = []
-    for cls, sig in FRAMES:
+    for cls, method, sig in FRAMES:
         n = code_length(sections, cls, sig)
-        name = "%s.%s" % (cls, "peek" if "peek" in sig.pattern else "maStepImpl")
+        name = "%s.%s" % (cls, method)
         print("%-24s %3d bytes (budget %d, %+d)" % (name, n, BUDGET, n - BUDGET))
         if n > BUDGET:
             over.append((name, n))
@@ -128,11 +133,12 @@ def main():
             "per-bar time. An N-way switch cannot stay under a fixed budget as N "
             "grows, so the fix is to split it: keep the common MATypes in this "
             "frame and delegate the rest to a second method that may grow freely. "
-            "Emitter: build_dispatch_peek_frame / emit_dispatch in "
+            "For the tape frames that is TAPE_FRAME_ARMS. Emitter: "
+            "build_dispatch_peek_frame / emit_dispatch / emit_dispatch_tape in "
             "ta_codegen/generator/src/backends/java_stream.rs."
             % ("Frame" if len(over) == 1 else "Frames", BUDGET,
                ", ".join("%s at %d" % (n, b) for n, b in over)))
-    print("Both MA dispatch frames are inside the %d-byte budget." % BUDGET)
+    print("Every MA dispatch frame is inside the %d-byte budget." % BUDGET)
 
 
 if __name__ == "__main__":

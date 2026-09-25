@@ -543,6 +543,9 @@ struct MavpStreamState {
     optInMAType: MAType,
     // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
     bank: Vec<MaStream>,
+    tapeMask: usize,
+    tapePos: usize,
+    tape: Vec<f64>,
     cur_outReal: f64,
 }
 
@@ -552,7 +555,7 @@ struct MavpStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn mavp_step_impl(sp: &mut MavpStreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
+    fn mavp_step_impl(sp: &mut MavpStreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) {
         let mut cp: i32 = inPeriods as i32;
         if cp < sp.optInMinPeriod {
             cp = sp.optInMinPeriod;
@@ -560,13 +563,30 @@ impl Core {
             cp = sp.optInMaxPeriod;
         }
         let slot: usize = (cp - sp.optInMinPeriod) as usize;
+        sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+        sp.tape[sp.tapePos] = inReal;
+        let tapeBase: usize = sp.tapePos + sp.tapeMask + 1;
         for (bankIdx, sub) in sp.bank.iter_mut().enumerate() {
-            let subValue = sub.update(inReal)?;
+            let subValue = sub.step_tape(&sp.tape, tapeBase, sp.tapeMask, inReal);
             if bankIdx == slot {
                 (*outReal) = subValue;
             }
         }
-        Ok(())
+        sp.cur_outReal = (*outReal);
+    }
+
+    fn mavp_tape_open(inReal: &[f64], reach: usize) -> (Vec<f64>, usize, usize) {
+        let historyLen: usize = inReal.len();
+        let mut size: usize = 1;
+        while size <= reach {
+            size <<= 1;
+        }
+        let tapeMask: usize = size - 1;
+        let mut tape: Vec<f64> = vec![0.0_f64; size];
+        for b in historyLen.saturating_sub(size)..historyLen {
+            tape[b & tapeMask] = inReal[b];
+        }
+        (tape, tapeMask, (historyLen - 1) & tapeMask)
     }
 
     /// Internal startIdx-anchored open behind [`Core::mavp_open`] (composition seam).
@@ -614,11 +634,17 @@ impl Core {
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
         let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
+        let mut reach: usize = 0;
         for bankIdx in 0..nBank {
-            let (sub, subValue) = self.ma_open_internal(inReal, subStart, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let (mut sub, subValue) = self.ma_open_internal(inReal, subStart, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let slotReach = sub.tape_detach();
+            if slotReach > reach {
+                reach = slotReach;
+            }
             bank.push(sub);
             scratch.push(subValue);
         }
+        let (tape, tapeMask, tapePos) = Core::mavp_tape_open(inReal, reach);
         let mut cp: i32 = inPeriods[historyLen - 1] as i32;
         if cp < optInMinPeriod {
             cp = optInMinPeriod;
@@ -626,7 +652,7 @@ impl Core {
             cp = optInMaxPeriod;
         }
         let lastValue_outReal: f64 = scratch[(cp - optInMinPeriod) as usize];
-        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank, cur_outReal: lastValue_outReal };
+        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank, tapeMask, tapePos, tape, cur_outReal: lastValue_outReal };
         Ok((MavpStream { state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
     }
 
@@ -735,11 +761,17 @@ impl Core {
         // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.
         let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
+        let mut reach: usize = 0;
         for bankIdx in 0..nBank {
-            let (sub, subValue) = self.ma_open_internal(&inReal[..lookbackTotal + 1], lookbackTotal, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let (mut sub, subValue) = self.ma_open_internal(&inReal[..lookbackTotal + 1], lookbackTotal, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let slotReach = sub.tape_detach();
+            if slotReach > reach {
+                reach = slotReach;
+            }
             bank.push(sub);
             scratch.push(subValue);
         }
+        let (tape, tapeMask, tapePos) = Core::mavp_tape_open(&inReal[..lookbackTotal + 1], reach);
         // First output bar (lookbackTotal), then replay the remaining history.
         let mut cp: i32 = inPeriods[lookbackTotal] as i32;
         if cp < optInMinPeriod {
@@ -748,21 +780,12 @@ impl Core {
             cp = optInMaxPeriod;
         }
         outReal[0] = scratch[(cp - optInMinPeriod) as usize];
+        let mut state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank, tapeMask, tapePos, tape, cur_outReal: outReal[0] };
         let mut t: usize = lookbackTotal + 1;
         while t < historyLen {
-            for (bankIdx, sub) in bank.iter_mut().enumerate() {
-                scratch[bankIdx] = sub.update(inReal[t])?;
-            }
-            cp = inPeriods[t] as i32;
-            if cp < optInMinPeriod {
-                cp = optInMinPeriod;
-            } else if cp > optInMaxPeriod {
-                cp = optInMaxPeriod;
-            }
-            outReal[t - lookbackTotal] = scratch[(cp - optInMinPeriod) as usize];
+            Core::mavp_step_impl(&mut state, inReal[t], inPeriods[t], &mut outReal[t - lookbackTotal]);
             t += 1;
         }
-        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank, cur_outReal: outReal[historyLen - lookbackTotal - 1] };
         Ok((MavpStream { state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
     }
 
@@ -803,8 +826,7 @@ impl MavpStream {
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
-        Core::mavp_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
-        self.state.cur_outReal = outReal;
+        Core::mavp_step_impl(&mut self.state, inReal, inPeriods, &mut outReal);
         self.out.count += 1;
         Ok(outReal)
     }
@@ -837,7 +859,8 @@ impl MavpStream {
                 cp = sp.optInMaxPeriod;
             }
             let slot: usize = (cp - sp.optInMinPeriod) as usize;
-            outReal = sp.bank[slot].peek(inReal)?;
+            let tapeBase: usize = ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1;
+            outReal = sp.bank[slot].peek_tape(&sp.tape, tapeBase, sp.tapeMask, inReal)?;
         }
         Ok(outReal)
     }

@@ -628,3 +628,37 @@
       MInteger outNBElement = new MInteger();
       return smaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
+   private double smaStepTape( SmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double tempReal = 0.0;
+      sp.periodTotal += (double)inReal;
+      tempReal = sp.periodTotal;
+      sp.periodTotal -= (double)tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+      sp.cur_outReal = tempReal / (double)sp.optInTimePeriod;
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+   private double smaPeekTape( SmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double tempReal = 0.0;
+      double cur_outReal = 0.0;
+      double periodTotal = sp.periodTotal;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      pkSlot0 = tapeBase & tapeMask;
+      pkVal0 = inReal;
+      periodTotal += (double)inReal;
+      tempReal = periodTotal;
+      periodTotal -= (double)((((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0);
+      cur_outReal = tempReal / (double)sp.optInTimePeriod;
+      return cur_outReal;
+   }
+   private int smaTapeDetach( SmaStream sp )
+   {
+      int reach = 0;
+      sp.ring_trailingIdx_inReal = new double[0];
+      if( sp.ringCap_trailingIdx > reach ) {
+         reach = sp.ringCap_trailingIdx;
+      }
+      return reach;
+   }

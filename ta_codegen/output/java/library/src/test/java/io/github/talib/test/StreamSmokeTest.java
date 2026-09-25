@@ -1396,6 +1396,16 @@ public class StreamSmokeTest {
                       name + ": the copy's update moved the original's outRange");
                 check(allBitEq(updated, rd.read(value, h)),
                       name + ": the copy's update moved the original's value()");
+                /* ...nor anything it does not report. `ref` took the same bars
+                 * and was never copied. A buffer the copy shares with the
+                 * original differs from it here, in the one slot the copy
+                 * wrote, and in no value: fed the same bar next, each handle
+                 * stores it before reading it. */
+                java.util.List<String> shared = new java.util.ArrayList<String>();
+                stateDiff(h, ref, name, shared, 0);
+                check(shared.isEmpty(), name + ": the copy's update wrote the original -> "
+                      + (shared.size() > 4 ? shared.subList(0, 4) + " (+" + (shared.size() - 4) + " more)"
+                                           : shared.toString()));
                 double[] onOriginal = rd.read(update, h, barB);
                 check(allBitEq(onCopy, onOriginal),
                       name + ": copy is equivalent (same bar, same bits)");
@@ -1441,6 +1451,78 @@ public class StreamSmokeTest {
         check(swStateSubs >= 13,
               "only " + swStateSubs + " handle(s) hold a sub-stream, so a peek that commits one "
               + "has nothing to be caught by");
+    }
+
+    /**
+     * The MAVP bank (#445) against the batch, bit for bit, for every MAType.
+     * Its slots read their price history from one shared tape, so the bands are
+     * the ones whose deepest lag is a power of two for some MAType, the only
+     * place a tape one slot too short shows. The fork runs to the end before its
+     * original moves: in lockstep, a tape the two shared would read right.
+     */
+    private static void mavpBankMatchesBatchOnEveryMaType(Core core) {
+        final int n = 1200;
+        double[] closes = new double[n];
+        double x = 100.0;
+        for (int t = 0; t < n; t++) {
+            x += (t % 7 == 3) ? -1.37 : (t % 5 == 1 ? 0.83 : 0.21);
+            if (t % 311 == 0) {
+                x *= 1.9;
+            }
+            closes[t] = Math.floor(x * 100.0 + 0.5) / 100.0;
+        }
+        double[] periods = new double[n];
+        int[][] bands = { {2, 2}, {2, 8}, {2, 32}, {5, 33}, {2, 65} };
+        int configs = 0;
+        for (MAType ma : MAType.values()) {
+            if (ma == MAType.DEFAULT) {
+                continue;
+            }
+            for (int[] band : bands) {
+                int min = band[0], max = band[1];
+                for (int t = 0; t < n; t++) {
+                    periods[t] = min + (t % (max - min + 3)) - 1;
+                }
+                double[] batch = new double[n];
+                OutRange r = core.mavp(0, n - 1, closes, periods, min, max, ma, batch);
+                int lb = r.begIdx();
+                String what = "MAVP " + ma + " [" + min + ", " + max + "]";
+                Core.MavpStream s = core.mavpOpen(java.util.Arrays.copyOf(closes, lb + 1),
+                    java.util.Arrays.copyOf(periods, lb + 1), min, max, ma);
+                Core.MavpStream twin = s.clone();
+                boolean ok = bitEq(s.value(), batch[0]);
+                int mid = (lb + 1 + n) / 2;
+                for (int t = lb + 1; ok && t < mid; t++) {
+                    double pk = s.peek(closes[t], periods[t]);
+                    double up = s.update(closes[t], periods[t]);
+                    double tw = twin.update(closes[t], periods[t]);
+                    ok = bitEq(pk, up) && bitEq(up, batch[t - lb]) && bitEq(tw, up);
+                }
+                check(ok, what + ": Open, then Peek and Update, track batch");
+                twin.advance();
+                Core.MavpStream fork = s.clone();
+                for (int t = mid; ok && t < n; t++) {
+                    double pk = fork.peek(closes[t], periods[t]);
+                    double up = fork.update(closes[t], periods[t]);
+                    ok = bitEq(pk, up) && bitEq(up, batch[t - lb]);
+                }
+                check(ok, what + ": the fork tracks batch");
+                for (int t = mid; ok && t < n; t++) {
+                    double up = s.update(closes[t], periods[t]);
+                    ok = bitEq(up, batch[t - lb]) && bitEq(twin.update(closes[t], periods[t]), up);
+                }
+                check(ok, what + ": the original and its advanced twin track batch after the fork ran ahead");
+                double[] filled = new double[r.count()];
+                Core.MavpStream f = core.mavpOpenAndFill(closes, periods, min, max, ma, filled);
+                boolean same = bitEq(f.value(), batch[r.count() - 1]);
+                for (int i = 0; i < r.count(); i++) {
+                    same &= bitEq(filled[i], batch[i]);
+                }
+                check(same, what + ": OpenAndFill is bit-identical to batch");
+                configs++;
+            }
+        }
+        check(configs >= 5 * 13, "MAVP bank ran " + configs + " configurations");
     }
 
     public static void main(String[] args) {
@@ -1758,6 +1840,7 @@ public class StreamSmokeTest {
         aRejectedUpdateCostsNothingAndAdvanceCostsOneBar(core, open, high, low, close);
         theLastBarAStreamCanCountIsIndexMax(core, close);
         peekAndCopyHoldOnEveryHandle(core);
+        mavpBankMatchesBatchOnEveryMaType(core);
 
 
         if (failures == 0) {

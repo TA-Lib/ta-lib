@@ -760,6 +760,9 @@ public partial class Core
       internal int optInMaxPeriod;
       internal MAType optInMAType;
       internal double cur_outReal;
+      internal int tapeMask;
+      internal int tapePos;
+      internal double[] tape = [];
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
       internal MaStream[] bank = [];
       internal int outRangeBegIdx;
@@ -807,6 +810,10 @@ public partial class Core
          this.optInMaxPeriod = other.optInMaxPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
+         this.tapeMask = other.tapeMask;
+         this.tapePos = other.tapePos;
+         this.tape = new double[other.tape.Length];
+         Array.Copy( other.tape, this.tape, other.tape.Length );
          this.bank = new MaStream[other.bank.Length];
          for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
             this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
@@ -870,7 +877,7 @@ public partial class Core
             cp = sp.optInMaxPeriod;
          }
          int slot = cp - sp.optInMinPeriod;
-         double cur_outReal = sp.bank[slot].Peek(inReal);
+         double cur_outReal = sp.core.MaPeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, inReal);
          return cur_outReal;
       }
 
@@ -900,13 +907,31 @@ public partial class Core
          cp = sp.optInMaxPeriod;
       }
       int slot = cp - sp.optInMinPeriod;
+      sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+      sp.tape[sp.tapePos] = inReal;
+      int tapeBase = sp.tapePos + sp.tapeMask + 1;
       MaStream[] bank = sp.bank;
       for( int bankIdx = 0; bankIdx < bank.Length; bankIdx++ ) {
-         double subValue = bank[bankIdx].Update(inReal);
+         double subValue = MaStepTape(bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, inReal);
          if( bankIdx == slot ) {
             sp.cur_outReal = subValue;
          }
       }
+   }
+
+   private static void MavpTapeOpen( MavpStream sp, ReadOnlySpan<double> inReal, int reach )
+   {
+      int size = 1;
+      while( size <= reach ) {
+         size <<= 1;
+      }
+      int historyLen = inReal.Length;
+      sp.tape = new double[size];
+      sp.tapeMask = size - 1;
+      for( int b = (historyLen > size)? historyLen - size : 0; b < historyLen; b++ ) {
+         sp.tape[b & sp.tapeMask] = inReal[b];
+      }
+      sp.tapePos = (historyLen - 1) & sp.tapeMask;
    }
 
    private RetCode MavpOpenImpl( MavpStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
@@ -955,9 +980,15 @@ public partial class Core
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       MaStream[] bank = new MaStream[nBank];
+      int reach = 0;
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
          bank[bankIdx] = MaOpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
+         int slotReach = MaTapeDetach(bank[bankIdx]);
+         if( slotReach > reach ) {
+            reach = slotReach;
+         }
       }
+      MavpTapeOpen(sp, inReal, reach);
       int cp = (int)inPeriods[historyLen - 1];
       if( cp < optInMinPeriod ) {
          cp = optInMinPeriod;
@@ -1020,11 +1051,17 @@ public partial class Core
       double[] scratch = new double[nBank];
       double[] seedPrefix = new double[lookbackTotal + 1];
       inReal.Slice(0, lookbackTotal + 1).CopyTo(seedPrefix);
+      int reach = 0;
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
          MaStream sub = MaOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
          bank[bankIdx] = sub;
          scratch[bankIdx] = sub.cur_outReal;
+         int slotReach = MaTapeDetach(sub);
+         if( slotReach > reach ) {
+            reach = slotReach;
+         }
       }
+      MavpTapeOpen(sp, seedPrefix, reach);
       /* First output bar (lookbackTotal), then replay the remaining history. */
       int cp = (int)inPeriods[lookbackTotal];
       if( cp < optInMinPeriod ) {
@@ -1034,8 +1071,11 @@ public partial class Core
       }
       outReal[0] = scratch[cp - optInMinPeriod];
       for( int t = lookbackTotal + 1; t < historyLen; t++ ) {
+         sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+         sp.tape[sp.tapePos] = inReal[t];
+         int tapeBase = sp.tapePos + sp.tapeMask + 1;
          for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-            scratch[bankIdx] = bank[bankIdx].Update(inReal[t]);
+            scratch[bankIdx] = MaStepTape(bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, inReal[t]);
          }
          cp = (int)inPeriods[t];
          if( cp < optInMinPeriod ) {

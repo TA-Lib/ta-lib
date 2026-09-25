@@ -1503,4 +1503,112 @@ public partial class Core
       }
       return TrimaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
+
+   private double TrimaStepTape( TrimaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      if( sp.optInTimePeriod % 2 == 1 ) {
+         /* Step (1) */
+         sp.numerator -= sp.numeratorSub;
+         sp.numeratorSub -= sp.tempReal;
+         sp.tempReal = tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask];
+         sp.numeratorSub += sp.tempReal;
+         /* Step (2) */
+         sp.numerator += sp.numeratorAdd;
+         sp.numeratorAdd -= sp.tempReal;
+         sp.tempReal = inReal;
+         sp.numeratorAdd += sp.tempReal;
+         /* Step (3) */
+         sp.numerator += sp.tempReal;
+         /* Step (4) */
+         sp.tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+         sp.cur_outReal = sp.numerator * sp.factor;
+      } else {
+         /* Step (1) */
+         sp.numerator -= sp.numeratorSub;
+         sp.numeratorSub -= sp.tempReal;
+         sp.tempReal = tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask];
+         sp.numeratorSub += sp.tempReal;
+         /* Step (2) */
+         sp.numeratorAdd -= sp.tempReal;
+         sp.numerator += sp.numeratorAdd;
+         sp.tempReal = inReal;
+         sp.numeratorAdd += sp.tempReal;
+         /* Step (3) */
+         sp.numerator += sp.tempReal;
+         /* Step (4) */
+         sp.tempReal = tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask];
+         sp.cur_outReal = sp.numerator * sp.factor;
+      }
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double TrimaPeekTape( TrimaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      double cur_outReal = 0.0;
+      if( sp.optInTimePeriod % 2 == 1 ) {
+         double numerator = sp.numerator;
+         double numeratorAdd = sp.numeratorAdd;
+         double numeratorSub = sp.numeratorSub;
+         double tempReal = sp.tempReal;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         pkSlot0 = tapeBase & tapeMask;
+         pkVal0 = inReal;
+         /* Step (1) */
+         numerator -= numeratorSub;
+         numeratorSub -= tempReal;
+         tempReal = (((tapeBase - sp.ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask] : pkVal0;
+         numeratorSub += tempReal;
+         /* Step (2) */
+         numerator += numeratorAdd;
+         numeratorAdd -= tempReal;
+         tempReal = inReal;
+         numeratorAdd += tempReal;
+         /* Step (3) */
+         numerator += tempReal;
+         /* Step (4) */
+         tempReal = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+         cur_outReal = numerator * sp.factor;
+      } else {
+         double numerator = sp.numerator;
+         double numeratorAdd = sp.numeratorAdd;
+         double numeratorSub = sp.numeratorSub;
+         double tempReal = sp.tempReal;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         pkSlot0 = tapeBase & tapeMask;
+         pkVal0 = inReal;
+         /* Step (1) */
+         numerator -= numeratorSub;
+         numeratorSub -= tempReal;
+         tempReal = (((tapeBase - sp.ringCap_middleIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_middleIdx) & tapeMask] : pkVal0;
+         numeratorSub += tempReal;
+         /* Step (2) */
+         numeratorAdd -= tempReal;
+         numerator += numeratorAdd;
+         tempReal = inReal;
+         numeratorAdd += tempReal;
+         /* Step (3) */
+         numerator += tempReal;
+         /* Step (4) */
+         tempReal = (((tapeBase - sp.ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask] : pkVal0;
+         cur_outReal = numerator * sp.factor;
+      }
+      return cur_outReal;
+   }
+
+   private int TrimaTapeDetach( TrimaStream sp )
+   {
+      int reach = 0;
+      sp.ring_middleIdx_inReal = [];
+      if( sp.ringCap_middleIdx > reach ) {
+         reach = sp.ringCap_middleIdx;
+      }
+      sp.ring_trailingIdx_inReal = [];
+      if( sp.ringCap_trailingIdx > reach ) {
+         reach = sp.ringCap_trailingIdx;
+      }
+      return reach;
+   }
 }

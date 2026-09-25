@@ -24,6 +24,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~1.3x to 2.7x: CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR (#411)
 - ~1.2x to 17x: PERCENTILE, more on a trending series and on the first output of a long window (#435)
 - ~1.4x to 6.4x: IMI, more when up and down bars alternate unpredictably (#440)
+- ~1.8x to 45x: MAVP stream updates over SMA, WMA, TRIMA, KAMA, HMA and ZLEMA, more the wider
+  the period band. Their memory no longer grows with the square of `optInMaxPeriod`: at 2 to
+  20000, SMA holds 2.7 MB instead of 1.5 GB. (#445)
 
 ### Changed
 - (#411) CMO, PLUS_DM, MINUS_DM, PLUS_DI, MINUS_DI, DX, ADX and ADXR optimization with some
@@ -57,6 +60,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   resumes far below its earlier level.
 - `ta_func.h` is plain ASCII again. In 0.8.1 its comments had non-ASCII characters, so MSVC could warn (C4819) when reading it under a Chinese, Japanese or Korean code page.
 - CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.
+- MAVP stream `OpenAndFill` matches the batch when the history holds a NaN or infinite price.
+  In 0.8.1 C skipped that bar in every period's average, so the values after it were wrong,
+  and Java threw. (#445)
 
 ## [0.8.1] 2026-09-12
 ### Added

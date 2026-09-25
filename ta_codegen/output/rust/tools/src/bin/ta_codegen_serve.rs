@@ -25298,14 +25298,25 @@ fn sv_ac(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -25464,20 +25475,35 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -25619,14 +25645,25 @@ fn sv_acos(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -25766,14 +25803,25 @@ fn sv_ad(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -25913,14 +25961,25 @@ fn sv_add(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -26063,14 +26122,25 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -26211,14 +26281,25 @@ fn sv_adr(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -26360,14 +26441,25 @@ fn sv_adx(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -26509,14 +26601,25 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -26658,14 +26761,25 @@ fn sv_ao(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -26817,14 +26931,25 @@ fn sv_apo(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -26974,17 +27099,30 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -27126,14 +27264,25 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -27273,14 +27422,25 @@ fn sv_asin(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -27420,14 +27580,25 @@ fn sv_atan(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -27569,14 +27740,25 @@ fn sv_atr(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -27717,14 +27899,25 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -27864,14 +28057,25 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -28042,20 +28246,35 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -28210,14 +28429,25 @@ fn sv_bbw(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -28358,14 +28588,25 @@ fn sv_beta(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -28505,14 +28746,25 @@ fn sv_bop(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -28653,14 +28905,25 @@ fn sv_cci(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -28804,14 +29067,25 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -28955,14 +29229,25 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -29106,14 +29391,25 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -29257,14 +29553,25 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -29408,14 +29715,25 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -29559,14 +29877,25 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -29710,14 +30039,25 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -29862,14 +30202,25 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -30013,14 +30364,25 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -30164,14 +30526,25 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -30315,14 +30688,25 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -30466,14 +30850,25 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -30617,14 +31012,25 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -30768,14 +31174,25 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -30920,14 +31337,25 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -31071,14 +31499,25 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -31222,14 +31661,25 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -31373,14 +31823,25 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -31524,14 +31985,25 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -31676,14 +32148,25 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -31828,14 +32311,25 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -31979,14 +32473,25 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -32130,14 +32635,25 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -32281,14 +32797,25 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -32432,14 +32959,25 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -32583,14 +33121,25 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -32734,14 +33283,25 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -32885,14 +33445,25 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -33036,14 +33607,25 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -33187,14 +33769,25 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -33338,14 +33931,25 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -33489,14 +34093,25 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -33640,14 +34255,25 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -33791,14 +34417,25 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -33942,14 +34579,25 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -34093,14 +34741,25 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -34244,14 +34903,25 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -34395,14 +35065,25 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -34546,14 +35227,25 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -34697,14 +35389,25 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -34848,14 +35551,25 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -35000,14 +35714,25 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -35152,14 +35877,25 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -35304,14 +36040,25 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -35455,14 +36202,25 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -35606,14 +36364,25 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -35757,14 +36526,25 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -35908,14 +36688,25 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -36059,14 +36850,25 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -36210,14 +37012,25 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -36361,14 +37174,25 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -36512,14 +37336,25 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -36663,14 +37498,25 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -36814,14 +37660,25 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -36965,14 +37822,25 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -37116,14 +37984,25 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -37267,14 +38146,25 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -37418,14 +38308,25 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -37569,14 +38470,25 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -37720,14 +38632,25 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -37871,14 +38794,25 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -38018,14 +38952,25 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -38166,14 +39111,25 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -38315,14 +39271,25 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -38463,14 +39430,25 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -38613,14 +39591,25 @@ fn sv_coppock(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -38761,14 +39750,25 @@ fn sv_correl(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -38908,14 +39908,25 @@ fn sv_cos(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -39055,14 +40066,25 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -39206,14 +40228,25 @@ fn sv_crsi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -39354,14 +40387,25 @@ fn sv_cti(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -39501,14 +40545,25 @@ fn sv_cumsum(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -39651,14 +40706,25 @@ fn sv_cvi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -39800,14 +40866,25 @@ fn sv_dema(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -39947,14 +41024,25 @@ fn sv_div(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -40113,20 +41201,35 @@ fn sv_donchian(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -40269,14 +41372,25 @@ fn sv_dpo(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -40418,14 +41532,25 @@ fn sv_dx(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -40566,14 +41691,25 @@ fn sv_efi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -40715,14 +41851,25 @@ fn sv_ema(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -40863,14 +42010,25 @@ fn sv_er(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -41021,17 +42179,30 @@ fn sv_eri(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -41172,14 +42343,25 @@ fn sv_exp(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -41319,14 +42501,25 @@ fn sv_floor(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -41467,14 +42660,25 @@ fn sv_fosc(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -41625,17 +42829,30 @@ fn sv_fractal(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork.0 != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_fork.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0 != u_fork.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1 != u_fork.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0 != u_fork.0 { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.0 != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1 != u_fork.1 { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0 != u_src.0 || vb.0 != u_fork.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1 != u_src.1 || vb.1 != u_fork.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0 != u_src.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1 != u_src.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -41804,10 +43021,27 @@ fn sv_ha(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.3, b3[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.3.to_bits() != u_fork.3.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
@@ -41816,11 +43050,11 @@ fn sv_ha(core: &Core, params: &Value) -> String {
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.3.to_bits() != u_fork.3.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.3, b3[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.3.to_bits() != u_src.3.to_bits() || vb.3.to_bits() != u_fork.3.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.3.to_bits() != u_src.3.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -41964,14 +43198,25 @@ fn sv_hma(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -42112,14 +43357,25 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -42260,14 +43516,25 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -42417,17 +43684,30 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -42578,17 +43858,30 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -42730,14 +44023,25 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -42878,14 +44182,25 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -43026,14 +44341,25 @@ fn sv_imi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -43175,14 +44501,25 @@ fn sv_kama(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -43345,20 +44682,35 @@ fn sv_kc(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -43536,20 +44888,35 @@ fn sv_kdj(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -43692,14 +45059,25 @@ fn sv_kurtosis(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -43840,14 +45218,25 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -43988,14 +45377,25 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -44136,14 +45536,25 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -44284,14 +45695,25 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -44431,14 +45853,25 @@ fn sv_ln(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -44578,14 +46011,25 @@ fn sv_log10(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -44736,14 +46180,25 @@ fn sv_ma(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -44905,20 +46360,35 @@ fn sv_macd(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -45101,20 +46571,35 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -45276,20 +46761,35 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.2.to_bits() != u_src.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -45443,17 +46943,30 @@ fn sv_mama(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -45594,14 +47107,25 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -45744,14 +47268,25 @@ fn sv_massi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -45904,14 +47439,25 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -46052,14 +47598,25 @@ fn sv_max(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -46200,14 +47757,25 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -46348,14 +47916,25 @@ fn sv_median(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -46495,14 +48074,25 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -46643,14 +48233,25 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -46791,14 +48392,25 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -46939,14 +48551,25 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -47087,14 +48710,25 @@ fn sv_min(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -47235,14 +48869,25 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v != u_src { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -47392,17 +49037,30 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -47553,17 +49211,30 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_fork.0 != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_fork.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0 != u_fork.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1 != u_fork.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0 != u_fork.0 { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.0 != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1 != u_fork.1 { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0 != u_src.0 || vb.0 != u_fork.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1 != u_src.1 || vb.1 != u_fork.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0 != u_src.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1 != u_src.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -47706,14 +49377,25 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -47855,14 +49537,25 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -48003,14 +49696,25 @@ fn sv_mom(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -48150,14 +49854,25 @@ fn sv_mult(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -48299,14 +50014,25 @@ fn sv_natr(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -48446,14 +50172,25 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -48593,14 +50330,25 @@ fn sv_obv(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -48742,14 +50490,25 @@ fn sv_percentile(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -48890,14 +50649,25 @@ fn sv_percentrank(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -49039,14 +50809,25 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -49188,14 +50969,25 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -49347,14 +51139,25 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -49494,14 +51297,25 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -49653,14 +51467,25 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -49800,14 +51625,25 @@ fn sv_pvt(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -49948,14 +51784,25 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_o[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -50097,14 +51944,25 @@ fn sv_rma(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -50245,14 +52103,25 @@ fn sv_roc(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -50393,14 +52262,25 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -50541,14 +52421,25 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -50689,14 +52580,25 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -50838,14 +52740,25 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -50988,14 +52901,25 @@ fn sv_rvi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -51138,14 +53062,25 @@ fn sv_rvir(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -51286,14 +53221,25 @@ fn sv_rvol(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -51435,14 +53381,25 @@ fn sv_sar(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -51590,14 +53547,25 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -51737,14 +53705,25 @@ fn sv_sin(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -51884,14 +53863,25 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -52032,14 +54022,25 @@ fn sv_sma(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -52193,17 +54194,30 @@ fn sv_smi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -52344,14 +54358,25 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -52493,14 +54518,25 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -52667,17 +54703,30 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -52839,17 +54888,30 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -53013,17 +55075,30 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -53164,14 +55239,25 @@ fn sv_sub(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -53312,14 +55398,25 @@ fn sv_sum(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -53471,17 +55568,30 @@ fn sv_supertrend(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_fork.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1 != u_fork.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1 != u_fork.1 { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1 != u_src.1 || vb.1 != u_fork.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1 != u_src.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -53625,14 +55735,25 @@ fn sv_t3(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -53772,14 +55893,25 @@ fn sv_tan(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -53919,14 +56051,25 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -54068,14 +56211,25 @@ fn sv_tema(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -54215,14 +56369,25 @@ fn sv_trange(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -54363,14 +56528,25 @@ fn sv_trima(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -54512,14 +56688,25 @@ fn sv_trix(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -54660,14 +56847,25 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -54810,14 +57008,25 @@ fn sv_tsi(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -54957,14 +57166,25 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -55107,14 +57327,25 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -55256,14 +57487,25 @@ fn sv_var(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -55404,14 +57646,25 @@ fn sv_vhf(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -55561,17 +57814,30 @@ fn sv_vortex(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_fork.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
-                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.0.to_bits() != u_src.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if v.1.to_bits() != u_src.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -55712,14 +57978,25 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -55860,14 +58137,25 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -56007,14 +58295,25 @@ fn sv_wad(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -56154,14 +58453,25 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -56302,14 +58612,25 @@ fn sv_willr(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -56450,14 +58771,25 @@ fn sv_wma(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }
@@ -56599,14 +58931,25 @@ fn sv_zlema(core: &Core, params: &Value) -> String {
                     let mut forked = true;
                     for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
                     let mut sb = sa.clone();
+                    let mut fk = Vec::with_capacity(svN - mid);
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if sv_xtier_ne(u_fork, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let v = sb.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                        fk.push(u_fork);
+                    }
+                    }
                     if forked {
                     for t in mid..svN {
                         let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
-                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let u_fork = fk[t - mid];
                         if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
                         if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
-                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
-                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        { let v = sa.value(); value_checked = 1; value_legs += 1;
+                          if v.to_bits() != u_src.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
                         }
                     }
                     }

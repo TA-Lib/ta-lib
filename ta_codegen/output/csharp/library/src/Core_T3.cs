@@ -1093,4 +1093,21 @@ public partial class Core
       }
       return T3OpenAndFillInternal(inReal, 0, optInTimePeriod, optInVFactor, out _, out _, outReal);
    }
+
+   private double T3StepTape( T3Stream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      T3StepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double T3PeekTape( T3Stream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.Peek(inReal);
+   }
+
+   private int T3TapeDetach( T3Stream sp )
+   {
+      return 0;
+   }
 }

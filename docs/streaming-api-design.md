@@ -348,7 +348,9 @@ One rule holds in every language, each enforcing it its own way:
      (candle-settings reads in CDL update bodies mirror batch's own), no
      index-variable leakage, and the plan must match the analyzed shape.
 5. **Composition goes through public stream handles**, never cross-TU internals,
-   and its bit-exactness composes by induction: each sub-stream is bit-exact
+   with one exception: a period bank (MAVP) steps its slots through private,
+   unchecked tape entries, so that one tape holds the price history they all
+   read. Bit-exactness composes by induction: each sub-stream is bit-exact
    against its own batch over the full intermediate series, which is exactly what
    the composed batch computes. `open` opens each sub-stream on its source series
    at the sub-call's own start argument, passed VERBATIM — the callee clamps it

@@ -581,6 +581,55 @@ impl Core {
         }
     }
 
+    fn kama_step_tape_impl(sp: &mut KamaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        let mut tempReal2: f64 = 0.0_f64;
+        let mut periodROC: f64 = 0.0_f64;
+        tempReal = inReal;
+        tempReal2 = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
+        periodROC = tempReal - tempReal2;
+        // Adjust sumROC1:
+        //  - Remove trailing ROC1
+        //  - Add new ROC1
+        sp.sumROC1 -= (sp.trailingValue - tempReal2).abs();
+        sp.sumROC1 += (tempReal - sp.lag1_inReal).abs();
+        // Once a whole window of flat bars has gone by, every 1-day change it
+        // spans is exactly zero, so the sum is known to be exactly zero and the
+        // residue can be dropped. That is what lets the efficiency ratio be
+        // decided by `sumROC1 <= periodROC` alone: a window that flat has
+        // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+        if tempReal - sp.lag1_inReal == 0.0 {
+            sp.nullRun += 1;
+        } else {
+            sp.nullRun = 0;
+        }
+        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.sumROC1 = 0.0;
+        }
+        // Save the trailing value. Do this because inReal
+        // and outReal can be pointers to the same buffer.
+        sp.trailingValue = tempReal2;
+        // Calculate the efficiency ratio
+        if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
+            tempReal = 1.0;
+        } else {
+            tempReal = (periodROC / sp.sumROC1).abs();
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            }
+        }
+        // Calculate the smoothing constant
+        tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+        tempReal *= tempReal;
+        // Calculate the KAMA like an EMA, using the
+        // smoothing constant as the adaptive factor.
+        sp.prevKAMA = (inReal - sp.prevKAMA as f64).mul_add(tempReal, sp.prevKAMA);
+        (*outReal) = sp.prevKAMA;
+        sp.cur_outReal = (*outReal);
+        sp.lag1_inReal = inReal;
+    }
+
     /// The single whole-history transcription behind [`Core::kama_open_internal`]
     /// (stride 0, scalar sink) and [`Core::kama_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn kama_open_impl(
@@ -1129,6 +1178,90 @@ impl KamaStream {
         }
         self.out.count += 1;
         Ok(())
+    }
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl KamaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        Core::kama_step_tape_impl(&mut self.state, tape, tapeBase, tapeMask, inReal, &mut outReal);
+        self.out.count += 1;
+        outReal
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut tempReal2: f64 = 0.0_f64;
+            let mut periodROC: f64 = 0.0_f64;
+            let mut nullRun = sp.nullRun;
+            let mut prevKAMA = sp.prevKAMA;
+            let mut sumROC1 = sp.sumROC1;
+            let mut trailingValue = sp.trailingValue;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            pkSlot0 = (tapeBase & tapeMask) as usize;
+            pkVal0 = inReal;
+            tempReal = inReal;
+            tempReal2 = (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 });
+            periodROC = tempReal - tempReal2;
+            // Adjust sumROC1:
+            //  - Remove trailing ROC1
+            //  - Add new ROC1
+            sumROC1 -= (trailingValue - tempReal2).abs();
+            sumROC1 += (tempReal - sp.lag1_inReal).abs();
+            // Once a whole window of flat bars has gone by, every 1-day change it
+            // spans is exactly zero, so the sum is known to be exactly zero and the
+            // residue can be dropped. That is what lets the efficiency ratio be
+            // decided by `sumROC1 <= periodROC` alone: a window that flat has
+            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+            if tempReal - sp.lag1_inReal == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((sp.optInTimePeriod) as usize) {
+                nullRun = (sp.optInTimePeriod) as usize;
+                sumROC1 = 0.0;
+            }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
+            // Calculate the efficiency ratio
+            if sumROC1 <= 0.0 || sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else {
+                tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
+            }
+            // Calculate the smoothing constant
+            tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+            tempReal *= tempReal;
+            // Calculate the KAMA like an EMA, using the
+            // smoothing constant as the adaptive factor.
+            prevKAMA = (inReal - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            (*outReal) = prevKAMA;
+        }
+        Ok(outReal)
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        let mut reach: usize = 0;
+        self.state.ring_trailingIdx_inReal = Vec::new();
+        if self.state.ringCap_trailingIdx > reach {
+            reach = self.state.ringCap_trailingIdx;
+        }
+        reach
     }
 }
 

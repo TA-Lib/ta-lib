@@ -476,6 +476,32 @@ TA_LIB_API TA_RetCode TA_EMA_Close( TA_EMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_EMA_StepTape( struct TA_EMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   (void)tape;
+   (void)tapeBase;
+   (void)tapeMask;
+   TA_EMA_StepImpl( sp, inReal, outReal );
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_EMA_PeekTape( const struct TA_EMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   (void)tape;
+   (void)tapeBase;
+   (void)tapeMask;
+   (void)TA_EMA_Peek( sp, inReal, outReal );
+}
+
+/* Private function, not in public API. */
+int TA_EMA_TapeDetach( struct TA_EMA_Stream *sp )
+{
+   (void)sp;
+   return 0;
+}
+
 TA_LIB_API TA_RetCode TA_EMA_Value( const TA_EMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

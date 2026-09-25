@@ -756,10 +756,12 @@ fn emit_csharp_sv_func(
 
 
     // ---- Clone() independence: open at the earliest prefix, advance to mid,
-    // clone, drive both to the end. Both must match batch (cross-tier) and each
-    // other (same-tier), and both must report the batch range (#287: a clone
-    // that carries every numeric field but drops the range pair produced
-    // identical values and was invisible here).
+    // clone, drive the fork to the end, then the original. Both must match
+    // batch (cross-tier) and each other (same-tier), and both must report the
+    // batch range (#287: a clone that carries every numeric field but drops the
+    // range pair produced identical values and was invisible here).
+    // Fed in lockstep instead, a buffer the two share and each writes the bar
+    // into before reading (MAVP's tape) answers correctly on both, forever.
     // `Clone()` is C#'s spelling of Java's `copy()`.
     s.push_str("            {\n");
     s.push_str("                int p0 = lb + 1;\n");
@@ -776,11 +778,21 @@ fn emit_csharp_sv_func(
         "                        for (int t = p0; t < mid; t++) sA.Update({bars_t});"
     );
     let _ = writeln!(s, "                        Core.{class} sB = sA.Clone();");
+    let _ = writeln!(s, "                        var fk = new {up_ty}[svN];");
+    s.push_str("                        for (int t = mid; t < svN; t++) {\n");
+    let _ = writeln!(s, "                            fk[t] = sB.Update({bars_t});");
+    for i in 0..n_out {
+        let cross = xtier_ne(&rd_out("fk[t]", i), &format!("b{i}[t - beg]"), i, "zsign");
+        let _ = writeln!(
+            s,
+            "                            if ({cross}) {{ allOk = false; if (diag.Length == 0) diag = \",\\\"copyForkDiverged\\\":\" + t; }}"
+        );
+    }
+    s.push_str("                        }\n");
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
     let _ = writeln!(s, "                            {up_ty} uA = sA.Update({bars_t});");
-    let _ = writeln!(s, "                            {up_ty} uB = sB.Update({bars_t});");
     for i in 0..n_out {
-        let same = same_tier_ne(&rd_out("uA", i), &rd_out("uB", i), i);
+        let same = same_tier_ne(&rd_out("uA", i), &rd_out("fk[t]", i), i);
         let cross = xtier_ne(&rd_out("uA", i), &format!("b{i}[t - beg]"), i, "zsign");
         let _ = writeln!(
             s,

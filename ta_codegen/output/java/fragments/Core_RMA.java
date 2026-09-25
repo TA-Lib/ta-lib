@@ -687,3 +687,17 @@
       MInteger outNBElement = new MInteger();
       return rmaOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
    }
+   private double rmaStepTape( RmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      rmaStepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+   private double rmaPeekTape( RmaStream sp, double[] tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.peek(inReal);
+   }
+   private int rmaTapeDetach( RmaStream sp )
+   {
+      return 0;
+   }

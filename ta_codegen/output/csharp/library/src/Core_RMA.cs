@@ -798,4 +798,21 @@ public partial class Core
       }
       return RmaOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outReal);
    }
+
+   private double RmaStepTape( RmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      RmaStepImpl(sp, inReal);
+      sp.outRangeCount++;
+      return sp.cur_outReal;
+   }
+
+   private double RmaPeekTape( RmaStream sp, ReadOnlySpan<double> tape, int tapeBase, int tapeMask, double inReal )
+   {
+      return sp.Peek(inReal);
+   }
+
+   private int RmaTapeDetach( RmaStream sp )
+   {
+      return 0;
+   }
 }

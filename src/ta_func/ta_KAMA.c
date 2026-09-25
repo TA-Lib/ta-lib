@@ -1132,6 +1132,150 @@ TA_LIB_API TA_RetCode TA_KAMA_Close( TA_KAMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_KAMA_StepTape( struct TA_KAMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double tempReal;
+   double tempReal2;
+   double periodROC;
+
+   tempReal = inReal;
+   tempReal2 = tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask];
+   periodROC = tempReal - tempReal2;
+   /* Adjust sumROC1:
+    *  - Remove trailing ROC1
+    *  - Add new ROC1
+    */
+   sp->sumROC1 -= fabs(sp->trailingValue - tempReal2);
+   sp->sumROC1 += fabs(tempReal - sp->lag1_inReal);
+   /* Once a whole window of flat bars has gone by, every 1-day change it
+    * spans is exactly zero, so the sum is known to be exactly zero and the
+    * residue can be dropped. That is what lets the efficiency ratio be
+    * decided by `sumROC1 <= periodROC` alone: a window that flat has
+    * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+    */
+   if( tempReal - sp->lag1_inReal == 0.0 )
+   {
+      sp->nullRun += 1;
+   } else 
+   {
+      sp->nullRun = 0;
+   }
+   if( sp->nullRun >= sp->optInTimePeriod )
+   {
+      sp->nullRun = sp->optInTimePeriod;
+      sp->sumROC1 = 0.0;
+   }
+   /* Save the trailing value. Do this because inReal
+    * and outReal can be pointers to the same buffer.
+    */
+   sp->trailingValue = tempReal2;
+   /* Calculate the efficiency ratio */
+   if( sp->sumROC1 <= 0.0 || sp->sumROC1 <= periodROC )
+   {
+      tempReal = 1.0;
+   } else 
+   {
+      tempReal = fabs(periodROC / sp->sumROC1);
+      if( tempReal > 1.0 )
+      {
+         tempReal = 1.0;
+      }
+   }
+   /* Calculate the smoothing constant */
+   tempReal = fma(tempReal, sp->constDiff, sp->constMax);
+   tempReal *= tempReal;
+   /* Calculate the KAMA like an EMA, using the
+    * smoothing constant as the adaptive factor.
+    */
+   sp->prevKAMA = fma(inReal - sp->prevKAMA, tempReal, sp->prevKAMA);
+   *outReal= sp->prevKAMA;
+   sp->cur_outReal = *outReal;
+   sp->lag1_inReal = inReal;
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_KAMA_PeekTape( const struct TA_KAMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double tempReal;
+   double tempReal2;
+   double periodROC;
+   int nullRun;
+   double prevKAMA;
+   double sumROC1;
+   double trailingValue;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+
+   nullRun = sp->nullRun;
+   prevKAMA = sp->prevKAMA;
+   sumROC1 = sp->sumROC1;
+   trailingValue = sp->trailingValue;
+   pkSlot0 = tapeBase & tapeMask;
+   pkVal0 = inReal;
+   tempReal = inReal;
+   tempReal2 = (((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0;
+   periodROC = tempReal - tempReal2;
+   /* Adjust sumROC1:
+    *  - Remove trailing ROC1
+    *  - Add new ROC1
+    */
+   sumROC1 -= fabs(trailingValue - tempReal2);
+   sumROC1 += fabs(tempReal - sp->lag1_inReal);
+   /* Once a whole window of flat bars has gone by, every 1-day change it
+    * spans is exactly zero, so the sum is known to be exactly zero and the
+    * residue can be dropped. That is what lets the efficiency ratio be
+    * decided by `sumROC1 <= periodROC` alone: a window that flat has
+    * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+    */
+   if( tempReal - sp->lag1_inReal == 0.0 )
+   {
+      nullRun += 1;
+   } else 
+   {
+      nullRun = 0;
+   }
+   if( nullRun >= sp->optInTimePeriod )
+   {
+      nullRun = sp->optInTimePeriod;
+      sumROC1 = 0.0;
+   }
+   /* Save the trailing value. Do this because inReal
+    * and outReal can be pointers to the same buffer.
+    */
+   trailingValue = tempReal2;
+   /* Calculate the efficiency ratio */
+   if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
+   {
+      tempReal = 1.0;
+   } else 
+   {
+      tempReal = fabs(periodROC / sumROC1);
+      if( tempReal > 1.0 )
+      {
+         tempReal = 1.0;
+      }
+   }
+   /* Calculate the smoothing constant */
+   tempReal = fma(tempReal, sp->constDiff, sp->constMax);
+   tempReal *= tempReal;
+   /* Calculate the KAMA like an EMA, using the
+    * smoothing constant as the adaptive factor.
+    */
+   prevKAMA = fma(inReal - prevKAMA, tempReal, prevKAMA);
+   *outReal= prevKAMA;
+}
+
+/* Private function, not in public API. */
+int TA_KAMA_TapeDetach( struct TA_KAMA_Stream *sp )
+{
+   int reach = 0;
+   if( sp->ring_trailingIdx_inReal ) { TA_Free( sp->ring_trailingIdx_inReal ); sp->ring_trailingIdx_inReal = NULL; }
+   if( sp->ringCap_trailingIdx > reach ) reach = sp->ringCap_trailingIdx;
+   return reach;
+}
+
 TA_LIB_API TA_RetCode TA_KAMA_Value( const TA_KAMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

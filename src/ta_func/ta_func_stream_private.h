@@ -638,4 +638,45 @@ TA_RetCode TA_WILLR_OpenAndFillInternal( struct TA_WILLR_Stream **stream, const 
 TA_RetCode TA_WMA_OpenAndFillInternal( struct TA_WMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_ZLEMA_OpenAndFillInternal( struct TA_ZLEMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
+/* Period-bank tape entries */
+void TA_DEMA_StepTape( struct TA_DEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_DEMA_PeekTape( const struct TA_DEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_DEMA_TapeDetach( struct TA_DEMA_Stream *sp );
+void TA_EMA_StepTape( struct TA_EMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_EMA_PeekTape( const struct TA_EMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_EMA_TapeDetach( struct TA_EMA_Stream *sp );
+void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_HMA_TapeDetach( struct TA_HMA_Stream *sp );
+void TA_KAMA_StepTape( struct TA_KAMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_KAMA_PeekTape( const struct TA_KAMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_KAMA_TapeDetach( struct TA_KAMA_Stream *sp );
+void TA_MA_StepTape( struct TA_MA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_MA_PeekTape( const struct TA_MA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_MA_TapeDetach( struct TA_MA_Stream *sp );
+void TA_MAMA_StepTape( struct TA_MAMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outMAMA, double *outFAMA );
+void TA_MAMA_PeekTape( const struct TA_MAMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outMAMA, double *outFAMA );
+int TA_MAMA_TapeDetach( struct TA_MAMA_Stream *sp );
+void TA_RMA_StepTape( struct TA_RMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_RMA_PeekTape( const struct TA_RMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_RMA_TapeDetach( struct TA_RMA_Stream *sp );
+void TA_SMA_StepTape( struct TA_SMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_SMA_PeekTape( const struct TA_SMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_SMA_TapeDetach( struct TA_SMA_Stream *sp );
+void TA_T3_StepTape( struct TA_T3_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_T3_PeekTape( const struct TA_T3_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_T3_TapeDetach( struct TA_T3_Stream *sp );
+void TA_TEMA_StepTape( struct TA_TEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_TEMA_PeekTape( const struct TA_TEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_TEMA_TapeDetach( struct TA_TEMA_Stream *sp );
+void TA_TRIMA_StepTape( struct TA_TRIMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_TRIMA_PeekTape( const struct TA_TRIMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_TRIMA_TapeDetach( struct TA_TRIMA_Stream *sp );
+void TA_WMA_StepTape( struct TA_WMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_WMA_PeekTape( const struct TA_WMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_WMA_TapeDetach( struct TA_WMA_Stream *sp );
+void TA_ZLEMA_StepTape( struct TA_ZLEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+void TA_ZLEMA_PeekTape( const struct TA_ZLEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal );
+int TA_ZLEMA_TapeDetach( struct TA_ZLEMA_Stream *sp );
+
 #endif /* TA_FUNC_STREAM_PRIVATE_H */

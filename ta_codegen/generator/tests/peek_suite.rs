@@ -210,6 +210,7 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
     let mut peek_sites = 0usize;
     let mut update_stores = 0usize;
     let mut buffers_seen = 0usize;
+    let (mut tape_peeks, mut tape_sites) = (0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
 
     for name in indicators() {
@@ -224,6 +225,17 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
         let mut bodies: Vec<String> = Vec::new();
         if let Some(f) = body_of(&src, &format!("TA_{upper}_PeekImpl(")) {
             bodies.push(f);
+        }
+        // A tape peek's (#445) handle is `const`, which does not reach a buffer
+        // behind a pointer field (HMA's `cb_dRing`).
+        let tape_peek = body_of(&src, &format!("void TA_{upper}_PeekTape("));
+        if let Some(f) = &tape_peek {
+            tape_peeks += 1;
+            let (stores, sites) = buffer_stores(f, &buffers);
+            tape_sites += sites;
+            for (buf, line) in stores {
+                offenders.push(format!("{upper} tape peek: {buf} <- {line}"));
+            }
         }
         bodies.push(
             body_of(&src, &format!("TA_RetCode TA_{upper}_Peek("))
@@ -243,6 +255,13 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
     }
 
     assert!(peek_frames >= 200, "only {peek_frames} peek entry points swept");
+    let registry = Registry::from_dir(&input_dir());
+    let tape_set = indicators().iter().filter(|n| registry.in_tape_set(n)).count();
+    assert!(
+        tape_set > 0 && tape_peeks == tape_set,
+        "{tape_peeks} tape peek(s) swept for a tape set of {tape_set}"
+    );
+    assert!(tape_sites > 0, "the tape peeks index no handle buffer, so the sweep saw nothing");
     assert!(
         buffers_seen > 150,
         "only {buffers_seen} handle buffer(s) found across the corpus, so the store scan \
@@ -680,7 +699,7 @@ fn no_c_peek_copies_the_handle() {
             frames += 1;
         } else if names_word(&peek, "sp") {
             offenders.push(format!("{upper}: names `sp` without binding it to the caller's handle"));
-        } else if peek.contains("_Peek(") {
+        } else if peek.contains("_Peek(") || peek.contains("_PeekTape(") {
             dispatchers += 1;
         } else if peek.contains("->") {
             offenders.push(format!(

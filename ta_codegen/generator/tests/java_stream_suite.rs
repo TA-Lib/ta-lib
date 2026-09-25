@@ -323,8 +323,52 @@ fn test_java_mavp_period_bank() {
     assert!(s.contains("for( int bankIdx = 0; bankIdx < sp.bank.length; bankIdx++ ) {"));
     // Shared max-period seeding anchor.
     assert!(s.contains("maLookback(optInMaxPeriod, optInMAType)"));
-    // Fill replays history (no per-bar array exists to un-discard).
+    // Fill replays history (no per-bar array exists to un-discard), through
+    // the very step `update` runs.
     assert!(s.contains("java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1)"));
+    assert!(s.contains("mavpStepImpl(sp, inReal[t], inPeriods[t]);"));
+    // #445: each slot drops its own copy of the prices as soon as it is open,
+    // the tape is longer than the deepest lag any slot reads, the bar enters the
+    // tape before any slot steps, and a copy owns its tape.
+    assert!(s.contains("int slotReach = maTapeDetach(bank[bankIdx]);"));
+    assert!(s.contains("while( size <= reach ) {"));
+    let step = &s[s.find("private void mavpStepImpl(").unwrap()..];
+    let step = &step[..step.find("private void mavpTapeOpen(").unwrap()];
+    let write = step.find("sp.tape[sp.tapePos] = inReal;").expect("the step writes the bar into the tape");
+    assert!(write < step.find("maStepTape(sp.bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, inReal)").unwrap());
+    assert!(s.contains("this.tape = other.tape.clone();"));
+    // Peek reads the selected slot through the tape and never writes it.
+    let peek = &s[s.find("public double peek(").unwrap()..];
+    let peek = &peek[..peek.find("public double value(").unwrap()];
+    assert!(peek.contains("core.maPeekTape(sp.bank[slot], sp.tape,"));
+    assert!(!peek.contains(".update(") && !peek.contains("StepTape") && !peek.contains("tape[sp."));
+}
+
+/// The arms' tape entries (#445): the step reads the history from the tape and
+/// keeps no copy of it, the peek only reads the tape, and an arm with no history
+/// of its input delegates to its ordinary step.
+#[test]
+fn test_java_tape_entries() {
+    let sma = java_stream_section("sma");
+    let step = &sma[sma.find("private double smaStepTape(").unwrap()..];
+    let step = &step[..step.find("private double smaPeekTape(").unwrap()];
+    assert!(step.contains("tape[(tapeBase - sp.ringCap_trailingIdx) & tapeMask]"));
+    assert!(!step.contains("sp.ring_trailingIdx_inReal") && !step.contains("sp.ringPos_trailingIdx"));
+    assert!(step.contains("sp.outRangeCount++;"));
+    let peek = &sma[sma.find("private double smaPeekTape(").unwrap()..];
+    let peek = &peek[..peek.find("private int smaTapeDetach(").unwrap()];
+    assert!(!peek.contains("tape[tapeBase & tapeMask] ="), "the peek shadows the bar instead of storing it");
+    assert!(peek.contains("pkSlot0 = tapeBase & tapeMask;"));
+    // Zero-length, never null: the copy constructor clones every array field.
+    assert!(sma.contains("sp.ring_trailingIdx_inReal = new double[0];"));
+
+    let ema = java_stream_section("ema");
+    assert!(ema.contains("emaStepImpl(sp, inReal);\n      sp.outRangeCount++;"));
+    assert!(ema.contains("private int emaTapeDetach( EmaStream sp )\n   {\n      return 0;"));
+
+    let ma = java_stream_section("ma");
+    assert!(ma.contains("sp.cur_outReal = smaStepTape((SmaStream) sp.sub, tape, tapeBase, tapeMask, inReal);"));
+    assert!(ma.contains("return maPeekTapeRest(sp, tape, tapeBase, tapeMask, inReal);"));
 }
 
 // ---------------------------------------------------------------------------
@@ -1019,13 +1063,14 @@ fn no_java_peek_copies_the_handle() {
 /// caller-owned sink, because Java has no out-params and the API has no
 /// sink-less `update`. Pinned as an exact per-function COUNT, not a set — the
 /// three functions each carry one site per verb, and losing or gaining one on
-/// either verb is the thing #325 changes.
+/// either verb is the thing #325 changes. MA carries a third, in the MAMA arm of
+/// its tape peek.
 ///
 /// Non-vacuity: the map is asserted non-empty and every counted line is required
 /// to be a real `new <N>Out()` allocation, so an emitter that stopped writing
 /// them fails here rather than passing with an empty sweep.
 #[test]
-fn the_composed_sub_handle_sinks_are_exactly_the_costed_six() {
+fn the_composed_sub_handle_sinks_are_exactly_the_costed_sites() {
     let mut sites: BTreeMap<String, usize> = BTreeMap::new();
     for name in streaming_indicators() {
         let s = java_stream_section(&name);
@@ -1042,7 +1087,7 @@ fn the_composed_sub_handle_sinks_are_exactly_the_costed_six() {
     }
     let expected: BTreeMap<String, usize> = [
         ("kdj".to_string(), 2usize),
-        ("ma".to_string(), 2usize),
+        ("ma".to_string(), 3usize),
         ("stochrsi".to_string(), 2usize),
     ]
     .into_iter()
@@ -1051,7 +1096,7 @@ fn the_composed_sub_handle_sinks_are_exactly_the_costed_six() {
     assert_eq!(
         sites, expected,
         "the composed sub-handle sink sites moved (one per verb on each of the three \
-         composed multi-output callees, #325)"
+         composed multi-output callees, #325, plus MA's tape peek)"
     );
 }
 

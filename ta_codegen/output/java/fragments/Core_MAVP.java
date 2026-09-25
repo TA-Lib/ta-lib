@@ -671,6 +671,9 @@
       private int optInMaxPeriod;
       private MAType optInMAType;
       private double cur_outReal;
+      private int tapeMask;
+      private int tapePos;
+      private double[] tape;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
       private MaStream[] bank;
       private int outRangeBegIdx;
@@ -718,6 +721,9 @@
          this.optInMaxPeriod = other.optInMaxPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
+         this.tapeMask = other.tapeMask;
+         this.tapePos = other.tapePos;
+         this.tape = other.tape.clone();
          this.bank = new MaStream[other.bank.length];
          for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
             this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
@@ -775,7 +781,7 @@
             cp = sp.optInMaxPeriod;
          }
          int slot = cp - sp.optInMinPeriod;
-         double cur_outReal = sp.bank[slot].peek(inReal);
+         double cur_outReal = core.maPeekTape(sp.bank[slot], sp.tape, ((sp.tapePos + 1) & sp.tapeMask) + sp.tapeMask + 1, sp.tapeMask, inReal);
          return cur_outReal;
       }
 
@@ -814,12 +820,28 @@
          cp = sp.optInMaxPeriod;
       }
       int slot = cp - sp.optInMinPeriod;
+      sp.tapePos = (sp.tapePos + 1) & sp.tapeMask;
+      sp.tape[sp.tapePos] = inReal;
+      int tapeBase = sp.tapePos + sp.tapeMask + 1;
       for( int bankIdx = 0; bankIdx < sp.bank.length; bankIdx++ ) {
-         double subValue = sp.bank[bankIdx].update(inReal);
+         double subValue = maStepTape(sp.bank[bankIdx], sp.tape, tapeBase, sp.tapeMask, inReal);
          if( bankIdx == slot ) {
             sp.cur_outReal = subValue;
          }
       }
+   }
+   private void mavpTapeOpen( MavpStream sp, double inReal[], int historyLen, int reach )
+   {
+      int size = 1;
+      while( size <= reach ) {
+         size <<= 1;
+      }
+      sp.tape = new double[size];
+      sp.tapeMask = size - 1;
+      for( int b = historyLen > size ? historyLen - size : 0; b < historyLen; b++ ) {
+         sp.tape[b & sp.tapeMask] = inReal[b];
+      }
+      sp.tapePos = (historyLen - 1) & sp.tapeMask;
    }
    private RetCode mavpOpenImpl( MavpStream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
@@ -865,8 +887,13 @@
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       MaStream[] bank = new MaStream[nBank];
+      int reach = 0;
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
          bank[bankIdx] = maOpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
+         int slotReach = maTapeDetach(bank[bankIdx]);
+         if( slotReach > reach ) {
+            reach = slotReach;
+         }
       }
       int cp = (int)inPeriods[historyLen - 1];
       if( cp < optInMinPeriod ) {
@@ -878,6 +905,7 @@
       sp.optInMaxPeriod = optInMaxPeriod;
       sp.optInMAType = optInMAType;
       sp.bank = bank;
+      mavpTapeOpen(sp, inReal, historyLen, reach);
       sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
       sp.outRangeBegIdx = subStart;
       sp.outRangeCount = historyLen - subStart;
@@ -921,13 +949,15 @@
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
-      MaStream[] bank = new MaStream[nBank];
-      double[] scratch = new double[nBank];
       double[] seedPrefix = java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1);
+      MaStream[] bank = new MaStream[nBank];
+      int reach = 0;
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-         MaStream sub = maOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
-         bank[bankIdx] = sub;
-         scratch[bankIdx] = sub.cur_outReal;
+         bank[bankIdx] = maOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
+         int slotReach = maTapeDetach(bank[bankIdx]);
+         if( slotReach > reach ) {
+            reach = slotReach;
+         }
       }
       /* First output bar (lookbackTotal), then replay the remaining history. */
       int cp = (int)inPeriods[lookbackTotal];
@@ -936,25 +966,18 @@
       } else if( cp > optInMaxPeriod ) {
          cp = optInMaxPeriod;
       }
-      outReal[0] = scratch[cp - optInMinPeriod];
-      for( int t = lookbackTotal + 1; t < historyLen; t++ ) {
-         for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-            scratch[bankIdx] = bank[bankIdx].update(inReal[t]);
-         }
-         cp = (int)inPeriods[t];
-         if( cp < optInMinPeriod ) {
-            cp = optInMinPeriod;
-         } else if( cp > optInMaxPeriod ) {
-            cp = optInMaxPeriod;
-         }
-         outReal[t - lookbackTotal] = scratch[cp - optInMinPeriod];
-      }
-      outBegIdx.value = lookbackTotal;
-      outNBElement.value = historyLen - lookbackTotal;
       sp.optInMinPeriod = optInMinPeriod;
       sp.optInMaxPeriod = optInMaxPeriod;
       sp.optInMAType = optInMAType;
       sp.bank = bank;
+      mavpTapeOpen(sp, seedPrefix, lookbackTotal + 1, reach);
+      outReal[0] = bank[cp - optInMinPeriod].cur_outReal;
+      for( int t = lookbackTotal + 1; t < historyLen; t++ ) {
+         mavpStepImpl(sp, inReal[t], inPeriods[t]);
+         outReal[t - lookbackTotal] = sp.cur_outReal;
+      }
+      outBegIdx.value = lookbackTotal;
+      outNBElement.value = historyLen - lookbackTotal;
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.SUCCESS;
    }

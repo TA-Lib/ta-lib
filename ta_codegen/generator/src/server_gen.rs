@@ -290,6 +290,25 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     }
     s.push('\n');
 
+    // A period bank's slots step through the dispatcher's and the arms' tape
+    // entries (#445), each defined in its own translation unit.
+    s.push_str("/* Period-bank tape entries */\n");
+    let tape_set = crate::streaming::tape_set_of(funcs);
+    for func in funcs
+        .iter()
+        .filter(|f| tape_set.contains(&f.name.to_lowercase()))
+    {
+        for sig in [
+            crate::backends::c_stream::step_tape_signature(func),
+            crate::backends::c_stream::peek_tape_signature(func),
+            crate::backends::c_stream::tape_detach_signature(func),
+        ] {
+            s.push_str(&sig);
+            s.push_str(";\n");
+        }
+    }
+    s.push('\n');
+
     s.push_str("#endif /* TA_FUNC_STREAM_PRIVATE_H */\n");
     s
 }

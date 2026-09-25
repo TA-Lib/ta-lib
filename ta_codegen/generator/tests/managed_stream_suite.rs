@@ -257,3 +257,121 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
         );
     }
 }
+
+/// Whether a code line stores into the handle (`sp.`) or the tape: any
+/// assignment operator after the whole target, or an increment on either side.
+fn handle_or_tape_store(line: &str) -> bool {
+    let l = line.trim();
+    if l.starts_with("//") || l.starts_with("/*") || l.starts_with('*') {
+        return false;
+    }
+    let b = l.as_bytes();
+    let ident = |c: u8| c.is_ascii_alphanumeric() || c == b'_' || c == b'.';
+    for prefix in ["sp.", "tape["] {
+        for (at, _) in l.match_indices(prefix) {
+            if at > 0 && ident(b[at - 1]) {
+                continue;
+            }
+            let mut k = at + prefix.len() - usize::from(prefix.ends_with('['));
+            while k < b.len() && ident(b[k]) {
+                k += 1;
+            }
+            while k < b.len() && b[k] == b'[' {
+                let mut depth = 0usize;
+                while k < b.len() {
+                    match b[k] {
+                        b'[' => depth += 1,
+                        b']' => depth -= 1,
+                        _ => {}
+                    }
+                    k += 1;
+                    if depth == 0 {
+                        break;
+                    }
+                }
+            }
+            let after = l[k..].trim_start();
+            let before = l[..at].trim_end();
+            let assigns = !after.starts_with("==")
+                && ["=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>="]
+                    .iter()
+                    .any(|op| after.starts_with(op));
+            if assigns
+                || after.starts_with("++")
+                || after.starts_with("--")
+                || before.ends_with("++")
+                || before.ends_with("--")
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// No managed peek a period bank reaches (#445) writes its handle or the bank's
+/// tape: the arms' and MA's tape peeks, and MAVP's own. Java cannot mark the
+/// tape read-only and neither language can mark the handle read-only, and a
+/// tape store at the incoming bar's slot is invisible to every value gate: the
+/// next update overwrites it before any read.
+#[test]
+fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
+    for store in [
+        "sp.periodTotal += x;",
+        "tape[(tapeBase - k) & tapeMask] = inReal;",
+        "++sp.x;",
+        "if( ++sp.hilbertIdx == 3 ) {",
+        "sp.x <<= 1;",
+        "if( c ) sp.x = 1;",
+        "a = 1; sp.x = 2;",
+        "sp.buf[sp.i++] = v;",
+    ] {
+        assert!(handle_or_tape_store(store), "missed a store: {store}");
+    }
+    for read in [
+        "if( sp.x == 2 ) {",
+        "y = sp.x <= 3;",
+        "double v = core.maPeekTape(sp.bank[slot], sp.tape, 1, sp.tapeMask, x);",
+    ] {
+        assert!(!handle_or_tape_store(read), "a read taken for a store: {read}");
+    }
+
+    let registry = Registry::from_dir(&input_dir());
+    let members: Vec<String> = streaming_funcs()
+        .into_iter()
+        .filter(|n| registry.in_tape_set(n))
+        .collect();
+    assert!(!members.is_empty(), "the tape set is empty");
+    let mut offenders = Vec::new();
+    for lang in ["java", "csharp"] {
+        let mut swept = 0usize;
+        for name in &members {
+            let src = section(name, lang);
+            let mut found = false;
+            for (at, _) in src.match_indices("PeekTape") {
+                let line_start = src[..at].rfind('\n').map_or(0, |k| k + 1);
+                if !src[line_start..at].trim_start().starts_with("private ") {
+                    continue;
+                }
+                found = true;
+                for l in body_of(&src[line_start..], "PeekTape").lines() {
+                    if handle_or_tape_store(l) {
+                        offenders.push(format!("{lang} {name}: {}", l.trim()));
+                    }
+                }
+            }
+            swept += usize::from(found);
+        }
+        assert_eq!(swept, members.len(), "{lang}: {swept} of {} tape peeks found", members.len());
+        let bank = section("mavp", lang);
+        let needle = if lang == "java" { "public double peek(" } else { "public double Peek(" };
+        let peek = body_of(&bank, needle);
+        assert!(peek.contains("sp.tape"), "{lang}: MAVP's peek no longer reads the tape");
+        for l in peek.lines() {
+            if handle_or_tape_store(l) {
+                offenders.push(format!("{lang} mavp: {}", l.trim()));
+            }
+        }
+    }
+    assert!(offenders.is_empty(), "a peek writes the handle or the tape:\n{}", offenders.join("\n"));
+}

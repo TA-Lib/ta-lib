@@ -617,6 +617,44 @@ impl Core {
         }
     }
 
+    fn trima_step_tape_impl(sp: &mut TrimaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod % 2 == 1 {
+            // Step (1)
+            sp.numerator -= sp.numeratorSub;
+            sp.numeratorSub -= sp.tempReal;
+            sp.tempReal = tape[(tapeBase - sp.ringCap_middleIdx & tapeMask) as usize];
+            sp.numeratorSub += sp.tempReal;
+            // Step (2)
+            sp.numerator += sp.numeratorAdd;
+            sp.numeratorAdd -= sp.tempReal;
+            sp.tempReal = inReal;
+            sp.numeratorAdd += sp.tempReal;
+            // Step (3)
+            sp.numerator += sp.tempReal;
+            // Step (4)
+            sp.tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
+            (*outReal) = sp.numerator * sp.factor;
+            sp.cur_outReal = (*outReal);
+        } else {
+            // Step (1)
+            sp.numerator -= sp.numeratorSub;
+            sp.numeratorSub -= sp.tempReal;
+            sp.tempReal = tape[(tapeBase - sp.ringCap_middleIdx & tapeMask) as usize];
+            sp.numeratorSub += sp.tempReal;
+            // Step (2)
+            sp.numeratorAdd -= sp.tempReal;
+            sp.numerator += sp.numeratorAdd;
+            sp.tempReal = inReal;
+            sp.numeratorAdd += sp.tempReal;
+            // Step (3)
+            sp.numerator += sp.tempReal;
+            // Step (4)
+            sp.tempReal = tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize];
+            (*outReal) = sp.numerator * sp.factor;
+            sp.cur_outReal = (*outReal);
+        }
+    }
+
     /// The single whole-history transcription behind [`Core::trima_open_internal`]
     /// (stride 0, scalar sink) and [`Core::trima_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn trima_open_impl(
@@ -1367,6 +1405,91 @@ impl TrimaStream {
         }
         self.out.count += 1;
         Ok(())
+    }
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl TrimaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        Core::trima_step_tape_impl(&mut self.state, tape, tapeBase, tapeMask, inReal, &mut outReal);
+        self.out.count += 1;
+        outReal
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod % 2 == 1 {
+                let mut numerator = sp.numerator;
+                let mut numeratorAdd = sp.numeratorAdd;
+                let mut numeratorSub = sp.numeratorSub;
+                let mut tempReal = sp.tempReal;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                pkSlot0 = (tapeBase & tapeMask) as usize;
+                pkVal0 = inReal;
+                // Step (1)
+                numerator -= numeratorSub;
+                numeratorSub -= tempReal;
+                tempReal = (if ((tapeBase - sp.ringCap_middleIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_middleIdx & tapeMask) as usize] } else { pkVal0 });
+                numeratorSub += tempReal;
+                // Step (2)
+                numerator += numeratorAdd;
+                numeratorAdd -= tempReal;
+                tempReal = inReal;
+                numeratorAdd += tempReal;
+                // Step (3)
+                numerator += tempReal;
+                // Step (4)
+                tempReal = (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 });
+                (*outReal) = numerator * sp.factor;
+            } else {
+                let mut numerator = sp.numerator;
+                let mut numeratorAdd = sp.numeratorAdd;
+                let mut numeratorSub = sp.numeratorSub;
+                let mut tempReal = sp.tempReal;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                pkSlot0 = (tapeBase & tapeMask) as usize;
+                pkVal0 = inReal;
+                // Step (1)
+                numerator -= numeratorSub;
+                numeratorSub -= tempReal;
+                tempReal = (if ((tapeBase - sp.ringCap_middleIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_middleIdx & tapeMask) as usize] } else { pkVal0 });
+                numeratorSub += tempReal;
+                // Step (2)
+                numeratorAdd -= tempReal;
+                numerator += numeratorAdd;
+                tempReal = inReal;
+                numeratorAdd += tempReal;
+                // Step (3)
+                numerator += tempReal;
+                // Step (4)
+                tempReal = (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 });
+                (*outReal) = numerator * sp.factor;
+            }
+        }
+        Ok(outReal)
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        let mut reach: usize = 0;
+        self.state.ring_middleIdx_inReal = Vec::new();
+        if self.state.ringCap_middleIdx > reach {
+            reach = self.state.ringCap_middleIdx;
+        }
+        self.state.ring_trailingIdx_inReal = Vec::new();
+        if self.state.ringCap_trailingIdx > reach {
+            reach = self.state.ringCap_trailingIdx;
+        }
+        reach
     }
 }
 

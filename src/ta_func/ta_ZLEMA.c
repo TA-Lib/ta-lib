@@ -566,6 +566,38 @@ TA_LIB_API TA_RetCode TA_ZLEMA_Close( TA_ZLEMA_Stream *stream )
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+void TA_ZLEMA_StepTape( struct TA_ZLEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   sp->prevMA = fma(2.0 * inReal - tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] - sp->prevMA, sp->optInK_1, sp->prevMA);
+   *outReal= sp->prevMA;
+   sp->cur_outReal = *outReal;
+   sp->outRangeCount++;
+}
+
+/* Private function, not in public API. */
+void TA_ZLEMA_PeekTape( const struct TA_ZLEMA_Stream *sp, const double tape[], int tapeBase, int tapeMask, double inReal, double *outReal )
+{
+   double prevMA;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+
+   prevMA = sp->prevMA;
+   pkSlot0 = tapeBase & tapeMask;
+   pkVal0 = inReal;
+   prevMA = fma(2.0 * inReal - ((((tapeBase - sp->ringCap_trailingIdx) & tapeMask) != pkSlot0) ? tape[(tapeBase - sp->ringCap_trailingIdx) & tapeMask] : pkVal0) - prevMA, sp->optInK_1, prevMA);
+   *outReal= prevMA;
+}
+
+/* Private function, not in public API. */
+int TA_ZLEMA_TapeDetach( struct TA_ZLEMA_Stream *sp )
+{
+   int reach = 0;
+   if( sp->ring_trailingIdx_inReal ) { TA_Free( sp->ring_trailingIdx_inReal ); sp->ring_trailingIdx_inReal = NULL; }
+   if( sp->ringCap_trailingIdx > reach ) reach = sp->ringCap_trailingIdx;
+   return reach;
+}
+
 TA_LIB_API TA_RetCode TA_ZLEMA_Value( const TA_ZLEMA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

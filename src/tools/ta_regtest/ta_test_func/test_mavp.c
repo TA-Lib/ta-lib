@@ -46,6 +46,7 @@
  *                per-bar TA_MA oracle and end-truncation pins (#143).
  *  072726 MF,CC  #145. Iterate the generated MAType list instead of a
  *                hand-kept one, and verify the unstable legs cross-language.
+ *  092526 MF,CC  #445. The streaming bank against the batch.
  */
 
 /* Description:
@@ -142,6 +143,7 @@ static float   mvPeriodsS[MV_BUF_SIZE];
 /**** Local functions declarations.    ****/
 static ErrorNumber mvLoadTypes( void );
 static ErrorNumber mvWidestExpressibleBand( void );
+static ErrorNumber mvStreamBank( void );
 static ErrorNumber mvOracleCheck( const char *label,
                                   const TA_History *history,
                                   const TA_Real *periods,
@@ -341,6 +343,14 @@ ErrorNumber test_func_mavp( TA_History *history )
    errNb = mvWidestExpressibleBand();
    if( errNb != TA_TEST_PASS ) return errNb;
 
+   /* The streaming bank against the batch, bit for bit (#445). */
+   errNb = mvStreamBank();
+   if( errNb != TA_TEST_PASS ) return errNb;
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 7 );
+   errNb = mvStreamBank();
+   if( errNb != TA_TEST_PASS ) return errNb;
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
    /* Leave globals as found. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
@@ -485,6 +495,283 @@ static ErrorNumber mvWidestExpressibleBand( void )
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
 
+   return TA_TEST_PASS;
+}
+
+/* #445: the stream against the batch, bit for bit, for every MAType.
+ *
+ * Every slot reads its price history from one tape the bank shares, so what
+ * can go wrong is a wrong lag in one slot, a tape one slot too short, a peek
+ * that sees a slot the commit would not, a fork sharing the tape, or the tape
+ * drifting from the bars after an Advance. Each leg below exists to see one:
+ *  - bands whose deepest lag is exactly a power of two ([2,2], [2,32], [2,33],
+ *    [2,65]), the only place an undersized tape shows;
+ *  - a ramp that selects every slot every nBank+2 bars, and a staircase that
+ *    holds each period for 8p+1 bars, so a WMA/HMA re-anchor bar is selected
+ *    in every slot;
+ *  - Peek before every Update;
+ *  - a fork driven to the end BEFORE its original, so a shared tape shows;
+ *  - two handles fed alike, one of them Advanced once.
+ */
+#define MV_SB_MAXN 18500
+static TA_Real mvSbPrice[MV_SB_MAXN];
+static TA_Real mvSbPer[MV_SB_MAXN];
+static TA_Real mvSbBatch[MV_SB_MAXN];
+static TA_Real mvSbOut[MV_SB_MAXN];
+static TA_Real mvSbFork[MV_SB_MAXN];
+static long    mvSbCompared;
+
+static int mvSbSame( TA_Real a, TA_Real b )
+{
+   return memcmp( &a, &b, sizeof(TA_Real) ) == 0;
+}
+
+static ErrorNumber mvSbFail( const char *what, TA_MAType type, int minP, int maxP,
+                             const char *series, int bar, TA_Real got, TA_Real want )
+{
+   printf( "\nFail: MAVP stream %s: type=%d band=[%d,%d] %s bar %d:"
+           " got %.17g, batch %.17g\n",
+           what, (int)type, minP, maxP, series, bar, got, want );
+   return TA_MAVP_STREAM_MISMATCH;
+}
+
+/* Open at `prefix`, then Peek and Update every remaining bar. With `forkAt`,
+ * a clone taken there runs to the end first. With `twin`, a second handle
+ * takes the same bars and one Advance at the midpoint. */
+static ErrorNumber mvSbDrive( TA_MAType type, int minP, int maxP, const char *series,
+                              int n, int lb, int prefix, int forkAt, int twin )
+{
+   TA_MAVP_Stream *h = NULL, *fork = NULL, *h2 = NULL;
+   TA_Real v, pk, v2;
+   int t, u, beg, nb, beg2, nb2;
+   ErrorNumber err = TA_TEST_PASS;
+
+   if( TA_MAVP_Open( &h, mvSbPrice, mvSbPer, prefix, minP, maxP, type, &v ) != TA_SUCCESS ||
+       ( twin && TA_MAVP_Open( &h2, mvSbPrice, mvSbPer, prefix, minP, maxP, type, &v2 ) != TA_SUCCESS ) )
+   {
+      printf( "\nFail: MAVP stream Open: type=%d band=[%d,%d] %s prefix %d\n",
+              (int)type, minP, maxP, series, prefix );
+      err = TA_MAVP_STREAM_CALL_FAILED;
+      goto done;
+   }
+   if( !mvSbSame( v, mvSbBatch[prefix - 1 - lb] ) )
+   {
+      err = mvSbFail( "Open", type, minP, maxP, series, prefix - 1, v, mvSbBatch[prefix - 1 - lb] );
+      goto done;
+   }
+   for( t = prefix; t < n; t++ )
+   {
+      if( t == forkAt )
+      {
+         if( TA_MAVP_Clone( h, &fork ) != TA_SUCCESS )
+         {
+            err = TA_MAVP_STREAM_CALL_FAILED;
+            goto done;
+         }
+         for( u = t; u < n; u++ )
+            TA_MAVP_Update( fork, mvSbPrice[u], mvSbPer[u], &mvSbFork[u] );
+      }
+      if( twin && t == ( prefix + n ) / 2 && TA_MAVP_Advance( h2 ) != TA_SUCCESS )
+      {
+         err = TA_MAVP_STREAM_CALL_FAILED;
+         goto done;
+      }
+      if( TA_MAVP_Peek( h, mvSbPrice[t], mvSbPer[t], &pk ) != TA_SUCCESS ||
+          TA_MAVP_Update( h, mvSbPrice[t], mvSbPer[t], &v ) != TA_SUCCESS ||
+          ( twin && TA_MAVP_Update( h2, mvSbPrice[t], mvSbPer[t], &v2 ) != TA_SUCCESS ) )
+      {
+         err = TA_MAVP_STREAM_CALL_FAILED;
+         goto done;
+      }
+      if( !mvSbSame( v, mvSbBatch[t - lb] ) )
+      {
+         err = mvSbFail( "Update", type, minP, maxP, series, t, v, mvSbBatch[t - lb] );
+         goto done;
+      }
+      if( !mvSbSame( pk, v ) )
+      {
+         err = mvSbFail( "Peek", type, minP, maxP, series, t, pk, v );
+         goto done;
+      }
+      if( fork && !mvSbSame( mvSbFork[t], v ) )
+      {
+         err = mvSbFail( "Clone", type, minP, maxP, series, t, mvSbFork[t], v );
+         goto done;
+      }
+      if( twin && !mvSbSame( v2, v ) )
+      {
+         err = mvSbFail( "Advance twin", type, minP, maxP, series, t, v2, v );
+         goto done;
+      }
+      mvSbCompared++;
+   }
+   if( twin )
+   {
+      TA_MAVP_OutRange( h, &beg, &nb );
+      TA_MAVP_OutRange( h2, &beg2, &nb2 );
+      if( beg2 != beg || nb2 != nb + 1 )
+      {
+         printf( "\nFail: MAVP stream Advance twin range: [%d,%d] vs [%d,%d]\n",
+                 beg2, nb2, beg, nb );
+         err = TA_MAVP_STREAM_MISMATCH;
+      }
+   }
+done:
+   TA_MAVP_Close( h );
+   TA_MAVP_Close( fork );
+   TA_MAVP_Close( h2 );
+   return err;
+}
+
+static ErrorNumber mvStreamBank( void )
+{
+   static const int bands[][2] = { {1,1}, {2,2}, {1,13}, {2,32}, {2,33}, {2,65} };
+   TA_MAVP_Stream *h;
+   TA_Real x;
+   TA_Integer beg, nb;
+   unsigned int seed;
+   int b, s, ti, i, n, lb, minP, maxP, nBank, stairLen, p, held;
+   ErrorNumber err;
+   const char *series;
+
+   /* Two-decimal prices are not dyadic, so a wrong lag cannot cancel out;
+    * the flat runs and the rare large prints reach KAMA's and WMA's edge
+    * paths. */
+   seed = 445;
+   x = 100.0;
+   for( i = 0; i < MV_SB_MAXN; i++ )
+   {
+      seed = seed * 1103515245u + 12345u;
+      if( i % 1500 < 1460 )
+      {
+         if( i % 997 == 0 )
+            x = x * ( ( i / 997 ) % 2 ? 3.7 : 0.29 );
+         else
+            x += ( (double)( ( seed >> 8 ) % 201 ) - 100.0 ) / 100.0;
+      }
+      if( x < 1.0 ) x = 1.0 + (double)( ( seed >> 8 ) % 97 ) / 100.0;
+      x = floor( x * 100.0 + 0.5 ) / 100.0;
+      mvSbPrice[i] = x;
+   }
+
+   mvSbCompared = 0;
+   for( ti = 0; ti < mvNbTypes; ti++ )
+   for( b = 0; b < (int)( sizeof(bands) / sizeof(bands[0]) ); b++ )
+   for( s = 0; s < 2; s++ )
+   {
+      minP = bands[b][0];
+      maxP = bands[b][1];
+      nBank = maxP - minP + 1;
+      lb = TA_MAVP_Lookback( minP, maxP, mvTypes[ti] );
+      if( s == 0 )
+      {
+         series = "ramp";
+         n = lb + 3000;
+         for( i = 0; i < n; i++ )
+            mvSbPer[i] = minP - 1 + ( i % ( nBank + 2 ) ) + ( i % 3 == 1 ? 0.37 : 0.0 );
+      }
+      else
+      {
+         series = "staircase";
+         stairLen = 0;
+         for( p = minP; p <= maxP; p++ )
+            stairLen += 8 * p + 1;
+         n = lb + 16 + stairLen;
+         if( n > MV_SB_MAXN )
+         {
+            printf( "\nFail: MAVP stream staircase needs %d bars\n", n );
+            return TA_MAVP_STREAM_CALL_FAILED;
+         }
+         p = minP;
+         held = 0;
+         for( i = 0; i < n; i++ )
+         {
+            mvSbPer[i] = p;
+            if( i > lb && ++held == 8 * p + 1 && p < maxP )
+            {
+               p++;
+               held = 0;
+            }
+         }
+      }
+
+      if( TA_MAVP( 0, n - 1, mvSbPrice, mvSbPer, minP, maxP, mvTypes[ti],
+                   &beg, &nb, mvSbBatch ) != TA_SUCCESS || beg != lb || nb != n - lb )
+      {
+         printf( "\nFail: MAVP stream batch: type=%d band=[%d,%d] %s\n",
+                 (int)mvTypes[ti], minP, maxP, series );
+         return TA_MAVP_STREAM_CALL_FAILED;
+      }
+
+      h = NULL;
+      if( TA_MAVP_OpenAndFill( &h, mvSbPrice, mvSbPer, n, minP, maxP, mvTypes[ti],
+                               &beg, &nb, mvSbOut ) != TA_SUCCESS || beg != lb || nb != n - lb )
+      {
+         TA_MAVP_Close( h );
+         printf( "\nFail: MAVP stream OpenAndFill: type=%d band=[%d,%d] %s\n",
+                 (int)mvTypes[ti], minP, maxP, series );
+         return TA_MAVP_STREAM_CALL_FAILED;
+      }
+      TA_MAVP_Close( h );
+      for( i = 0; i < nb; i++ )
+      {
+         if( !mvSbSame( mvSbOut[i], mvSbBatch[i] ) )
+            return mvSbFail( "OpenAndFill", mvTypes[ti], minP, maxP, series,
+                             lb + i, mvSbOut[i], mvSbBatch[i] );
+         mvSbCompared++;
+      }
+
+      err = mvSbDrive( mvTypes[ti], minP, maxP, series, n, lb, lb + 1, -1, 0 );
+      if( err == TA_TEST_PASS )
+         err = mvSbDrive( mvTypes[ti], minP, maxP, series, n, lb, lb + 2, -1, 1 );
+      if( err == TA_TEST_PASS )
+         err = mvSbDrive( mvTypes[ti], minP, maxP, series, n, lb, lb + ( n - lb ) / 3,
+                          lb + ( n - lb ) / 2, 0 );
+      if( err != TA_TEST_PASS )
+         return err;
+   }
+
+   if( mvSbCompared < 1000000 )
+   {
+      printf( "\nFail: MAVP stream compared %ld values\n", mvSbCompared );
+      return TA_MAVP_STREAM_VACUOUS;
+   }
+
+   /* A history is not checked for finite values, so OpenAndFill over one that
+    * holds a NaN and an infinity must equal the batch, NaN for NaN. */
+   for( ti = 0; ti < mvNbTypes; ti++ )
+   {
+      TA_Real keepNaN, keepInf;
+      minP = 2;
+      maxP = 33;
+      lb = TA_MAVP_Lookback( minP, maxP, mvTypes[ti] );
+      n = lb + 400;
+      for( i = 0; i < n; i++ )
+         mvSbPer[i] = minP - 1 + ( i % ( maxP - minP + 3 ) );
+      keepNaN = mvSbPrice[lb + 40];
+      keepInf = mvSbPrice[lb + 120];
+      mvSbPrice[lb + 40] = NAN;
+      mvSbPrice[lb + 120] = INFINITY;
+      h = NULL;
+      if( TA_MAVP( 0, n - 1, mvSbPrice, mvSbPer, minP, maxP, mvTypes[ti],
+                   &beg, &nb, mvSbBatch ) != TA_SUCCESS ||
+          TA_MAVP_OpenAndFill( &h, mvSbPrice, mvSbPer, n, minP, maxP, mvTypes[ti],
+                               &beg, &nb, mvSbOut ) != TA_SUCCESS || nb != n - lb )
+      {
+         TA_MAVP_Close( h );
+         printf( "\nFail: MAVP stream non-finite history: type=%d\n", (int)mvTypes[ti] );
+         return TA_MAVP_STREAM_CALL_FAILED;
+      }
+      TA_MAVP_Close( h );
+      mvSbPrice[lb + 40] = keepNaN;
+      mvSbPrice[lb + 120] = keepInf;
+      for( i = 0; i < nb; i++ )
+      {
+         if( !mvSbSame( mvSbOut[i], mvSbBatch[i] ) && !( isnan( mvSbOut[i] ) && isnan( mvSbBatch[i] ) ) )
+            return mvSbFail( "OpenAndFill over a non-finite history", mvTypes[ti], minP, maxP,
+                             "ramp", lb + i, mvSbOut[i], mvSbBatch[i] );
+      }
+   }
    return TA_TEST_PASS;
 }
 

@@ -522,6 +522,11 @@ typedef enum
   /* (#430) CTI legs that ran while comparing nothing. */
   TA_CTI_VACUOUS                     = 1684,
 
+  /* (#445) MAVP's streaming period bank against its batch. */
+  TA_MAVP_STREAM_CALL_FAILED         = 1685,
+  TA_MAVP_STREAM_MISMATCH            = 1686,
+  TA_MAVP_STREAM_VACUOUS             = 1687,
+
   /* One code for every suite that routes a fixed vector through server_verify
    * (#427), because it reports one failure and the message names the leg.
    * server_verify answers TA_TEST_PASS when it cannot build the request, so a

@@ -1278,10 +1278,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.AcStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -1532,12 +1536,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AccbandsStream sB = sA.Clone();
+                        var fk = new Core.AccbandsValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.AccbandsValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.AccbandsValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.RealUpperBand, uB.RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealMiddleBand, uB.RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealLowerBand, uB.RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealUpperBand, fk[t].RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealMiddleBand, fk[t].RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealLowerBand, fk[t].RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -1734,10 +1744,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.AcosStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -1927,10 +1941,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.AdStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -2116,10 +2134,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.AddStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -2312,10 +2334,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.AdoscStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -2509,10 +2535,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.AdrStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -2709,10 +2739,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AdxStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -2909,10 +2943,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AdxrStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -3107,10 +3145,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.AoStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -3322,10 +3364,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.ApoStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -3542,11 +3588,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.AroonStream sB = sA.Clone();
+                        var fk = new Core.AroonValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t].AroonDown, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].AroonUp, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.AroonValue uA = sA.Update(fz_h[t], fz_l[t]);
-                            Core.AroonValue uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA.AroonDown, uB.AroonDown) || SvXtierNe(uA.AroonDown, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.AroonUp, uB.AroonUp) || SvXtierNe(uA.AroonUp, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.AroonDown, fk[t].AroonDown) || SvXtierNe(uA.AroonDown, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.AroonUp, fk[t].AroonUp) || SvXtierNe(uA.AroonUp, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -3743,10 +3794,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.AroonoscStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -3937,10 +3992,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.AsinStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -4124,10 +4183,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.AtanStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -4317,10 +4380,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.AtrStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -4512,10 +4579,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.AvgdevStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -4712,10 +4783,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.AvgpriceStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -4972,12 +5047,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.BbandsStream sB = sA.Clone();
+                        var fk = new Core.BbandsValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.BbandsValue uA = sA.Update(fz_c[t]);
-                            Core.BbandsValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.RealUpperBand, uB.RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealMiddleBand, uB.RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealLowerBand, uB.RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealUpperBand, fk[t].RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealMiddleBand, fk[t].RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealLowerBand, fk[t].RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -5196,10 +5277,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.BbwStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -5393,10 +5478,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.BetaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -5593,10 +5682,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.BopStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -5785,10 +5878,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.CciStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -5980,10 +6077,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl2crowsStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -6195,10 +6296,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3blackcrowsStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -6410,10 +6515,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3insideStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -6625,10 +6734,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3linestrikeStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -6840,10 +6953,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3outsideStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -7055,10 +7172,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3starsinsouthStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -7270,10 +7391,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdl3whitesoldiersStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -7486,10 +7611,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlabandonedbabyStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -7701,10 +7830,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdladvanceblockStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -7916,10 +8049,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlbeltholdStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -8131,10 +8268,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlbreakawayStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -8346,10 +8487,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlclosingmarubozuStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -8561,10 +8706,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlconcealbabyswallStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -8776,10 +8925,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlcounterattackStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -8992,10 +9145,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldarkcloudcoverStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -9207,10 +9364,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldojiStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -9422,10 +9583,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldojistarStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -9637,10 +9802,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdldragonflydojiStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -9852,10 +10021,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlengulfingStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -10068,10 +10241,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdleveningdojistarStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -10284,10 +10461,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdleveningstarStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -10499,10 +10680,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlgapsidesidewhiteStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -10714,10 +10899,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlgravestonedojiStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -10929,10 +11118,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhammerStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -11144,10 +11337,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhangingmanStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -11359,10 +11556,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlharamiStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -11574,10 +11775,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlharamicrossStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -11789,10 +11994,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhighwaveStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -12004,10 +12213,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhikkakeStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -12219,10 +12432,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhikkakemodStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -12434,10 +12651,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlhomingpigeonStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -12649,10 +12870,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlidentical3crowsStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -12864,10 +13089,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlinneckStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -13079,10 +13308,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlinvertedhammerStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -13294,10 +13527,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlkickingStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -13509,10 +13746,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlkickingbylengthStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -13724,10 +13965,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlladderbottomStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -13939,10 +14184,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdllongleggeddojiStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -14154,10 +14403,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdllonglineStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -14369,10 +14622,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmarubozuStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -14584,10 +14841,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmatchinglowStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -14800,10 +15061,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmatholdStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -15016,10 +15281,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmorningdojistarStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -15232,10 +15501,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlmorningstarStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -15447,10 +15720,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlonneckStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -15662,10 +15939,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlpiercingStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -15877,10 +16158,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlrickshawmanStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -16092,10 +16377,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlrisefall3methodsStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -16307,10 +16596,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlseparatinglinesStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -16522,10 +16815,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlshootingstarStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -16737,10 +17034,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlshortlineStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -16952,10 +17253,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlspinningtopStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -17167,10 +17472,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlstalledpatternStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -17382,10 +17691,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlsticksandwichStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -17597,10 +17910,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdltakuriStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -17812,10 +18129,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdltasukigapStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -18027,10 +18348,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdlthrustingStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -18242,10 +18567,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.CdltristarStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -18457,10 +18786,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlunique3riverStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -18672,10 +19005,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlupsidegap2crowsStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -18887,10 +19224,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.Cdlxsidegap3methodsStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            int uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -19101,10 +19442,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CeilStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -19295,10 +19640,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.CmfStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -19491,10 +19840,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CmoStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -19686,10 +20039,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CmouStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -19883,10 +20240,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CoppockStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -20080,10 +20441,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.CorrelStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -20274,10 +20639,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CosStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -20461,10 +20830,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CoshStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -20652,10 +21025,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CrsiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -20847,10 +21224,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CtiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -21041,10 +21422,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.CumsumStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -21233,10 +21618,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.CviStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -21429,10 +21818,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.DemaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -21625,10 +22018,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.DivStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -21866,12 +22263,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.DonchianStream sB = sA.Clone();
+                        var fk = new Core.DonchianValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t].RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.DonchianValue uA = sA.Update(fz_h[t], fz_l[t]);
-                            Core.DonchianValue uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA.RealUpperBand, uB.RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealMiddleBand, uB.RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealLowerBand, uB.RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealUpperBand, fk[t].RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealMiddleBand, fk[t].RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealLowerBand, fk[t].RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -22069,10 +22472,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.DpoStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -22269,10 +22676,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.DxStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -22466,10 +22877,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.EfiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -22662,10 +23077,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.EmaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -22857,10 +23276,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.ErStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -23082,11 +23505,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.EriStream sB = sA.Clone();
+                        var fk = new Core.EriValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].BullPower, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].BearPower, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.EriValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.EriValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.BullPower, uB.BullPower) || SvXtierNe(uA.BullPower, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.BearPower, uB.BearPower) || SvXtierNe(uA.BearPower, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.BullPower, fk[t].BullPower) || SvXtierNe(uA.BullPower, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.BearPower, fk[t].BearPower) || SvXtierNe(uA.BearPower, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -23280,10 +23708,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.ExpStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -23467,10 +23899,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.FloorStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -23655,10 +24091,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.FoscStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -23862,11 +24302,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.FractalStream sB = sA.Clone();
+                        var fk = new Core.FractalValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (fk[t].SwingHigh != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (fk[t].SwingLow != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.FractalValue uA = sA.Update(fz_h[t], fz_l[t]);
-                            Core.FractalValue uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (uA.SwingHigh != uB.SwingHigh || uA.SwingHigh != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.SwingLow != uB.SwingLow || uA.SwingLow != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.SwingHigh != fk[t].SwingHigh || uA.SwingHigh != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.SwingLow != fk[t].SwingLow || uA.SwingLow != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -24164,13 +24609,20 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         Core.HaStream sB = sA.Clone();
+                        var fk = new Core.HaValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].HAOpen, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].HAHigh, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].HALow, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].HAClose, b3[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.HaValue uA = sA.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            Core.HaValue uB = sB.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.HAOpen, uB.HAOpen) || SvXtierNe(uA.HAOpen, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.HAHigh, uB.HAHigh) || SvXtierNe(uA.HAHigh, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.HALow, uB.HALow) || SvXtierNe(uA.HALow, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.HAClose, uB.HAClose) || SvXtierNe(uA.HAClose, b3[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.HAOpen, fk[t].HAOpen) || SvXtierNe(uA.HAOpen, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.HAHigh, fk[t].HAHigh) || SvXtierNe(uA.HAHigh, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.HALow, fk[t].HALow) || SvXtierNe(uA.HALow, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.HAClose, fk[t].HAClose) || SvXtierNe(uA.HAClose, b3[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -24361,10 +24813,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.HmaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -24556,10 +25012,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.HtDcperiodStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -24744,10 +25204,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.HtDcphaseStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -24953,11 +25417,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.HtPhasorStream sB = sA.Clone();
+                        var fk = new Core.HtPhasorValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].InPhase, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].Quadrature, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.HtPhasorValue uA = sA.Update(fz_c[t]);
-                            Core.HtPhasorValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.InPhase, uB.InPhase) || SvXtierNe(uA.InPhase, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.Quadrature, uB.Quadrature) || SvXtierNe(uA.Quadrature, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.InPhase, fk[t].InPhase) || SvXtierNe(uA.InPhase, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.Quadrature, fk[t].Quadrature) || SvXtierNe(uA.Quadrature, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -25165,11 +25634,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.HtSineStream sB = sA.Clone();
+                        var fk = new Core.HtSineValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].Sine, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].LeadSine, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.HtSineValue uA = sA.Update(fz_c[t]);
-                            Core.HtSineValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.Sine, uB.Sine) || SvXtierNe(uA.Sine, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.LeadSine, uB.LeadSine) || SvXtierNe(uA.LeadSine, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.Sine, fk[t].Sine) || SvXtierNe(uA.Sine, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.LeadSine, fk[t].LeadSine) || SvXtierNe(uA.LeadSine, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -25356,10 +25830,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.HtTrendlineStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -25538,10 +26016,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.HtTrendmodeStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_c[t]);
-                            int uB = sB.Update(fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -25728,10 +26210,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_c[t]);
                         Core.ImiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_o[t], fz_c[t]);
-                            double uB = sB.Update(fz_o[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -25924,10 +26410,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.KamaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -26182,12 +26672,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.KcStream sB = sA.Clone();
+                        var fk = new Core.KcValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.KcValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.KcValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.RealUpperBand, uB.RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealMiddleBand, uB.RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.RealLowerBand, uB.RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealUpperBand, fk[t].RealUpperBand) || SvXtierNe(uA.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealMiddleBand, fk[t].RealMiddleBand) || SvXtierNe(uA.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.RealLowerBand, fk[t].RealLowerBand) || SvXtierNe(uA.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -26471,12 +26967,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.KdjStream sB = sA.Clone();
+                        var fk = new Core.KdjValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].K, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].D, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].J, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.KdjValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.KdjValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.K, uB.K) || SvXtierNe(uA.K, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.D, uB.D) || SvXtierNe(uA.D, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.J, uB.J) || SvXtierNe(uA.J, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.K, fk[t].K) || SvXtierNe(uA.K, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.D, fk[t].D) || SvXtierNe(uA.D, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.J, fk[t].J) || SvXtierNe(uA.J, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -26674,10 +27176,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.KurtosisStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -26869,10 +27375,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.LinearregStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -27064,10 +27574,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.LinearregAngleStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -27259,10 +27773,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.LinearregInterceptStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -27454,10 +27972,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.LinearregSlopeStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -27648,10 +28170,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.LnStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -27835,10 +28361,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.Log10Stream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -28042,10 +28572,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -28287,12 +28821,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MacdStream sB = sA.Clone();
+                        var fk = new Core.MacdValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.MacdValue uA = sA.Update(fz_c[t]);
-                            Core.MacdValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.MACD, uB.MACD) || SvXtierNe(uA.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.MACDSignal, uB.MACDSignal) || SvXtierNe(uA.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.MACDHist, uB.MACDHist) || SvXtierNe(uA.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACD, fk[t].MACD) || SvXtierNe(uA.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACDSignal, fk[t].MACDSignal) || SvXtierNe(uA.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACDHist, fk[t].MACDHist) || SvXtierNe(uA.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -28566,12 +29106,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MacdextStream sB = sA.Clone();
+                        var fk = new Core.MacdextValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.MacdextValue uA = sA.Update(fz_c[t]);
-                            Core.MacdextValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.MACD, uB.MACD) || SvXtierNe(uA.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.MACDSignal, uB.MACDSignal) || SvXtierNe(uA.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.MACDHist, uB.MACDHist) || SvXtierNe(uA.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACD, fk[t].MACD) || SvXtierNe(uA.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACDSignal, fk[t].MACDSignal) || SvXtierNe(uA.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACDHist, fk[t].MACDHist) || SvXtierNe(uA.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -28817,12 +29363,18 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MacdfixStream sB = sA.Clone();
+                        var fk = new Core.MacdfixValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.MacdfixValue uA = sA.Update(fz_c[t]);
-                            Core.MacdfixValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.MACD, uB.MACD) || SvXtierNe(uA.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.MACDSignal, uB.MACDSignal) || SvXtierNe(uA.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.MACDHist, uB.MACDHist) || SvXtierNe(uA.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACD, fk[t].MACD) || SvXtierNe(uA.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACDSignal, fk[t].MACDSignal) || SvXtierNe(uA.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MACDHist, fk[t].MACDHist) || SvXtierNe(uA.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -29043,11 +29595,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MamaStream sB = sA.Clone();
+                        var fk = new Core.MamaValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].MAMA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].FAMA, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.MamaValue uA = sA.Update(fz_c[t]);
-                            Core.MamaValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.MAMA, uB.MAMA) || SvXtierNe(uA.MAMA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.FAMA, uB.FAMA) || SvXtierNe(uA.FAMA, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MAMA, fk[t].MAMA) || SvXtierNe(uA.MAMA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.FAMA, fk[t].FAMA) || SvXtierNe(uA.FAMA, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -29237,10 +29794,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_v[t]);
                         Core.MarketfiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_v[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -29429,10 +29990,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.MassiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -29647,10 +30212,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.MavpStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -29842,10 +30411,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MaxStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -30031,10 +30604,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MaxindexStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_c[t]);
-                            int uB = sB.Update(fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -30226,10 +30803,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MedianStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -30422,10 +31003,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.MedpriceStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -30616,10 +31201,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.MfiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -30811,10 +31400,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MidpointStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -31008,10 +31601,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.MidpriceStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -31203,10 +31800,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MinStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -31392,10 +31993,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MinindexStream sB = sA.Clone();
+                        var fk = new int[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (fk[t] != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.Update(fz_c[t]);
-                            int uB = sB.Update(fz_c[t]);
-                            if (uA != uB || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA != fk[t] || uA != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -31608,11 +32213,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MinmaxStream sB = sA.Clone();
+                        var fk = new Core.MinmaxValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].Min, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].Max, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.MinmaxValue uA = sA.Update(fz_c[t]);
-                            Core.MinmaxValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.Min, uB.Min) || SvXtierNe(uA.Min, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.Max, uB.Max) || SvXtierNe(uA.Max, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.Min, fk[t].Min) || SvXtierNe(uA.Min, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.Max, fk[t].Max) || SvXtierNe(uA.Max, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -31818,11 +32428,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MinmaxindexStream sB = sA.Clone();
+                        var fk = new Core.MinmaxindexValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (fk[t].MinIdx != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (fk[t].MaxIdx != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.MinmaxindexValue uA = sA.Update(fz_c[t]);
-                            Core.MinmaxindexValue uB = sB.Update(fz_c[t]);
-                            if (uA.MinIdx != uB.MinIdx || uA.MinIdx != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.MaxIdx != uB.MaxIdx || uA.MaxIdx != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.MinIdx != fk[t].MinIdx || uA.MinIdx != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.MaxIdx != fk[t].MaxIdx || uA.MaxIdx != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -32022,10 +32637,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.MinusDiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -32220,10 +32839,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.MinusDmStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -32415,10 +33038,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.MomStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -32611,10 +33238,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.MultStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -32804,10 +33435,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.NatrStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -33000,10 +33635,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.NviStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -33189,10 +33828,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.ObvStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -33378,10 +34021,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.PercentileStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -33573,10 +34220,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.PercentrankStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -33773,10 +34424,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.PlusDiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -33971,10 +34626,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.PlusDmStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -34186,10 +34845,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.PpoStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -34382,10 +35045,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.PviStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -34590,10 +35257,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_v[t]);
                         Core.PvoStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_v[t]);
-                            double uB = sB.Update(fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -34786,10 +35457,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.PvtStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -34976,10 +35651,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_o[t], fz_c[t]);
                         Core.QstickStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_o[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_o[t], fz_c[t]);
-                            double uB = sB.Update(fz_o[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -35172,10 +35851,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.RmaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -35367,10 +36050,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.RocStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -35562,10 +36249,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.RocpStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -35757,10 +36448,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.RocrStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -35952,10 +36647,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.Rocr100Stream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -36148,10 +36847,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.RsiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -36345,10 +37048,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.RviStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -36544,10 +37251,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.RvirStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -36739,10 +37450,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_v[t]);
                         Core.RvolStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_v[t]);
-                            double uB = sB.Update(fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -36937,10 +37652,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.SarStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -37134,10 +37853,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
                         Core.SarextStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -37321,10 +38044,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.SinStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -37508,10 +38235,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.SinhStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -37696,10 +38427,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.SmaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -37924,11 +38659,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.SmiStream sB = sA.Clone();
+                        var fk = new Core.SmiValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].SMI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].SMISignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.SmiValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.SmiValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.SMI, uB.SMI) || SvXtierNe(uA.SMI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.SMISignal, uB.SMISignal) || SvXtierNe(uA.SMISignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.SMI, fk[t].SMI) || SvXtierNe(uA.SMI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.SMISignal, fk[t].SMISignal) || SvXtierNe(uA.SMISignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -38122,10 +38862,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.SqrtStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -38311,10 +39055,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.StddevStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -38560,11 +39308,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.StochStream sB = sA.Clone();
+                        var fk = new Core.StochValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].SlowK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].SlowD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.StochValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.StochValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.SlowK, uB.SlowK) || SvXtierNe(uA.SlowK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.SlowD, uB.SlowD) || SvXtierNe(uA.SlowD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.SlowK, fk[t].SlowK) || SvXtierNe(uA.SlowK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.SlowD, fk[t].SlowD) || SvXtierNe(uA.SlowD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -38810,11 +39563,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.StochfStream sB = sA.Clone();
+                        var fk = new Core.StochfValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.StochfValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.StochfValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.FastK, uB.FastK) || SvXtierNe(uA.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.FastD, uB.FastD) || SvXtierNe(uA.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.FastK, fk[t].FastK) || SvXtierNe(uA.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.FastD, fk[t].FastD) || SvXtierNe(uA.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -39054,11 +39812,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.StochrsiStream sB = sA.Clone();
+                        var fk = new Core.StochrsiValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t].FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.StochrsiValue uA = sA.Update(fz_c[t]);
-                            Core.StochrsiValue uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA.FastK, uB.FastK) || SvXtierNe(uA.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.FastD, uB.FastD) || SvXtierNe(uA.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.FastK, fk[t].FastK) || SvXtierNe(uA.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.FastD, fk[t].FastD) || SvXtierNe(uA.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -39254,10 +40017,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.SubStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -39442,10 +40209,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.SumStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -39653,11 +40424,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.SupertrendStream sB = sA.Clone();
+                        var fk = new Core.SupertrendValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].Supertrend, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (fk[t].Trend != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.SupertrendValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.SupertrendValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.Supertrend, uB.Supertrend) || SvXtierNe(uA.Supertrend, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.Trend != uB.Trend || uA.Trend != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.Supertrend, fk[t].Supertrend) || SvXtierNe(uA.Supertrend, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.Trend != fk[t].Trend || uA.Trend != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -39854,10 +40630,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.T3Stream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -40048,10 +40828,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.TanStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -40235,10 +41019,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.TanhStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -40424,10 +41212,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.TemaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -40622,10 +41414,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.TrangeStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -40810,10 +41606,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.TrimaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -41006,10 +41806,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.TrixStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -41201,10 +42005,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.TsfStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -41398,10 +42206,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.TsiStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -41596,10 +42408,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.TyppriceStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -41790,10 +42606,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.UltoscStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -41986,10 +42806,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.VarStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -42181,10 +43005,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.VhfStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -42405,11 +43233,16 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.VortexStream sB = sA.Clone();
+                        var fk = new Core.VortexValue[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t].PlusVI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                            if (SvXtierNe(fk[t].MinusVI, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             Core.VortexValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.VortexValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.PlusVI, uB.PlusVI) || SvXtierNe(uA.PlusVI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (SvBne(uA.MinusVI, uB.MinusVI) || SvXtierNe(uA.MinusVI, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.PlusVI, fk[t].PlusVI) || SvXtierNe(uA.PlusVI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.MinusVI, fk[t].MinusVI) || SvXtierNe(uA.MinusVI, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -42609,10 +43442,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         Core.VwapStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -42799,10 +43636,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t], fz_v[t]);
                         Core.VwmaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t], fz_v[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t], fz_v[t]);
-                            double uB = sB.Update(fz_c[t], fz_v[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -42997,10 +43838,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.WadStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -43188,10 +44033,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.WclpriceStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -43380,10 +44229,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                         Core.WillrStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -43575,10 +44428,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.WmaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -43771,10 +44628,14 @@ public class TaCodegenServe {
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
                         Core.ZlemaStream sB = sA.Clone();
+                        var fk = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            fk[t] = sB.Update(fz_c[t]);
+                            if (SvXtierNe(fk[t], b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyForkDiverged\":" + t; }
+                        }
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.Update(fz_c[t]);
-                            double uB = sB.Update(fz_c[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA, fk[t]) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;

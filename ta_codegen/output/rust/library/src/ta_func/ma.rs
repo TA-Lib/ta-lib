@@ -515,6 +515,55 @@ impl Core {
         Ok(())
     }
 
+    fn ma_step_tape_impl(sp: &mut MaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
+            (*outReal) = inReal;
+            return;
+        }
+        match &mut sp.sub {
+            MaSub::Identity => {
+                (*outReal) = inReal;
+            }
+            MaSub::Sma(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Ema(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Wma(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Dema(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Tema(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Trima(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Kama(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Mama(sub) => {
+                let subValue = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+                (*outReal) = subValue.0;
+            }
+            MaSub::T3(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Hma(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Zlema(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+            MaSub::Rma(sub) => {
+                (*outReal) = sub.step_tape(tape, tapeBase, tapeMask, inReal);
+            }
+        }
+    }
+
     /// Internal startIdx-anchored open behind [`Core::ma_open`] (composition seam).
     pub(crate) fn ma_open_internal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAType: MAType,
@@ -986,6 +1035,93 @@ impl MaStream {
         }
         self.out.count += 1;
         Ok(())
+    }
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl MaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        Core::ma_step_tape_impl(&mut self.state, tape, tapeBase, tapeMask, inReal, &mut outReal);
+        self.state.cur_outReal = outReal;
+        self.out.count += 1;
+        outReal
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
+                outReal = inReal;
+                return Ok(outReal);
+            }
+            match &sp.sub {
+                MaSub::Identity => {
+                    outReal = inReal;
+                }
+                MaSub::Sma(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Ema(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Wma(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Dema(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Tema(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Trima(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Kama(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Mama(sub) => {
+                    let subValue = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                    outReal = subValue.0;
+                }
+                MaSub::T3(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Hma(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Zlema(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+                MaSub::Rma(sub) => {
+                    outReal = sub.peek_tape(tape, tapeBase, tapeMask, inReal)?;
+                }
+            }
+        }
+        Ok(outReal)
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        match &mut self.state.sub {
+            MaSub::Identity => 0,
+            MaSub::Sma(sub) => sub.tape_detach(),
+            MaSub::Ema(sub) => sub.tape_detach(),
+            MaSub::Wma(sub) => sub.tape_detach(),
+            MaSub::Dema(sub) => sub.tape_detach(),
+            MaSub::Tema(sub) => sub.tape_detach(),
+            MaSub::Trima(sub) => sub.tape_detach(),
+            MaSub::Kama(sub) => sub.tape_detach(),
+            MaSub::Mama(sub) => sub.tape_detach(),
+            MaSub::T3(sub) => sub.tape_detach(),
+            MaSub::Hma(sub) => sub.tape_detach(),
+            MaSub::Zlema(sub) => sub.tape_detach(),
+            MaSub::Rma(sub) => sub.tape_detach(),
+        }
     }
 }
 

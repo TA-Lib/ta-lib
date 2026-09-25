@@ -319,6 +319,15 @@ impl Core {
         }
     }
 
+    fn sma_step_tape_impl(sp: &mut SmaStreamState, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64, outReal: &mut f64) {
+        let mut tempReal: f64 = 0.0_f64;
+        sp.periodTotal += inReal as f64;
+        tempReal = sp.periodTotal;
+        sp.periodTotal -= tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] as f64;
+        (*outReal) = tempReal / (sp.optInTimePeriod as f64);
+        sp.cur_outReal = (*outReal);
+    }
+
     /// The single whole-history transcription behind [`Core::sma_open_internal`]
     /// (stride 0, scalar sink) and [`Core::sma_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn sma_open_impl(
@@ -642,6 +651,48 @@ impl SmaStream {
         }
         self.out.count += 1;
         Ok(())
+    }
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl SmaStream {
+    pub(crate) fn step_tape(&mut self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> f64 {
+        let mut outReal: f64 = 0.0_f64;
+        Core::sma_step_tape_impl(&mut self.state, tape, tapeBase, tapeMask, inReal, &mut outReal);
+        self.out.count += 1;
+        outReal
+    }
+
+    pub(crate) fn peek_tape(&self, tape: &[f64], tapeBase: usize, tapeMask: usize, inReal: f64) -> Result<f64, RetCode> {
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut periodTotal = sp.periodTotal;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            pkSlot0 = (tapeBase & tapeMask) as usize;
+            pkVal0 = inReal;
+            periodTotal += inReal as f64;
+            tempReal = periodTotal;
+            periodTotal -= (if ((tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize) != pkSlot0 { tape[(tapeBase - sp.ringCap_trailingIdx & tapeMask) as usize] } else { pkVal0 }) as f64;
+            (*outReal) = tempReal / (sp.optInTimePeriod as f64);
+        }
+        Ok(outReal)
+    }
+
+    pub(crate) fn tape_detach(&mut self) -> usize {
+        let mut reach: usize = 0;
+        self.state.ring_trailingIdx_inReal = Vec::new();
+        if self.state.ringCap_trailingIdx > reach {
+            reach = self.state.ringCap_trailingIdx;
+        }
+        reach
     }
 }
 
