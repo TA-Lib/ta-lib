@@ -60,6 +60,7 @@
  *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
  *                used, and bound it so an off-contract period cannot overflow.
  *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
+ *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  */
 
 TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType )
@@ -197,16 +198,9 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       return TA_SUCCESS;
    }
    outputSize = endIdx - firstOut + 1;
-   /* Allocate intermediate local buffer. */
-   localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
-   /* Output indices grouped by clamped period (counting sort below). */
-   sortedIdx = malloc(outputSize * sizeof(int));
-   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
+   if( localPeriodArray == NULL )
    {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
@@ -223,9 +217,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       localFinalArray = malloc(outputSize * sizeof(double));
       if( localFinalArray == NULL )
       {
-         free(localOutputArray);
          free(localPeriodArray);
-         free(sortedIdx);
          *outBegIdx= 0;
          *outNBElement= 0;
          return TA_ALLOC_ERR;
@@ -311,9 +303,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
     */
    if( maxUsed < minUsed || maxUsed - minUsed > 100000 )
    {
-      free(localOutputArray);
       free(localPeriodArray);
-      free(sortedIdx);
       if( finalIsAllocated )
       {
          free(localFinalArray);
@@ -321,26 +311,6 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_BAD_PARAM;
-   }
-   /* Per-period bucket cursor for the counting sort. Indexed RELATIVE to
-    * minUsed: only [minUsed, maxUsed+1] is ever touched, so sizing from the
-    * largest period used allocated up to 400KB for a band of periods that
-    * may be a handful wide — and allocated it even on the single-period
-    * fast path below.
-    */
-   bucketOfs = malloc((maxUsed - minUsed + 2) * sizeof(int));
-   if( bucketOfs == NULL )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      if( finalIsAllocated )
-      {
-         free(localFinalArray);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
    }
    if( minUsed == maxUsed )
    {
@@ -350,10 +320,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       retCode = TA_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
-         free(localOutputArray);
          free(localPeriodArray);
-         free(sortedIdx);
-         free(bucketOfs);
          if( finalIsAllocated )
          {
             free(localFinalArray);
@@ -364,6 +331,23 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       }
    } else 
    {
+      localOutputArray = malloc(outputSize * sizeof(double));
+      sortedIdx = malloc(outputSize * sizeof(int));
+      bucketOfs = malloc((maxUsed - minUsed + 2) * sizeof(int));
+      if( localOutputArray == NULL || sortedIdx == NULL || bucketOfs == NULL )
+      {
+         free(localOutputArray);
+         free(sortedIdx);
+         free(bucketOfs);
+         free(localPeriodArray);
+         if( finalIsAllocated )
+         {
+            free(localFinalArray);
+         }
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
       /* Counting sort: sortedIdx ends up holding the output indices ordered
        * by period, one contiguous ascending slice per distinct period, with
        * bucketOfs[p] the end of period p's slice.
@@ -443,15 +427,15 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
          }
          bucketStart = bucketEnd;
       }
+      free(localOutputArray);
+      free(sortedIdx);
+      free(bucketOfs);
    }
    if( localFinalArray != outReal )
    {
       memcpy(outReal,localFinalArray,outputSize * sizeof(double));
    }
-   free(localOutputArray);
    free(localPeriodArray);
-   free(sortedIdx);
-   free(bucketOfs);
    if( finalIsAllocated )
    {
       free(localFinalArray);
@@ -555,14 +539,9 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       return TA_SUCCESS;
    }
    outputSize = endIdx - firstOut + 1;
-   localOutputArray = malloc(outputSize * sizeof(double));
    localPeriodArray = malloc(outputSize * sizeof(int));
-   sortedIdx = malloc(outputSize * sizeof(int));
-   if( localOutputArray == NULL || localPeriodArray == NULL || sortedIdx == NULL )
+   if( localPeriodArray == NULL )
    {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
@@ -574,9 +553,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       localFinalArray = malloc(outputSize * sizeof(double));
       if( localFinalArray == NULL )
       {
-         free(localOutputArray);
          free(localPeriodArray);
-         free(sortedIdx);
          *outBegIdx= 0;
          *outNBElement= 0;
          return TA_ALLOC_ERR;
@@ -622,9 +599,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    }
    if( maxUsed < minUsed || maxUsed - minUsed > 100000 )
    {
-      free(localOutputArray);
       free(localPeriodArray);
-      free(sortedIdx);
       if( finalIsAllocated )
       {
          free(localFinalArray);
@@ -633,29 +608,12 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       *outNBElement= 0;
       return TA_BAD_PARAM;
    }
-   bucketOfs = malloc((maxUsed - minUsed + 2) * sizeof(int));
-   if( bucketOfs == NULL )
-   {
-      free(localOutputArray);
-      free(localPeriodArray);
-      free(sortedIdx);
-      if( finalIsAllocated )
-      {
-         free(localFinalArray);
-      }
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
    if( minUsed == maxUsed )
    {
       retCode = TA_S_MA(startIdx,endIdx,inReal,minUsed,optInMAType,&localBegIdx,&localNbElement,localFinalArray);
       if( retCode != TA_SUCCESS )
       {
-         free(localOutputArray);
          free(localPeriodArray);
-         free(sortedIdx);
-         free(bucketOfs);
          if( finalIsAllocated )
          {
             free(localFinalArray);
@@ -666,6 +624,23 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       }
    } else 
    {
+      localOutputArray = malloc(outputSize * sizeof(double));
+      sortedIdx = malloc(outputSize * sizeof(int));
+      bucketOfs = malloc((maxUsed - minUsed + 2) * sizeof(int));
+      if( localOutputArray == NULL || sortedIdx == NULL || bucketOfs == NULL )
+      {
+         free(localOutputArray);
+         free(sortedIdx);
+         free(bucketOfs);
+         free(localPeriodArray);
+         if( finalIsAllocated )
+         {
+            free(localFinalArray);
+         }
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_ALLOC_ERR;
+      }
       for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 )
       {
          bucketOfs[curPeriod - minUsed] = 0;
@@ -722,15 +697,15 @@ TA_RetCode TA_S_MAVP( int    startIdx,
          }
          bucketStart = bucketEnd;
       }
+      free(localOutputArray);
+      free(sortedIdx);
+      free(bucketOfs);
    }
    if( localFinalArray != outReal )
    {
       memcpy(outReal,localFinalArray,outputSize * sizeof(double));
    }
-   free(localOutputArray);
    free(localPeriodArray);
-   free(sortedIdx);
-   free(bucketOfs);
    if( finalIsAllocated )
    {
       free(localFinalArray);

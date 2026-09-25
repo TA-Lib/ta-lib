@@ -58,6 +58,7 @@
  *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
  *                used, and bound it so an off-contract period cannot overflow.
  *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
+ *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  */
 
 // Import types from parent module
@@ -212,11 +213,7 @@ impl Core {
             return RetCode::Success;
         }
         outputSize = endIdx - firstOut + 1;
-        // Allocate intermediate local buffer.
-        localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
-        // Output indices grouped by clamped period (counting sort below).
-        sortedIdx = vec![0_i32; (outputSize * 1) as usize];
         // In-place defence (issue #130): each ma() pass below re-reads inReal over
         // the full range, so with outReal==inReal the results are staged in a
         // scratch buffer and copied once at the end. A regular call writes
@@ -299,12 +296,6 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::BadParam;
         }
-        // Per-period bucket cursor for the counting sort. Indexed RELATIVE to
-        // minUsed: only [minUsed, maxUsed+1] is ever touched, so sizing from the
-        // largest period used allocated up to 400KB for a band of periods that
-        // may be a handful wide — and allocated it even on the single-period
-        // fast path below.
-        bucketOfs = vec![0_i32; ((maxUsed - minUsed + 2) * 1) as usize];
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
@@ -313,6 +304,9 @@ impl Core {
             localNbElement = _xr0.count;
             retCode = RetCode::Success;
         } else {
+            localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
+            sortedIdx = vec![0_i32; (outputSize * 1) as usize];
+            bucketOfs = vec![0_i32; ((maxUsed - minUsed + 2) * 1) as usize];
             // Counting sort: sortedIdx ends up holding the output indices ordered
             // by period, one contiguous ascending slice per distinct period, with
             // bucketOfs[p] the end of period p's slice.

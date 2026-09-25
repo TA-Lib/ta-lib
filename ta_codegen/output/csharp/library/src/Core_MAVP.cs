@@ -60,6 +60,7 @@ public partial class Core
     *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
     *                used, and bound it so an off-contract period cannot overflow.
     *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
+    *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
     */
    /// <summary>
    /// Number of leading input bars <c>Mavp</c> consumes before it can produce
@@ -209,11 +210,7 @@ public partial class Core
          return RetCode.Success ;
       }
       outputSize = endIdx - firstOut + 1;
-      /* Allocate intermediate local buffer. */
-      localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
-      /* Output indices grouped by clamped period (counting sort below). */
-      sortedIdx = new int[(int)(outputSize * 1)];
       /* In-place defence (issue #130): each ma() pass below re-reads inReal over
        * the full range, so with outReal==inReal the results are staged in a
        * scratch buffer and copied once at the end. A regular call writes
@@ -298,13 +295,6 @@ public partial class Core
          outNBElement = 0;
          return RetCode.BadParam ;
       }
-      /* Per-period bucket cursor for the counting sort. Indexed RELATIVE to
-       * minUsed: only [minUsed, maxUsed+1] is ever touched, so sizing from the
-       * largest period used allocated up to 400KB for a band of periods that
-       * may be a handful wide — and allocated it even on the single-period
-       * fast path below.
-       */
-      bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
@@ -314,6 +304,9 @@ public partial class Core
          localNbElement = _xr0.Count;
          retCode = RetCode.Success;
       } else {
+         localOutputArray = new double[(int)(outputSize * 1)];
+         sortedIdx = new int[(int)(outputSize * 1)];
+         bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
          /* Counting sort: sortedIdx ends up holding the output indices ordered
           * by period, one contiguous ascending slice per distinct period, with
           * bucketOfs[p] the end of period p's slice.
@@ -468,9 +461,7 @@ public partial class Core
          return RetCode.Success ;
       }
       outputSize = endIdx - firstOut + 1;
-      localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
-      sortedIdx = new int[(int)(outputSize * 1)];
       finalIsAllocated = 0;
       localFinalArray = outReal;
       minUsed = optInMaxPeriod;
@@ -505,13 +496,15 @@ public partial class Core
          outNBElement = 0;
          return RetCode.BadParam ;
       }
-      bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
          OutRange _xr0 = Ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
          localBegIdx = _xr0.BegIdx;
          localNbElement = _xr0.Count;
          retCode = RetCode.Success;
       } else {
+         localOutputArray = new double[(int)(outputSize * 1)];
+         sortedIdx = new int[(int)(outputSize * 1)];
+         bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
          for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
             bucketOfs[curPeriod - minUsed] = 0;
          }

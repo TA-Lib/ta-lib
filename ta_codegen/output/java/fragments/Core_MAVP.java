@@ -16,6 +16,7 @@
  *  072726 MF,CC  #145. Index the bucket table relative to the smallest period
  *                used, and bound it so an off-contract period cannot overflow.
  *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
+ *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  */
 
    /**
@@ -156,11 +157,7 @@
          return RetCode.SUCCESS ;
       }
       outputSize = endIdx - firstOut + 1;
-      /* Allocate intermediate local buffer. */
-      localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
-      /* Output indices grouped by clamped period (counting sort below). */
-      sortedIdx = new int[(int)(outputSize * 1)];
       /* In-place defence (issue #130): each ma() pass below re-reads inReal over
        * the full range, so with outReal==inReal the results are staged in a
        * scratch buffer and copied once at the end. A regular call writes
@@ -245,13 +242,6 @@
          outNBElement.value = 0;
          return RetCode.BAD_PARAM ;
       }
-      /* Per-period bucket cursor for the counting sort. Indexed RELATIVE to
-       * minUsed: only [minUsed, maxUsed+1] is ever touched, so sizing from the
-       * largest period used allocated up to 400KB for a band of periods that
-       * may be a handful wide — and allocated it even on the single-period
-       * fast path below.
-       */
-      bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
@@ -261,6 +251,9 @@
          localNbElement.value = _xr0.count();
          retCode = RetCode.SUCCESS;
       } else {
+         localOutputArray = new double[(int)(outputSize * 1)];
+         sortedIdx = new int[(int)(outputSize * 1)];
+         bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
          /* Counting sort: sortedIdx ends up holding the output indices ordered
           * by period, one contiguous ascending slice per distinct period, with
           * bucketOfs[p] the end of period p's slice.
@@ -408,9 +401,7 @@
          return RetCode.SUCCESS ;
       }
       outputSize = endIdx - firstOut + 1;
-      localOutputArray = new double[(int)(outputSize * 1)];
       localPeriodArray = new int[(int)(outputSize * 1)];
-      sortedIdx = new int[(int)(outputSize * 1)];
       finalIsAllocated = 0;
       if( false ) {
          finalIsAllocated = 1;
@@ -450,13 +441,15 @@
          outNBElement.value = 0;
          return RetCode.BAD_PARAM ;
       }
-      bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
          OutRange _xr0 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
          localBegIdx.value = _xr0.begIdx();
          localNbElement.value = _xr0.count();
          retCode = RetCode.SUCCESS;
       } else {
+         localOutputArray = new double[(int)(outputSize * 1)];
+         sortedIdx = new int[(int)(outputSize * 1)];
+         bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
          for( curPeriod = minUsed; curPeriod <= maxUsed + 1; curPeriod += 1 ) {
             bucketOfs[curPeriod - minUsed] = 0;
          }
