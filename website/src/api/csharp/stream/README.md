@@ -1,6 +1,6 @@
 ---
 title: C# Streaming API
-description: "C# streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history, bit-identical to the batch calls, and Update allocates nothing."
+description: "C# streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history; its values are bit-identical to the batch calls, and Update allocates nothing."
 toc: false
 ---
 
@@ -8,7 +8,7 @@ toc: false
 The C# API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, cost at most time proportional to its length. Every value is **bit-identical** to what the [batch method](/api/csharp/) (`core.Sma`, `core.Rsi`, …) would return by recomputing over the whole array.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, take time at most proportional to the window's length. Every value is **bit-identical** to what the [batch method](/api/csharp/) (`core.Sma`, `core.Rsi`, …) would return by recomputing over the whole array.
 
 Each streamable function adds two factory methods on `Core` and a handful of members on its stream (a class nested in `Core`, e.g. `Core.SmaStream`):
 

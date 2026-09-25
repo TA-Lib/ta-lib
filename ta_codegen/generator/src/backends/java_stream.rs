@@ -2680,8 +2680,8 @@ fn emit_open_wrappers(
         // The guard the anchored seam deliberately omits: every composed
         // sub-call passes a destination that aliases neither its sources nor
         // each other, so it belongs on the public frame, not the hot one. It
-        // throws through the same mapping as the open tail, so the message is
-        // the one every other opener BAD_PARAM carries.
+        // throws through the same mapping as the opener's tail, so it reads as
+        // the tail's BAD_PARAM does.
         if let Some(cond) = alias_condition(func) {
             let _ = writeln!(o, "      if( {cond} ) {{");
             let _ = writeln!(

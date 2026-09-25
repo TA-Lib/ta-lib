@@ -54,16 +54,17 @@ TA_RetCode synth19(int    startIdx,
       return TA_ALLOC_ERR;
    }
 
-   /* Fill both buffers from the first output's window, then clear part of
-    * each: a clear is observable only because it overwrites data. */
+   v = 0;
    for( k = 0; k < 8; k++ )
    {
+      v += 1;
       tempReal = inReal[startIdx - lookbackTotal + (k % optInTimePeriod)];
       if( !(tempReal >= 0.0) || !(tempReal < 1000000.0) )
          tempReal = 0.0;
       countBuf[k] = (int)tempReal;
       countBuf[k] &= 7;
-      sumBuf[k] = tempReal;
+      countBuf[k] += v * 8;
+      sumBuf[k] = tempReal + (double)v;
    }
    memset( countBuf, 0, 2 * sizeof(int) );
    memset( &countBuf[5], 0, 3 * sizeof(int) );

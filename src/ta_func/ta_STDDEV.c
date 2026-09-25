@@ -111,7 +111,7 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
     *
     * Same shape as the guard in apo and bbands: the variance below runs on the
     * same range and its lookback IS stddev's, so it declines and yields 0,0
-    * without reading. Observably identical, but it makes "a range shorter than
+    * without reading. Observably identical, but it makes "a range that ends before
     * the lookback reads nothing" true of stddev itself rather than only of var.
     * Pinned by the zero-length no-I/O probe over every guarded core.
     */
@@ -302,7 +302,7 @@ static TA_RetCode TA_STDDEV_OpenImpl( struct TA_STDDEV_Stream **stream, const do
        *
        * Same shape as the guard in apo and bbands: the variance below runs on the
        * same range and its lookback IS stddev's, so it declines and yields 0,0
-       * without reading. Observably identical, but it makes "a range shorter than
+       * without reading. Observably identical, but it makes "a range that ends before
        * the lookback reads nothing" true of stddev itself rather than only of var.
        * Pinned by the zero-length no-I/O probe over every guarded core.
        */
