@@ -100,7 +100,7 @@ public enum FuncUnstId
 }
 
 /// <summary>Companion constants for <see cref="FuncUnstId"/>.</summary>
-public static class FuncUnstIds
+internal static class FuncUnstIds
 {
     /// <summary>Number of function ids — the size of the unstable-period
     /// table. Not an id, and not <see cref="FuncUnstId.ALL"/>. Mirrors C's

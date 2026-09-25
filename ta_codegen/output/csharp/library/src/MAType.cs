@@ -70,7 +70,7 @@ public enum MAType
 }
 
 /// <summary>Companion constants for <see cref="MAType"/>.</summary>
-public static class MATypes
+internal static class MATypes
 {
     /// <summary>Lowest value <see cref="MAType"/> defines. Not a member:
     /// the inclusive lower bound of the domain a parameter of that type

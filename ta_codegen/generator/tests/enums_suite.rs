@@ -173,8 +173,8 @@ fn the_enum_limit_macros_are_declared_next_to_the_enum() {
         "the C# limit companion must span the members:\n{cs}"
     );
     assert!(
-        cs.contains("public static class MATypes"),
-        "the C# limits must live in the enum's companion class:\n{cs}"
+        cs.contains("internal static class MATypes"),
+        "the C# limits must live in an internal companion, or a consumer build bakes them in:\n{cs}"
     );
 }
 
@@ -328,6 +328,10 @@ fn csharp_funcunstid_pins_the_all_sentinel_and_the_count() {
             "FuncUnstId.cs is missing `{decl}`:\n{src}"
         );
     }
+    assert!(
+        src.contains("internal static class FuncUnstIds"),
+        "a public const Count would be baked into consumer IL at their build:\n{src}"
+    );
     // Count must not silently include the All sentinel.
     assert!(
         !src.contains(&format!("public const int Count = {};", fu.variants.len() + 1)),
