@@ -70,13 +70,19 @@ into 0.1.2. Get the contents right before publishing, not after.
 
 ## Credentials
 
-Not yet decided (#179 A6). Today: a maintainer's personal crates.io token, stored by
-`cargo login`, publishing from a local machine. That is what published dispatch 0.1.2.
+A maintainer's personal crates.io token, stored by `cargo login`, publishing from their
+own machine, the same shape as the Java publish. No CI secret. Create it at crates.io,
+Account Settings, API Tokens:
 
-The alternative is crates.io **Trusted Publishing** — OIDC from a named GitHub Actions
-workflow, no long-lived secret anywhere. The repo currently has zero Actions secrets and
-both crates report `trustpub_only: false`. Worth revisiting now that publication is
-per-release rather than one-off: a personal token on one machine is a bus factor.
+- **Scope:** `publish-update` only. Both crates exist, so no `publish-new`, and no
+  owner or yank scope.
+- **Crates:** `ta-lib` and `ta-lib-dispatch`.
+- **Expiry:** set one (a year is fine). An expired token fails `cargo publish` loudly;
+  make a new one and `cargo login` again.
+
+Both crates are also owned by the team `github:ta-lib:rust-crate-io-owners`, whose
+members can publish with their own token. That team, not one machine, is what keeps a
+release possible when a maintainer is unavailable.
 
 ## Publishing
 
