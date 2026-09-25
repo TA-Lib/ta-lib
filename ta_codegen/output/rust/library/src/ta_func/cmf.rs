@@ -138,7 +138,6 @@ impl Core {
         let mut heap_mfv_volume: Vec<f64> = Vec::new();
         let mut mfv_volume: &mut [f64] = &mut [];
         let mut mfv_Idx: usize = 0;
-        let mut maxIdx_mfv: usize = 49;
         // Both the per-bar money flow volume and the volume that produced it are
         // carried in the circular buffer. Keeping the volume here rather than
         // re-reading inVolume[] at the trailing index is what makes outReal safe to
@@ -172,7 +171,6 @@ impl Core {
             heap_mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
             mfv_volume = &mut heap_mfv_volume;
         }
-        maxIdx_mfv = ((optInTimePeriod) as usize) - 1;
         mfv_Idx = 0;
         outIdx = 0;
         // Accumulate the money flow volume and the volume over the first

@@ -151,8 +151,9 @@ pub struct RustRenderCtx {
     /// keep pure-`Vec` storage, whose ownership the open path moves into the
     /// stream state struct.
     pub circbuf_hybrid_static: std::collections::HashMap<String, i64>,
-    /// Per batch CIRCBUF, a storage slice whose length is the ring's: the
-    /// wrap tests against it, which lets LLVM drop the ring's own check.
+    /// Per batch ring (a CIRCBUF the body advances), a storage slice whose
+    /// length is the ring's: the wrap tests against it, which lets LLVM drop
+    /// the ring's own check. A batch CIRCBUF absent here has no cursor.
     pub circbuf_len_of: std::collections::HashMap<String, String>,
     /// Output parameters typed `Option<&mut [T]>` because their .yaml marks them
     /// `nullable` (rule B6a). Every store into one is wrapped in an `if let
@@ -1964,14 +1965,15 @@ pub(crate) enum CircBufTier {
     /// Batch: C's hybrid — a zeroed stack array at the static size, a heap `Vec`
     /// behind it, and a `&mut` slice the body indexes through. The heap `Vec` is
     /// declared only when a runtime `CIRCBUF_INIT` exists to reach it
-    /// (`INIT_LOCAL_ONLY` never leaves the stack array).
-    BatchHybrid { has_runtime_init: bool },
+    /// (`INIT_LOCAL_ONLY` never leaves the stack array). The cursor only when the
+    /// body advances it, and never a bound: the wrap tests the slice length.
+    BatchHybrid { has_runtime_init: bool, is_ring: bool },
 }
 
 /// Emit the function-top declarations for a CIRCBUF prolog, plus the `usize`
-/// rotation index and bound. The bound is seeded to `static_size - 1` (NOT 0)
-/// so the `INIT_LOCAL_ONLY` path (HT functions) sizes its buffer correctly
-/// before any `INIT` runs. Indent is the 8-space body level.
+/// rotation index and bound where the tier has them. The bound is seeded to
+/// `static_size - 1` (NOT 0) so the `INIT_LOCAL_ONLY` path (HT functions) sizes
+/// its buffer correctly before any `INIT` runs. Indent is the 8-space body level.
 pub(crate) fn emit_circbuf_prolog_rust(
     id: &str,
     layout: &CircBufLayout,
@@ -1991,7 +1993,7 @@ pub(crate) fn emit_circbuf_prolog_rust(
                     "        let mut {storage}: Vec<{vt}> = Vec::new();\n"
                 ));
             }
-            CircBufTier::BatchHybrid { has_runtime_init } => {
+            CircBufTier::BatchHybrid { has_runtime_init, .. } => {
                 s.push_str(&format!(
                     "        let mut local_{storage}: [{vt}; {static_size}] = [{zero}; {static_size}];\n"
                 ));
@@ -2006,11 +2008,19 @@ pub(crate) fn emit_circbuf_prolog_rust(
             }
         }
     }
-    s.push_str(&format!("        let mut {id}_Idx: usize = 0;\n"));
-    s.push_str(&format!(
-        "        let mut maxIdx_{id}: usize = {};\n",
-        static_size - 1
-    ));
+    match tier {
+        CircBufTier::StreamVec => {
+            s.push_str(&format!("        let mut {id}_Idx: usize = 0;\n"));
+            s.push_str(&format!(
+                "        let mut maxIdx_{id}: usize = {};\n",
+                static_size - 1
+            ));
+        }
+        CircBufTier::BatchHybrid { is_ring: true, .. } => {
+            s.push_str(&format!("        let mut {id}_Idx: usize = 0;\n"));
+        }
+        CircBufTier::BatchHybrid { is_ring: false, .. } => {}
+    }
     s
 }
 
@@ -2031,7 +2041,7 @@ pub(crate) fn collect_circbuf_static(body: &[Statement]) -> std::collections::Ha
 pub(crate) fn collect_circbuf_len_of(body: &[Statement]) -> std::collections::HashMap<String, String> {
     body.iter()
         .filter_map(|s| match s {
-            Statement::CircBuf(CircBuf::Prolog { id, layout, .. }) => {
+            Statement::CircBuf(CircBuf::Prolog { id, layout, .. }) if circbuf_is_ring(body, id) => {
                 circbuf_storage(id, layout).into_iter().next().map(|(storage, _)| (id.clone(), storage))
             }
             _ => None,
@@ -2042,25 +2052,37 @@ pub(crate) fn collect_circbuf_len_of(body: &[Statement]) -> std::collections::Ha
 /// The batch tier's storage shape for `id` in `body`. The heap `Vec` is declared
 /// only when a runtime `CIRCBUF_INIT` can reach it.
 pub(crate) fn batch_circbuf_tier(body: &[Statement], id: &str) -> CircBufTier {
-    CircBufTier::BatchHybrid { has_runtime_init: circbuf_has_runtime_init(body, id) }
+    CircBufTier::BatchHybrid {
+        has_runtime_init: circbuf_has_runtime_init(body, id),
+        is_ring: circbuf_is_ring(body, id),
+    }
 }
 
 /// Whether a runtime-sized `CIRCBUF_INIT` for `id` appears anywhere in `body`
 /// (as opposed to `INIT_LOCAL_ONLY`, which never needs the heap fallback).
 pub(crate) fn circbuf_has_runtime_init(body: &[Statement], id: &str) -> bool {
+    any_circbuf_op(body, &|op| matches!(op, CircBuf::Init { id: i, .. } if i == id))
+}
+
+/// Whether `body` advances `id` with `CIRCBUF_NEXT`. A CIRCBUF it never advances
+/// is period-sized scratch indexed directly, whose cursor nothing reads.
+fn circbuf_is_ring(body: &[Statement], id: &str) -> bool {
+    any_circbuf_op(body, &|op| matches!(op, CircBuf::Next { id: i } if i == id))
+}
+
+fn any_circbuf_op(body: &[Statement], pred: &dyn Fn(&CircBuf) -> bool) -> bool {
     body.iter().any(|stmt| match stmt {
-        Statement::CircBuf(CircBuf::Init { id: init_id, .. }) => init_id == id,
+        Statement::CircBuf(op) => pred(op),
         Statement::If { then_body, else_body, .. } => {
-            circbuf_has_runtime_init(then_body, id) || circbuf_has_runtime_init(else_body, id)
+            any_circbuf_op(then_body, pred) || any_circbuf_op(else_body, pred)
         }
         Statement::While { body: b, .. }
         | Statement::DoWhile { body: b, .. }
         | Statement::For { body: b, .. }
         | Statement::ForC { body: b, .. }
-        | Statement::Block { body: b } => circbuf_has_runtime_init(b, id),
+        | Statement::Block { body: b } => any_circbuf_op(b, pred),
         Statement::Switch { cases, default, .. } => {
-            cases.iter().any(|(_, cb)| circbuf_has_runtime_init(cb, id))
-                || circbuf_has_runtime_init(default, id)
+            cases.iter().any(|(_, cb)| any_circbuf_op(cb, pred)) || any_circbuf_op(default, pred)
         }
         _ => false,
     })
@@ -2863,6 +2885,11 @@ fn pure_shift<'x>(condition: &Expr, body: &'x [Statement]) -> Option<(&'x str, b
 }
 
 impl RustStmt<'_, '_> {
+    /// The stream tier keeps every cursor; the batch tier only a ring's.
+    fn circbuf_has_cursor(&self, id: &str) -> bool {
+        !self.ctx.circbuf_hybrid_static.contains_key(id) || self.ctx.circbuf_len_of.contains_key(id)
+    }
+
     /// A pure shift as one `copy_within` (a memmove). Element by element it keeps
     /// two bounds checks per slot and never becomes a memmove; both leave `v == e`.
     /// `None` unless the rendered loop indexes `a` by the bare `v` and compares it
@@ -3081,8 +3108,12 @@ impl StatementEmitter for RustStmt<'_, '_> {
                         ));
                     }
                 }
-                s.push_str(&format!("{pad}maxIdx_{id} = (({sz}) as usize) - 1;\n"));
-                s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                if !self.ctx.circbuf_hybrid_static.contains_key(id) {
+                    s.push_str(&format!("{pad}maxIdx_{id} = (({sz}) as usize) - 1;\n"));
+                }
+                if self.circbuf_has_cursor(id) {
+                    s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                }
                 s
             }
             // Always the static capacity; bound was seeded in the prolog (maxIdx + 1).
@@ -3107,7 +3138,9 @@ impl StatementEmitter for RustStmt<'_, '_> {
                         ));
                     }
                 }
-                s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                if self.circbuf_has_cursor(id) {
+                    s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                }
                 s
             }
         }

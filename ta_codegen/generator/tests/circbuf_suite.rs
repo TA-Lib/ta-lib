@@ -259,7 +259,7 @@ fn rust_circbuf_class_layout_shares_one_crossover_guard() {
         1,
         "ULTOSC: the class layout must decide once, not per field"
     );
-    let guard = extract_section(&batch, "if (optInTimePeriod3) as usize <= 32usize {", "maxIdx_term =");
+    let guard = extract_section(&batch, "if (optInTimePeriod3) as usize <= 32usize {", "term_Idx = 0;");
     assert!(
         guard.contains("term_closeMinusTrueLow = &mut local_term_closeMinusTrueLow[..(optInTimePeriod3) as usize];")
             && guard.contains("term_trueRange = &mut local_term_trueRange[..(optInTimePeriod3) as usize];"),

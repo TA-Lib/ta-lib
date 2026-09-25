@@ -187,7 +187,6 @@ impl Core {
         let mut heap_ratioRing: Vec<f64> = Vec::new();
         let mut ratioRing: &mut [f64] = &mut [];
         let mut ratioRing_Idx: usize = 0;
-        let mut maxIdx_ratioRing: usize = 31;
         lookbackEma = self.ema_lookback(optInFastPeriod).unwrap_or(usize::MAX);
         lookbackEma2 = lookbackEma * 2;
         lookbackTotal = lookbackEma2 + (((optInSlowPeriod - 1)) as usize);
@@ -208,7 +207,6 @@ impl Core {
             heap_ratioRing = vec![0.0_f64; (optInSlowPeriod) as usize];
             ratioRing = &mut heap_ratioRing;
         }
-        maxIdx_ratioRing = ((optInSlowPeriod) as usize) - 1;
         ratioRing_Idx = 0;
         (*outBegIdx) = startIdx;
         // Dorsey's pipeline in one pass: EMA of the high-low range, EMA of that,

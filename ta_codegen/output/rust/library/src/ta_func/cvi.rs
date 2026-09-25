@@ -176,7 +176,6 @@ impl Core {
         let mut heap_emaRing: Vec<f64> = Vec::new();
         let mut emaRing: &mut [f64] = &mut [];
         let mut emaRing_Idx: usize = 0;
-        let mut maxIdx_emaRing: usize = 31;
         // CVI[t] = 100 * (E[t] - E[t-optInROCPeriod]) / E[t-optInROCPeriod], with E
         // an EMA of the high-low spread. The spread is never materialised and the
         // EMA is anchored optInROCPeriod bars behind startIdx.
@@ -208,7 +207,6 @@ impl Core {
             heap_emaRing = vec![0.0_f64; (optInROCPeriod) as usize];
             emaRing = &mut heap_emaRing;
         }
-        maxIdx_emaRing = ((optInROCPeriod) as usize) - 1;
         emaRing_Idx = 0;
         optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
         today = startIdx - lookbackTotal;

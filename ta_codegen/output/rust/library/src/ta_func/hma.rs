@@ -164,7 +164,6 @@ impl Core {
         let mut heap_dRing: Vec<f64> = Vec::new();
         let mut dRing: &mut [f64] = &mut [];
         let mut dRing_Idx: usize = 0;
-        let mut maxIdx_dRing: usize = 49;
         // The de-lagged series needs only its last sqrt(n) values, so the whole
         // computation runs in one pass over a single window into the input:
         // three interleaved WMA rolling sums plus this small ring. The ring has
@@ -306,7 +305,6 @@ impl Core {
                 heap_dRing = vec![0.0_f64; (ringSize) as usize];
                 dRing = &mut heap_dRing;
             }
-            maxIdx_dRing = ((ringSize) as usize) - 1;
             dRing_Idx = 0;
             // Warm-up: the sqrtPeriod-1 de-lagged values before the first output
             // prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.

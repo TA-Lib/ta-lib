@@ -170,7 +170,6 @@ impl Core {
         let mut heap_sRing: Vec<f64> = Vec::new();
         let mut sRing: &mut [f64] = &mut [];
         let mut sRing_Idx: usize = 0;
-        let mut maxIdx_sRing: usize = 49;
         // Coppock Curve: a WMA(optInWMAPeriod) of the SUM of two rates of change,
         // ROC(optInROC1Period) + ROC(optInROC2Period). The sum, not the mean:
         // every published definition sums them; Tulip's beta/copp.c averages and
@@ -227,7 +226,6 @@ impl Core {
             heap_sRing = vec![0.0_f64; (ringSize) as usize];
             sRing = &mut heap_sRing;
         }
-        maxIdx_sRing = ((ringSize) as usize) - 1;
         sRing_Idx = 0;
         // At w == 1 the priming loop below never runs, so the first trailing read
         // would see an undefined slot; at w > 1 priming overwrites every slot.

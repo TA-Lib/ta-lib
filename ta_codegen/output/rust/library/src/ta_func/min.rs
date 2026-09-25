@@ -120,13 +120,9 @@ impl Core {
         let mut local_sufLowest: [f64; 30] = [0.0_f64; 30];
         let mut heap_sufLowest: Vec<f64> = Vec::new();
         let mut sufLowest: &mut [f64] = &mut [];
-        let mut sufLowest_Idx: usize = 0;
-        let mut maxIdx_sufLowest: usize = 29;
         let mut local_preLowest: [f64; 30] = [0.0_f64; 30];
         let mut heap_preLowest: Vec<f64> = Vec::new();
         let mut preLowest: &mut [f64] = &mut [];
-        let mut preLowest_Idx: usize = 0;
-        let mut maxIdx_preLowest: usize = 29;
         let mut lowest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
@@ -178,8 +174,6 @@ impl Core {
             heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufLowest = &mut heap_sufLowest;
         }
-        maxIdx_sufLowest = ((optInTimePeriod) as usize) - 1;
-        sufLowest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
             preLowest = &mut local_preLowest[..(optInTimePeriod) as usize];
@@ -187,8 +181,6 @@ impl Core {
             heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             preLowest = &mut heap_preLowest;
         }
-        maxIdx_preLowest = ((optInTimePeriod) as usize) - 1;
-        preLowest_Idx = 0;
         blockStart = trailingIdx;
         while today <= endIdx {
             // Suffix extrema of the block [blockStart, blockStart+p-1], which

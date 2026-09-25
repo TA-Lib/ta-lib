@@ -149,7 +149,6 @@ impl Core {
         let mut heap_circBuffer: Vec<f64> = Vec::new();
         let mut circBuffer: &mut [f64] = &mut [];
         let mut circBuffer_Idx: usize = 0;
-        let mut maxIdx_circBuffer: usize = 29;
         // This ptr will points on a circular buffer of
         // at least "optInTimePeriod" element.
         // Identify the minimum number of price bar needed
@@ -178,7 +177,6 @@ impl Core {
             heap_circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
             circBuffer = &mut heap_circBuffer;
         }
-        maxIdx_circBuffer = ((optInTimePeriod) as usize) - 1;
         circBuffer_Idx = 0;
         // Do the MA calculation using tight loops.
         // Add-up the initial period, except for the last value.

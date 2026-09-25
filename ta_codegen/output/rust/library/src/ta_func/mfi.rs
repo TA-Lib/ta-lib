@@ -159,7 +159,6 @@ impl Core {
         let mut heap_mflow_negative: Vec<f64> = Vec::new();
         let mut mflow_negative: &mut [f64] = &mut [];
         let mut mflow_Idx: usize = 0;
-        let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
@@ -186,7 +185,6 @@ impl Core {
             heap_mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
             mflow_negative = &mut heap_mflow_negative;
         }
-        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
         mflow_Idx = 0;
         outIdx = 0;
         // Index into the output.

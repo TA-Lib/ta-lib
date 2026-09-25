@@ -188,7 +188,6 @@ impl Core {
         let mut heap_term_trueRange: Vec<f64> = Vec::new();
         let mut term_trueRange: &mut [f64] = &mut [];
         let mut term_Idx: usize = 0;
-        let mut maxIdx_term: usize = 31;
         // The two per-bar terms the three moving sums are built from. Both are a
         // pure function of the bar, so each bar is evaluated once on entry and read
         // back when it leaves each of the three windows.
@@ -248,7 +247,6 @@ impl Core {
             heap_term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
             term_trueRange = &mut heap_term_trueRange;
         }
-        maxIdx_term = ((optInTimePeriod3) as usize) - 1;
         term_Idx = 0;
         // Prime running totals used in moving averages.
         //

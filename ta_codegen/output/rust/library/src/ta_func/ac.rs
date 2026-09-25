@@ -162,7 +162,6 @@ impl Core {
         let mut heap_oscBuffer: Vec<f64> = Vec::new();
         let mut oscBuffer: &mut [f64] = &mut [];
         let mut oscBuffer_Idx: usize = 0;
-        let mut maxIdx_oscBuffer: usize = 31;
         // Bill Williams' Accelerator/Decelerator Oscillator (New Trading
         // Dimensions, 1998): how fast the Awesome Oscillator is itself
         // accelerating, drawn as a zero-centred histogram.
@@ -211,7 +210,6 @@ impl Core {
             heap_oscBuffer = vec![0.0_f64; (optInSignalPeriod) as usize];
             oscBuffer = &mut heap_oscBuffer;
         }
-        maxIdx_oscBuffer = ((optInSignalPeriod) as usize) - 1;
         oscBuffer_Idx = 0;
         // The first bar the oscillator is evaluated on for this call. It trails
         // the first output by the signal window, because that many oscillator

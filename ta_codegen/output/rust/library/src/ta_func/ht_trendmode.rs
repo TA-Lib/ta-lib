@@ -204,7 +204,6 @@ impl Core {
         let mut local_smoothPrice: [f64; 50] = [0.0_f64; 50];
         let mut smoothPrice: &mut [f64] = &mut [];
         let mut smoothPrice_Idx: usize = 0;
-        let mut maxIdx_smoothPrice: usize = 49;
         let mut idx: usize = 0_usize;
         let mut DCPeriodInt: i32 = 0_i32;
         let mut DCPhase: f64 = 0.0_f64;

@@ -121,23 +121,15 @@ impl Core {
         let mut local_sufHighest: [f64; 30] = [0.0_f64; 30];
         let mut heap_sufHighest: Vec<f64> = Vec::new();
         let mut sufHighest: &mut [f64] = &mut [];
-        let mut sufHighest_Idx: usize = 0;
-        let mut maxIdx_sufHighest: usize = 29;
         let mut local_preHighest: [f64; 30] = [0.0_f64; 30];
         let mut heap_preHighest: Vec<f64> = Vec::new();
         let mut preHighest: &mut [f64] = &mut [];
-        let mut preHighest_Idx: usize = 0;
-        let mut maxIdx_preHighest: usize = 29;
         let mut local_sufLowest: [f64; 30] = [0.0_f64; 30];
         let mut heap_sufLowest: Vec<f64> = Vec::new();
         let mut sufLowest: &mut [f64] = &mut [];
-        let mut sufLowest_Idx: usize = 0;
-        let mut maxIdx_sufLowest: usize = 29;
         let mut local_preLowest: [f64; 30] = [0.0_f64; 30];
         let mut heap_preLowest: Vec<f64> = Vec::new();
         let mut preLowest: &mut [f64] = &mut [];
-        let mut preLowest_Idx: usize = 0;
-        let mut maxIdx_preLowest: usize = 29;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmpHigh: f64 = 0.0_f64;
@@ -199,8 +191,6 @@ impl Core {
             heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufHighest = &mut heap_sufHighest;
         }
-        maxIdx_sufHighest = ((optInTimePeriod) as usize) - 1;
-        sufHighest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
             preHighest = &mut local_preHighest[..(optInTimePeriod) as usize];
@@ -208,8 +198,6 @@ impl Core {
             heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
             preHighest = &mut heap_preHighest;
         }
-        maxIdx_preHighest = ((optInTimePeriod) as usize) - 1;
-        preHighest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
             sufLowest = &mut local_sufLowest[..(optInTimePeriod) as usize];
@@ -217,8 +205,6 @@ impl Core {
             heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             sufLowest = &mut heap_sufLowest;
         }
-        maxIdx_sufLowest = ((optInTimePeriod) as usize) - 1;
-        sufLowest_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 30usize {
             preLowest = &mut local_preLowest[..(optInTimePeriod) as usize];
@@ -226,8 +212,6 @@ impl Core {
             heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
             preLowest = &mut heap_preLowest;
         }
-        maxIdx_preLowest = ((optInTimePeriod) as usize) - 1;
-        preLowest_Idx = 0;
         blockStart = trailingIdx;
         while today <= endIdx {
             // Suffix extrema of the block [blockStart, blockStart+p-1], which

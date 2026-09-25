@@ -221,12 +221,9 @@ impl Core {
         let mut heap_ring: Vec<f64> = Vec::new();
         let mut ring: &mut [f64] = &mut [];
         let mut ring_Idx: usize = 0;
-        let mut maxIdx_ring: usize = 99;
         let mut local_sorted: [f64; 100] = [0.0_f64; 100];
         let mut heap_sorted: Vec<f64> = Vec::new();
         let mut sorted: &mut [f64] = &mut [];
-        let mut sorted_Idx: usize = 0;
-        let mut maxIdx_sorted: usize = 99;
         // The window is carried twice: "ring" by age, "sorted" by value.
         lookbackTotal = (optInTimePeriod - 1) as usize;
         if startIdx < lookbackTotal {
@@ -245,7 +242,6 @@ impl Core {
             heap_ring = vec![0.0_f64; (optInTimePeriod) as usize];
             ring = &mut heap_ring;
         }
-        maxIdx_ring = ((optInTimePeriod) as usize) - 1;
         ring_Idx = 0;
         if optInTimePeriod < 1 { return RetCode::InternalError; }
         if (optInTimePeriod) as usize <= 100usize {
@@ -254,8 +250,6 @@ impl Core {
             heap_sorted = vec![0.0_f64; (optInTimePeriod) as usize];
             sorted = &mut heap_sorted;
         }
-        maxIdx_sorted = ((optInTimePeriod) as usize) - 1;
-        sorted_Idx = 0;
         // Never read as a value, but from 2048 values it is the first free slot and
         // travels with the ring: set so two handles over the same bars hold the same
         // state.
