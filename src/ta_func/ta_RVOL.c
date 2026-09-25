@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#370).
+ *  092526 MF,CC  #446 exact zero total on a dead volume window.
  */
 
 TA_LIB_API int TA_RVOL_Lookback( int optInTimePeriod )
@@ -80,6 +81,7 @@ TA_LIB_API TA_RetCode TA_RVOL( int    startIdx,
    int outIdx;
    int trailingIdx;
    int lookbackTotal;
+   int nullRun;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -113,19 +115,25 @@ TA_LIB_API TA_RetCode TA_RVOL( int    startIdx,
    }
    periodTotal = 0.0;
    trailingIdx = startIdx - lookbackTotal;
+   /* Consecutive zero-volume bars. Once they fill a window the total is
+    * exactly zero, where add-then-subtract would leave the rounding residue of
+    * the volumes that departed, of either sign.
+    */
+   nullRun = 0;
    i = trailingIdx;
    while( i < startIdx )
    {
       periodTotal += (double)inVolume[i];
+      nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
       i = i + 1;
    }
    outIdx = 0;
    while( i <= endIdx )
    {
-      /* Drop the trailing bar BEFORE adding today's. That order makes each
-       * baseline bit-identical to the moving average of the same period at the
-       * previous bar; the reverse order differs only in the last ulp, so no
-       * tolerance can tell the two apart.
+      /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+       * window, that order makes each baseline bit-identical to the moving
+       * average of the same period at the previous bar; the reverse order
+       * differs only in the last ulp, so no tolerance can tell the two apart.
        */
       baseline = periodTotal / (double)optInTimePeriod;
       periodTotal -= (double)inVolume[trailingIdx];
@@ -133,6 +141,12 @@ TA_LIB_API TA_RetCode TA_RVOL( int    startIdx,
       todayVolume = (double)inVolume[i];
       i = i + 1;
       periodTotal += todayVolume;
+      nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         periodTotal = 0.0;
+      }
       outReal[outIdx] = todayVolume / baseline;
       outIdx = outIdx + 1;
    }
@@ -156,6 +170,7 @@ TA_RetCode TA_S_RVOL( int    startIdx,
    int outIdx;
    int trailingIdx;
    int lookbackTotal;
+   int nullRun;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -186,10 +201,12 @@ TA_RetCode TA_S_RVOL( int    startIdx,
    }
    periodTotal = 0.0;
    trailingIdx = startIdx - lookbackTotal;
+   nullRun = 0;
    i = trailingIdx;
    while( i < startIdx )
    {
       periodTotal += (double)inVolume[i];
+      nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
       i = i + 1;
    }
    outIdx = 0;
@@ -201,6 +218,12 @@ TA_RetCode TA_S_RVOL( int    startIdx,
       todayVolume = (double)inVolume[i];
       i = i + 1;
       periodTotal += todayVolume;
+      nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         periodTotal = 0.0;
+      }
       outReal[outIdx] = todayVolume / baseline;
       outIdx = outIdx + 1;
    }
@@ -219,6 +242,7 @@ struct TA_RVOL_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double periodTotal;
+   int nullRun;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inVolume;
@@ -242,15 +266,21 @@ static void TA_RVOL_StepImpl( struct TA_RVOL_Stream *sp, double inVolume, double
    {
       sp->ring_trailingIdx_inVolume[0] = inVolume;
    }
-   /* Drop the trailing bar BEFORE adding today's. That order makes each
-    * baseline bit-identical to the moving average of the same period at the
-    * previous bar; the reverse order differs only in the last ulp, so no
-    * tolerance can tell the two apart.
+   /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+    * window, that order makes each baseline bit-identical to the moving
+    * average of the same period at the previous bar; the reverse order
+    * differs only in the last ulp, so no tolerance can tell the two apart.
     */
    baseline = sp->periodTotal / (double)sp->optInTimePeriod;
    sp->periodTotal -= (double)sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx];
    todayVolume = (double)inVolume;
    sp->periodTotal += todayVolume;
+   sp->nullRun = (todayVolume == 0.0) ? sp->nullRun + 1 : 0;
+   if( sp->nullRun >= sp->optInTimePeriod )
+   {
+      sp->nullRun = sp->optInTimePeriod;
+      sp->periodTotal = 0.0;
+   }
    *outReal= todayVolume / baseline;
    sp->cur_outReal = *outReal;
    sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] = inVolume;
@@ -292,6 +322,7 @@ static TA_RetCode TA_RVOL_OpenImpl( struct TA_RVOL_Stream **stream, const double
       int outIdx;
       int trailingIdx;
       int lookbackTotal;
+      int nullRun = 0;
       /* One bar more than a moving average of the same period: today is excluded
        * from its own baseline.
        */
@@ -308,19 +339,25 @@ static TA_RetCode TA_RVOL_OpenImpl( struct TA_RVOL_Stream **stream, const double
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
+      /* Consecutive zero-volume bars. Once they fill a window the total is
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the volumes that departed, of either sign.
+       */
+      nullRun = 0;
       i = trailingIdx;
       while( i < startIdx )
       {
          periodTotal += (double)inVolume[i];
+         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
       while( i <= endIdx )
       {
-         /* Drop the trailing bar BEFORE adding today's. That order makes each
-          * baseline bit-identical to the moving average of the same period at the
-          * previous bar; the reverse order differs only in the last ulp, so no
-          * tolerance can tell the two apart.
+         /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+          * window, that order makes each baseline bit-identical to the moving
+          * average of the same period at the previous bar; the reverse order
+          * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)optInTimePeriod;
          periodTotal -= (double)inVolume[trailingIdx];
@@ -328,6 +365,12 @@ static TA_RetCode TA_RVOL_OpenImpl( struct TA_RVOL_Stream **stream, const double
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
+         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod )
+         {
+            nullRun = optInTimePeriod;
+            periodTotal = 0.0;
+         }
          outReal[outIdx * outStride] = todayVolume / baseline;
          outIdx = outIdx + 1;
       }
@@ -340,6 +383,7 @@ static TA_RetCode TA_RVOL_OpenImpl( struct TA_RVOL_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->periodTotal = periodTotal;
+      sp->nullRun = nullRun;
       sp->ringCap_trailingIdx = (int)(i - trailingIdx);
       if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_RVOL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(408); }
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
@@ -415,6 +459,7 @@ TA_LIB_API TA_RetCode TA_RVOL_Peek( const TA_RVOL_Stream *stream, double inVolum
    const struct TA_RVOL_Stream *sp = stream;
    double baseline;
    double todayVolume;
+   int nullRun;
    double periodTotal;
    double *ring_trailingIdx_inVolume;
    int pkSlot0 = -1;
@@ -422,6 +467,7 @@ TA_LIB_API TA_RetCode TA_RVOL_Peek( const TA_RVOL_Stream *stream, double inVolum
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   nullRun = sp->nullRun;
    periodTotal = sp->periodTotal;
    ring_trailingIdx_inVolume = sp->ring_trailingIdx_inVolume;
    if( sp->ringCap_trailingIdx == 0 )
@@ -429,15 +475,21 @@ TA_LIB_API TA_RetCode TA_RVOL_Peek( const TA_RVOL_Stream *stream, double inVolum
       pkSlot0 = 0;
       pkVal0 = inVolume;
    }
-   /* Drop the trailing bar BEFORE adding today's. That order makes each
-    * baseline bit-identical to the moving average of the same period at the
-    * previous bar; the reverse order differs only in the last ulp, so no
-    * tolerance can tell the two apart.
+   /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+    * window, that order makes each baseline bit-identical to the moving
+    * average of the same period at the previous bar; the reverse order
+    * differs only in the last ulp, so no tolerance can tell the two apart.
     */
    baseline = periodTotal / (double)sp->optInTimePeriod;
    periodTotal -= (double)((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal0);
    todayVolume = (double)inVolume;
    periodTotal += todayVolume;
+   nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+   if( nullRun >= sp->optInTimePeriod )
+   {
+      nullRun = sp->optInTimePeriod;
+      periodTotal = 0.0;
+   }
    *outReal= todayVolume / baseline;
    return TA_SUCCESS;
 }

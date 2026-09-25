@@ -49,6 +49,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#434) VAR, STDDEV, BBANDS, CORREL, RVI and RVIR no longer return stale values, or rebuild
   the window on every bar, once a series settles onto the level their rolling sums were last
   anchored on. Values move at periods 2 to 5 by at most 1e-9 relative.
+- (#446) RVOL, VWMA and CMF return their documented value on a window where nothing traded
+  (RVOL ±Inf or NaN, VWMA NaN, CMF 0) after fractional volume, or for VWMA after fractional
+  prices. They returned a value built on rounding residue, e.g. RVOL 4.4e16 where +Inf was
+  due. Bars after a dead window move too, VWMA's and CMF's even on whole-number volume, by at
+  most 1e-10 relative (CMF 3e-11 on its -1 to +1 scale) on a test corpus, more when volume
+  resumes far below its earlier level.
 - `ta_func.h` is plain ASCII again. In 0.8.1 its comments had non-ASCII characters, so MSVC could warn (C4819) when reading it under a Chinese, Japanese or Korean code page.
 - CMake on Windows no longer stops at configure when the `Platform` environment variable (set by vcvarsall) is missing or holds another value.
 

@@ -39,7 +39,7 @@ TA_RetCode cmou(int startIdx, int endIdx,
    double upSum, downSum, sum, diff, tempReal, prevValue, trailingValue;
 
    /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-    * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+    * pandas-ta default). Over the trailing optInTimePeriod changes
     * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
     * |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
     * moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder

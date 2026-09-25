@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  090426 MF,CC  Initial version (#370).
+    *  092526 MF,CC  #446 exact zero total on a dead volume window.
     */
    /// <summary>
    /// Number of leading input bars <c>Rvol</c> consumes before it can produce
@@ -94,6 +95,7 @@ public partial class Core
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
+      int nullRun = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -122,17 +124,23 @@ public partial class Core
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
+      /* Consecutive zero-volume bars. Once they fill a window the total is
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the volumes that departed, of either sign.
+       */
+      nullRun = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
+         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
       while( i <= endIdx ) {
-         /* Drop the trailing bar BEFORE adding today's. That order makes each
-          * baseline bit-identical to the moving average of the same period at the
-          * previous bar; the reverse order differs only in the last ulp, so no
-          * tolerance can tell the two apart.
+         /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+          * window, that order makes each baseline bit-identical to the moving
+          * average of the same period at the previous bar; the reverse order
+          * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)optInTimePeriod;
          periodTotal -= (double)inVolume[trailingIdx];
@@ -140,6 +148,11 @@ public partial class Core
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
+         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            periodTotal = 0.0;
+         }
          outReal[outIdx] = todayVolume / baseline;
          outIdx = outIdx + 1;
       }
@@ -164,6 +177,7 @@ public partial class Core
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
+      int nullRun = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -189,9 +203,11 @@ public partial class Core
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
+      nullRun = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
+         nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
@@ -202,6 +218,11 @@ public partial class Core
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
+         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            periodTotal = 0.0;
+         }
          outReal[outIdx] = todayVolume / baseline;
          outIdx = outIdx + 1;
       }
@@ -408,6 +429,7 @@ public partial class Core
       internal Core core;
       internal int optInTimePeriod;
       internal double periodTotal;
+      internal int nullRun;
       internal int ringPos_trailingIdx;
       internal int ringCap_trailingIdx;
       internal double[] ring_trailingIdx_inVolume = [];
@@ -455,6 +477,7 @@ public partial class Core
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
+         this.nullRun = other.nullRun;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inVolume = new double[other.ring_trailingIdx_inVolume.Length];
@@ -513,6 +536,7 @@ public partial class Core
          double baseline = 0.0;
          double todayVolume = 0.0;
          double cur_outReal = 0.0;
+         int nullRun = sp.nullRun;
          double periodTotal = sp.periodTotal;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
@@ -520,15 +544,20 @@ public partial class Core
             pkSlot0 = 0;
             pkVal0 = inVolume;
          }
-         /* Drop the trailing bar BEFORE adding today's. That order makes each
-          * baseline bit-identical to the moving average of the same period at the
-          * previous bar; the reverse order differs only in the last ulp, so no
-          * tolerance can tell the two apart.
+         /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+          * window, that order makes each baseline bit-identical to the moving
+          * average of the same period at the previous bar; the reverse order
+          * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)sp.optInTimePeriod;
          periodTotal -= (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
          todayVolume = (double)inVolume;
          periodTotal += todayVolume;
+         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            periodTotal = 0.0;
+         }
          cur_outReal = todayVolume / baseline;
          return cur_outReal;
       }
@@ -557,15 +586,20 @@ public partial class Core
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inVolume[0] = inVolume;
       }
-      /* Drop the trailing bar BEFORE adding today's. That order makes each
-       * baseline bit-identical to the moving average of the same period at the
-       * previous bar; the reverse order differs only in the last ulp, so no
-       * tolerance can tell the two apart.
+      /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+       * window, that order makes each baseline bit-identical to the moving
+       * average of the same period at the previous bar; the reverse order
+       * differs only in the last ulp, so no tolerance can tell the two apart.
        */
       baseline = sp.periodTotal / (double)sp.optInTimePeriod;
       sp.periodTotal -= (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
       todayVolume = (double)inVolume;
       sp.periodTotal += todayVolume;
+      sp.nullRun = (todayVolume == 0.0) ? sp.nullRun + 1 : 0;
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.periodTotal = 0.0;
+      }
       sp.cur_outReal = todayVolume / baseline;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -585,6 +619,7 @@ public partial class Core
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
+      int nullRun = 0;
       int historyLen = inVolume.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -617,17 +652,23 @@ public partial class Core
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
+      /* Consecutive zero-volume bars. Once they fill a window the total is
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the volumes that departed, of either sign.
+       */
+      nullRun = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
+         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
       while( i <= endIdx ) {
-         /* Drop the trailing bar BEFORE adding today's. That order makes each
-          * baseline bit-identical to the moving average of the same period at the
-          * previous bar; the reverse order differs only in the last ulp, so no
-          * tolerance can tell the two apart.
+         /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+          * window, that order makes each baseline bit-identical to the moving
+          * average of the same period at the previous bar; the reverse order
+          * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)optInTimePeriod;
          periodTotal -= (double)inVolume[trailingIdx];
@@ -635,6 +676,11 @@ public partial class Core
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
+         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            periodTotal = 0.0;
+         }
          outReal[outIdx * outStride] = todayVolume / baseline;
          outIdx = outIdx + 1;
       }
@@ -650,6 +696,7 @@ public partial class Core
       inVolume.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inVolume);
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
+      sp.nullRun = nullRun;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;

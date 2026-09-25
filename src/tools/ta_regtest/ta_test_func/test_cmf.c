@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072126 MF,CC  First version (issue #134).
+ *  092526 MF,CC  Leg 3b: a window that goes dead after fractional volume (#446).
  */
 
 /* Description:
@@ -57,7 +58,9 @@
  *        tolerance. Plus in-place aliasing and cross-language bitwise.
  *     2. SELF REGRESSION, bitwise. Catches a future reassociation of the money
  *        flow volume expression, which the tolerance legs would wave through.
- *     3. Deterministic edges that no fuzz shape reaches.
+ *     3. Deterministic edges that no fuzz shape reaches. 3b: a window that goes
+ *        dead after fractional volume, in batch, in the C stream and in every
+ *        language.
  *     4. Aliasing of the output over each of the four inputs.
  *     5. The generic start/end range sweep.
  *     6. The single-precision entry point, bitwise, over the full period grid.
@@ -159,6 +162,7 @@ static const CmfGolden cmfSelf[] =
 static ErrorNumber test_cmf_oracle   ( const TA_History *history );
 static ErrorNumber test_cmf_self     ( const TA_History *history );
 static ErrorNumber test_cmf_edges    ( void );
+static ErrorNumber test_cmf_dead_after_fractional( void );
 static ErrorNumber test_cmf_aliasing ( const TA_History *history );
 static ErrorNumber test_cmf_range    ( const TA_History *history );
 static ErrorNumber test_cmf_single   ( const TA_History *history );
@@ -179,6 +183,9 @@ ErrorNumber test_func_cmf( TA_History *history )
    if( retValue != TA_TEST_PASS ) return retValue;
 
    retValue = test_cmf_edges();
+   if( retValue != TA_TEST_PASS ) return retValue;
+
+   retValue = test_cmf_dead_after_fractional();
    if( retValue != TA_TEST_PASS ) return retValue;
 
    retValue = test_cmf_aliasing( history );
@@ -477,6 +484,202 @@ static ErrorNumber test_cmf_edges( void )
    }
 
    return TA_TEST_PASS;
+}
+
+/* (3b) A window that goes dead after fractional volume: exactly +0.0, as when
+ * it starts dead. Here the sums reaching bar 24 hold the rounding residue of
+ * the bars that departed, and TA_SUM, which keeps the same sums without the
+ * reset, is the witness that they do. Only a positive volume residue gets past
+ * the divisor guard, so the witness asks for one. Anchor 20 seeds across the
+ * live/dead edge, which only a seed loop that counts its zero bars gets right.
+ * Bars from 24 on must be the bits of a call seeded inside the dead run.
+ *
+ * The reset fires at bar 24, inside the first 2*lookback+10 bars (28 here)
+ * that server_verify's ride-along replays through Open+Update in every language;
+ * moving the dead run later leaves that replay short of it, silently. */
+static ErrorNumber test_cmf_dead_after_fractional( void )
+{
+#define DF_N 60
+   static TA_Real h[DF_N], l[DF_N], c[DF_N], v[DF_N], mfv[DF_N];
+   static TA_Real full[OUT_CAP], edge[OUT_CAP], out[OUT_CAP], ref[OUT_CAP];
+   static TA_Real sumV[OUT_CAP], sumMFV[OUT_CAP];
+   static const int anchor[2] = { 0, 20 };
+   static const int openBase[3] = { 0, 0, 11 };
+   static const int openLen[3] = { 10, 20, 10 };
+   const TA_Real posZero = 0.0;
+   const int period = 10;
+   TA_RetCode retCode;
+   TA_Integer begIdx, nbElement, begRef, nbRef, begS, nbS;
+   TA_CMF_Stream *stream;
+   const double *want;
+   double got, peek;
+   int a, i, s, w, off;
+
+   for( i = 0; i < DF_N; i++ )
+   {
+      h[i] = 100.5 + 0.37 * (double)i;
+      l[i] = h[i] - 1.13;
+      c[i] = l[i] + 0.61 + 0.07 * (double)( i % 4 );
+      v[i] = ( i >= 15 && i < 35 ) ? 0.0 : 1002.69 + 1.3 * (double)( i % 3 );
+      mfv[i] = ( ( ( c[i] - l[i] ) - ( h[i] - c[i] ) ) / ( h[i] - l[i] ) ) * v[i];
+   }
+
+   retCode = TA_CMF( 24, DF_N-1, h, l, c, v, period, &begRef, &nbRef, ref );
+   if( retCode != TA_SUCCESS || begRef != 24 || nbRef != DF_N-24 )
+   {
+      printf( "CMF dead-after-fractional Fail: reference rc=%d (%d,%d)\n",
+              (int)retCode, begRef, nbRef );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( a = 0; a < 2; a++ )
+   {
+      s = anchor[a] < period-1 ? period-1 : anchor[a];
+
+      retCode = TA_SUM( s, 24, v, period, &begS, &nbS, sumV );
+      if( retCode == TA_SUCCESS )
+         retCode = TA_SUM( s, 24, mfv, period, &begS, &nbS, sumMFV );
+      if( retCode != TA_SUCCESS || begS != s
+          || !( sumV[24-s] > 0.0 ) || sumMFV[24-s] == 0.0 )
+      {
+         printf( "CMF dead-after-fractional [anchor %d]: the sums reaching the dead "
+                 "window are %.17g and %.17g, so this corpus no longer tells a reset "
+                 "from none\n", anchor[a], sumV[24-s], sumMFV[24-s] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      retCode = TA_CMF( anchor[a], DF_N-1, h, l, c, v, period, &begIdx, &nbElement,
+                        a == 0 ? full : edge );
+      if( retCode != TA_SUCCESS || begIdx != s || nbElement != DF_N-s )
+      {
+         printf( "CMF dead-after-fractional Fail [anchor %d]: rc=%d (%d,%d)\n",
+                 anchor[a], (int)retCode, begIdx, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = begIdx; i < DF_N; i++ )
+      {
+         got = ( a == 0 ? full : edge )[i-begIdx];
+         if( i >= 24 && i <= 34 ? memcmp( &got, &posZero, sizeof(double) ) != 0
+                                : !( got >= -1.0 && got <= 1.0 ) )
+         {
+            printf( "CMF dead-after-fractional Fail [anchor %d] at bar %d: %.17g; "
+                    "bars 24..34 carry no volume (exactly +0.0), every other bar is "
+                    "in [-1,+1]\n", anchor[a], i, got );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         if( i >= 24 && memcmp( &got, &ref[i-24], sizeof(double) ) != 0 )
+         {
+            printf( "CMF dead-after-fractional Fail [anchor %d] at bar %d: %.17g, a "
+                    "call seeded inside the dead run gives %.17g -- the sums kept "
+                    "residue past the dead window\n", anchor[a], i, got, ref[i-24] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   /* The stream, Peek and Update on every bar. Opening on 20 bars ends inside
+    * the dead run, so the handle must carry the count Open started; opening
+    * at bar 11 seeds across the edge like anchor 20, so Open must count too. */
+   for( a = 0; a < 3; a++ )
+   {
+      want = openBase[a] == 0 ? full : edge;
+      off  = openBase[a] == 0 ? period-1 : 20;
+      w = openBase[a] + openLen[a] - 1;
+      stream = NULL;
+      retCode = TA_CMF_Open( &stream, h + openBase[a], l + openBase[a],
+                             c + openBase[a], v + openBase[a], openLen[a],
+                             period, &got );
+      if( retCode != TA_SUCCESS || memcmp( &got, &want[w-off], sizeof(double) ) != 0 )
+      {
+         printf( "CMF dead-after-fractional stream Fail [open %d+%d]: rc=%d "
+                 "%.17g, batch %.17g\n", openBase[a], openLen[a], (int)retCode,
+                 got, want[w-off] );
+         if( stream ) TA_CMF_Close( stream );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( i = w+1; i < DF_N; i++ )
+      {
+         retCode = TA_CMF_Peek( stream, h[i], l[i], c[i], v[i], &peek );
+         if( retCode == TA_SUCCESS )
+            retCode = TA_CMF_Update( stream, h[i], l[i], c[i], v[i], &got );
+         if( retCode != TA_SUCCESS
+             || memcmp( &peek, &want[i-off], sizeof(double) ) != 0
+             || memcmp( &got, &want[i-off], sizeof(double) ) != 0 )
+         {
+            printf( "CMF dead-after-fractional stream Fail [open %d+%d] at bar "
+                    "%d: rc=%d peek %.17g update %.17g batch %.17g\n", openBase[a],
+                    openLen[a], i, (int)retCode, peek, got, want[i-off] );
+            TA_CMF_Close( stream );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      TA_CMF_Close( stream );
+   }
+
+   /* OpenAndFill runs Open's own copy of the loop through bar 24. */
+   stream = NULL;
+   retCode = TA_CMF_OpenAndFill( &stream, h, l, c, v, DF_N, period,
+                                  &begIdx, &nbElement, out );
+   if( stream ) TA_CMF_Close( stream );
+   if( retCode != TA_SUCCESS || begIdx != period-1 || nbElement != DF_N-(period-1) )
+   {
+      printf( "CMF dead-after-fractional OpenAndFill Fail: rc=%d (%d,%d)\n",
+              (int)retCode, begIdx, nbElement );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nbElement; i++ )
+   {
+      if( memcmp( &out[i], &full[i], sizeof(double) ) != 0 )
+      {
+         printf( "CMF dead-after-fractional OpenAndFill Fail at bar %d: %.17g, "
+                 "batch %.17g\n", begIdx+i, out[i], full[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore, rideBefore;
+
+      optIn[0] = (double)period;
+      for( a = 0; a < 2; a++ )
+      {
+         cmpBefore = server_verify_comparisons();
+         rideBefore = server_verify_ride_cases();
+         /* Route 1 starts at bar 11: the batch seed and the ride-along's Open
+          * both straddle the live/dead edge there, so every language must count
+          * zero bars in its seed loop too. */
+         e = a == 0
+             ? server_verify( "CMF", 0, DF_N-1, DF_N,
+                             TA_SUCCESS, period-1, DF_N-period+1,
+                             (const TA_Real*[]){ h, l, c, v, NULL }, optIn, 1,
+                             (const TA_Real*[]){ full, NULL }, NULL )
+             : server_verify( "CMF", 0, DF_N-12, DF_N-11,
+                             TA_SUCCESS, period-1, DF_N-20,
+                             (const TA_Real*[]){ h+11, l+11, c+11, v+11, NULL },
+                             optIn, 1, (const TA_Real*[]){ edge, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         /* Every server that compared the batch must also have replayed it
+          * through its stream: that replay is what route 1 adds for Open. */
+         if( server_verify_comparisons() == cmpBefore
+             || server_verify_ride_cases() - rideBefore
+                != server_verify_comparisons() - cmpBefore )
+         {
+            printf( "CMF dead-after-fractional [route %d]: %d server(s) compared "
+                    "the batch, %d replayed it through the stream\n", a,
+                    server_verify_comparisons() - cmpBefore,
+                    server_verify_ride_cases() - rideBefore );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+#undef DF_N
 }
 
 /* (4) outReal may alias any of the four inputs. The circular buffer carries the

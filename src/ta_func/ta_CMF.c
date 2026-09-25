@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072126 MF,CC  First version (issue #134).
+ *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  */
 
 TA_LIB_API int TA_CMF_Lookback( int optInTimePeriod )
@@ -87,6 +88,7 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
    int outIdx;
    int i;
    int today;
+   int nullRun;
    double local_mfv_flow[50];
    double *mfv_flow = &local_mfv_flow[0];
    double local_mfv_volume[50];
@@ -172,6 +174,11 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
    today = startIdx - lookbackTotal;
    sumMFV = 0.0;
    sumVol = 0.0;
+   /* Consecutive zero-volume bars. Once they fill a window both sums are
+    * exactly zero, where add-then-subtract would leave the rounding residue of
+    * the bars that departed, of either sign.
+    */
+   nullRun = 0;
    for( i = optInTimePeriod; i > 0; i -= 1 )
    {
       high = inHigh[today];
@@ -189,6 +196,7 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
+      nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
       today += 1;
       mfv_Idx++;
       if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
@@ -226,7 +234,14 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
+      nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
       today += 1;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         sumMFV = 0.0;
+         sumVol = 0.0;
+      }
       if( sumVol > 0.0 )
       {
          outReal[outIdx++] = sumMFV / sumVol;
@@ -266,6 +281,7 @@ TA_RetCode TA_S_CMF( int    startIdx,
    int outIdx;
    int i;
    int today;
+   int nullRun;
    double local_mfv_flow[50];
    double *mfv_flow = &local_mfv_flow[0];
    double local_mfv_volume[50];
@@ -332,6 +348,7 @@ TA_RetCode TA_S_CMF( int    startIdx,
    today = startIdx - lookbackTotal;
    sumMFV = 0.0;
    sumVol = 0.0;
+   nullRun = 0;
    for( i = optInTimePeriod; i > 0; i -= 1 )
    {
       high = (double)inHigh[today];
@@ -349,6 +366,7 @@ TA_RetCode TA_S_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = (double)inVolume[today];
       sumMFV += mfv;
       sumVol += (double)inVolume[today];
+      nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
       today += 1;
       mfv_Idx++;
       if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
@@ -379,7 +397,14 @@ TA_RetCode TA_S_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = (double)inVolume[today];
       sumMFV += mfv;
       sumVol += (double)inVolume[today];
+      nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
       today += 1;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         sumMFV = 0.0;
+         sumVol = 0.0;
+      }
       if( sumVol > 0.0 )
       {
          outReal[outIdx++] = sumMFV / sumVol;
@@ -408,6 +433,7 @@ struct TA_CMF_Stream {
    int optInTimePeriod;
    double sumMFV;
    double sumVol;
+   int nullRun;
    int mfv_Idx;
    int maxIdx_mfv;
    int cbSize_mfv;
@@ -454,6 +480,13 @@ static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inL
    sp->cb_mfv_volume[sp->mfv_Idx] = inVolume;
    sumMFV += mfv;
    sumVol += inVolume;
+   sp->nullRun = (inVolume == 0.0) ? sp->nullRun + 1 : 0;
+   if( sp->nullRun >= sp->optInTimePeriod )
+   {
+      sp->nullRun = sp->optInTimePeriod;
+      sumMFV = 0.0;
+      sumVol = 0.0;
+   }
    if( sumVol > 0.0 )
    {
       *outReal= sumMFV / sumVol;
@@ -512,6 +545,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       int outIdx;
       int i;
       int today;
+      int nullRun = 0;
       /* Both the per-bar money flow volume and the volume that produced it are
        * carried in the circular buffer. Keeping the volume here rather than
        * re-reading inVolume[] at the trailing index is what makes outReal safe to
@@ -568,6 +602,11 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       today = startIdx - lookbackTotal;
       sumMFV = 0.0;
       sumVol = 0.0;
+      /* Consecutive zero-volume bars. Once they fill a window both sums are
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the bars that departed, of either sign.
+       */
+      nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 )
       {
          high = inHigh[today];
@@ -585,6 +624,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
+         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
@@ -622,7 +662,14 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
+         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
+         if( nullRun >= optInTimePeriod )
+         {
+            nullRun = optInTimePeriod;
+            sumMFV = 0.0;
+            sumVol = 0.0;
+         }
          if( sumVol > 0.0 )
          {
             outReal[outIdx++ * outStride] = sumMFV / sumVol;
@@ -643,6 +690,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       sp->optInTimePeriod = optInTimePeriod;
       sp->sumMFV = sumMFV;
       sp->sumVol = sumVol;
+      sp->nullRun = nullRun;
       sp->mfv_Idx = mfv_Idx;
       sp->maxIdx_mfv = maxIdx_mfv;
       sp->cbSize_mfv = maxIdx_mfv + 1;
@@ -724,6 +772,7 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    double close;
    double tmp;
    double mfv;
+   int nullRun;
    double sumMFV;
    double sumVol;
    double *cb_mfv_flow;
@@ -731,6 +780,7 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   nullRun = sp->nullRun;
    sumMFV = sp->sumMFV;
    sumVol = sp->sumVol;
    cb_mfv_flow = sp->cb_mfv_flow;
@@ -750,6 +800,13 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    }
    sumMFV += mfv;
    sumVol += inVolume;
+   nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
+   if( nullRun >= sp->optInTimePeriod )
+   {
+      nullRun = sp->optInTimePeriod;
+      sumMFV = 0.0;
+      sumVol = 0.0;
+   }
    if( sumVol > 0.0 )
    {
       *outReal= sumMFV / sumVol;

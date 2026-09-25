@@ -9,7 +9,7 @@ Chande Momentum Oscillator: Tushar Chande's original momentum oscillator, comput
 
 Bounded in [-100,+100]; positive = net upward momentum, negative = net downward.
 
-CMOU is the version as defined by Chande in his book *The New Technical Trader* (1994), and is the more common implementation used by TradingView (`ta.cmo`), QuantConnect and pandas-ta's default.
+CMOU is the version as defined by Chande in his book *The New Technical Trader* (1994), and is the more common implementation used by TradingView (`ta.cmo`) and pandas-ta's default.
 
 See [`CMO`](/functions/cmo.md) for a smoothed variant of CMOU.
 

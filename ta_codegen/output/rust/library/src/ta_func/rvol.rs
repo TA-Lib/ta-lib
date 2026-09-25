@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#370).
+ *  092526 MF,CC  #446 exact zero total on a dead volume window.
  */
 
 // Import types from parent module
@@ -122,6 +123,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         // One bar more than a moving average of the same period: today is excluded
         // from its own baseline.
         lookbackTotal = optInTimePeriod as usize;
@@ -136,31 +138,35 @@ impl Core {
         let inVolume = &inVolume[..=endIdx];
         periodTotal = 0.0;
         trailingIdx = startIdx - lookbackTotal;
+        // Consecutive zero-volume bars. Once they fill a window the total is
+        // exactly zero, where add-then-subtract would leave the rounding residue of
+        // the volumes that departed, of either sign.
+        nullRun = 0;
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inVolume[i] as f64;
+            nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
             i = i + 1;
         }
         outIdx = 0;
-        if i <= endIdx {
-            let _wn: usize = endIdx - i + 1;
-            let _w0 = &inVolume[i..][.._wn];
-            let _w1 = &inVolume[trailingIdx..][.._wn];
-            let _w2 = &mut outReal[outIdx..][.._wn];
-            for _wk in 0.._wn {
-                // Drop the trailing bar BEFORE adding today's. That order makes each
-                // baseline bit-identical to the moving average of the same period at the
-                // previous bar; the reverse order differs only in the last ulp, so no
-                // tolerance can tell the two apart.
-                baseline = periodTotal / (optInTimePeriod as f64);
-                periodTotal -= _w1[_wk] as f64;
-                trailingIdx = trailingIdx + 1;
-                todayVolume = _w0[_wk] as f64;
-                i = i + 1;
-                periodTotal += todayVolume;
-                _w2[_wk] = todayVolume / baseline;
-                outIdx = outIdx + 1;
+        while i <= endIdx {
+            // Drop the trailing bar BEFORE adding today's. Up to the first dead
+            // window, that order makes each baseline bit-identical to the moving
+            // average of the same period at the previous bar; the reverse order
+            // differs only in the last ulp, so no tolerance can tell the two apart.
+            baseline = periodTotal / (optInTimePeriod as f64);
+            periodTotal -= inVolume[trailingIdx] as f64;
+            trailingIdx = trailingIdx + 1;
+            todayVolume = inVolume[i] as f64;
+            i = i + 1;
+            periodTotal += todayVolume;
+            nullRun = (if todayVolume == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                periodTotal = 0.0;
             }
+            outReal[outIdx] = todayVolume / baseline;
+            outIdx = outIdx + 1;
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
@@ -298,6 +304,7 @@ pub struct RvolStream {
 struct RvolStreamState {
     optInTimePeriod: i32,
     periodTotal: f64,
+    nullRun: usize,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inVolume: Vec<f64>,
@@ -316,14 +323,19 @@ impl Core {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inVolume[0] = inVolume;
         }
-        // Drop the trailing bar BEFORE adding today's. That order makes each
-        // baseline bit-identical to the moving average of the same period at the
-        // previous bar; the reverse order differs only in the last ulp, so no
-        // tolerance can tell the two apart.
+        // Drop the trailing bar BEFORE adding today's. Up to the first dead
+        // window, that order makes each baseline bit-identical to the moving
+        // average of the same period at the previous bar; the reverse order
+        // differs only in the last ulp, so no tolerance can tell the two apart.
         baseline = sp.periodTotal / (sp.optInTimePeriod as f64);
         sp.periodTotal -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] as f64;
         todayVolume = inVolume as f64;
         sp.periodTotal += todayVolume;
+        sp.nullRun = (if todayVolume == 0.0 { sp.nullRun + 1 } else { 0 });
+        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.periodTotal = 0.0;
+        }
         (*outReal) = todayVolume / baseline;
         sp.cur_outReal = (*outReal);
         sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
@@ -366,6 +378,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         // One bar more than a moving average of the same period: today is excluded
         // from its own baseline.
         lookbackTotal = optInTimePeriod as usize;
@@ -379,23 +392,33 @@ impl Core {
         }
         periodTotal = 0.0;
         trailingIdx = startIdx - lookbackTotal;
+        // Consecutive zero-volume bars. Once they fill a window the total is
+        // exactly zero, where add-then-subtract would leave the rounding residue of
+        // the volumes that departed, of either sign.
+        nullRun = 0;
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inVolume[i] as f64;
+            nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
             i = i + 1;
         }
         outIdx = 0;
         while i <= endIdx {
-            // Drop the trailing bar BEFORE adding today's. That order makes each
-            // baseline bit-identical to the moving average of the same period at the
-            // previous bar; the reverse order differs only in the last ulp, so no
-            // tolerance can tell the two apart.
+            // Drop the trailing bar BEFORE adding today's. Up to the first dead
+            // window, that order makes each baseline bit-identical to the moving
+            // average of the same period at the previous bar; the reverse order
+            // differs only in the last ulp, so no tolerance can tell the two apart.
             baseline = periodTotal / (optInTimePeriod as f64);
             periodTotal -= inVolume[trailingIdx] as f64;
             trailingIdx = trailingIdx + 1;
             todayVolume = inVolume[i] as f64;
             i = i + 1;
             periodTotal += todayVolume;
+            nullRun = (if todayVolume == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                periodTotal = 0.0;
+            }
             outReal[(outIdx * outStride) as usize] = todayVolume / baseline;
             outIdx = outIdx + 1;
         }
@@ -414,6 +437,7 @@ impl Core {
         let state = RvolStreamState {
             optInTimePeriod,
             periodTotal,
+            nullRun,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
@@ -591,6 +615,7 @@ impl RvolStream {
             let outReal = &mut outReal;
             let mut baseline: f64 = 0.0_f64;
             let mut todayVolume: f64 = 0.0_f64;
+            let mut nullRun = sp.nullRun;
             let mut periodTotal = sp.periodTotal;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -598,14 +623,19 @@ impl RvolStream {
                 pkSlot0 = 0;
                 pkVal0 = inVolume;
             }
-            // Drop the trailing bar BEFORE adding today's. That order makes each
-            // baseline bit-identical to the moving average of the same period at the
-            // previous bar; the reverse order differs only in the last ulp, so no
-            // tolerance can tell the two apart.
+            // Drop the trailing bar BEFORE adding today's. Up to the first dead
+            // window, that order makes each baseline bit-identical to the moving
+            // average of the same period at the previous bar; the reverse order
+            // differs only in the last ulp, so no tolerance can tell the two apart.
             baseline = periodTotal / (sp.optInTimePeriod as f64);
             periodTotal -= (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] } else { pkVal0 }) as f64;
             todayVolume = inVolume as f64;
             periodTotal += todayVolume;
+            nullRun = (if todayVolume == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((sp.optInTimePeriod) as usize) {
+                nullRun = (sp.optInTimePeriod) as usize;
+                periodTotal = 0.0;
+            }
             (*outReal) = todayVolume / baseline;
         }
         Ok(outReal)

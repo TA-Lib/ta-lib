@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072126 MF,CC  First version (issue #134).
+ *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  */
 
 // Import types from parent module
@@ -131,6 +132,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut local_mfv_flow: [f64; 50] = [0.0_f64; 50];
         let mut heap_mfv_flow: Vec<f64> = Vec::new();
         let mut mfv_flow: &mut [f64] = &mut [];
@@ -181,6 +183,10 @@ impl Core {
         today = startIdx - lookbackTotal;
         sumMFV = 0.0;
         sumVol = 0.0;
+        // Consecutive zero-volume bars. Once they fill a window both sums are
+        // exactly zero, where add-then-subtract would leave the rounding residue of
+        // the bars that departed, of either sign.
+        nullRun = 0;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
         while i > 0 {
@@ -197,6 +203,7 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
+            nullRun = (if inVolume[today] == 0.0 { nullRun + 1 } else { 0 });
             today += 1;
             mfv_Idx += 1;
             if mfv_Idx >= mfv_flow.len() { mfv_Idx = 0; }
@@ -231,7 +238,13 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
+            nullRun = (if inVolume[today] == 0.0 { nullRun + 1 } else { 0 });
             today += 1;
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                sumMFV = 0.0;
+                sumVol = 0.0;
+            }
             if sumVol > 0.0 {
                 outReal[outIdx] = sumMFV / sumVol;
                 outIdx += 1;
@@ -408,6 +421,7 @@ struct CmfStreamState {
     optInTimePeriod: i32,
     sumMFV: f64,
     sumVol: f64,
+    nullRun: usize,
     mfv_Idx: usize,
     maxIdx_mfv: usize,
     cbSize_mfv: usize,
@@ -443,6 +457,12 @@ impl Core {
         sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
         sp.sumMFV += mfv;
         sp.sumVol += inVolume;
+        sp.nullRun = (if inVolume == 0.0 { sp.nullRun + 1 } else { 0 });
+        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.sumMFV = 0.0;
+            sp.sumVol = 0.0;
+        }
         if sp.sumVol > 0.0 {
             (*outReal) = sp.sumMFV / sp.sumVol;
         } else {
@@ -495,6 +515,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         let mut mfv_flow: Vec<f64> = Vec::new();
         let mut mfv_volume: Vec<f64> = Vec::new();
         let mut mfv_Idx: usize = 0;
@@ -532,6 +553,10 @@ impl Core {
         today = startIdx - lookbackTotal;
         sumMFV = 0.0;
         sumVol = 0.0;
+        // Consecutive zero-volume bars. Once they fill a window both sums are
+        // exactly zero, where add-then-subtract would leave the rounding residue of
+        // the bars that departed, of either sign.
+        nullRun = 0;
         // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
         while i > 0 {
@@ -548,6 +573,7 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
+            nullRun = (if inVolume[today] == 0.0 { nullRun + 1 } else { 0 });
             today += 1;
             mfv_Idx += 1;
             if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
@@ -580,7 +606,13 @@ impl Core {
             mfv_volume[mfv_Idx] = inVolume[today];
             sumMFV += mfv;
             sumVol += inVolume[today];
+            nullRun = (if inVolume[today] == 0.0 { nullRun + 1 } else { 0 });
             today += 1;
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                sumMFV = 0.0;
+                sumVol = 0.0;
+            }
             if sumVol > 0.0 {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sumMFV / sumVol;
             } else {
@@ -601,6 +633,7 @@ impl Core {
             optInTimePeriod,
             sumMFV,
             sumVol,
+            nullRun,
             mfv_Idx,
             maxIdx_mfv,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
@@ -796,6 +829,7 @@ impl CmfStream {
             let mut close: f64 = 0.0_f64;
             let mut tmp: f64 = 0.0_f64;
             let mut mfv: f64 = 0.0_f64;
+            let mut nullRun = sp.nullRun;
             let mut sumMFV = sp.sumMFV;
             let mut sumVol = sp.sumVol;
             sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
@@ -811,6 +845,12 @@ impl CmfStream {
             }
             sumMFV += mfv;
             sumVol += inVolume;
+            nullRun = (if inVolume == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((sp.optInTimePeriod) as usize) {
+                nullRun = (sp.optInTimePeriod) as usize;
+                sumMFV = 0.0;
+                sumVol = 0.0;
+            }
             if sumVol > 0.0 {
                 (*outReal) = sumMFV / sumVol;
             } else {

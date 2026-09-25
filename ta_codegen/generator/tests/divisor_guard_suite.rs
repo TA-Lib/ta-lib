@@ -112,17 +112,17 @@ const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     ("HT_TRENDMODE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
 
 
-    // Unguarded BY DECISION, not by oversight. `vwma.c:124` divides by the rolling
+    // Unguarded BY DECISION, not by oversight. `vwma.c` divides by the rolling
     // volume sum with no test, and `vwma.yaml` declares `nan_inf_output` to say so --
     // the standing answer for this shape (set as the precedent for #56 RVOL; not 1.0,
     // not 0.0, not carry-forward, which would force TA_FUNC_FLG_START_DEP onto an
     // otherwise windowed function).
     //
     // What clears it is statelessness, not the flag alone: #112's concern is a NaN
-    // that POISONS AN ACCUMULATOR (#39's KVO B2 is the live case). VWMA carries
-    // nothing across bars, so a non-finite value is contained to the bar that produced
-    // it. KAMA below is the contrast -- it carries `sumROC1`, so the same reasoning
-    // does not reach it.
+    // that POISONS AN ACCUMULATOR (#39's KVO B2 is the live case). Nothing VWMA
+    // carries across bars is computed from the quotient, so a non-finite value is
+    // contained to the bar that produced it. KAMA below is the contrast -- it carries
+    // `sumROC1`, so the same reasoning does not reach it.
     ("VWMA", "tempV", "unguarded by decision: stateless per bar", "nan_inf_output"),
 
 

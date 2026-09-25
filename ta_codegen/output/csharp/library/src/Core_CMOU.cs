@@ -125,7 +125,7 @@ public partial class Core
          return RetCode.BadParam ;
       }
       /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-       * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+       * pandas-ta default). Over the trailing optInTimePeriod changes
        * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
        * |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
        * moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder
@@ -373,10 +373,9 @@ public partial class Core
    /// down-moves over the period. Bounded in [-100,+100]; positive = net upward
    /// momentum, negative = net downward. CMOU is the version as defined by
    /// Chande in his book <i>The New Technical Trader</i> (1994), and is the more
-   /// common implementation used by TradingView (<c>ta.cmo</c>), QuantConnect
-   /// and pandas-ta's default. See
-   /// <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see> for a
-   /// smoothed variant of CMOU.
+   /// common implementation used by TradingView (<c>ta.cmo</c>) and pandas-ta's
+   /// default. See <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see>
+   /// for a smoothed variant of CMOU.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -451,10 +450,9 @@ public partial class Core
    /// down-moves over the period. Bounded in [-100,+100]; positive = net upward
    /// momentum, negative = net downward. CMOU is the version as defined by
    /// Chande in his book <i>The New Technical Trader</i> (1994), and is the more
-   /// common implementation used by TradingView (<c>ta.cmo</c>), QuantConnect
-   /// and pandas-ta's default. See
-   /// <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see> for a
-   /// smoothed variant of CMOU.
+   /// common implementation used by TradingView (<c>ta.cmo</c>) and pandas-ta's
+   /// default. See <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see>
+   /// for a smoothed variant of CMOU.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -834,7 +832,7 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-       * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+       * pandas-ta default). Over the trailing optInTimePeriod changes
        * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
        * |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
        * moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder

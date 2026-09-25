@@ -54,6 +54,7 @@ public partial class Core
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
     *  072126 MF,CC  First version (issue #134).
+    *  092526 MF,CC  #446 exact zero sums on a dead volume window.
     */
    /// <summary>
    /// Number of leading input bars <c>Cmf</c> consumes before it can produce its
@@ -101,6 +102,7 @@ public partial class Core
       int outIdx = 0;
       int i = 0;
       int today = 0;
+      int nullRun = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -156,6 +158,11 @@ public partial class Core
       today = startIdx - lookbackTotal;
       sumMFV = 0.0;
       sumVol = 0.0;
+      /* Consecutive zero-volume bars. Once they fill a window both sums are
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the bars that departed, of either sign.
+       */
+      nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          high = inHigh[today];
          low = inLow[today];
@@ -170,6 +177,7 @@ public partial class Core
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
+         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -202,7 +210,13 @@ public partial class Core
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
+         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumMFV = 0.0;
+            sumVol = 0.0;
+         }
          if( sumVol > 0.0 ) {
             outReal[outIdx++] = sumMFV / sumVol;
          } else {
@@ -239,6 +253,7 @@ public partial class Core
       int outIdx = 0;
       int i = 0;
       int today = 0;
+      int nullRun = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -275,6 +290,7 @@ public partial class Core
       today = startIdx - lookbackTotal;
       sumMFV = 0.0;
       sumVol = 0.0;
+      nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          high = (double)inHigh[today];
          low = (double)inLow[today];
@@ -289,6 +305,7 @@ public partial class Core
          mfv_volume[mfv_Idx] = (double)inVolume[today];
          sumMFV += mfv;
          sumVol += (double)inVolume[today];
+         nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -314,7 +331,13 @@ public partial class Core
          mfv_volume[mfv_Idx] = (double)inVolume[today];
          sumMFV += mfv;
          sumVol += (double)inVolume[today];
+         nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumMFV = 0.0;
+            sumVol = 0.0;
+         }
          if( sumVol > 0.0 ) {
             outReal[outIdx++] = sumMFV / sumVol;
          } else {
@@ -567,6 +590,7 @@ public partial class Core
       internal int optInTimePeriod;
       internal double sumMFV;
       internal double sumVol;
+      internal int nullRun;
       internal int mfv_Idx;
       internal int maxIdx_mfv;
       internal int cbSize_mfv;
@@ -617,6 +641,7 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
          this.sumVol = other.sumVol;
+         this.nullRun = other.nullRun;
          this.mfv_Idx = other.mfv_Idx;
          this.maxIdx_mfv = other.maxIdx_mfv;
          this.cbSize_mfv = other.cbSize_mfv;
@@ -687,6 +712,7 @@ public partial class Core
          double tmp = 0.0;
          double mfv = 0.0;
          double cur_outReal = 0.0;
+         int nullRun = sp.nullRun;
          double sumMFV = sp.sumMFV;
          double sumVol = sp.sumVol;
          sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
@@ -702,6 +728,12 @@ public partial class Core
          }
          sumMFV += mfv;
          sumVol += inVolume;
+         nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            sumMFV = 0.0;
+            sumVol = 0.0;
+         }
          if( sumVol > 0.0 ) {
             cur_outReal = sumMFV / sumVol;
          } else {
@@ -749,6 +781,12 @@ public partial class Core
       sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
       sp.sumMFV += mfv;
       sp.sumVol += inVolume;
+      sp.nullRun = (inVolume == 0.0) ? sp.nullRun + 1 : 0;
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.sumMFV = 0.0;
+         sp.sumVol = 0.0;
+      }
       if( sp.sumVol > 0.0 ) {
          sp.cur_outReal = sp.sumMFV / sp.sumVol;
       } else {
@@ -775,6 +813,7 @@ public partial class Core
       int outIdx = 0;
       int i = 0;
       int today = 0;
+      int nullRun = 0;
       double[] mfv_flow = [];
       double[] mfv_volume = [];
       int mfv_Idx = 0;
@@ -837,6 +876,11 @@ public partial class Core
       today = startIdx - lookbackTotal;
       sumMFV = 0.0;
       sumVol = 0.0;
+      /* Consecutive zero-volume bars. Once they fill a window both sums are
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the bars that departed, of either sign.
+       */
+      nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
          high = inHigh[today];
          low = inLow[today];
@@ -851,6 +895,7 @@ public partial class Core
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
+         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -883,7 +928,13 @@ public partial class Core
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
+         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
          today += 1;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumMFV = 0.0;
+            sumVol = 0.0;
+         }
          if( sumVol > 0.0 ) {
             outReal[outIdx++ * outStride] = sumMFV / sumVol;
          } else {
@@ -902,6 +953,7 @@ public partial class Core
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumMFV = sumMFV;
       sp.sumVol = sumVol;
+      sp.nullRun = nullRun;
       sp.mfv_Idx = mfv_Idx;
       sp.maxIdx_mfv = maxIdx_mfv;
       sp.cbSize_mfv = capCb_mfv;

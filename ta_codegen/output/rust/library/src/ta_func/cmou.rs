@@ -138,7 +138,7 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut trailingValue: f64 = 0.0_f64;
         // CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-        // QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+        // pandas-ta default). Over the trailing optInTimePeriod changes
         // d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
         // |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
         // moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder
@@ -269,7 +269,7 @@ impl Core {
     /// **plain moving-window sums** of the up-moves and down-moves over the period. Bounded in
     /// \[-100,+100]; positive = net upward momentum, negative = net downward. CMOU is the version
     /// as defined by Chande in his book *The New Technical Trader* (1994), and is the more common
-    /// implementation used by TradingView (`ta.cmo`), QuantConnect and pandas-ta's default. See
+    /// implementation used by TradingView (`ta.cmo`) and pandas-ta's default. See
     /// [`CMO`](https://ta-lib.org/functions/cmo) for a smoothed variant of CMOU.
     ///
     /// Formula and more info at [ta-lib.org/functions/cmou](https://ta-lib.org/functions/cmou).
@@ -501,7 +501,7 @@ impl Core {
         let mut prevValue: f64 = 0.0_f64;
         let mut trailingValue: f64 = 0.0_f64;
         // CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-        // QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+        // pandas-ta default). Over the trailing optInTimePeriod changes
         // d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
         // |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
         // moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder

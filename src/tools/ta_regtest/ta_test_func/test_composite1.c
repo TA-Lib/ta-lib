@@ -52,6 +52,7 @@
  *  081626 MF,CC  AO legs: two-SMA-of-median differential plus two oracles (#227).
  *  081726 MF,CC  AC legs: AO-less-its-own-SMA differential plus one oracle (#228).
  *  090426 MF,CC  TA_MAType_ZLEMA into the PVO grid (#347).
+ *  092526 MF,CC  VWMA leg: a window that goes dead after fractional volume (#446).
  */
 
 /* Description:
@@ -180,6 +181,7 @@ static ErrorNumber test_vwma_inplace( const TA_History *history );
 static ErrorNumber test_vwma_tulip_vectors( void );
 static ErrorNumber test_vwma_flat_price( void );
 static ErrorNumber test_vwma_all_zero_volume( void );
+static ErrorNumber test_vwma_dead_after_fractional( void );
 static ErrorNumber test_cmf_differential( const TA_History *history );
 static ErrorNumber test_hma_differential( const TA_History *history );
 static ErrorNumber test_hma_oracle( const TA_History *history );
@@ -258,6 +260,10 @@ ErrorNumber test_func_composite1( TA_History *history )
       return retValue;
 
    retValue = test_vwma_all_zero_volume();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_vwma_dead_after_fractional();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -607,7 +613,9 @@ static ErrorNumber test_pvo_default_is_ema( const TA_History *history )
  * TA_SMA's add-new / snapshot / subtract-old order) precisely so that
  * equivalence holds BIT-FOR-BIT rather than approximately. If the differential
  * below ever needs a tolerance, the implementation has drifted from the spec --
- * do not paper over it with an epsilon.
+ * do not paper over it with an epsilon. The equivalence ends at the first window
+ * whose volume is entirely zero, where VWMA drops the residue TA_SMA keeps, so
+ * the differential runs on a series with none and (6b) covers the other side.
  *
  * The equivalence holds for every period EXCEPT 1, which is not governed by
  * this formula at all: a moving average of period 1 is the no-smoothing copy
@@ -1063,6 +1071,194 @@ static ErrorNumber test_vwma_all_zero_volume( void )
    }
    return TA_TEST_PASS;
 #undef ZV_N
+}
+
+/* (6b) A window that goes dead after fractional volume: NaN, exactly as when
+ * it starts dead. Here the sums reaching bar 24 hold the rounding residue of
+ * the bars that departed, and TA_SUM, which keeps the same sums without the
+ * reset, is the witness that they do. Anchor 20 seeds across the live/dead
+ * edge, which only a seed loop that counts its zero bars gets right. Bars from
+ * 24 on must be the bits of a call seeded inside the dead run.
+ *
+ * The reset fires at bar 24, inside the first 2*lookback+10 bars (28 here)
+ * that server_verify's ride-along replays through Open+Update in every language;
+ * moving the dead run later leaves that replay short of it, silently. */
+static ErrorNumber test_vwma_dead_after_fractional( void )
+{
+#define DF_N 60
+   static TA_Real p[DF_N], v[DF_N], pv[DF_N];
+   static TA_Real full[OUT_CAP], edge[OUT_CAP], out[OUT_CAP], ref[OUT_CAP];
+   static TA_Real sumV[OUT_CAP], sumPV[OUT_CAP];
+   static const int anchor[2] = { 0, 20 };
+   static const int openBase[3] = { 0, 0, 11 };
+   static const int openLen[3] = { 10, 20, 10 };
+   const int period = 10;
+   TA_RetCode rc;
+   TA_Integer beg, nb, begRef, nbRef, begS, nbS;
+   TA_VWMA_Stream *stream;
+   const double *want;
+   double got, peek;
+   int a, i, s, w, off;
+
+   for( i = 0; i < DF_N; i++ )
+   {
+      p[i]  = 90.37 + 0.11 * (double)( i % 5 );
+      v[i]  = ( i >= 15 && i < 35 ) ? 0.0 : 1002.69 + 1.3 * (double)( i % 3 );
+      pv[i] = p[i] * v[i];
+   }
+
+   rc = TA_VWMA( 24, DF_N - 1, p, v, period, &begRef, &nbRef, ref );
+   if( rc != TA_SUCCESS || begRef != 24 || nbRef != DF_N - 24 )
+   {
+      printf( "VWMA dead-after-fractional Fail: reference retCode %d (%d,%d)\n",
+              (int)rc, (int)begRef, (int)nbRef );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( a = 0; a < 2; a++ )
+   {
+      s = anchor[a] < period - 1 ? period - 1 : anchor[a];
+
+      rc = TA_SUM( s, 24, v, period, &begS, &nbS, sumV );
+      if( rc == TA_SUCCESS )
+         rc = TA_SUM( s, 24, pv, period, &begS, &nbS, sumPV );
+      if( rc != TA_SUCCESS || begS != s
+          || ( sumV[24 - s] == 0.0 && sumPV[24 - s] == 0.0 ) )
+      {
+         printf( "VWMA dead-after-fractional [anchor %d]: the sums reaching the "
+                 "dead window hold no residue, so this corpus no longer tells a "
+                 "reset from none\n", anchor[a] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      rc = TA_VWMA( anchor[a], DF_N - 1, p, v, period, &beg, &nb, a == 0 ? full : edge );
+      if( rc != TA_SUCCESS || beg != s || nb != DF_N - s )
+      {
+         printf( "VWMA dead-after-fractional Fail [anchor %d]: retCode %d (%d,%d)\n",
+                 anchor[a], (int)rc, (int)beg, (int)nb );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = beg; i < DF_N; i++ )
+      {
+         got = ( a == 0 ? full : edge )[i - beg];
+         if( i >= 24 && i <= 34 ? !isnan( got ) : !isfinite( got ) )
+         {
+            printf( "VWMA dead-after-fractional Fail [anchor %d] at bar %d: %.17g; "
+                    "bars 24..34 weigh only zero volume (NaN), every other bar is "
+                    "a finite average\n", anchor[a], i, got );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         if( i >= 24 && memcmp( &got, &ref[i - 24], sizeof(double) ) != 0 )
+         {
+            printf( "VWMA dead-after-fractional Fail [anchor %d] at bar %d: %.17g, a "
+                    "call seeded inside the dead run gives %.17g -- the sums kept "
+                    "residue past the dead window\n", anchor[a], i, got, ref[i - 24] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   /* The stream, Peek and Update on every bar. Opening on 20 bars ends inside
+    * the dead run, so the handle must carry the count Open started; opening
+    * at bar 11 seeds across the edge like anchor 20, so Open must count too. */
+   for( a = 0; a < 3; a++ )
+   {
+      want = openBase[a] == 0 ? full : edge;
+      off  = openBase[a] == 0 ? period-1 : 20;
+      w = openBase[a] + openLen[a] - 1;
+      stream = NULL;
+      rc = TA_VWMA_Open( &stream, p + openBase[a], v + openBase[a], openLen[a],
+                         period, &got );
+      if( rc != TA_SUCCESS || memcmp( &got, &want[w-off], sizeof(double) ) != 0 )
+      {
+         printf( "VWMA dead-after-fractional stream Fail [open %d+%d]: retCode %d "
+                 "%.17g, batch %.17g\n", openBase[a], openLen[a], (int)rc,
+                 got, want[w-off] );
+         if( stream ) TA_VWMA_Close( stream );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( i = w+1; i < DF_N; i++ )
+      {
+         rc = TA_VWMA_Peek( stream, p[i], v[i], &peek );
+         if( rc == TA_SUCCESS )
+            rc = TA_VWMA_Update( stream, p[i], v[i], &got );
+         if( rc != TA_SUCCESS
+             || memcmp( &peek, &want[i-off], sizeof(double) ) != 0
+             || memcmp( &got, &want[i-off], sizeof(double) ) != 0 )
+         {
+            printf( "VWMA dead-after-fractional stream Fail [open %d+%d] at bar "
+                    "%d: retCode %d peek %.17g update %.17g batch %.17g\n", openBase[a],
+                    openLen[a], i, (int)rc, peek, got, want[i-off] );
+            TA_VWMA_Close( stream );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      TA_VWMA_Close( stream );
+   }
+
+   /* OpenAndFill runs Open's own copy of the loop through bar 24. */
+   stream = NULL;
+   rc = TA_VWMA_OpenAndFill( &stream, p, v, DF_N, period, &beg, &nb, out );
+   if( stream ) TA_VWMA_Close( stream );
+   if( rc != TA_SUCCESS || beg != period - 1 || nb != DF_N - period + 1 )
+   {
+      printf( "VWMA dead-after-fractional OpenAndFill Fail: retCode %d (%d,%d)\n",
+              (int)rc, (int)beg, (int)nb );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nb; i++ )
+   {
+      if( memcmp( &out[i], &full[i], sizeof(double) ) != 0 )
+      {
+         printf( "VWMA dead-after-fractional OpenAndFill Fail at bar %d: %.17g, "
+                 "batch %.17g\n", (int)beg + i, out[i], full[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore, rideBefore;
+
+      optIn[0] = (double)period;
+      for( a = 0; a < 2; a++ )
+      {
+         cmpBefore = server_verify_comparisons();
+         rideBefore = server_verify_ride_cases();
+         /* Route 1 starts at bar 11: the batch seed and the ride-along's Open
+          * both straddle the live/dead edge there, so every language must count
+          * zero bars in its seed loop too. */
+         e = a == 0
+             ? server_verify( "VWMA", 0, DF_N - 1, DF_N,
+                             TA_SUCCESS, period - 1, DF_N - period + 1,
+                             (const TA_Real*[]){ p, v, NULL }, optIn, 1,
+                             (const TA_Real*[]){ full, NULL }, NULL )
+             : server_verify( "VWMA", 0, DF_N - 12, DF_N - 11,
+                             TA_SUCCESS, period - 1, DF_N - 20,
+                             (const TA_Real*[]){ p + 11, v + 11, NULL }, optIn, 1,
+                             (const TA_Real*[]){ edge, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         /* Every server that compared the batch must also have replayed it
+          * through its stream: that replay is what route 1 adds for Open. */
+         if( server_verify_comparisons() == cmpBefore
+             || server_verify_ride_cases() - rideBefore
+                != server_verify_comparisons() - cmpBefore )
+         {
+            printf( "VWMA dead-after-fractional [route %d]: %d server(s) compared "
+                    "the batch, %d replayed it through the stream\n", a,
+                    server_verify_comparisons() - cmpBefore,
+                    server_verify_ride_cases() - rideBefore );
+            return TA_SV_ROUTED_VACUOUS;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+#undef DF_N
 }
 
 /* ------------------------------------------------------------------------- */

@@ -59,8 +59,8 @@
  *     (1) External-oracle formula check on the standard 252-bar close series.
  *         The golden values are from an independent from-definition reference
  *         that is byte-for-byte the algorithm pandas-ta-classic uses for
- *         cmo(talib=False) (the rolling-sum, non-TA-Lib CMO that TradingView /
- *         QuantConnect also compute). This proves the RIGHT formula. The same
+ *         cmo(talib=False) (the rolling-sum, non-TA-Lib CMO that TradingView
+ *         also computes). This proves the RIGHT formula. The same
  *         call is verified bit-for-bit against every language server and in an
  *         in-place (outReal == inReal) buffer.
  *     (2) Deterministic edge windows: an all-up window (-> +100), an all-down
@@ -101,7 +101,7 @@
  *      i.e. exactly CMOU (100*(Su-Sd)/(Su+Sd) over the period, no smoothing).
  *   2. pandas-ta-classic 0.6.52 `cmo(length=14, talib=False)` -- Python library
  *      (ta-lib-oracles/pandas_serve). This is the non-TA-Lib CMO that TradingView
- *      (ta.cmo) and QuantConnect also compute.
+ *      (ta.cmo) also computes.
  * The two oracles are BIT-IDENTICAL to each other, and TA_CMOU reproduces both
  * BIT-FOR-BIT across all 238 outputs (maxabs 0) on the reference platform --
  * CMOU scales-then-divides, (100*(Su-Sd))/(Su+Sd), the same order Tulip and

@@ -43,6 +43,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090426 MF,CC  First version (issue #370).
+ *  092526 MF,CC  Leg 4b: a window that goes dead after fractional volume (#446).
  */
 
 /* Description:
@@ -58,9 +59,12 @@
  *        reverse order differs in the last ulp, which any tolerance would let
  *        through. Swept over three corpora, every period 1..60 and four start
  *        indices, so it also pins the lookback (a copy of SMA's off-by-one
- *        would move begIdx and fail the shape check first).
- *     2. EXTERNAL ORACLE: trading-signals 8.3.0 `ts.RVOL`, driven on this exact
- *        corpus. See rvolOracle below. Also the cross-language replay.
+ *        would move begIdx and fail the shape check first). It holds only up
+ *        to the first dead window, where TA_RVOL drops the residue TA_SMA
+ *        keeps; none of the three corpora has one.
+ *     2. EXTERNAL ORACLES: trading-signals 8.3.0 `ts.RVOL` and LEAN
+ *        `RelativeDailyVolume`, each driven on this exact corpus. See rvolOracle
+ *        below. Also the cross-language replay.
  *     3. Exact-arithmetic edges, on inputs whose every intermediate is an exact
  *        integer: a lone spike is reported at FULL size on its own bar and
  *        elevates exactly the next optInTimePeriod baselines -- the assertion
@@ -70,7 +74,8 @@
  *     4. The zero-baseline contract: a dead window has no ratio, and TA_RVOL
  *        emits a non-finite value there rather than a guarded 0. That is what
  *        `nan_inf_output` declares in rvol.yaml, and this leg is what makes the
- *        declaration honest.
+ *        declaration honest. 4b holds it where the window goes dead after
+ *        fractional volume, in batch, in the C stream and in every language.
  *     5. In-place aliasing (outReal == inVolume), bitwise, over both corpora
  *        and every period. At startIdx == optInTimePeriod the first output slot
  *        IS the bar about to be subtracted from the running total, so this is
@@ -103,6 +108,7 @@ extern double gDataClose[];
 #define RVOL_GD_NB   1000
 #define RVOL_SYN_NB  2000
 #define RVOL_MAX_PER 60
+#define RVOL_DF_NB   60
 
 /* Leg 2. trading-signals re-sums its window fresh where TA_RVOL rolls a running
  * total, so the two are not bit-exact in general -- but on this corpus they
@@ -121,18 +127,22 @@ typedef struct { int period; int bar; double want; } RvolGolden;
  * to the same double. `bar` is the ABSOLUTE bar index; the output index is
  * bar - begIdx.
  *
- * ONE independent implementation, executed on this exact series (2026-09-04),
- * never re-derived from the formula:
- *   trading-signals 8.3.0 -- TypeScript, `ts.RVOL` (dist/volume/RVOL/RVOL.js).
- *   It keeps the prior volumes, takes slice(-period) and re-sums that window on
- *   every bar, so its arithmetic is independent of our running total.
- *   getRequiredInputs() = period + 1, matching TA_RVOL_Lookback.
- * No second arm exists: pandas-ta-classic 0.6.52 has no rvol/relative_volume
- * module, Tulip Indicators 0.9.2 has none among its 104 indicators, and ta4j's
+ * TWO independent implementations, each executed on this exact series, never
+ * re-derived from the formula:
+ *   trading-signals 8.3.0 -- TypeScript, `ts.RVOL` (dist/volume/RVOL/RVOL.js),
+ *   2026-09-04. It keeps the prior volumes, takes slice(-period) and re-sums
+ *   that window on every bar, so its arithmetic is independent of our running
+ *   total. getRequiredInputs() = period + 1, matching TA_RVOL_Lookback.
+ *   QuantConnect LEAN `RelativeDailyVolume` -- C# System.Decimal,
+ *   QuantConnect.Indicators 2.5.18090, one bar per day, through
+ *   ta-lib-oracles lean_serve d980f73 (2026-09-25). It reproduces every row
+ *   below bit for bit.
+ * pandas-ta-classic 0.6.52 has no rvol/relative_volume module, Tulip Indicators
+ * 0.9.2 has none among its 104 indicators, and ta4j's
  * RelativeVolumeStandardDeviation is a z-score rather than this ratio.
- * It diverges only where this corpus does not go: on a zero baseline it returns
- * null, where TA_RVOL emits the non-finite value leg 4 pins. No window in this
- * corpus is dead.
+ * Both diverge only where this corpus does not go: on a zero baseline
+ * trading-signals returns null and LEAN returns 0, where TA_RVOL emits the
+ * non-finite value leg 4 pins. No window in this corpus is dead.
  * Each period's own lowest and highest bar is included: the lowest is where a
  * relative tolerance is least forgiving, the highest is the spike a wrong
  * window would dilute. */
@@ -181,6 +191,7 @@ static ErrorNumber test_rvol_differential( const char *tag, const TA_Real *in,
 static ErrorNumber test_rvol_oracle( const TA_History *history );
 static ErrorNumber test_rvol_edges( void );
 static ErrorNumber test_rvol_deadwindow( void );
+static ErrorNumber test_rvol_dead_after_fractional( void );
 static ErrorNumber test_rvol_aliasing( const char *tag, const TA_Real *in,
                                        int nbBars );
 static ErrorNumber test_rvol_range( const TA_Real *in );
@@ -237,6 +248,10 @@ ErrorNumber test_func_rvol( TA_History *history )
    if( err != TA_TEST_PASS )
       return err;
 
+   err = test_rvol_dead_after_fractional();
+   if( err != TA_TEST_PASS )
+      return err;
+
    err = test_rvol_aliasing( "TA_SREF volume", history->volume, nbBars );
    if( err != TA_TEST_PASS )
       return err;
@@ -253,12 +268,12 @@ ErrorNumber test_func_rvol( TA_History *history )
     * leg above is deterministic. */
    if( nbBars == 252
        && ( g_rvolDiffCmp != 757980 || g_rvolOracleCmp != NB_RVOL_ORACLE
-            || g_rvolEdgeCmp != 18419 || g_rvolNanCmp != 90
+            || g_rvolEdgeCmp != 18419 || g_rvolNanCmp != 358
             || g_rvolAliasCmp != 131460 ) )
    {
       printf( "RVOL Fail: coverage counters (diff %d, oracle %d, edges %d, "
               "dead-window %d, alias %d) are not what this file was written "
-              "with (757980, %d, 18419, 90, 131460)\n",
+              "with (757980, %d, 18419, 358, 131460)\n",
               g_rvolDiffCmp, g_rvolOracleCmp, g_rvolEdgeCmp, g_rvolNanCmp,
               g_rvolAliasCmp, NB_RVOL_ORACLE );
       return TA_RVOL_VACUOUS;
@@ -271,12 +286,12 @@ ErrorNumber test_func_rvol( TA_History *history )
 
 /* (1) TA_RVOL against TA_SMA shifted one bar, with NO tolerance.
  *
- * The identity is exact, not approximate: TA_RVOL accumulates the same window
- * TA_SMA does, in the same order, one bar behind, so every baseline is the
- * same double TA_SMA divided by the same period. Comparing bitwise is the only
- * way to hold the accumulator order -- add-new-then-subtract-old computes the
- * same window and lands within a few ulp, which every tolerance in this file
- * would accept.
+ * The identity is exact, not approximate, up to the first dead window: TA_RVOL
+ * accumulates the same window TA_SMA does, in the same order, one bar behind,
+ * so every baseline is the same double TA_SMA divided by the same period.
+ * Comparing bitwise is the only way to hold the accumulator order --
+ * add-new-then-subtract-old computes the same window and lands within a few
+ * ulp, which every tolerance in this file would accept.
  *
  * The shape check ahead of it is what pins the lookback: TA_RVOL needs one bar
  * more than TA_SMA of the same period, so an off-by-one there moves begIdx.
@@ -599,6 +614,202 @@ static ErrorNumber test_rvol_deadwindow( void )
          printf( "RVOL dead-window Fail at bar %d: %.17g, but its baseline "
                  "window has volume\n", i, got );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (4b) A window that goes dead after fractional volume.
+ *
+ * Leg 4's volumes are integers, so its total empties to exactly 0.0 by itself.
+ * These are not, and the total that reaches bar 24 holds the rounding residue
+ * of the volumes that departed: TA_SUM, which keeps the same total without the
+ * reset, is the witness that it does. Anchor 20 seeds across the live/dead
+ * edge, which only a seed loop that counts its zero bars gets right. Bars from
+ * 25 on must be the bits of a call seeded inside the dead run.
+ *
+ * The reset fires at bar 24 and first shows at bar 25, inside the first
+ * 2*lookback+10 bars (30 here) that server_verify's ride-along replays through
+ * Open+Update in every language; moving the dead run later leaves that replay
+ * short of it, silently.
+ */
+static void rvolBuildDeadAfterFractional( double *v )
+{
+   int i;
+   for( i = 0; i < RVOL_DF_NB; i++ )
+      v[i] = ( i >= 15 && i < 35 ) ? 0.0 : 1002.69 + 1.3 * (double)( i % 3 );
+}
+
+static ErrorNumber test_rvol_dead_after_fractional( void )
+{
+   static TA_Real v[RVOL_DF_NB], full[RVOL_CAP], edge[RVOL_CAP], out[RVOL_CAP];
+   static TA_Real ref[RVOL_CAP], sum[RVOL_CAP];
+   static const int anchor[2] = { 0, 20 };
+   static const int openBase[3] = { 0, 0, 10 };
+   static const int openLen[3] = { 11, 20, 11 };
+   const int period = 10;
+   TA_RetCode retCode;
+   TA_Integer begIdx, nbElement, begRef, nbRef, begS, nbS;
+   TA_RVOL_Stream *stream;
+   const double *want;
+   double got, peek;
+   int a, i, s, w, off;
+
+   rvolBuildDeadAfterFractional( v );
+
+   /* Seeded on bars 15..24 alone: a fresh sum of zeros. */
+   retCode = TA_RVOL( 25, RVOL_DF_NB-1, v, period, &begRef, &nbRef, ref );
+   if( retCode != TA_SUCCESS || begRef != 25 || nbRef != RVOL_DF_NB-25 )
+   {
+      printf( "RVOL dead-after-fractional Fail: reference rc=%d (%d,%d)\n",
+              (int)retCode, begRef, nbRef );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( a = 0; a < 2; a++ )
+   {
+      s = anchor[a] < period ? period : anchor[a];
+
+      retCode = TA_SUM( s-1, 24, v, period, &begS, &nbS, sum );
+      if( retCode != TA_SUCCESS || begS != s-1 || sum[24-begS] == 0.0 )
+      {
+         printf( "RVOL dead-after-fractional [anchor %d]: the total reaching the "
+                 "dead window is %.17g, so this corpus no longer tells a reset "
+                 "from none\n", anchor[a], retCode == TA_SUCCESS ? sum[24-begS] : 0.0 );
+         return TA_RVOL_VACUOUS;
+      }
+
+      retCode = TA_RVOL( anchor[a], RVOL_DF_NB-1, v, period, &begIdx, &nbElement,
+                         a == 0 ? full : edge );
+      if( retCode != TA_SUCCESS || begIdx != s || nbElement != RVOL_DF_NB-s )
+      {
+         printf( "RVOL dead-after-fractional Fail [anchor %d]: rc=%d (%d,%d)\n",
+                 anchor[a], (int)retCode, begIdx, nbElement );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = begIdx; i < RVOL_DF_NB; i++ )
+      {
+         got = ( a == 0 ? full : edge )[i-begIdx];
+         g_rvolNanCmp++;
+         if( i >= 25 && i <= 35 ? ( v[i] == 0.0 ? !isnan( got ) : got != INFINITY )
+                                : !isfinite( got ) )
+         {
+            printf( "RVOL dead-after-fractional Fail [anchor %d] at bar %d: "
+                    "volume %.17g gave %.17g; bars 25..35 have a dead baseline "
+                    "(NaN, or +Inf on a bar that traded), every other bar a finite "
+                    "ratio\n", anchor[a], i, v[i], got );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         if( i >= 25 && memcmp( &got, &ref[i-25], sizeof(double) ) != 0 )
+         {
+            printf( "RVOL dead-after-fractional Fail [anchor %d] at bar %d: "
+                    "%.17g, a call seeded inside the dead run gives %.17g -- the "
+                    "total kept residue past the dead window\n",
+                    anchor[a], i, got, ref[i-25] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   /* The stream, Peek and Update on every bar. Opening on 20 bars ends inside
+    * the dead run, so the handle must carry the count Open started; opening
+    * at bar 10 seeds across the edge like anchor 20, so Open must count too. */
+   for( a = 0; a < 3; a++ )
+   {
+      want = openBase[a] == 0 ? full : edge;
+      off  = openBase[a] == 0 ? period : 20;
+      w = openBase[a] + openLen[a] - 1;
+      stream = NULL;
+      retCode = TA_RVOL_Open( &stream, v + openBase[a], openLen[a], period, &got );
+      if( retCode != TA_SUCCESS || memcmp( &got, &want[w-off], sizeof(double) ) != 0 )
+      {
+         printf( "RVOL dead-after-fractional stream Fail [open %d+%d]: rc=%d "
+                 "%.17g, batch %.17g\n", openBase[a], openLen[a], (int)retCode,
+                 got, want[w-off] );
+         if( stream ) TA_RVOL_Close( stream );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( i = w+1; i < RVOL_DF_NB; i++ )
+      {
+         retCode = TA_RVOL_Peek( stream, v[i], &peek );
+         if( retCode == TA_SUCCESS )
+            retCode = TA_RVOL_Update( stream, v[i], &got );
+         g_rvolNanCmp++;
+         if( retCode != TA_SUCCESS
+             || memcmp( &peek, &want[i-off], sizeof(double) ) != 0
+             || memcmp( &got, &want[i-off], sizeof(double) ) != 0 )
+         {
+            printf( "RVOL dead-after-fractional stream Fail [open %d+%d] at bar "
+                    "%d: rc=%d peek %.17g update %.17g batch %.17g\n", openBase[a],
+                    openLen[a], i, (int)retCode, peek, got, want[i-off] );
+            TA_RVOL_Close( stream );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      TA_RVOL_Close( stream );
+   }
+
+   /* OpenAndFill runs Open's own copy of the loop through bar 24. */
+   stream = NULL;
+   retCode = TA_RVOL_OpenAndFill( &stream, v, RVOL_DF_NB, period,
+                                  &begIdx, &nbElement, out );
+   if( stream ) TA_RVOL_Close( stream );
+   if( retCode != TA_SUCCESS || begIdx != period || nbElement != RVOL_DF_NB-(period) )
+   {
+      printf( "RVOL dead-after-fractional OpenAndFill Fail: rc=%d (%d,%d)\n",
+              (int)retCode, begIdx, nbElement );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nbElement; i++ )
+   {
+      g_rvolNanCmp++;
+      if( memcmp( &out[i], &full[i], sizeof(double) ) != 0 )
+      {
+         printf( "RVOL dead-after-fractional OpenAndFill Fail at bar %d: %.17g, "
+                 "batch %.17g\n", begIdx+i, out[i], full[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   if( server_verify_active() )
+   {
+      double optIn[1];
+      ErrorNumber e;
+      int cmpBefore, rideBefore;
+
+      optIn[0] = (double)period;
+      for( a = 0; a < 2; a++ )
+      {
+         cmpBefore = server_verify_comparisons();
+         rideBefore = server_verify_ride_cases();
+         /* Route 1 starts at bar 10: the batch seed and the ride-along's Open
+          * both straddle the live/dead edge there, so every language must count
+          * zero bars in its seed loop too. */
+         e = a == 0
+             ? server_verify( "RVOL", 0, RVOL_DF_NB-1, RVOL_DF_NB,
+                             TA_SUCCESS, period, RVOL_DF_NB-period,
+                             (const TA_Real*[]){ v, NULL }, optIn, 1,
+                             (const TA_Real*[]){ full, NULL }, NULL )
+             : server_verify( "RVOL", 0, RVOL_DF_NB-11, RVOL_DF_NB-10,
+                             TA_SUCCESS, period, RVOL_DF_NB-20,
+                             (const TA_Real*[]){ v+10, NULL }, optIn, 1,
+                             (const TA_Real*[]){ edge, NULL }, NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+         /* Every server that compared the batch must also have replayed it
+          * through its stream: that replay is what route 1 adds for Open. */
+         if( server_verify_comparisons() == cmpBefore
+             || server_verify_ride_cases() - rideBefore
+                != server_verify_comparisons() - cmpBefore )
+         {
+            printf( "RVOL dead-after-fractional [route %d]: %d server(s) compared "
+                    "the batch, %d replayed it through the stream\n", a,
+                    server_verify_comparisons() - cmpBefore,
+                    server_verify_ride_cases() - rideBefore );
+            return TA_SV_ROUTED_VACUOUS;
+         }
       }
    }
 

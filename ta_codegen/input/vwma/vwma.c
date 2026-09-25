@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  072026 MF,CC  First version (#131).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
+ *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  *
  */
 
@@ -36,6 +37,7 @@ TA_RetCode vwma(int startIdx, int endIdx,
    size_t outIdx;
    size_t trailingIdx;
    size_t lookbackTotal;
+   int nullRun;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -84,6 +86,12 @@ TA_RetCode vwma(int startIdx, int endIdx,
    sumV = 0.0;
    trailingIdx = startIdx - lookbackTotal;
 
+   /* Consecutive zero-volume bars. Once they fill a window both sums are
+    * exactly zero, where add-then-subtract would leave the rounding residue of
+    * the bars that departed, of either sign.
+    */
+   nullRun = 0;
+
    i = trailingIdx;
    if( optInTimePeriod > 1 )
    {
@@ -91,6 +99,7 @@ TA_RetCode vwma(int startIdx, int endIdx,
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
+         nullRun = inVolume[i] == 0.0 ? nullRun+1 : 0;
          i = i + 1;
       }
    }
@@ -105,11 +114,19 @@ TA_RetCode vwma(int startIdx, int endIdx,
       tempReal = inReal[i] * inVolume[i];
       sumPV += tempReal;
       sumV += inVolume[i];
+      nullRun = inVolume[i] == 0.0 ? nullRun+1 : 0;
       i = i + 1;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         sumPV = 0.0;
+         sumV = 0.0;
+      }
 
       /* Snapshot both sums before removing the trailing bar, mirroring the
-       * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-       * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+       * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+       * window, that order is what makes this bit-identical to
+       * SMA(inReal*inVolume)/SMA(inVolume).
        */
       tempPV = sumPV;
       tempV = sumV;

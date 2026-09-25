@@ -3310,6 +3310,7 @@ static int sv_steq_TA_CMF( const struct TA_CMF_Stream *a, const struct TA_CMF_St
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->sumMFV, b->sumMFV, z) ) { *w = "sumMFV"; return 1; }
    if( sv_xtier_ne(a->sumVol, b->sumVol, z) ) { *w = "sumVol"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( a->mfv_Idx != b->mfv_Idx ) { *w = "mfv_Idx"; return 1; }
    if( a->maxIdx_mfv != b->maxIdx_mfv ) { *w = "maxIdx_mfv"; return 1; }
    if( a->cbSize_mfv != b->cbSize_mfv ) { *w = "cbSize_mfv"; return 1; }
@@ -5511,6 +5512,7 @@ static int sv_steq_TA_RVOL( const struct TA_RVOL_Stream *a, const struct TA_RVOL
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
    if( (a->ring_trailingIdx_inVolume == NULL) != (b->ring_trailingIdx_inVolume == NULL) ) { *w = "ring_trailingIdx_inVolume"; return 1; }
    if( a->ring_trailingIdx_inVolume ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
@@ -6165,6 +6167,7 @@ static int sv_steq_TA_VWMA( const struct TA_VWMA_Stream *a, const struct TA_VWMA
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->sumPV, b->sumPV, z) ) { *w = "sumPV"; return 1; }
    if( sv_xtier_ne(a->sumV, b->sumV, z) ) { *w = "sumV"; return 1; }
+   if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
    if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
    if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )

@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072126 MF,CC  First version (issue #134).
+ *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  */
 
 int cmf_lookback(int optInTimePeriod)
@@ -27,7 +28,7 @@ TA_RetCode cmf(int startIdx, int endIdx,
    double outReal[])
 {
    double sumMFV, sumVol, high, low, close, tmp, mfv;
-   int lookbackTotal, outIdx, i, today;
+   int lookbackTotal, outIdx, i, today, nullRun;
 
    /* Both the per-bar money flow volume and the volume that produced it are
     * carried in the circular buffer. Keeping the volume here rather than
@@ -68,6 +69,11 @@ TA_RetCode cmf(int startIdx, int endIdx,
    today = startIdx-lookbackTotal;
    sumMFV = 0.0;
    sumVol = 0.0;
+   /* Consecutive zero-volume bars. Once they fill a window both sums are
+    * exactly zero, where add-then-subtract would leave the rounding residue of
+    * the bars that departed, of either sign.
+    */
+   nullRun = 0;
    for( i=optInTimePeriod; i > 0; i-- )
    {
       high  = inHigh[today];
@@ -84,6 +90,7 @@ TA_RetCode cmf(int startIdx, int endIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
+      nullRun = inVolume[today] == 0.0 ? nullRun+1 : 0;
       today++;
 
       CIRCBUF_NEXT(mfv);
@@ -120,7 +127,14 @@ TA_RetCode cmf(int startIdx, int endIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
+      nullRun = inVolume[today] == 0.0 ? nullRun+1 : 0;
       today++;
+      if( nullRun >= optInTimePeriod )
+      {
+         nullRun = optInTimePeriod;
+         sumMFV = 0.0;
+         sumVol = 0.0;
+      }
 
       if( sumVol > 0.0 )
          outReal[outIdx++] = sumMFV/sumVol;

@@ -70840,6 +70840,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  072126 MF,CC  First version (issue #134).
+     *  092526 MF,CC  #446 exact zero sums on a dead volume window.
      */
 
        /**
@@ -70885,6 +70886,7 @@ class Core {
           int outIdx = 0;
           int i = 0;
           int today = 0;
+          int nullRun = 0;
           double[] mfv_flow;
           double[] mfv_volume;
           int mfv_Idx = 0;
@@ -70937,6 +70939,11 @@ class Core {
           today = startIdx - lookbackTotal;
           sumMFV = 0.0;
           sumVol = 0.0;
+          /* Consecutive zero-volume bars. Once they fill a window both sums are
+           * exactly zero, where add-then-subtract would leave the rounding residue of
+           * the bars that departed, of either sign.
+           */
+          nullRun = 0;
           for( i = optInTimePeriod; i > 0; i -= 1 ) {
              high = inHigh[today];
              low = inLow[today];
@@ -70951,6 +70958,7 @@ class Core {
              mfv_volume[mfv_Idx] = inVolume[today];
              sumMFV += mfv;
              sumVol += inVolume[today];
+             nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
              today += 1;
              mfv_Idx++;
              if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -70983,7 +70991,13 @@ class Core {
              mfv_volume[mfv_Idx] = inVolume[today];
              sumMFV += mfv;
              sumVol += inVolume[today];
+             nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
              today += 1;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                sumMFV = 0.0;
+                sumVol = 0.0;
+             }
              if( sumVol > 0.0 ) {
                 outReal[outIdx++] = sumMFV / sumVol;
              } else {
@@ -71018,6 +71032,7 @@ class Core {
           int outIdx = 0;
           int i = 0;
           int today = 0;
+          int nullRun = 0;
           double[] mfv_flow;
           double[] mfv_volume;
           int mfv_Idx = 0;
@@ -71051,6 +71066,7 @@ class Core {
           today = startIdx - lookbackTotal;
           sumMFV = 0.0;
           sumVol = 0.0;
+          nullRun = 0;
           for( i = optInTimePeriod; i > 0; i -= 1 ) {
              high = (double)inHigh[today];
              low = (double)inLow[today];
@@ -71065,6 +71081,7 @@ class Core {
              mfv_volume[mfv_Idx] = (double)inVolume[today];
              sumMFV += mfv;
              sumVol += (double)inVolume[today];
+             nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
              today += 1;
              mfv_Idx++;
              if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -71090,7 +71107,13 @@ class Core {
              mfv_volume[mfv_Idx] = (double)inVolume[today];
              sumMFV += mfv;
              sumVol += (double)inVolume[today];
+             nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
              today += 1;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                sumMFV = 0.0;
+                sumVol = 0.0;
+             }
              if( sumVol > 0.0 ) {
                 outReal[outIdx++] = sumMFV / sumVol;
              } else {
@@ -71309,6 +71332,7 @@ class Core {
           private int optInTimePeriod;
           private double sumMFV;
           private double sumVol;
+          private int nullRun;
           private int mfv_Idx;
           private int maxIdx_mfv;
           private int cbSize_mfv;
@@ -71359,6 +71383,7 @@ class Core {
              this.optInTimePeriod = other.optInTimePeriod;
              this.sumMFV = other.sumMFV;
              this.sumVol = other.sumVol;
+             this.nullRun = other.nullRun;
              this.mfv_Idx = other.mfv_Idx;
              this.maxIdx_mfv = other.maxIdx_mfv;
              this.cbSize_mfv = other.cbSize_mfv;
@@ -71417,6 +71442,7 @@ class Core {
              double tmp = 0.0;
              double mfv = 0.0;
              double cur_outReal = 0.0;
+             int nullRun = sp.nullRun;
              double sumMFV = sp.sumMFV;
              double sumVol = sp.sumVol;
              sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
@@ -71432,6 +71458,12 @@ class Core {
              }
              sumMFV += mfv;
              sumVol += inVolume;
+             nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
+             if( nullRun >= sp.optInTimePeriod ) {
+                nullRun = sp.optInTimePeriod;
+                sumMFV = 0.0;
+                sumVol = 0.0;
+             }
              if( sumVol > 0.0 ) {
                 cur_outReal = sumMFV / sumVol;
              } else {
@@ -71488,6 +71520,12 @@ class Core {
           sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
           sp.sumMFV += mfv;
           sp.sumVol += inVolume;
+          sp.nullRun = (inVolume == 0.0) ? sp.nullRun + 1 : 0;
+          if( sp.nullRun >= sp.optInTimePeriod ) {
+             sp.nullRun = sp.optInTimePeriod;
+             sp.sumMFV = 0.0;
+             sp.sumVol = 0.0;
+          }
           if( sp.sumVol > 0.0 ) {
              sp.cur_outReal = sp.sumMFV / sp.sumVol;
           } else {
@@ -71511,6 +71549,7 @@ class Core {
           int outIdx = 0;
           int i = 0;
           int today = 0;
+          int nullRun = 0;
           double[] mfv_flow;
           double[] mfv_volume;
           int mfv_Idx = 0;
@@ -71573,6 +71612,11 @@ class Core {
           today = startIdx - lookbackTotal;
           sumMFV = 0.0;
           sumVol = 0.0;
+          /* Consecutive zero-volume bars. Once they fill a window both sums are
+           * exactly zero, where add-then-subtract would leave the rounding residue of
+           * the bars that departed, of either sign.
+           */
+          nullRun = 0;
           for( i = optInTimePeriod; i > 0; i -= 1 ) {
              high = inHigh[today];
              low = inLow[today];
@@ -71587,6 +71631,7 @@ class Core {
              mfv_volume[mfv_Idx] = inVolume[today];
              sumMFV += mfv;
              sumVol += inVolume[today];
+             nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
              today += 1;
              mfv_Idx++;
              if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -71619,7 +71664,13 @@ class Core {
              mfv_volume[mfv_Idx] = inVolume[today];
              sumMFV += mfv;
              sumVol += inVolume[today];
+             nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
              today += 1;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                sumMFV = 0.0;
+                sumVol = 0.0;
+             }
              if( sumVol > 0.0 ) {
                 outReal[outIdx++ * outStride] = sumMFV / sumVol;
              } else {
@@ -71638,6 +71689,7 @@ class Core {
           sp.optInTimePeriod = optInTimePeriod;
           sp.sumMFV = sumMFV;
           sp.sumVol = sumVol;
+          sp.nullRun = nullRun;
           sp.mfv_Idx = mfv_Idx;
           sp.maxIdx_mfv = maxIdx_mfv;
           sp.cbSize_mfv = capCb_mfv;
@@ -72665,7 +72717,7 @@ class Core {
              return RetCode.BAD_PARAM;
           }
           /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-           * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+           * pandas-ta default). Over the trailing optInTimePeriod changes
            * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
            * |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
            * moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder
@@ -72908,10 +72960,9 @@ class Core {
         * down-moves over the period. Bounded in [-100,+100]; positive = net upward
         * momentum, negative = net downward. CMOU is the version as defined by
         * Chande in his book <i>The New Technical Trader</i> (1994), and is the more
-        * common implementation used by TradingView ({@code ta.cmo}), QuantConnect
-        * and pandas-ta's default. See <a
-        * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
-        * variant of CMOU.
+        * common implementation used by TradingView ({@code ta.cmo}) and pandas-ta's
+        * default. See <a href="https://ta-lib.org/functions/cmo">{@code CMO}</a>
+        * for a smoothed variant of CMOU.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cmou">ta-lib.org/functions/cmou</a>.
         * <p>Values are written only where the indicator is defined. The returned
@@ -72971,10 +73022,9 @@ class Core {
         * down-moves over the period. Bounded in [-100,+100]; positive = net upward
         * momentum, negative = net downward. CMOU is the version as defined by
         * Chande in his book <i>The New Technical Trader</i> (1994), and is the more
-        * common implementation used by TradingView ({@code ta.cmo}), QuantConnect
-        * and pandas-ta's default. See <a
-        * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
-        * variant of CMOU.
+        * common implementation used by TradingView ({@code ta.cmo}) and pandas-ta's
+        * default. See <a href="https://ta-lib.org/functions/cmo">{@code CMO}</a>
+        * for a smoothed variant of CMOU.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/cmou">ta-lib.org/functions/cmou</a>.
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -73332,7 +73382,7 @@ class Core {
              return RetCode.INSUFFICIENT_HISTORY;
           }
           /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-           * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+           * pandas-ta default). Over the trailing optInTimePeriod changes
            * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
            * |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
            * moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder
@@ -155193,6 +155243,7 @@ class Core {
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  090426 MF,CC  Initial version (#370).
+     *  092526 MF,CC  #446 exact zero total on a dead volume window.
      */
 
        /**
@@ -155232,6 +155283,7 @@ class Core {
           int outIdx = 0;
           int trailingIdx = 0;
           int lookbackTotal = 0;
+          int nullRun = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -155257,17 +155309,23 @@ class Core {
           }
           periodTotal = 0.0;
           trailingIdx = startIdx - lookbackTotal;
+          /* Consecutive zero-volume bars. Once they fill a window the total is
+           * exactly zero, where add-then-subtract would leave the rounding residue of
+           * the volumes that departed, of either sign.
+           */
+          nullRun = 0;
           i = trailingIdx;
           while( i < startIdx ) {
              periodTotal += (double)inVolume[i];
+             nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
              i = i + 1;
           }
           outIdx = 0;
           while( i <= endIdx ) {
-             /* Drop the trailing bar BEFORE adding today's. That order makes each
-              * baseline bit-identical to the moving average of the same period at the
-              * previous bar; the reverse order differs only in the last ulp, so no
-              * tolerance can tell the two apart.
+             /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+              * window, that order makes each baseline bit-identical to the moving
+              * average of the same period at the previous bar; the reverse order
+              * differs only in the last ulp, so no tolerance can tell the two apart.
               */
              baseline = periodTotal / (double)optInTimePeriod;
              periodTotal -= (double)inVolume[trailingIdx];
@@ -155275,6 +155333,11 @@ class Core {
              todayVolume = (double)inVolume[i];
              i = i + 1;
              periodTotal += todayVolume;
+             nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                periodTotal = 0.0;
+             }
              outReal[outIdx] = todayVolume / baseline;
              outIdx = outIdx + 1;
           }
@@ -155297,6 +155360,7 @@ class Core {
           int outIdx = 0;
           int trailingIdx = 0;
           int lookbackTotal = 0;
+          int nullRun = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -155319,9 +155383,11 @@ class Core {
           }
           periodTotal = 0.0;
           trailingIdx = startIdx - lookbackTotal;
+          nullRun = 0;
           i = trailingIdx;
           while( i < startIdx ) {
              periodTotal += (double)inVolume[i];
+             nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
              i = i + 1;
           }
           outIdx = 0;
@@ -155332,6 +155398,11 @@ class Core {
              todayVolume = (double)inVolume[i];
              i = i + 1;
              periodTotal += todayVolume;
+             nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                periodTotal = 0.0;
+             }
              outReal[outIdx] = todayVolume / baseline;
              outIdx = outIdx + 1;
           }
@@ -155506,6 +155577,7 @@ class Core {
           private Core core;
           private int optInTimePeriod;
           private double periodTotal;
+          private int nullRun;
           private int ringPos_trailingIdx;
           private int ringCap_trailingIdx;
           private double[] ring_trailingIdx_inVolume;
@@ -155553,6 +155625,7 @@ class Core {
              this.core = other.core;
              this.optInTimePeriod = other.optInTimePeriod;
              this.periodTotal = other.periodTotal;
+             this.nullRun = other.nullRun;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
              this.ring_trailingIdx_inVolume = other.ring_trailingIdx_inVolume.clone();
@@ -155606,6 +155679,7 @@ class Core {
              double baseline = 0.0;
              double todayVolume = 0.0;
              double cur_outReal = 0.0;
+             int nullRun = sp.nullRun;
              double periodTotal = sp.periodTotal;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
@@ -155613,15 +155687,20 @@ class Core {
                 pkSlot0 = 0;
                 pkVal0 = inVolume;
              }
-             /* Drop the trailing bar BEFORE adding today's. That order makes each
-              * baseline bit-identical to the moving average of the same period at the
-              * previous bar; the reverse order differs only in the last ulp, so no
-              * tolerance can tell the two apart.
+             /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+              * window, that order makes each baseline bit-identical to the moving
+              * average of the same period at the previous bar; the reverse order
+              * differs only in the last ulp, so no tolerance can tell the two apart.
               */
              baseline = periodTotal / (double)sp.optInTimePeriod;
              periodTotal -= (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
              todayVolume = (double)inVolume;
              periodTotal += todayVolume;
+             nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+             if( nullRun >= sp.optInTimePeriod ) {
+                nullRun = sp.optInTimePeriod;
+                periodTotal = 0.0;
+             }
              cur_outReal = todayVolume / baseline;
              return cur_outReal;
           }
@@ -155659,15 +155738,20 @@ class Core {
           if( sp.ringCap_trailingIdx == 0 ) {
              sp.ring_trailingIdx_inVolume[0] = inVolume;
           }
-          /* Drop the trailing bar BEFORE adding today's. That order makes each
-           * baseline bit-identical to the moving average of the same period at the
-           * previous bar; the reverse order differs only in the last ulp, so no
-           * tolerance can tell the two apart.
+          /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+           * window, that order makes each baseline bit-identical to the moving
+           * average of the same period at the previous bar; the reverse order
+           * differs only in the last ulp, so no tolerance can tell the two apart.
            */
           baseline = sp.periodTotal / (double)sp.optInTimePeriod;
           sp.periodTotal -= (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
           todayVolume = (double)inVolume;
           sp.periodTotal += todayVolume;
+          sp.nullRun = (todayVolume == 0.0) ? sp.nullRun + 1 : 0;
+          if( sp.nullRun >= sp.optInTimePeriod ) {
+             sp.nullRun = sp.optInTimePeriod;
+             sp.periodTotal = 0.0;
+          }
           sp.cur_outReal = todayVolume / baseline;
           sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
           sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -155684,6 +155768,7 @@ class Core {
           int outIdx = 0;
           int trailingIdx = 0;
           int lookbackTotal = 0;
+          int nullRun = 0;
           int historyLen = inVolume.length;
           int endIdx = historyLen - 1;
           if( historyLen < 1 ) {
@@ -155716,17 +155801,23 @@ class Core {
           }
           periodTotal = 0.0;
           trailingIdx = startIdx - lookbackTotal;
+          /* Consecutive zero-volume bars. Once they fill a window the total is
+           * exactly zero, where add-then-subtract would leave the rounding residue of
+           * the volumes that departed, of either sign.
+           */
+          nullRun = 0;
           i = trailingIdx;
           while( i < startIdx ) {
              periodTotal += (double)inVolume[i];
+             nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
              i = i + 1;
           }
           outIdx = 0;
           while( i <= endIdx ) {
-             /* Drop the trailing bar BEFORE adding today's. That order makes each
-              * baseline bit-identical to the moving average of the same period at the
-              * previous bar; the reverse order differs only in the last ulp, so no
-              * tolerance can tell the two apart.
+             /* Drop the trailing bar BEFORE adding today's. Up to the first dead
+              * window, that order makes each baseline bit-identical to the moving
+              * average of the same period at the previous bar; the reverse order
+              * differs only in the last ulp, so no tolerance can tell the two apart.
               */
              baseline = periodTotal / (double)optInTimePeriod;
              periodTotal -= (double)inVolume[trailingIdx];
@@ -155734,6 +155825,11 @@ class Core {
              todayVolume = (double)inVolume[i];
              i = i + 1;
              periodTotal += todayVolume;
+             nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                periodTotal = 0.0;
+             }
              outReal[outIdx * outStride] = todayVolume / baseline;
              outIdx = outIdx + 1;
           }
@@ -155749,6 +155845,7 @@ class Core {
           System.arraycopy(inVolume, historyLen - cap_trailingIdx, capRing_trailingIdx_inVolume, 0, cap_trailingIdx);
           sp.optInTimePeriod = optInTimePeriod;
           sp.periodTotal = periodTotal;
+          sp.nullRun = nullRun;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
@@ -182276,6 +182373,7 @@ class Core {
      *  -------------------------------------------------------------------
      *  072026 MF,CC  First version (#131).
      *  080926 MF,CC  Allow period of 1. Just copy input into output.
+     *  092526 MF,CC  #446 exact zero sums on a dead volume window.
      */
 
        /**
@@ -182317,6 +182415,7 @@ class Core {
           int outIdx = 0;
           int trailingIdx = 0;
           int lookbackTotal = 0;
+          int nullRun = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -182369,12 +182468,18 @@ class Core {
           sumPV = 0.0;
           sumV = 0.0;
           trailingIdx = startIdx - lookbackTotal;
+          /* Consecutive zero-volume bars. Once they fill a window both sums are
+           * exactly zero, where add-then-subtract would leave the rounding residue of
+           * the bars that departed, of either sign.
+           */
+          nullRun = 0;
           i = trailingIdx;
           if( optInTimePeriod > 1 ) {
              while( i < startIdx ) {
                 tempReal = inReal[i] * inVolume[i];
                 sumPV += tempReal;
                 sumV += inVolume[i];
+                nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
                 i = i + 1;
              }
           }
@@ -182387,10 +182492,17 @@ class Core {
              tempReal = inReal[i] * inVolume[i];
              sumPV += tempReal;
              sumV += inVolume[i];
+             nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
              i = i + 1;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                sumPV = 0.0;
+                sumV = 0.0;
+             }
              /* Snapshot both sums before removing the trailing bar, mirroring the
-              * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-              * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+              * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+              * window, that order is what makes this bit-identical to
+              * SMA(inReal*inVolume)/SMA(inVolume).
               */
              tempPV = sumPV;
              tempV = sumV;
@@ -182427,6 +182539,7 @@ class Core {
           int outIdx = 0;
           int trailingIdx = 0;
           int lookbackTotal = 0;
+          int nullRun = 0;
           if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
              return RetCode.OUT_OF_RANGE_START_INDEX ;
           }
@@ -182460,12 +182573,14 @@ class Core {
           sumPV = 0.0;
           sumV = 0.0;
           trailingIdx = startIdx - lookbackTotal;
+          nullRun = 0;
           i = trailingIdx;
           if( optInTimePeriod > 1 ) {
              while( i < startIdx ) {
                 tempReal = (double)inReal[i] * (double)inVolume[i];
                 sumPV += tempReal;
                 sumV += (double)inVolume[i];
+                nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
                 i = i + 1;
              }
           }
@@ -182474,7 +182589,13 @@ class Core {
              tempReal = (double)inReal[i] * (double)inVolume[i];
              sumPV += tempReal;
              sumV += (double)inVolume[i];
+             nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
              i = i + 1;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                sumPV = 0.0;
+                sumV = 0.0;
+             }
              tempPV = sumPV;
              tempV = sumV;
              tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
@@ -182660,6 +182781,7 @@ class Core {
           private int optInTimePeriod;
           private double sumPV;
           private double sumV;
+          private int nullRun;
           private int ringPos_trailingIdx;
           private int ringCap_trailingIdx;
           private double[] ring_trailingIdx_inReal;
@@ -182709,6 +182831,7 @@ class Core {
              this.optInTimePeriod = other.optInTimePeriod;
              this.sumPV = other.sumPV;
              this.sumV = other.sumV;
+             this.nullRun = other.nullRun;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
              this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -182764,6 +182887,7 @@ class Core {
              double tempV = 0.0;
              double tempReal = 0.0;
              double cur_outReal = 0.0;
+             int nullRun = sp.nullRun;
              double sumPV = sp.sumPV;
              double sumV = sp.sumV;
              int pkSlot0 = -1;
@@ -182783,9 +182907,16 @@ class Core {
              tempReal = inReal * inVolume;
              sumPV += tempReal;
              sumV += inVolume;
+             nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
+             if( nullRun >= sp.optInTimePeriod ) {
+                nullRun = sp.optInTimePeriod;
+                sumPV = 0.0;
+                sumV = 0.0;
+             }
              /* Snapshot both sums before removing the trailing bar, mirroring the
-              * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-              * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+              * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+              * window, that order is what makes this bit-identical to
+              * SMA(inReal*inVolume)/SMA(inVolume).
               */
              tempPV = sumPV;
              tempV = sumV;
@@ -182841,9 +182972,16 @@ class Core {
           tempReal = inReal * inVolume;
           sp.sumPV += tempReal;
           sp.sumV += inVolume;
+          sp.nullRun = (inVolume == 0.0) ? sp.nullRun + 1 : 0;
+          if( sp.nullRun >= sp.optInTimePeriod ) {
+             sp.nullRun = sp.optInTimePeriod;
+             sp.sumPV = 0.0;
+             sp.sumV = 0.0;
+          }
           /* Snapshot both sums before removing the trailing bar, mirroring the
-           * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-           * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+           * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+           * window, that order is what makes this bit-identical to
+           * SMA(inReal*inVolume)/SMA(inVolume).
            */
           tempPV = sp.sumPV;
           tempV = sp.sumV;
@@ -182872,6 +183010,7 @@ class Core {
           int outIdx = 0;
           int trailingIdx = 0;
           int lookbackTotal = 0;
+          int nullRun = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
           if( historyLen < 1 ) {
@@ -182902,6 +183041,7 @@ class Core {
              sp.optInTimePeriod = optInTimePeriod;
              sp.sumPV = 0.0;
              sp.sumV = 0.0;
+             sp.nullRun = 0;
              sp.ringPos_trailingIdx = 0;
              sp.ringCap_trailingIdx = 0;
              sp.ring_trailingIdx_inReal = new double[1];
@@ -182944,12 +183084,18 @@ class Core {
           sumPV = 0.0;
           sumV = 0.0;
           trailingIdx = startIdx - lookbackTotal;
+          /* Consecutive zero-volume bars. Once they fill a window both sums are
+           * exactly zero, where add-then-subtract would leave the rounding residue of
+           * the bars that departed, of either sign.
+           */
+          nullRun = 0;
           i = trailingIdx;
           if( optInTimePeriod > 1 ) {
              while( i < startIdx ) {
                 tempReal = inReal[i] * inVolume[i];
                 sumPV += tempReal;
                 sumV += inVolume[i];
+                nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
                 i = i + 1;
              }
           }
@@ -182962,10 +183108,17 @@ class Core {
              tempReal = inReal[i] * inVolume[i];
              sumPV += tempReal;
              sumV += inVolume[i];
+             nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
              i = i + 1;
+             if( nullRun >= optInTimePeriod ) {
+                nullRun = optInTimePeriod;
+                sumPV = 0.0;
+                sumV = 0.0;
+             }
              /* Snapshot both sums before removing the trailing bar, mirroring the
-              * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-              * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+              * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+              * window, that order is what makes this bit-identical to
+              * SMA(inReal*inVolume)/SMA(inVolume).
               */
              tempPV = sumPV;
              tempV = sumV;
@@ -182995,6 +183148,7 @@ class Core {
           sp.optInTimePeriod = optInTimePeriod;
           sp.sumPV = sumPV;
           sp.sumV = sumV;
+          sp.nullRun = nullRun;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
           sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
@@ -187200,7 +187354,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "25f5f0cba3d2f237";
+    static final String SPLICED_GENCODE_DIGEST = "973fd092ef22392a";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

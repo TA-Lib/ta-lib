@@ -114,7 +114,7 @@ TA_LIB_API TA_RetCode TA_CMOU( int    startIdx,
       return TA_BAD_PARAM;
 
    /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-    * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+    * pandas-ta default). Over the trailing optInTimePeriod changes
     * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
     * |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
     * moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder
@@ -533,7 +533,7 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
       double prevValue = 0.0;
       double trailingValue = 0.0;
       /* CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-       * QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
+       * pandas-ta default). Over the trailing optInTimePeriod changes
        * d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
        * |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
        * moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder

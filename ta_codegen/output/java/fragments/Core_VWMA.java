@@ -12,6 +12,7 @@
  *  -------------------------------------------------------------------
  *  072026 MF,CC  First version (#131).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
+ *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  */
 
    /**
@@ -53,6 +54,7 @@
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
+      int nullRun = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -105,12 +107,18 @@
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
+      /* Consecutive zero-volume bars. Once they fill a window both sums are
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the bars that departed, of either sign.
+       */
+      nullRun = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
+            nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
             i = i + 1;
          }
       }
@@ -123,10 +131,17 @@
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
+         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
          i = i + 1;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumPV = 0.0;
+            sumV = 0.0;
+         }
          /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-          * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+          * window, that order is what makes this bit-identical to
+          * SMA(inReal*inVolume)/SMA(inVolume).
           */
          tempPV = sumPV;
          tempV = sumV;
@@ -163,6 +178,7 @@
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
+      int nullRun = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -196,12 +212,14 @@
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
+      nullRun = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = (double)inReal[i] * (double)inVolume[i];
             sumPV += tempReal;
             sumV += (double)inVolume[i];
+            nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
             i = i + 1;
          }
       }
@@ -210,7 +228,13 @@
          tempReal = (double)inReal[i] * (double)inVolume[i];
          sumPV += tempReal;
          sumV += (double)inVolume[i];
+         nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
          i = i + 1;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumPV = 0.0;
+            sumV = 0.0;
+         }
          tempPV = sumPV;
          tempV = sumV;
          tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
@@ -396,6 +420,7 @@
       private int optInTimePeriod;
       private double sumPV;
       private double sumV;
+      private int nullRun;
       private int ringPos_trailingIdx;
       private int ringCap_trailingIdx;
       private double[] ring_trailingIdx_inReal;
@@ -445,6 +470,7 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
+         this.nullRun = other.nullRun;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -500,6 +526,7 @@
          double tempV = 0.0;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
+         int nullRun = sp.nullRun;
          double sumPV = sp.sumPV;
          double sumV = sp.sumV;
          int pkSlot0 = -1;
@@ -519,9 +546,16 @@
          tempReal = inReal * inVolume;
          sumPV += tempReal;
          sumV += inVolume;
+         nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            sumPV = 0.0;
+            sumV = 0.0;
+         }
          /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-          * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+          * window, that order is what makes this bit-identical to
+          * SMA(inReal*inVolume)/SMA(inVolume).
           */
          tempPV = sumPV;
          tempV = sumV;
@@ -577,9 +611,16 @@
       tempReal = inReal * inVolume;
       sp.sumPV += tempReal;
       sp.sumV += inVolume;
+      sp.nullRun = (inVolume == 0.0) ? sp.nullRun + 1 : 0;
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.sumPV = 0.0;
+         sp.sumV = 0.0;
+      }
       /* Snapshot both sums before removing the trailing bar, mirroring the
-       * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-       * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+       * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+       * window, that order is what makes this bit-identical to
+       * SMA(inReal*inVolume)/SMA(inVolume).
        */
       tempPV = sp.sumPV;
       tempV = sp.sumV;
@@ -608,6 +649,7 @@
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
+      int nullRun = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -638,6 +680,7 @@
          sp.optInTimePeriod = optInTimePeriod;
          sp.sumPV = 0.0;
          sp.sumV = 0.0;
+         sp.nullRun = 0;
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
@@ -680,12 +723,18 @@
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
+      /* Consecutive zero-volume bars. Once they fill a window both sums are
+       * exactly zero, where add-then-subtract would leave the rounding residue of
+       * the bars that departed, of either sign.
+       */
+      nullRun = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
+            nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
             i = i + 1;
          }
       }
@@ -698,10 +747,17 @@
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
+         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
          i = i + 1;
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumPV = 0.0;
+            sumV = 0.0;
+         }
          /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-          * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+          * window, that order is what makes this bit-identical to
+          * SMA(inReal*inVolume)/SMA(inVolume).
           */
          tempPV = sumPV;
          tempV = sumV;
@@ -731,6 +787,7 @@
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumPV = sumPV;
       sp.sumV = sumV;
+      sp.nullRun = nullRun;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;

@@ -54,6 +54,7 @@
  *  -------------------------------------------------------------------
  *  072026 MF,CC  First version (#131).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
+ *  092526 MF,CC  #446 exact zero sums on a dead volume window.
  */
 
 // Import types from parent module
@@ -128,6 +129,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = (optInTimePeriod - 1) as usize;
@@ -168,12 +170,17 @@ impl Core {
         sumPV = 0.0;
         sumV = 0.0;
         trailingIdx = startIdx - lookbackTotal;
+        // Consecutive zero-volume bars. Once they fill a window both sums are
+        // exactly zero, where add-then-subtract would leave the rounding residue of
+        // the bars that departed, of either sign.
+        nullRun = 0;
         i = trailingIdx;
         if optInTimePeriod > 1 {
             while i < startIdx {
                 tempReal = inReal[i] * inVolume[i];
                 sumPV += tempReal;
                 sumV += inVolume[i];
+                nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
                 i = i + 1;
             }
         }
@@ -181,32 +188,31 @@ impl Core {
         // Note that this algorithm allows the inReal and
         // outReal to be the same buffer.
         outIdx = 0;
-        if i <= endIdx {
-            let _wn: usize = endIdx - i + 1;
-            let _w0 = &inReal[i..][.._wn];
-            let _w1 = &inReal[trailingIdx..][.._wn];
-            let _w2 = &inVolume[i..][.._wn];
-            let _w3 = &inVolume[trailingIdx..][.._wn];
-            let _w4 = &mut outReal[outIdx..][.._wn];
-            for _wk in 0.._wn {
-                tempReal = _w0[_wk] * _w2[_wk];
-                sumPV += tempReal;
-                sumV += _w2[_wk];
-                i = i + 1;
-                // Snapshot both sums before removing the trailing bar, mirroring the
-                // add-new / snapshot / subtract-old order of TA_SMA. That order is what
-                // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
-                tempPV = sumPV;
-                tempV = sumV;
-                // Read the trailing values before writing the output, since the caller
-                // may pass the same buffer for an input and the output.
-                tempReal = _w1[_wk] * _w3[_wk];
-                sumPV -= tempReal;
-                sumV -= _w3[_wk];
-                _w4[_wk] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
-                trailingIdx = trailingIdx + 1;
-                outIdx = outIdx + 1;
+        while i <= endIdx {
+            tempReal = inReal[i] * inVolume[i];
+            sumPV += tempReal;
+            sumV += inVolume[i];
+            nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
+            i = i + 1;
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                sumPV = 0.0;
+                sumV = 0.0;
             }
+            // Snapshot both sums before removing the trailing bar, mirroring the
+            // add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+            // window, that order is what makes this bit-identical to
+            // SMA(inReal*inVolume)/SMA(inVolume).
+            tempPV = sumPV;
+            tempV = sumV;
+            // Read the trailing values before writing the output, since the caller
+            // may pass the same buffer for an input and the output.
+            tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
+            sumPV -= tempReal;
+            sumV -= inVolume[trailingIdx];
+            outReal[outIdx] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
+            trailingIdx = trailingIdx + 1;
+            outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;
@@ -355,6 +361,7 @@ struct VwmaStreamState {
     optInTimePeriod: i32,
     sumPV: f64,
     sumV: f64,
+    nullRun: usize,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
@@ -384,9 +391,16 @@ impl Core {
         tempReal = inReal * inVolume;
         sp.sumPV += tempReal;
         sp.sumV += inVolume;
+        sp.nullRun = (if inVolume == 0.0 { sp.nullRun + 1 } else { 0 });
+        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
+            sp.nullRun = (sp.optInTimePeriod) as usize;
+            sp.sumPV = 0.0;
+            sp.sumV = 0.0;
+        }
         // Snapshot both sums before removing the trailing bar, mirroring the
-        // add-new / snapshot / subtract-old order of TA_SMA. That order is what
-        // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+        // add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+        // window, that order is what makes this bit-identical to
+        // SMA(inReal*inVolume)/SMA(inVolume).
         tempPV = sp.sumPV;
         tempV = sp.sumV;
         // Read the trailing values before writing the output, since the caller
@@ -444,6 +458,7 @@ impl Core {
                 optInTimePeriod: optInTimePeriod,
                 sumPV: 0.0_f64,
                 sumV: 0.0_f64,
+                nullRun: 0_usize,
                 ringPos_trailingIdx: 0_usize,
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
@@ -471,6 +486,7 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
+        let mut nullRun: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = (optInTimePeriod - 1) as usize;
@@ -494,12 +510,17 @@ impl Core {
         sumPV = 0.0;
         sumV = 0.0;
         trailingIdx = startIdx - lookbackTotal;
+        // Consecutive zero-volume bars. Once they fill a window both sums are
+        // exactly zero, where add-then-subtract would leave the rounding residue of
+        // the bars that departed, of either sign.
+        nullRun = 0;
         i = trailingIdx;
         if optInTimePeriod > 1 {
             while i < startIdx {
                 tempReal = inReal[i] * inVolume[i];
                 sumPV += tempReal;
                 sumV += inVolume[i];
+                nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
                 i = i + 1;
             }
         }
@@ -511,10 +532,17 @@ impl Core {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
+            nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
             i = i + 1;
+            if nullRun >= ((optInTimePeriod) as usize) {
+                nullRun = (optInTimePeriod) as usize;
+                sumPV = 0.0;
+                sumV = 0.0;
+            }
             // Snapshot both sums before removing the trailing bar, mirroring the
-            // add-new / snapshot / subtract-old order of TA_SMA. That order is what
-            // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+            // add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+            // window, that order is what makes this bit-identical to
+            // SMA(inReal*inVolume)/SMA(inVolume).
             tempPV = sumPV;
             tempV = sumV;
             // Read the trailing values before writing the output, since the caller
@@ -546,6 +574,7 @@ impl Core {
             optInTimePeriod,
             sumPV,
             sumV,
+            nullRun,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
@@ -730,6 +759,7 @@ impl VwmaStream {
             let mut tempPV: f64 = 0.0_f64;
             let mut tempV: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut nullRun = sp.nullRun;
             let mut sumPV = sp.sumPV;
             let mut sumV = sp.sumV;
             let mut pkSlot0: usize = usize::MAX;
@@ -749,9 +779,16 @@ impl VwmaStream {
             tempReal = inReal * inVolume;
             sumPV += tempReal;
             sumV += inVolume;
+            nullRun = (if inVolume == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((sp.optInTimePeriod) as usize) {
+                nullRun = (sp.optInTimePeriod) as usize;
+                sumPV = 0.0;
+                sumV = 0.0;
+            }
             // Snapshot both sums before removing the trailing bar, mirroring the
-            // add-new / snapshot / subtract-old order of TA_SMA. That order is what
-            // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+            // add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
+            // window, that order is what makes this bit-identical to
+            // SMA(inReal*inVolume)/SMA(inVolume).
             tempPV = sumPV;
             tempV = sumV;
             // Read the trailing values before writing the output, since the caller
