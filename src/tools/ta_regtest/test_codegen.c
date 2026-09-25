@@ -7999,6 +7999,21 @@ static void xlang_lookback_leg(const TA_FuncInfo *funcInfo, XlangCtx *ctx,
     }
 }
 
+static int xlang_period_selector(const TA_FuncInfo *fi)
+{
+    int realIndex = 0;
+    for( unsigned int i = 0; i < fi->nbInput; i++ )
+    {
+        const TA_InputParameterInfo *ii;
+        TA_GetInputParameterInfo(fi->handle, i, &ii);
+        if( ii->type != TA_Input_Real ) continue;
+        if( ii->paramName && strcmp(ii->paramName, "inPeriods") == 0 )
+            return realIndex == 1 ? 1 : -1;
+        realIndex++;
+    }
+    return 0;
+}
+
 /* Issue ONE hash-mode call for `optVals` against `sv` and parse the reply
  * (retCode / outBegIdx / outNBElement / out_hash). Returns 0 on a pipe failure
  * or a reply with no out_hash (the caller reports and fails). */
@@ -8013,7 +8028,7 @@ static int xlang_hash_call(XlangCtx *ctx, XlangServer *sv, const TA_FuncInfo *fi
      * (TA_FUNC_UNST_ADX) whatever function was called. The per-function method
      * hardcodes the right id in its generated handler, so the unstable legs
      * take the hex transport on every server. */
-    if( sv->usesSeed && unstPeriod == 0 )
+    if( sv->usesSeed && unstPeriod == 0 && xlang_period_selector(fi) == 0 )
         fuzz_build_request(ctx->reqBuf, fi, s, e, shape, seed, n, optVals, 0, 0);
     else
         xlang_build_hex_request(ctx->reqBuf, fi, hist, n, s, e, optVals, unstPeriod, 1);
@@ -8058,6 +8073,16 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         const TA_InputParameterInfo *ii;
         TA_GetInputParameterInfo(funcInfo->handle, i, &ii);
         if( ii->type == TA_Input_Integer ) return;   /* no test data */
+    }
+
+    const int rampPeriods = xlang_period_selector(funcInfo);
+    if( rampPeriods < 0 )
+    {
+        printf("XLANG [TA_%s]: inPeriods is not the second real input, so the "
+               "period ramp cannot reach it\n", funcInfo->name);
+        ctx->funcsWithFailures++;
+        ctx->error = TA_CODEGEN_OUTPUT_MISMATCH;
+        return;
     }
 
     TA_ParamHolder *paramHolder = NULL;
@@ -8162,6 +8187,10 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         int n = sizes[zi]; if( n > FUZZ_MAXN ) n = FUZZ_MAXN;
         fuzz_gen(shape, seeds[si], n,
                  g_fzBuf[0], g_fzBuf[1], g_fzBuf[2], g_fzBuf[3], g_fzBuf[4], g_fzBuf[5]);
+        /* On the fuzz volume (>= 1000) every inPeriods bar clamps to
+         * optInMaxPeriod; the ramp spans both clamps of the default [2, 30]. */
+        if( rampPeriods )
+            for( int b = 0; b < n; b++ ) g_fzBuf[4][b] = (double)(b % 42 - 1);
         hist.nbBars = (unsigned int)n;
         p.nbBars = n;
 
@@ -8387,7 +8416,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     /* curUnst != 0 forces the hex transport even for a seed
                      * server — see xlang_hash_call for why abstract_call cannot
                      * carry an unstable period. */
-                    if( sv->usesSeed && curUnst == 0 )
+                    if( sv->usesSeed && curUnst == 0 && !rampPeriods )
                         fuzz_build_request(ctx->reqBuf, funcInfo, s, e, shape, seeds[si], n, vec[k], 0, 0);
                     else
                     {
