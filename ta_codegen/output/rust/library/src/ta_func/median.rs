@@ -210,7 +210,7 @@ impl Core {
             ring[ring_Idx] = newValue;
             i += 1;
             ring_Idx += 1;
-            if ring_Idx > maxIdx_ring { ring_Idx = 0; }
+            if ring_Idx >= ring.len() { ring_Idx = 0; }
         }
         // Both scratch buffers hold copies and inReal is never read below i, so
         // inReal and outReal may be the same buffer.
@@ -269,7 +269,7 @@ impl Core {
             outIdx += 1;
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
-            if ring_Idx > maxIdx_ring { ring_Idx = 0; }
+            if ring_Idx >= ring.len() { ring_Idx = 0; }
             oldValue = ring[ring_Idx];
             // j is the first retained value >= oldValue. Keep every run of equal
             // values in age order (newValue goes after its equals, as above): the

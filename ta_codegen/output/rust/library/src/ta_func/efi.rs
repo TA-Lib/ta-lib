@@ -214,12 +214,18 @@ impl Core {
             outIdx = 0;
             today = startIdx;
             prevClose = inClose[today - 1];
-            while today <= endIdx {
-                force = (inClose[today] - prevClose) * inVolume[today];
-                prevClose = inClose[today];
-                outReal[outIdx] = force;
-                outIdx = outIdx + 1;
-                today = today + 1;
+            if today <= endIdx {
+                let _wn: usize = endIdx - today + 1;
+                let _w0 = &inClose[today..][.._wn];
+                let _w1 = &inVolume[today..][.._wn];
+                let _w2 = &mut outReal[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    force = (_w0[_wk] - prevClose) * _w1[_wk];
+                    prevClose = _w0[_wk];
+                    _w2[_wk] = force;
+                    outIdx = outIdx + 1;
+                    today = today + 1;
+                }
             }
             (*outNBElement) = outIdx;
             return RetCode::Success;
@@ -232,11 +238,20 @@ impl Core {
         prevClose = inClose[today - 1];
         i = (optInTimePeriod) as usize;
         tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            force = (inClose[today] - prevClose) * inVolume[today];
-            prevClose = inClose[today];
-            tempReal += force;
-            today = today + 1;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inClose[today..][.._wn];
+            let _w1 = &inVolume[today..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                force = (_w0[_wk] - prevClose) * _w1[_wk];
+                prevClose = _w0[_wk];
+                tempReal += force;
+                today = today + 1;
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         prevMA = tempReal / ((optInTimePeriod) as f64);
         while today <= startIdx {
@@ -247,13 +262,19 @@ impl Core {
         }
         outReal[0] = prevMA;
         outIdx = 1;
-        while today <= endIdx {
-            force = (inClose[today] - prevClose) * inVolume[today];
-            prevClose = inClose[today];
-            prevMA = (force - prevMA as f64).mul_add(optInK_1, prevMA);
-            outReal[outIdx] = prevMA;
-            outIdx = outIdx + 1;
-            today = today + 1;
+        if today <= endIdx {
+            let _wn: usize = endIdx - today + 1;
+            let _w0 = &inClose[today..][.._wn];
+            let _w1 = &inVolume[today..][.._wn];
+            let _w2 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                force = (_w0[_wk] - prevClose) * _w1[_wk];
+                prevClose = _w0[_wk];
+                prevMA = (force - prevMA as f64).mul_add(optInK_1, prevMA);
+                _w2[_wk] = prevMA;
+                outIdx = outIdx + 1;
+                today = today + 1;
+            }
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;

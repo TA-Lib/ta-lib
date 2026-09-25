@@ -210,25 +210,35 @@ impl Core {
         // Note that this algorithm allows outReal to be the same
         // buffer as either input.
         outIdx = 0;
-        while i <= endIdx {
-            medianPrice = (inHigh[i] + inLow[i]) / 2.0;
-            sumFast += medianPrice;
-            sumSlow += medianPrice;
-            i = i + 1;
-            // Snapshot the oscillator before either total drops its trailing bar,
-            // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
-            tempReal = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
-            // Read both trailing bars before writing the output. When startIdx is
-            // clamped to the lookback the longer window's trailing index equals
-            // outIdx exactly, so a store hoisted above this would read back the
-            // value it had just overwritten whenever the caller aliases outReal
-            // over inHigh or inLow.
-            sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0;
-            sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0;
-            trailingFastIdx = trailingFastIdx + 1;
-            trailingSlowIdx = trailingSlowIdx + 1;
-            outReal[outIdx] = tempReal;
-            outIdx = outIdx + 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inHigh[i..][.._wn];
+            let _w1 = &inHigh[trailingFastIdx..][.._wn];
+            let _w2 = &inHigh[trailingSlowIdx..][.._wn];
+            let _w3 = &inLow[i..][.._wn];
+            let _w4 = &inLow[trailingFastIdx..][.._wn];
+            let _w5 = &inLow[trailingSlowIdx..][.._wn];
+            let _w6 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                medianPrice = (_w0[_wk] + _w3[_wk]) / 2.0;
+                sumFast += medianPrice;
+                sumSlow += medianPrice;
+                i = i + 1;
+                // Snapshot the oscillator before either total drops its trailing bar,
+                // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+                tempReal = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
+                // Read both trailing bars before writing the output. When startIdx is
+                // clamped to the lookback the longer window's trailing index equals
+                // outIdx exactly, so a store hoisted above this would read back the
+                // value it had just overwritten whenever the caller aliases outReal
+                // over inHigh or inLow.
+                sumFast -= (_w1[_wk] + _w4[_wk]) / 2.0;
+                sumSlow -= (_w2[_wk] + _w5[_wk]) / 2.0;
+                trailingFastIdx = trailingFastIdx + 1;
+                trailingSlowIdx = trailingSlowIdx + 1;
+                _w6[_wk] = tempReal;
+                outIdx = outIdx + 1;
+            }
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;

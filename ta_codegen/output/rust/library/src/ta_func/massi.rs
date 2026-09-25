@@ -275,7 +275,7 @@ impl Core {
                 ratioRing[ratioRing_Idx] = ratio;
                 total = total + ratio;
                 ratioRing_Idx += 1;
-                if ratioRing_Idx > maxIdx_ratioRing { ratioRing_Idx = 0; }
+                if ratioRing_Idx >= ratioRing.len() { ratioRing_Idx = 0; }
                 if nBar == lookbackTotal {
                     tempReal = total;
                     total = total - ratioRing[ratioRing_Idx];
@@ -300,7 +300,7 @@ impl Core {
             ratioRing[ratioRing_Idx] = ratio;
             total = total + ratio;
             ratioRing_Idx += 1;
-            if ratioRing_Idx > maxIdx_ratioRing { ratioRing_Idx = 0; }
+            if ratioRing_Idx >= ratioRing.len() { ratioRing_Idx = 0; }
             tempReal = total;
             total = total - ratioRing[ratioRing_Idx];
             outReal[outIdx] = tempReal;

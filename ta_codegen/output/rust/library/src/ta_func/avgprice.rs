@@ -104,13 +104,26 @@ impl Core {
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let inOpen = &inOpen[..=endIdx];
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Average price = (High + Low + Open + Close) / 4
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[outIdx] = (((inHigh[i] + inLow[i] + inClose[i] + inOpen[i]) / 4_f64) as f64);
-            outIdx += 1;
+        i = startIdx;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inClose[i..][.._wn];
+            let _w1 = &inHigh[i..][.._wn];
+            let _w2 = &inLow[i..][.._wn];
+            let _w3 = &inOpen[i..][.._wn];
+            let _w4 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w4[_wk] = (((_w1[_wk] + _w2[_wk] + _w0[_wk] + _w3[_wk]) / 4_f64) as f64);
+                outIdx += 1;
+                i += 1;
+            }
         }
-        i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

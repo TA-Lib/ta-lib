@@ -244,56 +244,75 @@ impl Core {
         // Fill the signal ring with the oscillator values that precede the first
         // output. This is the same body as the main loop below minus the store --
         // the window is not full yet, so there is nothing to emit.
-        while i < startIdx {
-            medianPrice = (inHigh[i] + inLow[i]) / 2.0;
-            sumFast += medianPrice;
-            sumSlow += medianPrice;
-            osc = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
-            sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0;
-            sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0;
-            trailingFastIdx = trailingFastIdx + 1;
-            trailingSlowIdx = trailingSlowIdx + 1;
-            i = i + 1;
-            oscBuffer[oscBuffer_Idx] = osc;
-            sumSignal += osc;
-            oscBuffer_Idx += 1;
-            if oscBuffer_Idx > maxIdx_oscBuffer { oscBuffer_Idx = 0; }
+        if i < startIdx {
+            let _wn: usize = startIdx - i;
+            let _w0 = &inHigh[i..][.._wn];
+            let _w1 = &inHigh[trailingFastIdx..][.._wn];
+            let _w2 = &inHigh[trailingSlowIdx..][.._wn];
+            let _w3 = &inLow[i..][.._wn];
+            let _w4 = &inLow[trailingFastIdx..][.._wn];
+            let _w5 = &inLow[trailingSlowIdx..][.._wn];
+            for _wk in 0.._wn {
+                medianPrice = (_w0[_wk] + _w3[_wk]) / 2.0;
+                sumFast += medianPrice;
+                sumSlow += medianPrice;
+                osc = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
+                sumFast -= (_w1[_wk] + _w4[_wk]) / 2.0;
+                sumSlow -= (_w2[_wk] + _w5[_wk]) / 2.0;
+                trailingFastIdx = trailingFastIdx + 1;
+                trailingSlowIdx = trailingSlowIdx + 1;
+                i = i + 1;
+                oscBuffer[oscBuffer_Idx] = osc;
+                sumSignal += osc;
+                oscBuffer_Idx += 1;
+                if oscBuffer_Idx >= oscBuffer.len() { oscBuffer_Idx = 0; }
+            }
         }
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows outReal to be the same
         // buffer as either input.
         outIdx = 0;
-        while i <= endIdx {
-            medianPrice = (inHigh[i] + inLow[i]) / 2.0;
-            sumFast += medianPrice;
-            sumSlow += medianPrice;
-            // Snapshot the oscillator before either total drops its trailing bar,
-            // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
-            osc = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
-            sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0;
-            sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0;
-            trailingFastIdx = trailingFastIdx + 1;
-            trailingSlowIdx = trailingSlowIdx + 1;
-            i = i + 1;
-            // Today's oscillator enters the signal window at its own slot, and the
-            // bar leaving that window is read only after the ring has advanced onto
-            // it -- writing first is what makes the slot the loop is about to
-            // overwrite the newest value rather than the oldest one.
-            oscBuffer[oscBuffer_Idx] = osc;
-            sumSignal += osc;
-            tempReal = osc - sumSignal / (optInSignalPeriod as f64);
-            oscBuffer_Idx += 1;
-            if oscBuffer_Idx > maxIdx_oscBuffer { oscBuffer_Idx = 0; }
-            sumSignal -= oscBuffer[oscBuffer_Idx];
-            // Every input read for this bar is done above, so the store is safe
-            // when the caller aliases outReal over inHigh or inLow. Unlike ao.c
-            // there is slack here -- the signal window puts both trailing indices
-            // at least optInSignalPeriod-1 bars ahead of outIdx, so no reachable
-            // parameter makes them collide -- but the order is kept anyway, so
-            // that admitting a signal period of 1 would not silently reintroduce
-            // the collision ao.c has to guard against.
-            outReal[outIdx] = tempReal;
-            outIdx = outIdx + 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inHigh[i..][.._wn];
+            let _w1 = &inHigh[trailingFastIdx..][.._wn];
+            let _w2 = &inHigh[trailingSlowIdx..][.._wn];
+            let _w3 = &inLow[i..][.._wn];
+            let _w4 = &inLow[trailingFastIdx..][.._wn];
+            let _w5 = &inLow[trailingSlowIdx..][.._wn];
+            let _w6 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                medianPrice = (_w0[_wk] + _w3[_wk]) / 2.0;
+                sumFast += medianPrice;
+                sumSlow += medianPrice;
+                // Snapshot the oscillator before either total drops its trailing bar,
+                // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+                osc = sumFast / (optInFastPeriod as f64) - sumSlow / (optInSlowPeriod as f64);
+                sumFast -= (_w1[_wk] + _w4[_wk]) / 2.0;
+                sumSlow -= (_w2[_wk] + _w5[_wk]) / 2.0;
+                trailingFastIdx = trailingFastIdx + 1;
+                trailingSlowIdx = trailingSlowIdx + 1;
+                i = i + 1;
+                // Today's oscillator enters the signal window at its own slot, and the
+                // bar leaving that window is read only after the ring has advanced onto
+                // it -- writing first is what makes the slot the loop is about to
+                // overwrite the newest value rather than the oldest one.
+                oscBuffer[oscBuffer_Idx] = osc;
+                sumSignal += osc;
+                tempReal = osc - sumSignal / (optInSignalPeriod as f64);
+                oscBuffer_Idx += 1;
+                if oscBuffer_Idx >= oscBuffer.len() { oscBuffer_Idx = 0; }
+                sumSignal -= oscBuffer[oscBuffer_Idx];
+                // Every input read for this bar is done above, so the store is safe
+                // when the caller aliases outReal over inHigh or inLow. Unlike ao.c
+                // there is slack here -- the signal window puts both trailing indices
+                // at least optInSignalPeriod-1 bars ahead of outIdx, so no reachable
+                // parameter makes them collide -- but the order is kept anyway, so
+                // that admitting a signal period of 1 would not silently reintroduce
+                // the collision ao.c has to guard against.
+                _w6[_wk] = tempReal;
+                outIdx = outIdx + 1;
+            }
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;

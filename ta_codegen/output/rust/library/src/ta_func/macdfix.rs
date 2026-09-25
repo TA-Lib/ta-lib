@@ -260,12 +260,21 @@ impl Core {
         prevSignal = 0.0;
         prevSignal += macdValue;
         i = (optInSignalPeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            macdValue = prevFast - prevSlow;
-            prevSignal += macdValue;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inReal[today..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                tempReal = _w0[_wk];
+                today += 1;
+                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
+                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
+                macdValue = prevFast - prevSlow;
+                prevSignal += macdValue;
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         prevSignal = prevSignal / ((optInSignalPeriod) as f64);
         // Advance everything in lockstep through the unstable period

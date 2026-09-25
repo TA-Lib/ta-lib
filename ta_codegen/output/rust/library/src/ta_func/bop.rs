@@ -105,6 +105,10 @@ impl Core {
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
+        let inOpen = &inOpen[..=endIdx];
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // BOP = (Close - Open)/(High - Low)
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {

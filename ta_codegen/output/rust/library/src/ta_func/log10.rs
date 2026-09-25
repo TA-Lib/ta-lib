@@ -94,13 +94,18 @@ impl Core {
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
-        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
+        let inReal = &inReal[..=endIdx];
         i = startIdx;
         outIdx = 0;
-        while i <= endIdx {
-            outReal[outIdx] = (((inReal[i]).log10()) as f64);
-            i += 1;
-            outIdx += 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inReal[i..][.._wn];
+            let _w1 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w1[_wk] = (((_w0[_wk]).log10()) as f64);
+                i += 1;
+                outIdx += 1;
+            }
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;

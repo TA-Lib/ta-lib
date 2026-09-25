@@ -153,21 +153,28 @@ impl Core {
             i = i + 1;
         }
         outIdx = 0;
-        while i <= endIdx {
-            periodTotal += inReal[i];
-            i = i + 1;
-            tempReal = periodTotal;
-            periodTotal -= inReal[trailingIdx];
-            trailingIdx = trailingIdx + 1;
-            // Both reads precede the store. Either cursor can EQUAL outIdx -- the
-            // displaced one whenever startIdx equals the displacement, the trailing
-            // one whenever startIdx sits at the lookback -- so a store hoisted above
-            // them would read back what it had just overwritten when the caller
-            // aliases outReal over inReal.
-            dispVal = inReal[dispIdx];
-            dispIdx = dispIdx + 1;
-            outReal[outIdx] = dispVal - tempReal / (optInTimePeriod as f64);
-            outIdx = outIdx + 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inReal[dispIdx..][.._wn];
+            let _w1 = &inReal[i..][.._wn];
+            let _w2 = &inReal[trailingIdx..][.._wn];
+            let _w3 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                periodTotal += _w1[_wk];
+                i = i + 1;
+                tempReal = periodTotal;
+                periodTotal -= _w2[_wk];
+                trailingIdx = trailingIdx + 1;
+                // Both reads precede the store. Either cursor can EQUAL outIdx -- the
+                // displaced one whenever startIdx equals the displacement, the trailing
+                // one whenever startIdx sits at the lookback -- so a store hoisted above
+                // them would read back what it had just overwritten when the caller
+                // aliases outReal over inReal.
+                dispVal = _w0[_wk];
+                dispIdx = dispIdx + 1;
+                _w3[_wk] = dispVal - tempReal / (optInTimePeriod as f64);
+                outIdx = outIdx + 1;
+            }
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;

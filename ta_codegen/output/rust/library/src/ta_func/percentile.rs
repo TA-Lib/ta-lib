@@ -292,7 +292,7 @@ impl Core {
                 ring[ring_Idx] = newValue;
                 i += 1;
                 ring_Idx += 1;
-                if ring_Idx > maxIdx_ring { ring_Idx = 0; }
+                if ring_Idx >= ring.len() { ring_Idx = 0; }
             }
         } else {
             // Bottom-up merge sort, stable, with ring as the other half until it
@@ -350,15 +350,25 @@ impl Core {
                                 t += 1;
                             }
                         }
-                        while a < mid {
-                            ring[t] = sorted[a];
-                            a += 1;
-                            t += 1;
+                        if a < mid {
+                            let _wn: usize = mid - a;
+                            let _w0 = &mut ring[t..][.._wn];
+                            let _w1 = &sorted[a..][.._wn];
+                            for _wk in 0.._wn {
+                                _w0[_wk] = _w1[_wk];
+                                a += 1;
+                                t += 1;
+                            }
                         }
-                        while b < hi {
-                            ring[t] = sorted[b];
-                            b += 1;
-                            t += 1;
+                        if b < hi {
+                            let _wn: usize = hi - b;
+                            let _w0 = &mut ring[t..][.._wn];
+                            let _w1 = &sorted[b..][.._wn];
+                            for _wk in 0.._wn {
+                                _w0[_wk] = _w1[_wk];
+                                b += 1;
+                                t += 1;
+                            }
                         }
                         lo = hi;
                     }
@@ -389,32 +399,52 @@ impl Core {
                                     t += 1;
                                 }
                             }
-                            while a < mid {
-                                sorted[t] = ring[a];
-                                a += 1;
-                                t += 1;
+                            if a < mid {
+                                let _wn: usize = mid - a;
+                                let _w0 = &ring[a..][.._wn];
+                                let _w1 = &mut sorted[t..][.._wn];
+                                for _wk in 0.._wn {
+                                    _w1[_wk] = _w0[_wk];
+                                    a += 1;
+                                    t += 1;
+                                }
                             }
-                            while b < hi {
-                                sorted[t] = ring[b];
-                                b += 1;
-                                t += 1;
+                            if b < hi {
+                                let _wn: usize = hi - b;
+                                let _w0 = &ring[b..][.._wn];
+                                let _w1 = &mut sorted[t..][.._wn];
+                                for _wk in 0.._wn {
+                                    _w1[_wk] = _w0[_wk];
+                                    b += 1;
+                                    t += 1;
+                                }
                             }
                             lo = hi;
                         }
                         w += w;
                     } else {
                         t = 0;
-                        while t < lookbackTotal {
-                            sorted[t] = ring[t];
-                            t += 1;
+                        if t < lookbackTotal {
+                            let _wn: usize = lookbackTotal - t;
+                            let _w0 = &ring[t..][.._wn];
+                            let _w1 = &mut sorted[t..][.._wn];
+                            for _wk in 0.._wn {
+                                _w1[_wk] = _w0[_wk];
+                                t += 1;
+                            }
                         }
                     }
                 }
             }
             t = 0;
-            while t < lookbackTotal {
-                ring[t] = inReal[i + t];
-                t += 1;
+            if t < lookbackTotal {
+                let _wn: usize = lookbackTotal - t;
+                let _w0 = &inReal[i + t..][.._wn];
+                let _w1 = &mut ring[t..][.._wn];
+                for _wk in 0.._wn {
+                    _w1[_wk] = _w0[_wk];
+                    t += 1;
+                }
             }
             ring_Idx = lookbackTotal;
             i = startIdx;
@@ -470,7 +500,7 @@ impl Core {
             outIdx += 1;
             ring[ring_Idx] = newValue;
             ring_Idx += 1;
-            if ring_Idx > maxIdx_ring { ring_Idx = 0; }
+            if ring_Idx >= ring.len() { ring_Idx = 0; }
             oldValue = ring[ring_Idx];
             if lookbackTotal < 32 {
                 if lookbackTotal == 1 {
@@ -519,10 +549,14 @@ impl Core {
                             if trend == 1 {
                                 j = ring_Idx;
                                 k = 0;
-                                while k < lookbackTotal {
-                                    sorted[k] = ring[j];
-                                    j = (if j == lookbackTotal { 0 } else { j + 1 });
-                                    k += 1;
+                                if k < lookbackTotal {
+                                    let _wn: usize = lookbackTotal - k;
+                                    let _w0 = &mut sorted[k..][.._wn];
+                                    for _wk in 0.._wn {
+                                        _w0[_wk] = ring[j];
+                                        j = (if j == lookbackTotal { 0 } else { j + 1 });
+                                        k += 1;
+                                    }
                                 }
                             } else {
                                 j = ring_Idx + lookbackTotal - 1;
@@ -530,10 +564,14 @@ impl Core {
                                     j -= (optInTimePeriod) as usize;
                                 }
                                 k = 0;
-                                while k < lookbackTotal {
-                                    sorted[k] = ring[j];
-                                    j = (if j == 0 { lookbackTotal } else { j - 1 });
-                                    k += 1;
+                                if k < lookbackTotal {
+                                    let _wn: usize = lookbackTotal - k;
+                                    let _w0 = &mut sorted[k..][.._wn];
+                                    for _wk in 0.._wn {
+                                        _w0[_wk] = ring[j];
+                                        j = (if j == 0 { lookbackTotal } else { j - 1 });
+                                        k += 1;
+                                    }
                                 }
                             }
                             trend = 0;

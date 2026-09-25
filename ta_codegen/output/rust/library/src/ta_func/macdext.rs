@@ -276,11 +276,15 @@ impl Core {
             return RetCode::BadParam;
         }
         // Calculate (fast MA) - (slow MA).
-        // for( i = 0; i < outNbElement1; i += 1 )
         i = 0;
-        while i < outNbElement1 {
-            fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
-            i += 1;
+        if i < outNbElement1 {
+            let _wn: usize = outNbElement1 - i;
+            let _w0 = &mut fastMABuffer[i..][.._wn];
+            let _w1 = &slowMABuffer[i..][.._wn];
+            for _wk in 0.._wn {
+                _w0[_wk] = _w0[_wk] - _w1[_wk];
+                i += 1;
+            }
         }
         // Copy the result into the output for the caller.
         // memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
@@ -297,11 +301,16 @@ impl Core {
         outNbElement2 = _xr3.count;
         retCode = RetCode::Success;
         // Calculate the histogram.
-        // for( i = 0; i < outNbElement2; i += 1 )
         i = 0;
-        while i < outNbElement2 {
-            outMACDHist[i] = ((outMACD[i] - outMACDSignal[i]) as f64);
-            i += 1;
+        if i < outNbElement2 {
+            let _wn: usize = outNbElement2 - i;
+            let _w0 = &outMACD[i..][.._wn];
+            let _w1 = &mut outMACDHist[i..][.._wn];
+            let _w2 = &outMACDSignal[i..][.._wn];
+            for _wk in 0.._wn {
+                _w1[_wk] = ((_w0[_wk] - _w2[_wk]) as f64);
+                i += 1;
+            }
         }
         // All done! Indicate the output limits and return success.
         (*outBegIdx) = startIdx;

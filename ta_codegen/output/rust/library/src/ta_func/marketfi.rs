@@ -100,6 +100,9 @@ impl Core {
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         // Bill Williams' Market Facilitation Index: the price range a bar
         // travelled per unit of volume traded, i.e. how much movement the
         // market "facilitated" per tick.

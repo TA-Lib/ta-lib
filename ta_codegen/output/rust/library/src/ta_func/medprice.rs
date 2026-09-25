@@ -100,17 +100,26 @@ impl Core {
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
         // MEDPRICE = (High + Low ) / 2
         // This is the high and low of the same price bar.
         //
         // See MIDPRICE to use instead the highest high and lowest
         // low over multiple price bar.
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[outIdx] = (((inHigh[i] + inLow[i]) / 2.0) as f64);
-            outIdx += 1;
+        i = startIdx;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inHigh[i..][.._wn];
+            let _w1 = &inLow[i..][.._wn];
+            let _w2 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w2[_wk] = (((_w0[_wk] + _w1[_wk]) / 2.0) as f64);
+                outIdx += 1;
+                i += 1;
+            }
         }
-        i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

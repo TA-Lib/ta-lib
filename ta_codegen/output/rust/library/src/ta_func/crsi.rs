@@ -215,11 +215,16 @@ impl Core {
         retCode = RetCode::Success;
         offsetRSI = rsiNb - (*outNBElement);
         offsetStreak = streakNb - (*outNBElement);
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            outReal[i] = (((tempRSI[i + offsetRSI] + tempStreakRSI[i + offsetStreak] + outReal[i]) / 3.0) as f64);
-            i += 1;
+        if i < ((((*outNBElement) as usize)) as usize) {
+            let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+            let _w0 = &mut outReal[i..][.._wn];
+            let _w1 = &tempRSI[i + offsetRSI..][.._wn];
+            let _w2 = &tempStreakRSI[i + offsetStreak..][.._wn];
+            for _wk in 0.._wn {
+                _w0[_wk] = (((_w1[_wk] + _w2[_wk] + _w0[_wk]) / 3.0) as f64);
+                i += 1;
+            }
         }
         (*outBegIdx) = startIdx;
         return RetCode::Success;

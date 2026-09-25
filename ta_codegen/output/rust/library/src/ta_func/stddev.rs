@@ -166,18 +166,24 @@ impl Core {
         // bar, with TA_SUCCESS and nothing to say it had been suppressed (#243).
         // Dropping it also leaves a pure map, which the branch had kept sqrt out of.
         if optInNbDev != 1.0 {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                outReal[i] = (((outReal[i]).sqrt() * optInNbDev) as f64);
-                i += 1;
+            if i < ((((*outNBElement) as usize)) as usize) {
+                let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+                let _w0 = &mut outReal[i..][.._wn];
+                for _wk in 0.._wn {
+                    _w0[_wk] = (((_w0[_wk]).sqrt() * optInNbDev) as f64);
+                    i += 1;
+                }
             }
         } else {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                outReal[i] = (((outReal[i]).sqrt()) as f64);
-                i += 1;
+            if i < ((((*outNBElement) as usize)) as usize) {
+                let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+                let _w0 = &mut outReal[i..][.._wn];
+                for _wk in 0.._wn {
+                    _w0[_wk] = (((_w0[_wk]).sqrt()) as f64);
+                    i += 1;
+                }
             }
         }
         return RetCode::Success;

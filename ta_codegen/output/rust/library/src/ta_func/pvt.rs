@@ -101,6 +101,8 @@ impl Core {
         let mut prevPVT: f64 = 0.0_f64;
         let mut prevClose: f64 = 0.0_f64;
         let mut tempClose: f64 = 0.0_f64;
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         prevPVT = 0.0;
         prevClose = inClose[startIdx];
         outIdx = 0;

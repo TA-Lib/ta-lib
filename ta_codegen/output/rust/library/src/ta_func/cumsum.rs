@@ -95,6 +95,7 @@ impl Core {
         let mut total: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
+        let inReal = &inReal[..=endIdx];
         // Running total from the ANCHOR bar forward: the accumulator re-seeds at
         // startIdx, exactly as every shipped path-dependent accumulator does
         // (ad.c anchors at startIdx with ad = 0.0, obv.c seeds at
@@ -110,14 +111,18 @@ impl Core {
         // assignment expression, so the one-liner cannot lower to a required
         // backend.
         total = 0.0;
-        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
         i = startIdx;
         outIdx = 0;
-        while i <= endIdx {
-            total += inReal[i];
-            outReal[outIdx] = total;
-            i += 1;
-            outIdx += 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inReal[i..][.._wn];
+            let _w1 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                total += _w0[_wk];
+                _w1[_wk] = total;
+                i += 1;
+                outIdx += 1;
+            }
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;

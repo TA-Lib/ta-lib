@@ -325,74 +325,94 @@ impl Core {
         prevLow = inLow[today];
         prevClose = inClose[today];
         i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            // Plus Delta
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            // Minus Delta
-            prevLow = tempReal;
-            // +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
-            // first test and the max the second, as a non-positive delta cannot raise
-            // the sum. gcc keeps a branch if the select compares diffP itself or if a
-            // select, not the max, ends the step.
-            tempReal = diffP - diffM;
-            plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
-            tempReal = prevPlusDM + plusDM1;
-            prevPlusDM = (if prevPlusDM > tempReal { prevPlusDM } else { tempReal });
-            let mut _true_range_1: f64;
-            let mut range_1: f64 = prevHigh - prevLow;
-            let mut tmp_1: f64 = (prevHigh - prevClose).abs();
-            if tmp_1 > range_1 {
-                range_1 = tmp_1;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inClose[today + 1..][.._wn];
+            let _w1 = &inHigh[today + 1..][.._wn];
+            let _w2 = &inLow[today + 1..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                today += 1;
+                tempReal = _w1[_wk];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = _w2[_wk];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                // +DM1 = diffP when diffP > diffM and diffP > 0: the select takes the
+                // first test and the max the second, as a non-positive delta cannot raise
+                // the sum. gcc keeps a branch if the select compares diffP itself or if a
+                // select, not the max, ends the step.
+                tempReal = diffP - diffM;
+                plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+                tempReal = prevPlusDM + plusDM1;
+                prevPlusDM = (if prevPlusDM > tempReal { prevPlusDM } else { tempReal });
+                let mut _true_range_1: f64;
+                let mut range_1: f64 = prevHigh - prevLow;
+                let mut tmp_1: f64 = (prevHigh - prevClose).abs();
+                if tmp_1 > range_1 {
+                    range_1 = tmp_1;
+                }
+                tmp_1 = (prevLow - prevClose).abs();
+                if tmp_1 > range_1 {
+                    range_1 = tmp_1;
+                }
+                _true_range_1 = range_1;
+                tempReal = _true_range_1;
+                prevTR += tempReal;
+                prevClose = _w0[_wk];
             }
-            tmp_1 = (prevLow - prevClose).abs();
-            if tmp_1 > range_1 {
-                range_1 = tmp_1;
-            }
-            _true_range_1 = range_1;
-            tempReal = _true_range_1;
-            prevTR += tempReal;
-            prevClose = inClose[today];
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         // Process subsequent DI
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
         i = (self.unstable_period[FuncUnstId::PLUS_DI as usize] + 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-            // Calculate the prevPlusDM
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            // Plus Delta
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            // Minus Delta
-            prevLow = tempReal;
-            tempReal = diffP - diffM;
-            plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
-            tempReal = prevPlusDM - prevPlusDM * invPeriod;
-            prevPlusDM = tempReal + plusDM1;
-            prevPlusDM = (if tempReal > prevPlusDM { tempReal } else { prevPlusDM });
-            // Calculate the prevTR
-            let mut _true_range_2: f64;
-            let mut range_2: f64 = prevHigh - prevLow;
-            let mut tmp_2: f64 = (prevHigh - prevClose).abs();
-            if tmp_2 > range_2 {
-                range_2 = tmp_2;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inClose[today + 1..][.._wn];
+            let _w1 = &inHigh[today + 1..][.._wn];
+            let _w2 = &inLow[today + 1..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                // Calculate the prevPlusDM
+                today += 1;
+                tempReal = _w1[_wk];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = _w2[_wk];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                tempReal = diffP - diffM;
+                plusDM1 = (if tempReal > 0.0 { diffP } else { 0.0 });
+                tempReal = prevPlusDM - prevPlusDM * invPeriod;
+                prevPlusDM = tempReal + plusDM1;
+                prevPlusDM = (if tempReal > prevPlusDM { tempReal } else { prevPlusDM });
+                // Calculate the prevTR
+                let mut _true_range_2: f64;
+                let mut range_2: f64 = prevHigh - prevLow;
+                let mut tmp_2: f64 = (prevHigh - prevClose).abs();
+                if tmp_2 > range_2 {
+                    range_2 = tmp_2;
+                }
+                tmp_2 = (prevLow - prevClose).abs();
+                if tmp_2 > range_2 {
+                    range_2 = tmp_2;
+                }
+                _true_range_2 = range_2;
+                tempReal = _true_range_2;
+                prevTR = prevTR - prevTR * invPeriod + tempReal;
+                prevClose = _w0[_wk];
             }
-            tmp_2 = (prevLow - prevClose).abs();
-            if tmp_2 > range_2 {
-                range_2 = tmp_2;
-            }
-            _true_range_2 = range_2;
-            tempReal = _true_range_2;
-            prevTR = prevTR - prevTR * invPeriod + tempReal;
-            prevClose = inClose[today];
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         // Now start to write the output in
         // the caller provided outReal.

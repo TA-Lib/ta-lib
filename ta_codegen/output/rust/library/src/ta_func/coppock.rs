@@ -243,21 +243,26 @@ impl Core {
         periodSub = 0.0 as f64;
         periodSum = periodSub;
         i = 1;
-        while inIdx < startIdx {
-            base1 = inReal[roc1Idx];
-            roc1Idx += 1;
-            base2 = inReal[roc2Idx];
-            roc2Idx += 1;
-            roc1 = (if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 });
-            roc2 = (if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 });
-            tempReal = roc1 + roc2;
-            periodSub += tempReal;
-            periodSum += tempReal * ((i) as f64);
-            i += 1;
-            sRing[sRing_Idx] = tempReal;
-            sRing_Idx += 1;
-            if sRing_Idx > maxIdx_sRing { sRing_Idx = 0; }
-            inIdx += 1;
+        if inIdx < startIdx {
+            let _wn: usize = startIdx - inIdx;
+            let _w0 = &inReal[roc1Idx..][.._wn];
+            let _w1 = &inReal[roc2Idx..][.._wn];
+            for _wk in 0.._wn {
+                base1 = _w0[_wk];
+                roc1Idx += 1;
+                base2 = _w1[_wk];
+                roc2Idx += 1;
+                roc1 = (if base1 != 0.0 { (inReal[inIdx] / base1 - 1.0) * 100.0 } else { 0.0 });
+                roc2 = (if base2 != 0.0 { (inReal[inIdx] / base2 - 1.0) * 100.0 } else { 0.0 });
+                tempReal = roc1 + roc2;
+                periodSub += tempReal;
+                periodSum += tempReal * ((i) as f64);
+                i += 1;
+                sRing[sRing_Idx] = tempReal;
+                sRing_Idx += 1;
+                if sRing_Idx >= sRing.len() { sRing_Idx = 0; }
+                inIdx += 1;
+            }
         }
         barsSinceReseed = (8 * optInWMAPeriod) as usize;
         trailingValue = 0.0;
@@ -306,7 +311,7 @@ impl Core {
             trailingValue = sRing[sRing_Idx];
             sRing[sRing_Idx] = tempReal;
             sRing_Idx += 1;
-            if sRing_Idx > maxIdx_sRing { sRing_Idx = 0; }
+            if sRing_Idx >= sRing.len() { sRing_Idx = 0; }
             // Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
             // and TA_WMA ships an exact copy fast path, but the recurrence here is
             // off by a whole term at w == 1 -- ringSize clamps to 1, so the

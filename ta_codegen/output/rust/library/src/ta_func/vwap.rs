@@ -110,6 +110,10 @@ impl Core {
         let mut vwap: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         // Volume Weighted Average Price: the average typical price paid per
         // unit of volume, accumulated from the first bar of the range.
         //

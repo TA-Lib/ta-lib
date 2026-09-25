@@ -323,11 +323,14 @@ impl Core {
         I1ForEvenPrev2 = 0.0;
         I1ForOddPrev2 = I1ForEvenPrev2;
         smoothPeriod = 0.0;
-        // for( i = 0; i < 50; i += 1 )
         i = 0;
-        while i < 50 {
-            smoothPrice[i] = 0.0;
-            i += 1;
+        if i < 50 {
+            let _wn: usize = 50 - i;
+            let _w0 = &mut smoothPrice[i..][.._wn];
+            for _wk in 0.._wn {
+                _w0[_wk] = 0.0;
+                i += 1;
+            }
         }
         // The code is speed optimized and is most likely very
         // hard to follow if you do not already know well the
@@ -517,7 +520,7 @@ impl Core {
             }
             // Ooof... let's do the next price bar now!
             smoothPrice_Idx += 1;
-            if smoothPrice_Idx > maxIdx_smoothPrice { smoothPrice_Idx = 0; }
+            if smoothPrice_Idx >= smoothPrice.len() { smoothPrice_Idx = 0; }
             today += 1;
         }
         (*outNBElement) = outIdx;

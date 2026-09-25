@@ -258,6 +258,8 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
     Typing {
         ctx: RustRenderCtx {
             for_range_lowering: true,
+            window_loops: false,
+            same_len_inputs: std::collections::HashSet::new(),
             bounds_asserts: false,
             index_vars,
             real_vars,
@@ -273,6 +275,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             matype_map: HashMap::new(),
             enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
+            circbuf_len_of: HashMap::new(),
             nullable_outputs: HashSet::new(),
             nullable_shadow: false,
         },
@@ -3481,6 +3484,8 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
     index_vars.insert("historyLen".to_string());
     RustRenderCtx {
             for_range_lowering: true,
+            window_loops: false,
+            same_len_inputs: std::collections::HashSet::new(),
         bounds_asserts: false,
         index_vars,
         real_vars: HashSet::new(),
@@ -3501,6 +3506,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         matype_map: build_matype_map(enums),
         enum_vars: super::rust_lang::enum_local_types(func),
         circbuf_hybrid_static: HashMap::new(),
+        circbuf_len_of: HashMap::new(),
         nullable_outputs: HashSet::new(),
         nullable_shadow: false,
     }

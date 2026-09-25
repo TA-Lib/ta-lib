@@ -159,11 +159,16 @@ impl Core {
             // float array, so a double-sized byte copy would reinterpret and
             // over-read it (#137). Forward order keeps the in-place case correct (#94).
             today = startIdx;
-            // for( outIdx = 0; outIdx < i; outIdx += 1 )
             outIdx = 0;
-            while outIdx < i {
-                outReal[outIdx] = ((inReal[{ let _v = today; today += 1; _v }]) as f64);
-                outIdx += 1;
+            if outIdx < i {
+                let _wn: usize = i - outIdx;
+                let _w0 = &inReal[today..][.._wn];
+                let _w1 = &mut outReal[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    _w1[_wk] = ((_w0[_wk]) as f64);
+                    today += 1;
+                    outIdx += 1;
+                }
             }
             return RetCode::Success;
         }
@@ -179,16 +184,20 @@ impl Core {
         prevGain = 0.0;
         prevLoss = 0.0;
         today += 1;
-        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
         i = (optInTimePeriod) as usize;
-        while i > 0 {
-            tempValue1 = inReal[{ let _v = today; today += 1; _v }];
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
-            prevGain += gainDelta;
-            prevLoss += gainDelta - tempValue2;
-            i -= 1;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inReal[today..][.._wn];
+            for _wk in 0.._wn {
+                tempValue1 = _w0[_wk];
+                today += 1;
+                tempValue2 = tempValue1 - prevValue;
+                prevValue = tempValue1;
+                gainDelta = (if tempValue2 > 0.0 { tempValue2 } else { 0.0 });
+                prevGain += gainDelta;
+                prevLoss += gainDelta - tempValue2;
+                i -= 1;
+            }
         }
         // Subsequent prevLoss and prevGain are smoothed
         // using the previous values (Wilder's approach):

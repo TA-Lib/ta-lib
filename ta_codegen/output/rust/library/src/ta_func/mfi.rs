@@ -244,7 +244,7 @@ impl Core {
                 negSumMF = 0.0;
             }
             mflow_Idx += 1;
-            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
+            if mflow_Idx >= mflow_positive.len() { mflow_Idx = 0; }
             i -= 1;
         }
         // The following two equations are equivalent:
@@ -307,7 +307,7 @@ impl Core {
                 outIdx += 1;
             }
             mflow_Idx += 1;
-            if mflow_Idx > maxIdx_mflow { mflow_Idx = 0; }
+            if mflow_Idx >= mflow_positive.len() { mflow_Idx = 0; }
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;

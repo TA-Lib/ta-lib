@@ -234,13 +234,19 @@ impl Core {
             lowest = highest;
             sufHighest[(optInTimePeriod - 1) as usize] = highest;
             sufLowest[(optInTimePeriod - 1) as usize] = lowest;
-            while i > blockStart {
-                i -= 1;
-                tmpHigh = inReal[i];
-                highest = c_max(tmpHigh, highest);
-                lowest = c_min(tmpHigh, lowest);
-                sufHighest[i - blockStart] = highest;
-                sufLowest[i - blockStart] = lowest;
+            if i > blockStart {
+                let _wn: usize = i - blockStart;
+                let _w0 = &inReal[i - _wn..][.._wn];
+                let _w1 = &mut sufHighest[i - _wn - blockStart..][.._wn];
+                let _w2 = &mut sufLowest[i - _wn - blockStart..][.._wn];
+                for _wk in (0.._wn).rev() {
+                    i -= 1;
+                    tmpHigh = _w0[_wk];
+                    highest = c_max(tmpHigh, highest);
+                    lowest = c_min(tmpHigh, lowest);
+                    _w1[_wk] = highest;
+                    _w2[_wk] = lowest;
+                }
             }
             outMax[outIdx] = ((sufHighest[0]) as f64);
             outMin[outIdx] = ((sufLowest[0]) as f64);
@@ -262,26 +268,41 @@ impl Core {
                 preHighest[0] = highest;
                 preLowest[0] = lowest;
                 i = 1;
-                while i < nAvail {
-                    tmpHigh = inReal[blockNext + i];
-                    highest = c_max(tmpHigh, highest);
-                    lowest = c_min(tmpHigh, lowest);
-                    preHighest[i] = highest;
-                    preLowest[i] = lowest;
-                    i += 1;
+                if i < nAvail {
+                    let _wn: usize = nAvail - i;
+                    let _w0 = &inReal[blockNext + i..][.._wn];
+                    let _w1 = &mut preHighest[i..][.._wn];
+                    let _w2 = &mut preLowest[i..][.._wn];
+                    for _wk in 0.._wn {
+                        tmpHigh = _w0[_wk];
+                        highest = c_max(tmpHigh, highest);
+                        lowest = c_min(tmpHigh, lowest);
+                        _w1[_wk] = highest;
+                        _w2[_wk] = lowest;
+                        i += 1;
+                    }
                 }
                 // Combine. The suffix half is the older one, so preferring it
                 // on a tie keeps the earliest-wins rule.
                 m = 1;
-                while m <= nAvail {
-                    highest = sufHighest[m];
-                    highest = c_max(preHighest[m - 1], highest);
-                    lowest = sufLowest[m];
-                    lowest = c_min(preLowest[m - 1], lowest);
-                    outMax[outIdx] = highest;
-                    outMin[outIdx] = lowest;
-                    outIdx += 1;
-                    m += 1;
+                if m <= nAvail {
+                    let _wn: usize = nAvail - m + 1;
+                    let _w0 = &mut outMax[outIdx..][.._wn];
+                    let _w1 = &mut outMin[outIdx..][.._wn];
+                    let _w2 = &preHighest[m - 1..][.._wn];
+                    let _w3 = &preLowest[m - 1..][.._wn];
+                    let _w4 = &sufHighest[m..][.._wn];
+                    let _w5 = &sufLowest[m..][.._wn];
+                    for _wk in 0.._wn {
+                        highest = _w4[_wk];
+                        highest = c_max(_w2[_wk], highest);
+                        lowest = _w5[_wk];
+                        lowest = c_min(_w3[_wk], lowest);
+                        _w0[_wk] = highest;
+                        _w1[_wk] = lowest;
+                        outIdx += 1;
+                        m += 1;
+                    }
                 }
                 trailingIdx = trailingIdx + nAvail;
                 today = today + nAvail;

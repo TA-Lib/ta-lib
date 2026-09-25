@@ -102,13 +102,24 @@ impl Core {
         let mut startIdx = startIdx;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Typical price = (High + Low + Close ) / 3
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[outIdx] = (((inHigh[i] + inLow[i] + inClose[i]) / 3.0) as f64);
-            outIdx += 1;
+        i = startIdx;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inClose[i..][.._wn];
+            let _w1 = &inHigh[i..][.._wn];
+            let _w2 = &inLow[i..][.._wn];
+            let _w3 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w3[_wk] = (((_w1[_wk] + _w2[_wk] + _w0[_wk]) / 3.0) as f64);
+                outIdx += 1;
+                i += 1;
+            }
         }
-        i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

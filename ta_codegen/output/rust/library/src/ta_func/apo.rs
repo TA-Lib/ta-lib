@@ -192,11 +192,15 @@ impl Core {
         // outReal[i], with a non-negative index. An empty slow MA skips the loop.
         offset = fastNb - (*outNBElement);
         // Calculate (fast MA)-(slow MA) in the output.
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            outReal[i] = ((tempBuffer[i + offset] - outReal[i]) as f64);
-            i += 1;
+        if i < ((((*outNBElement) as usize)) as usize) {
+            let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+            let _w0 = &mut outReal[i..][.._wn];
+            let _w1 = &tempBuffer[i + offset..][.._wn];
+            for _wk in 0.._wn {
+                _w0[_wk] = ((_w1[_wk] - _w0[_wk]) as f64);
+                i += 1;
+            }
         }
         return RetCode::Success;
     }

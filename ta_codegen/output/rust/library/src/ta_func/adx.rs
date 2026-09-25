@@ -296,40 +296,50 @@ impl Core {
         prevLow = inLow[today];
         prevClose = inClose[today];
         i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            // Calculate the prevMinusDM and prevPlusDM
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            // Plus Delta
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            // Minus Delta
-            prevLow = tempReal;
-            // Gate on the leg subtraction first, then on the sign: comparing diffM > diffP
-            // directly, or testing the sign first, lets gcc thread the selects back into
-            // branches. a-b > 0.0 is exactly a > b for any in-domain difference.
-            minusSel = (if diffM - diffP > 0.0 { diffM } else { 0.0 });
-            plusSel = (if diffP - diffM > 0.0 { diffP } else { 0.0 });
-            minusDM1 = (if diffM > 0.0 { minusSel } else { 0.0 });
-            plusDM1 = (if diffP > 0.0 { plusSel } else { 0.0 });
-            prevMinusDM += minusDM1;
-            prevPlusDM += plusDM1;
-            let mut _true_range_0: f64;
-            let mut range_0: f64 = prevHigh - prevLow;
-            let mut tmp_0: f64 = (prevHigh - prevClose).abs();
-            if tmp_0 > range_0 {
-                range_0 = tmp_0;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inClose[today + 1..][.._wn];
+            let _w1 = &inHigh[today + 1..][.._wn];
+            let _w2 = &inLow[today + 1..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                // Calculate the prevMinusDM and prevPlusDM
+                today += 1;
+                tempReal = _w1[_wk];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = _w2[_wk];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                // Gate on the leg subtraction first, then on the sign: comparing diffM > diffP
+                // directly, or testing the sign first, lets gcc thread the selects back into
+                // branches. a-b > 0.0 is exactly a > b for any in-domain difference.
+                minusSel = (if diffM - diffP > 0.0 { diffM } else { 0.0 });
+                plusSel = (if diffP - diffM > 0.0 { diffP } else { 0.0 });
+                minusDM1 = (if diffM > 0.0 { minusSel } else { 0.0 });
+                plusDM1 = (if diffP > 0.0 { plusSel } else { 0.0 });
+                prevMinusDM += minusDM1;
+                prevPlusDM += plusDM1;
+                let mut _true_range_0: f64;
+                let mut range_0: f64 = prevHigh - prevLow;
+                let mut tmp_0: f64 = (prevHigh - prevClose).abs();
+                if tmp_0 > range_0 {
+                    range_0 = tmp_0;
+                }
+                tmp_0 = (prevLow - prevClose).abs();
+                if tmp_0 > range_0 {
+                    range_0 = tmp_0;
+                }
+                _true_range_0 = range_0;
+                tempReal = _true_range_0;
+                prevTR += tempReal;
+                prevClose = _w0[_wk];
             }
-            tmp_0 = (prevLow - prevClose).abs();
-            if tmp_0 > range_0 {
-                range_0 = tmp_0;
-            }
-            _true_range_0 = range_0;
-            tempReal = _true_range_0;
-            prevTR += tempReal;
-            prevClose = inClose[today];
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         // Add up all the initial DX.
         sumDX = 0.0;

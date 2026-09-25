@@ -104,6 +104,8 @@ impl Core {
         let mut prevReal: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevOBV: f64 = 0.0_f64;
+        let inReal = &inReal[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         prevOBV = inVolume[startIdx];
         prevReal = inReal[startIdx];
         outIdx = 0;

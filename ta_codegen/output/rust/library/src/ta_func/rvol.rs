@@ -142,19 +142,25 @@ impl Core {
             i = i + 1;
         }
         outIdx = 0;
-        while i <= endIdx {
-            // Drop the trailing bar BEFORE adding today's. That order makes each
-            // baseline bit-identical to the moving average of the same period at the
-            // previous bar; the reverse order differs only in the last ulp, so no
-            // tolerance can tell the two apart.
-            baseline = periodTotal / (optInTimePeriod as f64);
-            periodTotal -= inVolume[trailingIdx] as f64;
-            trailingIdx = trailingIdx + 1;
-            todayVolume = inVolume[i] as f64;
-            i = i + 1;
-            periodTotal += todayVolume;
-            outReal[outIdx] = todayVolume / baseline;
-            outIdx = outIdx + 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inVolume[i..][.._wn];
+            let _w1 = &inVolume[trailingIdx..][.._wn];
+            let _w2 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                // Drop the trailing bar BEFORE adding today's. That order makes each
+                // baseline bit-identical to the moving average of the same period at the
+                // previous bar; the reverse order differs only in the last ulp, so no
+                // tolerance can tell the two apart.
+                baseline = periodTotal / (optInTimePeriod as f64);
+                periodTotal -= _w1[_wk] as f64;
+                trailingIdx = trailingIdx + 1;
+                todayVolume = _w0[_wk] as f64;
+                i = i + 1;
+                periodTotal += todayVolume;
+                _w2[_wk] = todayVolume / baseline;
+                outIdx = outIdx + 1;
+            }
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;

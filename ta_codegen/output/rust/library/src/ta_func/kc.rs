@@ -215,14 +215,20 @@ impl Core {
             return retCode;
         }
         (*outBegIdx) = startIdx;
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            middle = outRealMiddleBand[i];
-            tempReal = tempATR[i] * optInNbDev;
-            outRealUpperBand[i] = middle + tempReal;
-            outRealLowerBand[i] = middle - tempReal;
-            i += 1;
+        if i < ((((*outNBElement) as usize)) as usize) {
+            let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+            let _w0 = &mut outRealLowerBand[i..][.._wn];
+            let _w1 = &outRealMiddleBand[i..][.._wn];
+            let _w2 = &mut outRealUpperBand[i..][.._wn];
+            let _w3 = &tempATR[i..][.._wn];
+            for _wk in 0.._wn {
+                middle = _w1[_wk];
+                tempReal = _w3[_wk] * optInNbDev;
+                _w2[_wk] = middle + tempReal;
+                _w0[_wk] = middle - tempReal;
+                i += 1;
+            }
         }
         return RetCode::Success;
     }

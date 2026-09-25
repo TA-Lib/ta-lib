@@ -226,20 +226,26 @@ impl Core {
             today = startIdx - 1;
             prevHigh = inHigh[today];
             prevLow = inLow[today];
-            while today < endIdx {
-                today += 1;
-                tempReal = inHigh[today];
-                diffP = tempReal - prevHigh;
-                // Plus Delta
-                prevHigh = tempReal;
-                tempReal = inLow[today];
-                diffM = prevLow - tempReal;
-                // Minus Delta
-                prevLow = tempReal;
-                minusDM1 = (if diffM > 0.0 { diffM } else { 0.0 });
-                minusDM1 = (if diffP < diffM { minusDM1 } else { 0.0 });
-                outReal[outIdx] = minusDM1;
-                outIdx += 1;
+            if today < endIdx {
+                let _wn: usize = endIdx - today;
+                let _w0 = &inHigh[today + 1..][.._wn];
+                let _w1 = &inLow[today + 1..][.._wn];
+                let _w2 = &mut outReal[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    today += 1;
+                    tempReal = _w0[_wk];
+                    diffP = tempReal - prevHigh;
+                    // Plus Delta
+                    prevHigh = tempReal;
+                    tempReal = _w1[_wk];
+                    diffM = prevLow - tempReal;
+                    // Minus Delta
+                    prevLow = tempReal;
+                    minusDM1 = (if diffM > 0.0 { diffM } else { 0.0 });
+                    minusDM1 = (if diffP < diffM { minusDM1 } else { 0.0 });
+                    _w2[_wk] = minusDM1;
+                    outIdx += 1;
+                }
             }
             (*outNBElement) = outIdx;
             return RetCode::Success;
@@ -252,65 +258,89 @@ impl Core {
         prevHigh = inHigh[today];
         prevLow = inLow[today];
         i = (optInTimePeriod - 1) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            // Plus Delta
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            // Minus Delta
-            prevLow = tempReal;
-            // -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
-            // first test and the max the second, as a non-positive delta cannot raise
-            // the sum. gcc keeps a branch if the select compares diffM itself or if a
-            // select, not the max, ends the step.
-            tempReal = diffM - diffP;
-            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
-            tempReal = prevMinusDM + minusDM1;
-            prevMinusDM = (if prevMinusDM > tempReal { prevMinusDM } else { tempReal });
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inHigh[today + 1..][.._wn];
+            let _w1 = &inLow[today + 1..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                today += 1;
+                tempReal = _w0[_wk];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = _w1[_wk];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                // -DM1 = diffM when diffP < diffM and diffM > 0: the select takes the
+                // first test and the max the second, as a non-positive delta cannot raise
+                // the sum. gcc keeps a branch if the select compares diffM itself or if a
+                // select, not the max, ends the step.
+                tempReal = diffM - diffP;
+                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                tempReal = prevMinusDM + minusDM1;
+                prevMinusDM = (if prevMinusDM > tempReal { prevMinusDM } else { tempReal });
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         // Process subsequent DM
         // Skip the unstable period.
         i = (self.unstable_period[FuncUnstId::MINUS_DM as usize]) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            // Plus Delta
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            // Minus Delta
-            prevLow = tempReal;
-            tempReal = diffM - diffP;
-            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
-            tempReal = prevMinusDM - prevMinusDM * invPeriod;
-            prevMinusDM = tempReal + minusDM1;
-            prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inHigh[today + 1..][.._wn];
+            let _w1 = &inLow[today + 1..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                today += 1;
+                tempReal = _w0[_wk];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = _w1[_wk];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                tempReal = diffM - diffP;
+                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                tempReal = prevMinusDM - prevMinusDM * invPeriod;
+                prevMinusDM = tempReal + minusDM1;
+                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         // Now start to write the output in
         // the caller provided outReal.
         outReal[0] = prevMinusDM;
         outIdx = 1;
-        while today < endIdx {
-            today += 1;
-            tempReal = inHigh[today];
-            diffP = tempReal - prevHigh;
-            // Plus Delta
-            prevHigh = tempReal;
-            tempReal = inLow[today];
-            diffM = prevLow - tempReal;
-            // Minus Delta
-            prevLow = tempReal;
-            tempReal = diffM - diffP;
-            minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
-            tempReal = prevMinusDM - prevMinusDM * invPeriod;
-            prevMinusDM = tempReal + minusDM1;
-            prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
-            outReal[outIdx] = prevMinusDM;
-            outIdx += 1;
+        if today < endIdx {
+            let _wn: usize = endIdx - today;
+            let _w0 = &inHigh[today + 1..][.._wn];
+            let _w1 = &inLow[today + 1..][.._wn];
+            let _w2 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                today += 1;
+                tempReal = _w0[_wk];
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = _w1[_wk];
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                tempReal = diffM - diffP;
+                minusDM1 = (if tempReal > 0.0 { diffM } else { 0.0 });
+                tempReal = prevMinusDM - prevMinusDM * invPeriod;
+                prevMinusDM = tempReal + minusDM1;
+                prevMinusDM = (if tempReal > prevMinusDM { tempReal } else { prevMinusDM });
+                _w2[_wk] = prevMinusDM;
+                outIdx += 1;
+            }
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;

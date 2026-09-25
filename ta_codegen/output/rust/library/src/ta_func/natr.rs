@@ -256,37 +256,53 @@ impl Core {
         // for the first 'period' bars.
         periodTotal = 0.0;
         i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            // Find the greatest of the 3 values.
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            greatest = c_max(val2, greatest);
-            val3 = (tempCY - tempLT).abs();
-            greatest = c_max(val3, greatest);
-            periodTotal += greatest;
-            today += 1;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inClose[today - 1..][.._wn];
+            let _w1 = &inHigh[today - 1 + 1..][.._wn];
+            let _w2 = &inLow[today - 1 + 1..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                // Find the greatest of the 3 values.
+                tempLT = _w2[_wk];
+                tempHT = _w1[_wk];
+                tempCY = _w0[_wk];
+                greatest = tempHT - tempLT;
+                // val1
+                val2 = (tempCY - tempHT).abs();
+                greatest = c_max(val2, greatest);
+                val3 = (tempCY - tempLT).abs();
+                greatest = c_max(val3, greatest);
+                periodTotal += greatest;
+                today += 1;
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
         // Skip the unstable period.
         i = (self.unstable_period[FuncUnstId::NATR as usize]) as usize;
-        while i != 0 {
-            // Find the greatest of the 3 values.
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            greatest = c_max(val2, greatest);
-            val3 = (tempCY - tempLT).abs();
-            greatest = c_max(val3, greatest);
-            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
-            today += 1;
-            i -= 1;
+        if i != 0 {
+            let _wn: usize = i;
+            let _w0 = &inClose[today - 1..][.._wn];
+            let _w1 = &inHigh[today - 1 + 1..][.._wn];
+            let _w2 = &inLow[today - 1 + 1..][.._wn];
+            for _wk in 0.._wn {
+                // Find the greatest of the 3 values.
+                tempLT = _w2[_wk];
+                tempHT = _w1[_wk];
+                tempCY = _w0[_wk];
+                greatest = tempHT - tempLT;
+                // val1
+                val2 = (tempCY - tempHT).abs();
+                greatest = c_max(val2, greatest);
+                val3 = (tempCY - tempLT).abs();
+                greatest = c_max(val3, greatest);
+                prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
+                today += 1;
+                i -= 1;
+            }
         }
         // Now start to write the final NATR in the caller
         // provided outReal.

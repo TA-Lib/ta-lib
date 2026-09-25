@@ -195,11 +195,16 @@ impl Core {
         }
         // Keep this one Sub expression: spelling it as an Add of a negated term
         // would arm the multiply-add fusion and move the last bits of J.
-        // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
-        while i < ((((*outNBElement) as usize)) as usize) {
-            outJ[i] = ((3.0 * outK[i] - 2.0 * outD[i]) as f64);
-            i += 1;
+        if i < ((((*outNBElement) as usize)) as usize) {
+            let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+            let _w0 = &outD[i..][.._wn];
+            let _w1 = &mut outJ[i..][.._wn];
+            let _w2 = &outK[i..][.._wn];
+            for _wk in 0.._wn {
+                _w1[_wk] = ((3.0 * _w2[_wk] - 2.0 * _w0[_wk]) as f64);
+                i += 1;
+            }
         }
         return RetCode::Success;
     }

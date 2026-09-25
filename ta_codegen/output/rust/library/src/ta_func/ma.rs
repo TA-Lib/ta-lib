@@ -216,13 +216,17 @@ impl Core {
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             nbElement = endIdx - startIdx + 1;
             (*outNBElement) = nbElement;
-            // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
             todayIdx = startIdx;
             outIdx = 0;
-            while outIdx < nbElement {
-                outReal[outIdx] = ((inReal[todayIdx]) as f64);
-                outIdx += 1;
-                todayIdx += 1;
+            if outIdx < nbElement {
+                let _wn: usize = nbElement - outIdx;
+                let _w0 = &inReal[todayIdx..][.._wn];
+                let _w1 = &mut outReal[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    _w1[_wk] = ((_w0[_wk]) as f64);
+                    outIdx += 1;
+                    todayIdx += 1;
+                }
             }
             (*outBegIdx) = startIdx;
             return RetCode::Success;

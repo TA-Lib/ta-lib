@@ -144,14 +144,21 @@ impl Core {
         today += 1;
         // Skip the unstable period.
         i = lookbackTotal;
-        while i != 0 {
-            // haOpen consumes the PREVIOUS candle on both sides of the midpoint, so
-            // it must advance before haClose is overwritten. Swapping these two
-            // still yields a plausible smoothed series.
-            haOpen = (haOpen + haClose) / 2.0;
-            haClose = (inOpen[today] + inHigh[today] + inLow[today] + inClose[today]) / 4.0;
-            today += 1;
-            i -= 1;
+        if i != 0 {
+            let _wn: usize = i;
+            let _w0 = &inClose[today..][.._wn];
+            let _w1 = &inHigh[today..][.._wn];
+            let _w2 = &inLow[today..][.._wn];
+            let _w3 = &inOpen[today..][.._wn];
+            for _wk in 0.._wn {
+                // haOpen consumes the PREVIOUS candle on both sides of the midpoint, so
+                // it must advance before haClose is overwritten. Swapping these two
+                // still yields a plausible smoothed series.
+                haOpen = (haOpen + haClose) / 2.0;
+                haClose = (_w3[_wk] + _w1[_wk] + _w2[_wk] + _w0[_wk]) / 4.0;
+                today += 1;
+                i -= 1;
+            }
         }
         tempHigh = inHigh[startIdx];
         tempLow = inLow[startIdx];
@@ -171,28 +178,39 @@ impl Core {
         outHALow[0] = haLow;
         outHAClose[0] = haClose;
         outIdx = 1;
-        while today <= endIdx {
-            // Every price of the bar is read into a local before any output is
-            // written, which is what lets an output alias any input: at startIdx 0
-            // the store lands on the very slot the high and low were just read from.
-            tempOpen = inOpen[today];
-            tempHigh = inHigh[today];
-            tempLow = inLow[today];
-            tempClose = inClose[today];
-            haOpen = (haOpen + haClose) / 2.0;
-            haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
-            haHigh = tempHigh;
-            haHigh = c_max(haOpen, haHigh);
-            haHigh = c_max(haClose, haHigh);
-            haLow = tempLow;
-            haLow = c_min(haOpen, haLow);
-            haLow = c_min(haClose, haLow);
-            outHAOpen[outIdx] = haOpen;
-            outHAHigh[outIdx] = haHigh;
-            outHALow[outIdx] = haLow;
-            outHAClose[outIdx] = haClose;
-            outIdx += 1;
-            today += 1;
+        if today <= endIdx {
+            let _wn: usize = endIdx - today + 1;
+            let _w0 = &inClose[today..][.._wn];
+            let _w1 = &inHigh[today..][.._wn];
+            let _w2 = &inLow[today..][.._wn];
+            let _w3 = &inOpen[today..][.._wn];
+            let _w4 = &mut outHAClose[outIdx..][.._wn];
+            let _w5 = &mut outHAHigh[outIdx..][.._wn];
+            let _w6 = &mut outHALow[outIdx..][.._wn];
+            let _w7 = &mut outHAOpen[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                // Every price of the bar is read into a local before any output is
+                // written, which is what lets an output alias any input: at startIdx 0
+                // the store lands on the very slot the high and low were just read from.
+                tempOpen = _w3[_wk];
+                tempHigh = _w1[_wk];
+                tempLow = _w2[_wk];
+                tempClose = _w0[_wk];
+                haOpen = (haOpen + haClose) / 2.0;
+                haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
+                haHigh = tempHigh;
+                haHigh = c_max(haOpen, haHigh);
+                haHigh = c_max(haClose, haHigh);
+                haLow = tempLow;
+                haLow = c_min(haOpen, haLow);
+                haLow = c_min(haClose, haLow);
+                _w7[_wk] = haOpen;
+                _w5[_wk] = haHigh;
+                _w6[_wk] = haLow;
+                _w4[_wk] = haClose;
+                outIdx += 1;
+                today += 1;
+            }
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;

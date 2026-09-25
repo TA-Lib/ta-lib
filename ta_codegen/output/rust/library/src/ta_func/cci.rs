@@ -189,7 +189,7 @@ impl Core {
                 circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
                 i += 1;
                 circBuffer_Idx += 1;
-                if circBuffer_Idx > maxIdx_circBuffer { circBuffer_Idx = 0; }
+                if circBuffer_Idx >= circBuffer.len() { circBuffer_Idx = 0; }
             }
         }
         // Proceed with the calculation for the requested range.
@@ -245,7 +245,7 @@ impl Core {
             }
             // Move forward the circular buffer indexes.
             circBuffer_Idx += 1;
-            if circBuffer_Idx > maxIdx_circBuffer { circBuffer_Idx = 0; }
+            if circBuffer_Idx >= circBuffer.len() { circBuffer_Idx = 0; }
             i += 1;
             if !(i <= endIdx) { break; }
         }

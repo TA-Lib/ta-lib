@@ -170,11 +170,14 @@ impl Core {
         // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
         // is adx[k]; the ADX range holds (period-1) more elements than the output.
         nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
-        // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
         outIdx = 0;
-        while outIdx < nbElement {
-            outReal[outIdx] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
-            outIdx += 1;
+        if outIdx < nbElement {
+            let _wn: usize = nbElement - outIdx;
+            let _w0 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w0[_wk] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
+                outIdx += 1;
+            }
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = nbElement;

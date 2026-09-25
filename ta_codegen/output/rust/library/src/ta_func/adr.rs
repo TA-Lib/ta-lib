@@ -172,14 +172,22 @@ impl Core {
         // Note that this algorithm allows outReal to be the same
         // buffer as either input.
         outIdx = 0;
-        while i <= endIdx {
-            periodTotal += (inHigh[i] - inLow[i]) as f64;
-            i = i + 1;
-            tempReal = periodTotal;
-            periodTotal -= (inHigh[trailingIdx] - inLow[trailingIdx]) as f64;
-            trailingIdx = trailingIdx + 1;
-            outReal[outIdx] = tempReal / (optInTimePeriod as f64);
-            outIdx = outIdx + 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inHigh[i..][.._wn];
+            let _w1 = &inHigh[trailingIdx..][.._wn];
+            let _w2 = &inLow[i..][.._wn];
+            let _w3 = &inLow[trailingIdx..][.._wn];
+            let _w4 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                periodTotal += (_w0[_wk] - _w2[_wk]) as f64;
+                i = i + 1;
+                tempReal = periodTotal;
+                periodTotal -= (_w1[_wk] - _w3[_wk]) as f64;
+                trailingIdx = trailingIdx + 1;
+                _w4[_wk] = tempReal / (optInTimePeriod as f64);
+                outIdx = outIdx + 1;
+            }
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;

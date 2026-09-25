@@ -110,6 +110,10 @@ impl Core {
         let mut close: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
         let mut ad: f64 = 0.0_f64;
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         // Note: Results from this function might vary slightly
         //       from Metastock outputs. The reason being that
         //       Metastock use float instead of double and this

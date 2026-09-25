@@ -107,6 +107,9 @@ impl Core {
         let mut trueExtreme: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
+        let inHigh = &inHigh[..=endIdx];
+        let inLow = &inLow[..=endIdx];
+        let inClose = &inClose[..=endIdx];
         // Williams' Accumulation/Distribution, in the form Steven Achelis
         // published (Technical Analysis from A to Z, 2nd ed., p.368) and the form
         // every modern vendor ships: each bar's close is measured against the TRUE

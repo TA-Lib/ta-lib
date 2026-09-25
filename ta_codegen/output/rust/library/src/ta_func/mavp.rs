@@ -317,32 +317,48 @@ impl Core {
             // Counting sort: sortedIdx ends up holding the output indices ordered
             // by period, one contiguous ascending slice per distinct period, with
             // bucketOfs[p] the end of period p's slice.
-            for curPeriod in (minUsed as usize)..(maxUsed + 1 as usize) + 1 {
-                bucketOfs[curPeriod - minUsed] = 0;
+            curPeriod = minUsed;
+            if curPeriod <= maxUsed + 1 {
+                let _wn: usize = maxUsed + 1 - curPeriod + 1;
+                let _w0 = &mut bucketOfs[curPeriod - minUsed..][.._wn];
+                for _wk in 0.._wn {
+                    _w0[_wk] = 0;
+                    curPeriod += 1;
+                }
             }
-            curPeriod = (maxUsed + 1 as usize) + 1;
-            // for( i = 0; i < outputSize; i += 1 )
             i = 0;
-            while i < outputSize {
-                // Staged through tempInt, not indexed inline: the Rust backend only
-                // coerces an int-array read to the index type when it is a DIRECT
-                // operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
-                // i32 with usize and fail to compile.
-                tempInt = localPeriodArray[i];
-                bucketOfs[(tempInt + 1 - ((minUsed) as i32)) as usize] = (bucketOfs[(tempInt + 1 - ((minUsed) as i32)) as usize] + 1) as i32;
-                i += 1;
+            if i < outputSize {
+                let _wn: usize = outputSize - i;
+                let _w0 = &localPeriodArray[i..][.._wn];
+                for _wk in 0.._wn {
+                    // Staged through tempInt, not indexed inline: the Rust backend only
+                    // coerces an int-array read to the index type when it is a DIRECT
+                    // operand, so bucketOfs[localPeriodArray[i]+1-minUsed] would mix
+                    // i32 with usize and fail to compile.
+                    tempInt = _w0[_wk];
+                    bucketOfs[(tempInt + 1 - ((minUsed) as i32)) as usize] = (bucketOfs[(tempInt + 1 - ((minUsed) as i32)) as usize] + 1) as i32;
+                    i += 1;
+                }
             }
-            for curPeriod in (minUsed as usize)..(maxUsed as usize) + 1 {
-                bucketOfs[curPeriod + 1 - minUsed] = (bucketOfs[curPeriod + 1 - minUsed] + bucketOfs[curPeriod - minUsed]) as i32;
+            curPeriod = minUsed;
+            if curPeriod <= maxUsed {
+                let _wn: usize = maxUsed - curPeriod + 1;
+                let _w0 = &mut bucketOfs[curPeriod - minUsed..][.._wn + 1];
+                for _wk in 0.._wn {
+                    _w0[_wk + 1] = (_w0[_wk + 1] + _w0[_wk]) as i32;
+                    curPeriod += 1;
+                }
             }
-            curPeriod = (maxUsed as usize) + 1;
-            // for( i = 0; i < outputSize; i += 1 )
             i = 0;
-            while i < outputSize {
-                tempInt = localPeriodArray[i];
-                sortedIdx[(bucketOfs[(tempInt - ((minUsed) as i32)) as usize]) as usize] = (i) as i32;
-                bucketOfs[(tempInt - ((minUsed) as i32)) as usize] = (bucketOfs[(tempInt - ((minUsed) as i32)) as usize] + 1) as i32;
-                i += 1;
+            if i < outputSize {
+                let _wn: usize = outputSize - i;
+                let _w0 = &localPeriodArray[i..][.._wn];
+                for _wk in 0.._wn {
+                    tempInt = _w0[_wk];
+                    sortedIdx[(bucketOfs[(tempInt - ((minUsed) as i32)) as usize]) as usize] = (i) as i32;
+                    bucketOfs[(tempInt - ((minUsed) as i32)) as usize] = (bucketOfs[(tempInt - ((minUsed) as i32)) as usize] + 1) as i32;
+                    i += 1;
+                }
             }
             // One MA pass per period actually requested, ending at the last output
             // that uses it: outputs before that point cannot depend on later input
@@ -375,12 +391,15 @@ impl Core {
             localFinalArray[_di.._di + _n].copy_from_slice(&localOutputArray[_si.._si + _n]);
         };
                     } else {
-                        // for( i = bucketStart; i < bucketEnd; i += 1 )
                         i = bucketStart;
-                        while i < bucketEnd {
-                            tempInt = sortedIdx[i];
-                            localFinalArray[(tempInt) as usize] = localOutputArray[(tempInt) as usize];
-                            i += 1;
+                        if i < bucketEnd {
+                            let _wn: usize = bucketEnd - i;
+                            let _w0 = &sortedIdx[i..][.._wn];
+                            for _wk in 0.._wn {
+                                tempInt = _w0[_wk];
+                                localFinalArray[(tempInt) as usize] = localOutputArray[(tempInt) as usize];
+                                i += 1;
+                            }
                         }
                     }
                 }

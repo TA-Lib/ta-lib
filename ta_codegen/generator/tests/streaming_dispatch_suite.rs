@@ -2230,10 +2230,22 @@ fn rust_bbands_elects_output_scratch_only_in_the_sma_fast_path() {
         "the deviation written into outRealUpperBand should be the root of the variance, \
          got `{dev_write}`: {rust_out}"
     );
-    assert!(
-        rust_out.contains("tempReal = outRealUpperBand[i] * optInNbDevUp;"),
-        "the band loop should read its deviation back out of outRealUpperBand: {rust_out}"
-    );
+    // The band loop may read it through a window cut from that slice.
+    let lines: Vec<&str> = rust_out.lines().map(str::trim).collect();
+    let read = lines
+        .iter()
+        .position(|l| l.starts_with("tempReal = ") && l.ends_with(" * optInNbDevUp;"))
+        .unwrap_or_else(|| panic!("BBANDS Rust should scale a deviation by optInNbDevUp: {rust_out}"));
+    let source = lines[read].trim_start_matches("tempReal = ").trim_end_matches(" * optInNbDevUp;");
+    let from_upper = source == "outRealUpperBand[i]"
+        || source.split_once('[').is_some_and(|(w, _)| {
+            lines[..read]
+                .iter()
+                .rev()
+                .find(|l| l.starts_with(&format!("let {w} = ")))
+                .is_some_and(|l| l.contains("outRealUpperBand["))
+        });
+    assert!(from_upper, "the band loop should read its deviation back out of outRealUpperBand: {rust_out}");
     // The dead aliasing arms, the input-alias guard and the copy-back are gone.
     assert!(
         !rust_out.contains("inReal.as_ptr() == outRealUpperBand.as_ptr()"),

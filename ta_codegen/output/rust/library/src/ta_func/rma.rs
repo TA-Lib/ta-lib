@@ -185,17 +185,29 @@ impl Core {
         // Seed with a simple average of the first 'period' values.
         periodTotal = 0.0;
         i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            periodTotal += inReal[today];
-            today += 1;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inReal[today..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                periodTotal += _w0[_wk];
+                today += 1;
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         prevRMA = periodTotal / ((optInTimePeriod) as f64);
         // Skip the unstable period.
         i = (self.unstable_period[FuncUnstId::RMA as usize]) as usize;
-        while i != 0 {
-            prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * inReal[today]);
-            today += 1;
-            i -= 1;
+        if i != 0 {
+            let _wn: usize = i;
+            let _w0 = &inReal[today..][.._wn];
+            for _wk in 0.._wn {
+                prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * _w0[_wk]);
+                today += 1;
+                i -= 1;
+            }
         }
         // Now start to write the final RMA in the caller
         // provided outReal.
@@ -203,11 +215,25 @@ impl Core {
         outReal[0] = prevRMA;
         // Now do the number of requested RMA.
         nbRMA = endIdx - startIdx + 1;
-        while { nbRMA = nbRMA.wrapping_sub(1); nbRMA } != 0 {
-            prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * inReal[today]);
-            outReal[outIdx] = prevRMA;
-            outIdx += 1;
-            today += 1;
+        if nbRMA > 1 {
+            let _wn: usize = nbRMA - 1;
+            let _w0 = &inReal[today..][.._wn];
+            let _w1 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                nbRMA -= 1;
+                prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * _w0[_wk]);
+                _w1[_wk] = prevRMA;
+                outIdx += 1;
+                today += 1;
+            }
+            nbRMA = nbRMA.wrapping_sub(1);
+        } else {
+            while { nbRMA = nbRMA.wrapping_sub(1); nbRMA } != 0 {
+                prevRMA = (wBeta as f64).mul_add(prevRMA, wAlpha * inReal[today]);
+                outReal[outIdx] = prevRMA;
+                outIdx += 1;
+                today += 1;
+            }
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;

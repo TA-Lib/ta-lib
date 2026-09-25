@@ -134,20 +134,27 @@ impl Core {
         let inClose = &inClose[..=endIdx];
         outIdx = 0;
         today = startIdx;
-        while today <= endIdx {
-            // Find the greatest of the 3 values.
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            greatest = c_max(val2, greatest);
-            val3 = (tempCY - tempLT).abs();
-            greatest = c_max(val3, greatest);
-            outReal[outIdx] = greatest;
-            outIdx += 1;
-            today += 1;
+        if today <= endIdx {
+            let _wn: usize = endIdx - today + 1;
+            let _w0 = &inClose[today - 1..][.._wn];
+            let _w1 = &inHigh[today - 1 + 1..][.._wn];
+            let _w2 = &inLow[today - 1 + 1..][.._wn];
+            let _w3 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                // Find the greatest of the 3 values.
+                tempLT = _w2[_wk];
+                tempHT = _w1[_wk];
+                tempCY = _w0[_wk];
+                greatest = tempHT - tempLT;
+                // val1
+                val2 = (tempCY - tempHT).abs();
+                greatest = c_max(val2, greatest);
+                val3 = (tempCY - tempLT).abs();
+                greatest = c_max(val3, greatest);
+                _w3[_wk] = greatest;
+                outIdx += 1;
+                today += 1;
+            }
         }
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;

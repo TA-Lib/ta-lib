@@ -2690,3 +2690,96 @@ fn rust_loops_that_are_not_pure_shifts_stay_loops() {
         assert!(out.contains("while"), "{out}");
     }
 }
+
+/// The block scans of the rolling-extremum family run check-free only as
+/// counted loops over windows (#442): the suffix and prefix passes in every
+/// member, and the combine pass where it does not branch. Every access inside
+/// such a loop must go through a window, or the check is back.
+#[test]
+fn rust_block_scans_run_as_counted_windows() {
+    let registry = make_registry();
+    let helpers = make_helpers();
+    for (name, scans) in [("min", 3), ("max", 3), ("minmax", 3), ("midpoint", 3), ("midprice", 3), ("willr", 2)] {
+        let (func, enums) = load_indicator(name);
+        let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let loops = windowed_loop_bodies(&rust);
+        assert!(loops.len() >= scans, "{name}: {} counted window loop(s), want at least {scans}:\n{rust}", loops.len());
+        for body in &loops {
+            for line in body.lines().map(str::trim).filter(|l| !l.starts_with("//")) {
+                for (at, _) in line.match_indices('[') {
+                    let array = line[..at].rsplit(|c: char| !(c.is_alphanumeric() || c == '_')).next().unwrap_or("");
+                    assert!(
+                        array.strip_prefix("_w").is_some_and(|j| !j.is_empty() && j.bytes().all(|b| b.is_ascii_digit())),
+                        "{name}: `{array}[` is indexed directly inside a counted window loop: `{line}`"
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// The bodies of the `for _wk in ...` loops in `rust`.
+fn windowed_loop_bodies(rust: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut lines = rust.lines();
+    while let Some(line) = lines.next() {
+        if !line.trim_start().starts_with("for _wk in ") {
+            continue;
+        }
+        let mut depth = 1i32;
+        let mut body = String::new();
+        for inner in lines.by_ref() {
+            depth += inner.matches('{').count() as i32 - inner.matches('}').count() as i32;
+            if depth <= 0 {
+                break;
+            }
+            body.push_str(inner);
+            body.push('\n');
+        }
+        out.push(body);
+    }
+    out
+}
+
+/// A loop whose condition decrements its counter: each pass decrements first,
+/// the failing test decrements once more on both paths, and `--c != 0`, which
+/// passes on a wrapped `c`, keeps the loop as written for a failed guard.
+#[test]
+fn rust_windowed_countdown_keeps_every_decrement_of_its_condition() {
+    use ir::{BinOp, Expr, Statement};
+    let var = |n: &str| Expr::Var(n.into());
+    let bin = |l: Expr, op: BinOp, r: Expr| Expr::BinOp(Box::new(l), op, Box::new(r));
+    let mut ctx = backends::rust_lang::RustRenderCtx::empty();
+    ctx.is_lookback = false;
+    ctx.window_loops = true;
+    for n in ["c", "k"] {
+        ctx.index_vars.insert(n.into());
+    }
+    let body = vec![
+        Statement::Assign {
+            target: Expr::ArrayAccess("outReal".into(), Box::new(var("k"))),
+            value: Expr::Literal(0.0),
+            compound: false,
+        },
+        Statement::Assign { target: var("k"), value: bin(var("k"), BinOp::Add, Expr::IntLiteral(1)), compound: true },
+    ];
+    let post = Expr::PostDecrement(Box::new(var("c")));
+    let pre = Expr::PreDecrement(Box::new(var("c")));
+    for (cond, guard, trip, as_written) in [
+        (bin(post, BinOp::Greater, Expr::IntLiteral(0)), "if c > 0 {", "let _wn: usize = c;", false),
+        (bin(pre, BinOp::NotEq, Expr::IntLiteral(0)), "if c > 1 {", "let _wn: usize = c - 1;", true),
+    ] {
+        let out = render_rust_stmt_with_ctx(&Statement::While { condition: cond, body: body.clone() }, &ctx);
+        let lines: Vec<&str> = out.lines().map(str::trim).collect();
+        let at = |l: &str| lines.iter().position(|x| *x == l).unwrap_or_else(|| panic!("no `{l}` in:\n{out}"));
+        let (g, t, pass, dec, last, other) =
+            (at(guard), at(trip), at("for _wk in 0.._wn {"), at("c -= 1;"), at("c = c.wrapping_sub(1);"), at("} else {"));
+        assert!(g < t && t < pass && pass < dec && dec < last && last < other, "{out}");
+        let unguarded = lines[other + 1];
+        if as_written {
+            assert!(unguarded.starts_with("while "), "{out}");
+        } else {
+            assert_eq!(unguarded, "c = c.wrapping_sub(1);", "{out}");
+        }
+    }
+}

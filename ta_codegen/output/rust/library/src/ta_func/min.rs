@@ -199,11 +199,16 @@ impl Core {
             i = blockStart + ((optInTimePeriod) as usize) - 1;
             lowest = inReal[i];
             sufLowest[(optInTimePeriod - 1) as usize] = lowest;
-            while i > blockStart {
-                i -= 1;
-                tmp = inReal[i];
-                lowest = c_min(tmp, lowest);
-                sufLowest[i - blockStart] = lowest;
+            if i > blockStart {
+                let _wn: usize = i - blockStart;
+                let _w0 = &inReal[i - _wn..][.._wn];
+                let _w1 = &mut sufLowest[i - _wn - blockStart..][.._wn];
+                for _wk in (0.._wn).rev() {
+                    i -= 1;
+                    tmp = _w0[_wk];
+                    lowest = c_min(tmp, lowest);
+                    _w1[_wk] = lowest;
+                }
             }
             lowest = sufLowest[0];
             outReal[outIdx] = lowest;
@@ -222,21 +227,32 @@ impl Core {
                 lowest = inReal[(blockStart + ((optInTimePeriod) as usize)) as usize];
                 preLowest[0] = lowest;
                 i = 1;
-                while i < nAvail {
-                    tmp = inReal[(blockStart + ((optInTimePeriod) as usize) + i) as usize];
-                    lowest = c_min(tmp, lowest);
-                    preLowest[i] = lowest;
-                    i += 1;
+                if i < nAvail {
+                    let _wn: usize = nAvail - i;
+                    let _w0 = &inReal[(blockStart + ((optInTimePeriod) as usize) + i) as usize..][.._wn];
+                    let _w1 = &mut preLowest[i..][.._wn];
+                    for _wk in 0.._wn {
+                        tmp = _w0[_wk];
+                        lowest = c_min(tmp, lowest);
+                        _w1[_wk] = lowest;
+                        i += 1;
+                    }
                 }
                 // Combine. The suffix half is the older one, so preferring it
                 // on a tie keeps the earliest-wins rule.
                 m = 1;
-                while m <= nAvail {
-                    lowest = sufLowest[m];
-                    lowest = c_min(preLowest[m - 1], lowest);
-                    outReal[outIdx] = lowest;
-                    outIdx += 1;
-                    m += 1;
+                if m <= nAvail {
+                    let _wn: usize = nAvail - m + 1;
+                    let _w0 = &mut outReal[outIdx..][.._wn];
+                    let _w1 = &preLowest[m - 1..][.._wn];
+                    let _w2 = &sufLowest[m..][.._wn];
+                    for _wk in 0.._wn {
+                        lowest = _w2[_wk];
+                        lowest = c_min(_w1[_wk], lowest);
+                        _w0[_wk] = lowest;
+                        outIdx += 1;
+                        m += 1;
+                    }
                 }
                 trailingIdx = trailingIdx + nAvail;
                 today = today + nAvail;

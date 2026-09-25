@@ -366,7 +366,7 @@ impl Core {
                 w += 1;
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
-                if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
+                if dRing_Idx >= dRing.len() { dRing_Idx = 0; }
                 today += 1;
             }
             barsSinceReseedSqrt = 8 * sqrtPeriod;
@@ -452,7 +452,7 @@ impl Core {
                 trailingSqrt = dRing[dRing_Idx];
                 dRing[dRing_Idx] = diffReal;
                 dRing_Idx += 1;
-                if dRing_Idx > maxIdx_dRing { dRing_Idx = 0; }
+                if dRing_Idx >= dRing.len() { dRing_Idx = 0; }
                 outReal[outIdx] = periodSumSqrt / dividerSqrt;
                 outIdx += 1;
                 periodSumSqrt -= periodSubSqrt;

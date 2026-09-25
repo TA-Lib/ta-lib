@@ -214,9 +214,18 @@ impl Core {
         today = startIdx - lookbackTotal;
         i = (optInTimePeriod) as usize;
         tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inHigh[today] - inLow[today];
-            today += 1;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inHigh[today..][.._wn];
+            let _w1 = &inLow[today..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                tempReal += _w0[_wk] - _w1[_wk];
+                today += 1;
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         prevEMA = tempReal / ((optInTimePeriod) as f64);
         // The ring keeps only the newest optInROCPeriod values, so pushing every EMA
@@ -224,14 +233,14 @@ impl Core {
         // loop reads.
         emaRing[emaRing_Idx] = prevEMA;
         emaRing_Idx += 1;
-        if emaRing_Idx > maxIdx_emaRing { emaRing_Idx = 0; }
+        if emaRing_Idx >= emaRing.len() { emaRing_Idx = 0; }
         while today < startIdx {
             tempReal = inHigh[today] - inLow[today];
             prevEMA = (tempReal - prevEMA as f64).mul_add(optInK_1, prevEMA);
             today += 1;
             emaRing[emaRing_Idx] = prevEMA;
             emaRing_Idx += 1;
-            if emaRing_Idx > maxIdx_emaRing { emaRing_Idx = 0; }
+            if emaRing_Idx >= emaRing.len() { emaRing_Idx = 0; }
         }
         // Read the expiring slot before overwriting it: that is what makes the lag
         // exactly optInROCPeriod rather than one less.
@@ -243,7 +252,7 @@ impl Core {
             laggedEMA = emaRing[emaRing_Idx];
             emaRing[emaRing_Idx] = prevEMA;
             emaRing_Idx += 1;
-            if emaRing_Idx > maxIdx_emaRing { emaRing_Idx = 0; }
+            if emaRing_Idx >= emaRing.len() { emaRing_Idx = 0; }
             if laggedEMA != 0.0 {
                 outReal[outIdx] = 100.0 * ((prevEMA - laggedEMA) / laggedEMA);
                 outIdx += 1;

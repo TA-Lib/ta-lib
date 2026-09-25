@@ -243,14 +243,21 @@ impl Core {
             lowest = inLow[i];
             sufHighest[(optInTimePeriod - 1) as usize] = highest;
             sufLowest[(optInTimePeriod - 1) as usize] = lowest;
-            while i > blockStart {
-                i -= 1;
-                tmp = inHigh[i];
-                highest = c_max(tmp, highest);
-                tmp = inLow[i];
-                lowest = c_min(tmp, lowest);
-                sufHighest[i - blockStart] = highest;
-                sufLowest[i - blockStart] = lowest;
+            if i > blockStart {
+                let _wn: usize = i - blockStart;
+                let _w0 = &inHigh[i - _wn..][.._wn];
+                let _w1 = &inLow[i - _wn..][.._wn];
+                let _w2 = &mut sufHighest[i - _wn - blockStart..][.._wn];
+                let _w3 = &mut sufLowest[i - _wn - blockStart..][.._wn];
+                for _wk in (0.._wn).rev() {
+                    i -= 1;
+                    tmp = _w0[_wk];
+                    highest = c_max(tmp, highest);
+                    tmp = _w1[_wk];
+                    lowest = c_min(tmp, lowest);
+                    _w2[_wk] = highest;
+                    _w3[_wk] = lowest;
+                }
             }
             highest = sufHighest[0];
             lowest = sufLowest[0];
@@ -298,14 +305,21 @@ impl Core {
                 preHighest[0] = highest;
                 preLowest[0] = lowest;
                 i = 1;
-                while i < nAvail {
-                    tmp = inHigh[blockNext + i];
-                    highest = c_max(tmp, highest);
-                    tmp = inLow[blockNext + i];
-                    lowest = c_min(tmp, lowest);
-                    preHighest[i] = highest;
-                    preLowest[i] = lowest;
-                    i += 1;
+                if i < nAvail {
+                    let _wn: usize = nAvail - i;
+                    let _w0 = &inHigh[blockNext + i..][.._wn];
+                    let _w1 = &inLow[blockNext + i..][.._wn];
+                    let _w2 = &mut preHighest[i..][.._wn];
+                    let _w3 = &mut preLowest[i..][.._wn];
+                    for _wk in 0.._wn {
+                        tmp = _w0[_wk];
+                        highest = c_max(tmp, highest);
+                        tmp = _w1[_wk];
+                        lowest = c_min(tmp, lowest);
+                        _w2[_wk] = highest;
+                        _w3[_wk] = lowest;
+                        i += 1;
+                    }
                 }
                 // Combine and emit. The suffix half is the older one, so
                 // preferring it on a tie keeps the earliest-wins rule. The

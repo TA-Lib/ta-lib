@@ -181,24 +181,32 @@ impl Core {
         // Note that this algorithm allows the inReal and
         // outReal to be the same buffer.
         outIdx = 0;
-        while i <= endIdx {
-            tempReal = inReal[i] * inVolume[i];
-            sumPV += tempReal;
-            sumV += inVolume[i];
-            i = i + 1;
-            // Snapshot both sums before removing the trailing bar, mirroring the
-            // add-new / snapshot / subtract-old order of TA_SMA. That order is what
-            // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
-            tempPV = sumPV;
-            tempV = sumV;
-            // Read the trailing values before writing the output, since the caller
-            // may pass the same buffer for an input and the output.
-            tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-            sumPV -= tempReal;
-            sumV -= inVolume[trailingIdx];
-            outReal[outIdx] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
-            trailingIdx = trailingIdx + 1;
-            outIdx = outIdx + 1;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inReal[i..][.._wn];
+            let _w1 = &inReal[trailingIdx..][.._wn];
+            let _w2 = &inVolume[i..][.._wn];
+            let _w3 = &inVolume[trailingIdx..][.._wn];
+            let _w4 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                tempReal = _w0[_wk] * _w2[_wk];
+                sumPV += tempReal;
+                sumV += _w2[_wk];
+                i = i + 1;
+                // Snapshot both sums before removing the trailing bar, mirroring the
+                // add-new / snapshot / subtract-old order of TA_SMA. That order is what
+                // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+                tempPV = sumPV;
+                tempV = sumV;
+                // Read the trailing values before writing the output, since the caller
+                // may pass the same buffer for an input and the output.
+                tempReal = _w1[_wk] * _w3[_wk];
+                sumPV -= tempReal;
+                sumV -= _w3[_wk];
+                _w4[_wk] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
+                trailingIdx = trailingIdx + 1;
+                outIdx = outIdx + 1;
+            }
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;

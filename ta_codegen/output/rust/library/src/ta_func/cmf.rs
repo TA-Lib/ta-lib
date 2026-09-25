@@ -201,7 +201,7 @@ impl Core {
             sumVol += inVolume[today];
             today += 1;
             mfv_Idx += 1;
-            if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
+            if mfv_Idx >= mfv_flow.len() { mfv_Idx = 0; }
             i -= 1;
         }
         // The first full window is complete: emit its output for startIdx here,
@@ -242,7 +242,7 @@ impl Core {
                 outIdx += 1;
             }
             mfv_Idx += 1;
-            if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
+            if mfv_Idx >= mfv_flow.len() { mfv_Idx = 0; }
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;

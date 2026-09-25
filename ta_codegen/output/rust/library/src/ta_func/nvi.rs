@@ -105,6 +105,8 @@ impl Core {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
         let mut tempNVI: f64 = 0.0_f64;
+        let inClose = &inClose[..=endIdx];
+        let inVolume = &inVolume[..=endIdx];
         // The index is a running cumulative value seeded at 1000, updated only on
         // bars whose volume decreased versus the prior bar (Negative Volume).
         prevNVI = 1000.0;

@@ -206,14 +206,22 @@ impl Core {
         if optInTimePeriod == 1 {
             outIdx = 0;
             today = startIdx;
-            while today <= endIdx {
-                tempHT = inHigh[today];
-                tempLT = inLow[today];
-                tempReal = inClose[today];
-                outBullPower[outIdx] = tempHT - tempReal;
-                outBearPower[outIdx] = tempLT - tempReal;
-                outIdx += 1;
-                today += 1;
+            if today <= endIdx {
+                let _wn: usize = endIdx - today + 1;
+                let _w0 = &inClose[today..][.._wn];
+                let _w1 = &inHigh[today..][.._wn];
+                let _w2 = &inLow[today..][.._wn];
+                let _w3 = &mut outBearPower[outIdx..][.._wn];
+                let _w4 = &mut outBullPower[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    tempHT = _w1[_wk];
+                    tempLT = _w2[_wk];
+                    tempReal = _w0[_wk];
+                    _w4[_wk] = tempHT - tempReal;
+                    _w3[_wk] = tempLT - tempReal;
+                    outIdx += 1;
+                    today += 1;
+                }
             }
             (*outBegIdx) = startIdx;
             (*outNBElement) = outIdx;
@@ -241,14 +249,22 @@ impl Core {
         outBullPower[0] = tempHT - prevMA;
         outBearPower[0] = tempLT - prevMA;
         outIdx = 1;
-        while today <= endIdx {
-            prevMA = (inClose[today] - prevMA as f64).mul_add(k, prevMA);
-            tempHT = inHigh[today];
-            tempLT = inLow[today];
-            outBullPower[outIdx] = tempHT - prevMA;
-            outBearPower[outIdx] = tempLT - prevMA;
-            outIdx += 1;
-            today += 1;
+        if today <= endIdx {
+            let _wn: usize = endIdx - today + 1;
+            let _w0 = &inClose[today..][.._wn];
+            let _w1 = &inHigh[today..][.._wn];
+            let _w2 = &inLow[today..][.._wn];
+            let _w3 = &mut outBearPower[outIdx..][.._wn];
+            let _w4 = &mut outBullPower[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                prevMA = (_w0[_wk] - prevMA as f64).mul_add(k, prevMA);
+                tempHT = _w1[_wk];
+                tempLT = _w2[_wk];
+                _w4[_wk] = tempHT - prevMA;
+                _w3[_wk] = tempLT - prevMA;
+                outIdx += 1;
+                today += 1;
+            }
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;

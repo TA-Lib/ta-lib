@@ -294,15 +294,18 @@ impl Core {
             maTotal = 0.0;
             varTotal1 = 0.0;
             varTotal2 = 0.0;
-            // for( _j = _trailingIdx; _j < startIdx; _j += 1 )
             _j = _trailingIdx;
-            while _j < startIdx {
-                maTotal += inReal[_j];
-                _tempReal = inReal[_j] - shift;
-                varTotal1 += _tempReal;
-                _tempReal *= _tempReal;
-                varTotal2 += _tempReal;
-                _j += 1;
+            if _j < startIdx {
+                let _wn: usize = startIdx - _j;
+                let _w0 = &inReal[_j..][.._wn];
+                for _wk in 0.._wn {
+                    maTotal += _w0[_wk];
+                    _tempReal = _w0[_wk] - shift;
+                    varTotal1 += _tempReal;
+                    _tempReal *= _tempReal;
+                    varTotal2 += _tempReal;
+                    _j += 1;
+                }
             }
             _i = startIdx;
             _outIdx = 0;
@@ -329,33 +332,48 @@ impl Core {
                     _barsSinceReseed = (32 * optInTimePeriod) as usize;
                     _windowStart = _i - _lookbackTotal;
                     _tempReal = 0.0;
-                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
-                        _tempReal += inReal[_j];
+                    _j = _windowStart;
+                    if _j <= _i {
+                        let _wn: usize = _i - _j + 1;
+                        let _w0 = &inReal[_j..][.._wn];
+                        for _wk in 0.._wn {
+                            _tempReal += _w0[_wk];
+                            _j += 1;
+                        }
                     }
-                    _j = (_i as usize) + 1;
                     shift = _tempReal * _invPeriod;
                     varTotal1 = 0.0;
                     varTotal2 = 0.0;
-                    for _j in (_windowStart as usize)..(_i as usize) + 1 {
-                        _tempReal = inReal[_j] - shift;
-                        varTotal1 += _tempReal;
-                        _tempReal *= _tempReal;
-                        varTotal2 += _tempReal;
+                    _j = _windowStart;
+                    if _j <= _i {
+                        let _wn: usize = _i - _j + 1;
+                        let _w0 = &inReal[_j..][.._wn];
+                        for _wk in 0.._wn {
+                            _tempReal = _w0[_wk] - shift;
+                            varTotal1 += _tempReal;
+                            _tempReal *= _tempReal;
+                            varTotal2 += _tempReal;
+                            _j += 1;
+                        }
                     }
-                    _j = (_i as usize) + 1;
                     meanValue1 = varTotal1 * _invPeriod;
                     variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                     if variance < 0.000001 * (varTotal2 * _invPeriod) {
                         shift = inReal[_i];
                         varTotal1 = 0.0;
                         varTotal2 = 0.0;
-                        for _j in (_windowStart as usize)..(_i as usize) + 1 {
-                            _tempReal = inReal[_j] - shift;
-                            varTotal1 += _tempReal;
-                            _tempReal *= _tempReal;
-                            varTotal2 += _tempReal;
+                        _j = _windowStart;
+                        if _j <= _i {
+                            let _wn: usize = _i - _j + 1;
+                            let _w0 = &inReal[_j..][.._wn];
+                            for _wk in 0.._wn {
+                                _tempReal = _w0[_wk] - shift;
+                                varTotal1 += _tempReal;
+                                _tempReal *= _tempReal;
+                                varTotal2 += _tempReal;
+                                _j += 1;
+                            }
                         }
-                        _j = (_i as usize) + 1;
                         meanValue1 = varTotal1 * _invPeriod;
                         variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                     }
@@ -395,24 +413,34 @@ impl Core {
             (*outBegIdx) = startIdx;
             // Now do a tight loop to calculate the upper/lower band at the same time.
             if optInNbDevUp == optInNbDevDn {
-                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
                 i = 0;
-                while i < ((((*outNBElement) as usize)) as usize) {
-                    tempReal = outRealUpperBand[i] * optInNbDevUp;
-                    tempReal2 = outRealMiddleBand[i];
-                    outRealUpperBand[i] = tempReal2 + tempReal;
-                    outRealLowerBand[i] = tempReal2 - tempReal;
-                    i += 1;
+                if i < ((((*outNBElement) as usize)) as usize) {
+                    let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+                    let _w0 = &mut outRealLowerBand[i..][.._wn];
+                    let _w1 = &outRealMiddleBand[i..][.._wn];
+                    let _w2 = &mut outRealUpperBand[i..][.._wn];
+                    for _wk in 0.._wn {
+                        tempReal = _w2[_wk] * optInNbDevUp;
+                        tempReal2 = _w1[_wk];
+                        _w2[_wk] = tempReal2 + tempReal;
+                        _w0[_wk] = tempReal2 - tempReal;
+                        i += 1;
+                    }
                 }
             } else {
-                // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
                 i = 0;
-                while i < ((((*outNBElement) as usize)) as usize) {
-                    tempReal = outRealUpperBand[i];
-                    tempReal2 = outRealMiddleBand[i];
-                    outRealUpperBand[i] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
-                    outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
-                    i += 1;
+                if i < ((((*outNBElement) as usize)) as usize) {
+                    let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+                    let _w0 = &mut outRealLowerBand[i..][.._wn];
+                    let _w1 = &outRealMiddleBand[i..][.._wn];
+                    let _w2 = &mut outRealUpperBand[i..][.._wn];
+                    for _wk in 0.._wn {
+                        tempReal = _w2[_wk];
+                        tempReal2 = _w1[_wk];
+                        _w2[_wk] = (tempReal as f64).mul_add(optInNbDevUp, tempReal2);
+                        _w0[_wk] = tempReal2 - tempReal * optInNbDevDn;
+                        i += 1;
+                    }
                 }
             }
             return RetCode::Success;
@@ -479,23 +507,35 @@ impl Core {
         };
         // Now do a tight loop to calculate the upper/lower band at the same time.
         if optInNbDevUp == optInNbDevDn {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = tempBuffer2[i] * optInNbDevUp;
-                tempReal2 = outRealMiddleBand[i];
-                outRealUpperBand[i] = tempReal2 + tempReal;
-                outRealLowerBand[i] = tempReal2 - tempReal;
-                i += 1;
+            if i < ((((*outNBElement) as usize)) as usize) {
+                let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+                let _w0 = &mut outRealLowerBand[i..][.._wn];
+                let _w1 = &outRealMiddleBand[i..][.._wn];
+                let _w2 = &mut outRealUpperBand[i..][.._wn];
+                let _w3 = &tempBuffer2[i..][.._wn];
+                for _wk in 0.._wn {
+                    tempReal = _w3[_wk] * optInNbDevUp;
+                    tempReal2 = _w1[_wk];
+                    _w2[_wk] = tempReal2 + tempReal;
+                    _w0[_wk] = tempReal2 - tempReal;
+                    i += 1;
+                }
             }
         } else {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
             i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal2 = outRealMiddleBand[i];
-                outRealUpperBand[i] = (((tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2)) as f64);
-                outRealLowerBand[i] = ((tempReal2 - tempBuffer2[i] * optInNbDevDn) as f64);
-                i += 1;
+            if i < ((((*outNBElement) as usize)) as usize) {
+                let _wn: usize = ((((*outNBElement) as usize)) as usize) - i;
+                let _w0 = &mut outRealLowerBand[i..][.._wn];
+                let _w1 = &outRealMiddleBand[i..][.._wn];
+                let _w2 = &mut outRealUpperBand[i..][.._wn];
+                let _w3 = &tempBuffer2[i..][.._wn];
+                for _wk in 0.._wn {
+                    tempReal2 = _w1[_wk];
+                    _w2[_wk] = (((_w3[_wk] as f64).mul_add(optInNbDevUp, tempReal2)) as f64);
+                    _w0[_wk] = ((tempReal2 - _w3[_wk] * optInNbDevDn) as f64);
+                    i += 1;
+                }
             }
         }
         return RetCode::Success;

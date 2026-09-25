@@ -203,25 +203,45 @@ impl Core {
         today = trailingIdx + lag;
         i = (optInTimePeriod) as usize;
         tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += 2.0 * inReal[today] - inReal[trailingIdx];
-            today += 1;
-            trailingIdx += 1;
+        if i > 0 {
+            let _wn: usize = i;
+            let _w0 = &inReal[today..][.._wn];
+            let _w1 = &inReal[trailingIdx..][.._wn];
+            for _wk in 0.._wn {
+                i -= 1;
+                tempReal += 2.0 * _w0[_wk] - _w1[_wk];
+                today += 1;
+                trailingIdx += 1;
+            }
+            i = i.wrapping_sub(1);
+        } else {
+            i = i.wrapping_sub(1);
         }
         prevMA = tempReal / ((optInTimePeriod) as f64);
-        while today <= startIdx {
-            prevMA = (2.0 * inReal[today] - inReal[trailingIdx] - prevMA as f64).mul_add(optInK_1, prevMA);
-            today += 1;
-            trailingIdx += 1;
+        if today <= startIdx {
+            let _wn: usize = startIdx - today + 1;
+            let _w0 = &inReal[today..][.._wn];
+            let _w1 = &inReal[trailingIdx..][.._wn];
+            for _wk in 0.._wn {
+                prevMA = (2.0 * _w0[_wk] - _w1[_wk] - prevMA as f64).mul_add(optInK_1, prevMA);
+                today += 1;
+                trailingIdx += 1;
+            }
         }
         outReal[0] = prevMA;
         outIdx = 1;
-        while today <= endIdx {
-            prevMA = (2.0 * inReal[today] - inReal[trailingIdx] - prevMA as f64).mul_add(optInK_1, prevMA);
-            today += 1;
-            trailingIdx += 1;
-            outReal[outIdx] = prevMA;
-            outIdx += 1;
+        if today <= endIdx {
+            let _wn: usize = endIdx - today + 1;
+            let _w0 = &inReal[today..][.._wn];
+            let _w1 = &inReal[trailingIdx..][.._wn];
+            let _w2 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                prevMA = (2.0 * _w0[_wk] - _w1[_wk] - prevMA as f64).mul_add(optInK_1, prevMA);
+                today += 1;
+                trailingIdx += 1;
+                _w2[_wk] = prevMA;
+                outIdx += 1;
+            }
         }
         (*outNBElement) = outIdx;
         return RetCode::Success;

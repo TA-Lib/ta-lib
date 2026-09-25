@@ -92,6 +92,11 @@ pub struct RustRenderCtx {
     /// because the frame's locals drop the `sp.` qualifier the gate keys on.
     /// Off, the loop takes the same generic fallback the step takes.
     pub for_range_lowering: bool,
+    /// Whether innermost loops may become counted loops over windows
+    /// ([`super::rust_window`]). Set for batch bodies only.
+    pub window_loops: bool,
+    /// Inputs resliced to `..=endIdx`, so all of one length.
+    pub same_len_inputs: std::collections::HashSet<String>,
     /// If true, emit a pre-loop bounds-assert preamble at the top of the body. The
     /// asserts give LLVM the proof it needs to elide the per-access bounds checks on
     /// the safe `[]` indexing that follows — the generated code never uses `unsafe`.
@@ -146,6 +151,9 @@ pub struct RustRenderCtx {
     /// keep pure-`Vec` storage, whose ownership the open path moves into the
     /// stream state struct.
     pub circbuf_hybrid_static: std::collections::HashMap<String, i64>,
+    /// Per batch CIRCBUF, a storage slice whose length is the ring's: the
+    /// wrap tests against it, which lets LLVM drop the ring's own check.
+    pub circbuf_len_of: std::collections::HashMap<String, String>,
     /// Output parameters typed `Option<&mut [T]>` because their .yaml marks them
     /// `nullable` (rule B6a). Every store into one is wrapped in an `if let
     /// Some(..) = ..as_deref_mut()`, so a caller that passed `None` is skipped.
@@ -267,6 +275,8 @@ impl RustRenderCtx {
     pub fn empty() -> Self {
         RustRenderCtx {
             for_range_lowering: true,
+            window_loops: false,
+            same_len_inputs: std::collections::HashSet::new(),
             bounds_asserts: false,
             index_vars: std::collections::HashSet::new(),
             real_vars: std::collections::HashSet::new(),
@@ -280,6 +290,7 @@ impl RustRenderCtx {
             matype_map: std::collections::HashMap::new(),
             enum_vars: std::collections::HashMap::new(),
             circbuf_hybrid_static: std::collections::HashMap::new(),
+            circbuf_len_of: std::collections::HashMap::new(),
             nullable_outputs: std::collections::HashSet::new(),
             nullable_shadow: false,
         }
@@ -658,6 +669,8 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     prune_enum_locals(&mut index_vars, &enum_vars);
     let ctx = RustRenderCtx {
             for_range_lowering: true,
+        window_loops: true,
+        same_len_inputs: std::collections::HashSet::new(),
         bounds_asserts: true,
         index_vars,
         real_vars,
@@ -671,6 +684,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         matype_map: build_matype_map(enums),
         enum_vars,
         circbuf_hybrid_static: collect_circbuf_static(&func.body),
+        circbuf_len_of: collect_circbuf_len_of(&func.body),
         nullable_outputs: super::common::nullable_output_names(func),
         nullable_shadow: false,
     };
@@ -1037,6 +1051,8 @@ fn gen_guarded_func(
         prune_enum_locals(&mut g_index_vars, &enum_vars);
         let g_ctx = RustRenderCtx {
             for_range_lowering: true,
+            window_loops: true,
+            same_len_inputs: std::collections::HashSet::new(),
             // The guarded preamble is emitted once by gen_guarded_func above, not
             // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
@@ -1052,6 +1068,7 @@ fn gen_guarded_func(
             matype_map: build_matype_map(enums),
             enum_vars,
             circbuf_hybrid_static: collect_circbuf_static(&func.body),
+            circbuf_len_of: collect_circbuf_len_of(&func.body),
             nullable_outputs: super::common::nullable_output_names(func),
             nullable_shadow: false,
         };
@@ -1139,6 +1156,8 @@ fn gen_guarded_func(
         prune_enum_locals(&mut g_index_vars, &enum_vars);
         let g_ctx = RustRenderCtx {
             for_range_lowering: true,
+            window_loops: true,
+            same_len_inputs: std::collections::HashSet::new(),
             // The guarded preamble is emitted once by gen_guarded_func above, not
             // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
@@ -1154,6 +1173,7 @@ fn gen_guarded_func(
             matype_map: build_matype_map(enums),
             enum_vars,
             circbuf_hybrid_static: collect_circbuf_static(&func.body),
+            circbuf_len_of: collect_circbuf_len_of(&func.body),
             nullable_outputs: super::common::nullable_output_names(func),
             nullable_shadow: false,
         };
@@ -1282,19 +1302,32 @@ fn gen_guarded_func(
         }
 
         // Render body statements
+        let indexed = indexed_arrays(&func.body);
+        let mut resliced = g_ctx.clone();
+        let mut reslice = String::new();
+        for input in func.inputs.iter().filter(|i| indexed.contains(&i.name)) {
+            reslice.push_str(&format!("        let {0} = &{0}[..=endIdx];\n", input.name));
+            resliced.same_len_inputs.insert(input.name.clone());
+        }
+        // With no lookback every call that got here computes, and the preamble
+        // has already asserted each input covers `endIdx`.
+        let at_entry = lookback_is_zero(func) && !func.body.iter().any(is_empty_range_exit);
+        if at_entry {
+            out.push_str(&reslice);
+        }
+        let mut past_reslice = at_entry;
         for stmt in &func.body {
             if matches!(stmt, Statement::VarDecl { .. }) {
                 continue;
             }
+            let ctx = if past_reslice { &resliced } else { &g_ctx };
             out.push_str(&render_statement(
-                stmt, 8, &g_ctx, &g_for_loop_vars, &g_var_inits,
+                stmt, 8, ctx, &g_for_loop_vars, &g_var_inits,
                 &g_output_names, &g_opt_real_params, enums, registry, helpers, &g_inline_counter,
             ));
-            if is_empty_range_exit(stmt) {
-                let indexed = indexed_arrays(&func.body);
-                for input in func.inputs.iter().filter(|i| indexed.contains(&i.name)) {
-                    out.push_str(&format!("        let {0} = &{0}[..=endIdx];\n", input.name));
-                }
+            if !past_reslice && is_empty_range_exit(stmt) {
+                out.push_str(&reslice);
+                past_reslice = true;
             }
         }
     }
@@ -1315,6 +1348,17 @@ fn is_empty_range_exit(stmt: &Statement) -> bool {
     matches!((l.as_ref(), r.as_ref()), (Expr::Var(s), Expr::Var(e)) if s == "startIdx" && e == "endIdx")
         && else_body.is_empty()
         && matches!(then_body.last(), Some(Statement::Return { .. }))
+}
+
+fn lookback_is_zero(func: &FuncDef) -> bool {
+    match &func.lookback {
+        Some(LookbackExpr::Literal(0)) => true,
+        Some(LookbackExpr::Code(stmts)) => {
+            let code: Vec<&Statement> = stmts.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect();
+            matches!(code.as_slice(), [Statement::Return { value: Some(Expr::IntLiteral(0)) }])
+        }
+        _ => false,
+    }
 }
 
 /// Every array `body` indexes, at any depth.
@@ -1978,6 +2022,17 @@ pub(crate) fn collect_circbuf_static(body: &[Statement]) -> std::collections::Ha
         .filter_map(|s| match s {
             Statement::CircBuf(CircBuf::Prolog { id, static_size, .. }) => {
                 Some((id.clone(), *static_size))
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+pub(crate) fn collect_circbuf_len_of(body: &[Statement]) -> std::collections::HashMap<String, String> {
+    body.iter()
+        .filter_map(|s| match s {
+            Statement::CircBuf(CircBuf::Prolog { id, layout, .. }) => {
+                circbuf_storage(id, layout).into_iter().next().map(|(storage, _)| (id.clone(), storage))
             }
             _ => None,
         })
@@ -2835,6 +2890,82 @@ impl RustStmt<'_, '_> {
         Some(format!("{pad}if {cond} {{\n{pad}    {copy}\n{pad}    {v} = {end};\n{pad}}}\n"))
     }
 
+    /// The loop as [`super::rust_window`] lowers it, or `None` to render it as
+    /// written. `as_written` is the loop after any `for` init, for a failed
+    /// guard the loop may still pass.
+    fn windowed(
+        &self,
+        condition: &Expr,
+        body: &[Statement],
+        update: Option<&Statement>,
+        as_written: &Statement,
+        indent: usize,
+    ) -> Option<String> {
+        use super::rust_window::{window_name, Names, PASS, TRIP};
+        if !self.ctx.window_loops {
+            return None;
+        }
+        let ctx = self.ctx;
+        let index = |n: &str| ctx.index_vars.contains(n) && !ctx.sentinel_vars.contains(n);
+        let usize_expr = |e: &Expr| expr_is_usize(e, ctx);
+        // A fixed-size array's length is already known to LLVM, and the loops
+        // over one run a constant few passes that a window's entry checks
+        // would outweigh.
+        let fixed = |a: &str| ctx.real_array_vars.contains(a) || (ctx.int_vec_vars.contains(a) && !ctx.vec_vars.contains(a));
+        let sliceable = |a: &str| !ctx.nullable_outputs.contains(a) && !fixed(a);
+        let same_len = |a: &str| ctx.same_len_inputs.contains(a);
+        let ring_storage = |id: &str| ctx.circbuf_len_of.get(id).cloned();
+        let names = Names {
+            index: &index,
+            usize_expr: &usize_expr,
+            sliceable: &sliceable,
+            same_len: &same_len,
+            ring_storage: &ring_storage,
+        };
+        let plan = super::rust_window::plan(condition, body, update, &names)?;
+
+        let mut inner = ctx.clone();
+        inner.index_vars.insert(TRIP.to_string());
+        inner.index_vars.insert(PASS.to_string());
+        let inner_stmt = RustStmt { ctx: &inner, ..*self };
+        let idx = |e: &Expr| render_index_expr(e, &inner, self.opt_real_params, self.registry, self.helpers);
+        let pad = " ".repeat(indent);
+        let guard = render_condition(&plan.guard, &inner, self.opt_real_params, self.registry, self.helpers);
+        let mut out = format!("{pad}if {guard} {{\n{pad}    let {TRIP}: usize = {};\n", idx(&plan.trip));
+        for (j, w) in plan.windows.iter().enumerate() {
+            let m = if w.mutable { "mut " } else { "" };
+            let len = if w.extra == 0 { TRIP.to_string() } else { format!("{TRIP} + {}", w.extra) };
+            out.push_str(&format!(
+                "{pad}    let {} = &{m}{}[{}..][..{len}];\n",
+                window_name(j),
+                w.array,
+                idx(&w.start)
+            ));
+        }
+        let range = if plan.reverse { format!("(0..{TRIP}).rev()") } else { format!("0..{TRIP}") };
+        out.push_str(&format!("{pad}    for {PASS} in {range} {{\n"));
+        for s in &plan.body {
+            out.push_str(&inner_stmt.walk_stmt(s, indent + 8));
+        }
+        out.push_str(&format!("{pad}    }}\n"));
+        match &plan.cond_step {
+            None => out.push_str(&format!("{pad}}}\n")),
+            Some(c) => {
+                let last = format!("{c} = {c}.wrapping_sub(1);");
+                out.push_str(&format!("{pad}    {last}\n{pad}}} else {{\n"));
+                if plan.may_pass_unguarded {
+                    let mut unwindowed = ctx.clone();
+                    unwindowed.window_loops = false;
+                    out.push_str(&RustStmt { ctx: &unwindowed, ..*self }.walk_stmt(as_written, indent + 4));
+                } else {
+                    out.push_str(&format!("{pad}    {last}\n"));
+                }
+                out.push_str(&format!("{pad}}}\n"));
+            }
+        }
+        Some(out)
+    }
+
     /// Shared `if` tail (then-body + else branch with `} else if` collapse) used
     /// by both the flat and multi-line-condition rendering paths.
     fn render_if_tail(&self, then_body: &[Statement], else_body: &[Statement], indent: usize) -> String {
@@ -2882,9 +3013,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
             // Destroy: Vec storage drops automatically — no explicit free.
             CircBuf::Prolog { .. } | CircBuf::Destroy { .. } => String::new(),
             // Advance with conditional reset (not modulo) — matches the reference macro.
-            CircBuf::Next { id } => {
-                format!("{pad}{id}_Idx += 1;\n{pad}if {id}_Idx > maxIdx_{id} {{ {id}_Idx = 0; }}\n")
-            }
+            CircBuf::Next { id } => match self.ctx.circbuf_len_of.get(id) {
+                Some(storage) => format!("{pad}{id}_Idx += 1;\n{pad}if {id}_Idx >= {storage}.len() {{ {id}_Idx = 0; }}\n"),
+                None => format!("{pad}{id}_Idx += 1;\n{pad}if {id}_Idx > maxIdx_{id} {{ {id}_Idx = 0; }}\n"),
+            },
             // Runtime-sized. Batch tier (id present in circbuf_hybrid_static):
             // C-style hybrid — bind the slices to the prolog's stack arrays when
             // the runtime size fits the static capacity, heap-allocate otherwise.
@@ -3467,6 +3599,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 }
             }
         }
+        let as_written = Statement::While { condition: condition.clone(), body: while_body.to_vec() };
+        if let Some(out) = self.windowed(condition, while_body, None, &as_written, indent) {
+            return out;
+        }
         let mut out = format!(
             "{}while {} {{\n",
             pad,
@@ -3636,6 +3772,16 @@ impl StatementEmitter for RustStmt<'_, '_> {
             if let Some(shift) = self.shift_as_copy_within(condition, &as_while, &pad) {
                 return self.walk_stmt(init, indent) + &shift;
             }
+        }
+        let mut after_init = for_body.to_vec();
+        after_init.push(update.clone());
+        let as_written = Statement::While { condition: condition.clone(), body: after_init };
+        if let Some(out) = self.windowed(condition, for_body, Some(update), &as_written, indent) {
+            let inits = match init {
+                Statement::Block { body } => body.clone(),
+                other => vec![other.clone()],
+            };
+            return inits.iter().map(|s| self.walk_stmt(s, indent)).collect::<String>() + &out;
         }
         // Range-iteration fast path: for(i=start; i<=end; i++) → for i in start..(end+1)
         // Uses exclusive range (not ..=) because LLVM vectorizes exclusive ranges
@@ -3881,6 +4027,9 @@ fn render_assign_target(
         }
         Expr::Var(name) => name.clone(),
         Expr::ArrayAccess(name, idx) => {
+            if let Some(w) = super::rust_window::render_marker(idx) {
+                return w;
+            }
             let idx_rendered = render_index_expr(idx, ctx, opt_real_params, registry, helpers);
             format!("{name}[{idx_rendered}]")
         }
@@ -4126,6 +4275,9 @@ impl ExprEmitter for RustExpr<'_> {
     }
 
     fn array_access(&self, name: &str, idx: &Expr) -> String {
+        if let Some(w) = super::rust_window::render_marker(idx) {
+            return w;
+        }
         let idx_rendered =
             render_index_expr(idx, self.ctx, self.opt_real_params, self.registry, self.helpers);
         // Always safe `[]` indexing. The bounds-assert preamble lets LLVM elide the

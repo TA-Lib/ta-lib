@@ -292,7 +292,7 @@ impl Core {
             term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
             term_trueRange[term_Idx] = trueRange;
             term_Idx += 1;
-            if term_Idx > maxIdx_term { term_Idx = 0; }
+            if term_Idx >= term_closeMinusTrueLow.len() { term_Idx = 0; }
             if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
                 nullRun += 1;
             } else {
@@ -395,7 +395,7 @@ impl Core {
                 trailingPos2 = 0;
             }
             term_Idx += 1;
-            if term_Idx > maxIdx_term { term_Idx = 0; }
+            if term_Idx >= term_closeMinusTrueLow.len() { term_Idx = 0; }
             a3Total -= term_closeMinusTrueLow[term_Idx];
             b3Total -= term_trueRange[term_Idx];
             // Last operation is to write the output. Must

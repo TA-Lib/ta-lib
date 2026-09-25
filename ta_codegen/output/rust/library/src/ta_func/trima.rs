@@ -302,23 +302,33 @@ impl Core {
             //       outReal and inReal are ptr on the same
             //       buffer.
             // Iterate for remaining output
-            while todayIdx <= endIdx {
-                // Step (1)
-                numerator -= numeratorSub;
-                numeratorSub -= tempReal;
-                tempReal = inReal[{ let _v = middleIdx; middleIdx += 1; _v }];
-                numeratorSub += tempReal;
-                // Step (2)
-                numerator += numeratorAdd;
-                numeratorAdd -= tempReal;
-                tempReal = inReal[{ let _v = todayIdx; todayIdx += 1; _v }];
-                numeratorAdd += tempReal;
-                // Step (3)
-                numerator += tempReal;
-                // Step (4)
-                tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-                outReal[outIdx] = numerator * factor;
-                outIdx += 1;
+            if todayIdx <= endIdx {
+                let _wn: usize = endIdx - todayIdx + 1;
+                let _w0 = &inReal[middleIdx..][.._wn];
+                let _w1 = &inReal[todayIdx..][.._wn];
+                let _w2 = &inReal[trailingIdx..][.._wn];
+                let _w3 = &mut outReal[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    // Step (1)
+                    numerator -= numeratorSub;
+                    numeratorSub -= tempReal;
+                    tempReal = _w0[_wk];
+                    middleIdx += 1;
+                    numeratorSub += tempReal;
+                    // Step (2)
+                    numerator += numeratorAdd;
+                    numeratorAdd -= tempReal;
+                    tempReal = _w1[_wk];
+                    todayIdx += 1;
+                    numeratorAdd += tempReal;
+                    // Step (3)
+                    numerator += tempReal;
+                    // Step (4)
+                    tempReal = _w2[_wk];
+                    trailingIdx += 1;
+                    _w3[_wk] = numerator * factor;
+                    outIdx += 1;
+                }
             }
         } else {
             // Even logic.
@@ -367,23 +377,33 @@ impl Core {
             //       outReal and inReal are ptr on the same
             //       buffer.
             // Iterate for remaining output
-            while todayIdx <= endIdx {
-                // Step (1)
-                numerator -= numeratorSub;
-                numeratorSub -= tempReal;
-                tempReal = inReal[{ let _v = middleIdx; middleIdx += 1; _v }];
-                numeratorSub += tempReal;
-                // Step (2)
-                numeratorAdd -= tempReal;
-                numerator += numeratorAdd;
-                tempReal = inReal[{ let _v = todayIdx; todayIdx += 1; _v }];
-                numeratorAdd += tempReal;
-                // Step (3)
-                numerator += tempReal;
-                // Step (4)
-                tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-                outReal[outIdx] = numerator * factor;
-                outIdx += 1;
+            if todayIdx <= endIdx {
+                let _wn: usize = endIdx - todayIdx + 1;
+                let _w0 = &inReal[middleIdx..][.._wn];
+                let _w1 = &inReal[todayIdx..][.._wn];
+                let _w2 = &inReal[trailingIdx..][.._wn];
+                let _w3 = &mut outReal[outIdx..][.._wn];
+                for _wk in 0.._wn {
+                    // Step (1)
+                    numerator -= numeratorSub;
+                    numeratorSub -= tempReal;
+                    tempReal = _w0[_wk];
+                    middleIdx += 1;
+                    numeratorSub += tempReal;
+                    // Step (2)
+                    numeratorAdd -= tempReal;
+                    numerator += numeratorAdd;
+                    tempReal = _w1[_wk];
+                    todayIdx += 1;
+                    numeratorAdd += tempReal;
+                    // Step (3)
+                    numerator += tempReal;
+                    // Step (4)
+                    tempReal = _w2[_wk];
+                    trailingIdx += 1;
+                    _w3[_wk] = numerator * factor;
+                    outIdx += 1;
+                }
             }
         }
         (*outNBElement) = outIdx;
