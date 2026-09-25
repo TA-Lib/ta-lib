@@ -526,7 +526,7 @@ public partial class Core
       }
    }
 
-   internal void EmaStepImpl( EmaStream sp, double inReal )
+   private void EmaStepImpl( EmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

@@ -685,7 +685,7 @@ public partial class Core
       }
    }
 
-   internal void FoscStepImpl( FoscStream sp, double inReal )
+   private void FoscStepImpl( FoscStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

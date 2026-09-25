@@ -1367,7 +1367,7 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
         (
             "csharp",
             &csharp,
-            "internal void SmaStepImpl( SmaStream sp,",
+            "private void SmaStepImpl( SmaStream sp,",
             // Only `Update`'s. `Peek` runs a frame inline and calls no step.
             &["core.SmaStepImpl(this,"],
             "StreamStep",

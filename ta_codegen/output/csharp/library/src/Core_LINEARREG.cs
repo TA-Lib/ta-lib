@@ -780,7 +780,7 @@ public partial class Core
       }
    }
 
-   internal void LinearregStepImpl( LinearregStream sp, double inReal )
+   private void LinearregStepImpl( LinearregStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

@@ -812,7 +812,7 @@ public partial class Core
       }
    }
 
-   internal void AcStepImpl( AcStream sp, double inHigh, double inLow )
+   private void AcStepImpl( AcStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double osc = 0.0;

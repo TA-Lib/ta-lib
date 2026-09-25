@@ -754,7 +754,7 @@ public partial class Core
       }
    }
 
-   internal void MinusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
+   private void MinusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;

@@ -556,7 +556,7 @@ public partial class Core
       }
    }
 
-   internal void VhfStepImpl( VhfStream sp, double inReal )
+   private void VhfStepImpl( VhfStream sp, double inReal )
    {
       int i = 0;
       double highest = 0.0;

@@ -882,7 +882,7 @@ public partial class Core
       }
    }
 
-   internal void KurtosisStepImpl( KurtosisStream sp, double inReal )
+   private void KurtosisStepImpl( KurtosisStream sp, double inReal )
    {
       double tempReal = 0.0;
       double dev = 0.0;

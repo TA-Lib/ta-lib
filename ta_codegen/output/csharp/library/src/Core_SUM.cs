@@ -491,7 +491,7 @@ public partial class Core
       }
    }
 
-   internal void SumStepImpl( SumStream sp, double inReal )
+   private void SumStepImpl( SumStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

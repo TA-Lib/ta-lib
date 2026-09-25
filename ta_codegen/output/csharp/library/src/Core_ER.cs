@@ -676,7 +676,7 @@ public partial class Core
       }
    }
 
-   internal void ErStepImpl( ErStream sp, double inReal )
+   private void ErStepImpl( ErStream sp, double inReal )
    {
       double periodROC = 0.0;
       double tempReal = 0.0;

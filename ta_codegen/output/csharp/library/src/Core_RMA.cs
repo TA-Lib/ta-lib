@@ -567,7 +567,7 @@ public partial class Core
       }
    }
 
-   internal void RmaStepImpl( RmaStream sp, double inReal )
+   private void RmaStepImpl( RmaStream sp, double inReal )
    {
       sp.prevRMA = Math.FusedMultiplyAdd(sp.wBeta, sp.prevRMA, sp.wAlpha * inReal);
       sp.cur_outReal = sp.prevRMA;

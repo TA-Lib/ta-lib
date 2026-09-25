@@ -599,7 +599,7 @@ public partial class Core
       }
    }
 
-   internal void ZlemaStepImpl( ZlemaStream sp, double inReal )
+   private void ZlemaStepImpl( ZlemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

@@ -2504,6 +2504,8 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("using TALib.Metadata;\n\n");
 
     s.push_str("public class TaCodegenServe {\n");
+    // Never Core.Default: the unstable-period RPCs write this Core's array in
+    // place, which would then reach every later CreateCall() in the process.
     s.push_str("    static Core core = new Core();\n");
     s.push_str("    const int MAX_ARRAY_SIZE = 200000;\n");
     s.push_str("    static double[] refOpen = new double[MAX_ARRAY_SIZE];\n");

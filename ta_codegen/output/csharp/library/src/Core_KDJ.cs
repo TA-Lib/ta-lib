@@ -663,7 +663,7 @@ public partial class Core
       }
    }
 
-   internal void KdjStepImpl( KdjStream sp, double inHigh, double inLow, double inClose )
+   private void KdjStepImpl( KdjStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_outK = 0.0;
       double cur_outD = 0.0;

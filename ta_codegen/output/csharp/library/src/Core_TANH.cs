@@ -377,7 +377,7 @@ public partial class Core
       }
    }
 
-   internal void TanhStepImpl( TanhStream sp, double inReal )
+   private void TanhStepImpl( TanhStream sp, double inReal )
    {
       sp.cur_outReal = Math.Tanh(inReal);
    }

@@ -622,7 +622,7 @@ public partial class Core
       }
    }
 
-   internal void VwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
+   private void VwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
    {
       double tempPV = 0.0;
       double tempV = 0.0;

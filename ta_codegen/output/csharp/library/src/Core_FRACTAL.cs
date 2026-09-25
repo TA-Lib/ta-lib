@@ -666,7 +666,7 @@ public partial class Core
       }
    }
 
-   internal void FractalStepImpl( FractalStream sp, double inHigh, double inLow )
+   private void FractalStepImpl( FractalStream sp, double inHigh, double inLow )
    {
       int i = 0;
       double pivotHigh = 0.0;

@@ -821,7 +821,7 @@ public partial class Core
       }
    }
 
-   internal void MaStepImpl( MaStream sp, double inReal )
+   private void MaStepImpl( MaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
          sp.cur_outReal = inReal;

@@ -769,7 +769,7 @@ public partial class Core
       }
    }
 
-   internal void Cdl3whitesoldiersStepImpl( Cdl3whitesoldiersStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void Cdl3whitesoldiersStepImpl( Cdl3whitesoldiersStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;

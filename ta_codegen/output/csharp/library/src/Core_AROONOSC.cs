@@ -667,7 +667,7 @@ public partial class Core
       }
    }
 
-   internal void AroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
+   private void AroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       double aroon = 0.0;

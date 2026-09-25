@@ -377,7 +377,7 @@ public partial class Core
       }
    }
 
-   internal void TanStepImpl( TanStream sp, double inReal )
+   private void TanStepImpl( TanStream sp, double inReal )
    {
       sp.cur_outReal = Math.Tan(inReal);
    }

@@ -649,7 +649,7 @@ public partial class Core
       }
    }
 
-   internal void StochrsiStepImpl( StochrsiStream sp, double inReal )
+   private void StochrsiStepImpl( StochrsiStream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
       double cur_outFastK = 0.0;

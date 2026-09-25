@@ -1045,7 +1045,7 @@ public partial class Core
       }
    }
 
-   internal void CorrelStepImpl( CorrelStream sp, double inReal0, double inReal1 )
+   private void CorrelStepImpl( CorrelStream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
       double y = 0.0;

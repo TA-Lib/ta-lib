@@ -676,7 +676,7 @@ public partial class Core
       }
    }
 
-   internal void RsiStepImpl( RsiStream sp, double inReal )
+   private void RsiStepImpl( RsiStream sp, double inReal )
    {
       double gainDelta = 0.0;
       double tempValue1 = 0.0;

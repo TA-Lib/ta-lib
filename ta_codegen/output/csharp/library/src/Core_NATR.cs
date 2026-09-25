@@ -741,7 +741,7 @@ public partial class Core
       }
    }
 
-   internal void NatrStepImpl( NatrStream sp, double inHigh, double inLow, double inClose )
+   private void NatrStepImpl( NatrStream sp, double inHigh, double inLow, double inClose )
    {
       double tempValue = 0.0;
       double val2 = 0.0;

@@ -33,6 +33,8 @@
 
 /* Hand-written library scaffolding; ta_codegen never opens this file. */
 
+using System.Globalization;
+
 namespace TALib;
 
 /// <summary>The output range an indicator call wrote: where the values start
@@ -43,25 +45,11 @@ namespace TALib;
 /// touched — the library never pads with NaN. <see cref="Count"/> of 0 is a
 /// legitimate result (valid range shorter than the lookback), not an
 /// error.</remarks>
-public readonly struct OutRange
+/// <param name="BegIdx">Input index of the first output value.</param>
+/// <param name="Count">Number of values written, starting at output index
+/// 0.</param>
+public readonly record struct OutRange(int BegIdx, int Count)
 {
-    /// <summary>Input index of the first output value.</summary>
-    public int BegIdx { get; }
-
-    /// <summary>Number of values written, starting at output index 0.</summary>
-    public int Count { get; }
-
-    /// <summary>Create a range: <paramref name="begIdx"/> is the input index
-    /// of the first value, <paramref name="count"/> how many were
-    /// written.</summary>
-    /// <param name="begIdx">Input index of the first output value.</param>
-    /// <param name="count">Number of values written.</param>
-    public OutRange(int begIdx, int count)
-    {
-        BegIdx = begIdx;
-        Count = count;
-    }
-
     /// <summary>True when no values were written.</summary>
     public bool IsEmpty => Count == 0;
 
@@ -71,4 +59,10 @@ public readonly struct OutRange
     /// that reads say what they mean. A live stream never reports it: a
     /// successful open has already produced at least one value.</remarks>
     public static OutRange Empty => default;
+
+    /// <summary>For example <c>OutRange { BegIdx = 3, Count = 7 }</c>, the same
+    /// in every culture.</summary>
+    /// <returns>The two components.</returns>
+    public override string ToString() =>
+        string.Create(CultureInfo.InvariantCulture, $"OutRange {{ BegIdx = {BegIdx}, Count = {Count} }}");
 }

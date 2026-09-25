@@ -548,7 +548,7 @@ public partial class Core
       }
    }
 
-   internal void MinindexStepImpl( MinindexStream sp, double inReal )
+   private void MinindexStepImpl( MinindexStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;

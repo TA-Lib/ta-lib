@@ -672,7 +672,7 @@ public partial class Core
       }
    }
 
-   internal void HaStepImpl( HaStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void HaStepImpl( HaStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double haHigh = 0.0;
       double haLow = 0.0;

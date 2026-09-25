@@ -450,7 +450,7 @@ public partial class Core
       }
    }
 
-   internal void BopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void BopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       /* BOP is a fraction of the bar's own range, so it is scale-free and the

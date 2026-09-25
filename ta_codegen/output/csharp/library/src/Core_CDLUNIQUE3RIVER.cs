@@ -615,7 +615,7 @@ public partial class Core
       }
    }
 
-   internal void Cdlunique3riverStepImpl( Cdlunique3riverStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void Cdlunique3riverStepImpl( Cdlunique3riverStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

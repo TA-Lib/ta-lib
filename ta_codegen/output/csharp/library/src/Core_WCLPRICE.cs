@@ -406,7 +406,7 @@ public partial class Core
       }
    }
 
-   internal void WclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
+   private void WclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (Math.FusedMultiplyAdd(inClose, 2.0, inHigh + inLow)) / 4.0;
    }

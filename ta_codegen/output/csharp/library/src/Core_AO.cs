@@ -661,7 +661,7 @@ public partial class Core
       }
    }
 
-   internal void AoStepImpl( AoStream sp, double inHigh, double inLow )
+   private void AoStepImpl( AoStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double tempReal = 0.0;

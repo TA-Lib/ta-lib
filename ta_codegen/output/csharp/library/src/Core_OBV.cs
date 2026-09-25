@@ -434,7 +434,7 @@ public partial class Core
       }
    }
 
-   internal void ObvStepImpl( ObvStream sp, double inReal, double inVolume )
+   private void ObvStepImpl( ObvStream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       tempReal = inReal;

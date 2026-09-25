@@ -383,7 +383,7 @@ public partial class Core
       }
    }
 
-   internal void AcosStepImpl( AcosStream sp, double inReal )
+   private void AcosStepImpl( AcosStream sp, double inReal )
    {
       sp.cur_outReal = Math.Acos(inReal);
    }

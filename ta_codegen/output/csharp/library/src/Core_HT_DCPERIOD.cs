@@ -1243,7 +1243,7 @@ public partial class Core
       }
    }
 
-   internal void HtDcperiodStepImpl( HtDcperiodStream sp, double inReal )
+   private void HtDcperiodStepImpl( HtDcperiodStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

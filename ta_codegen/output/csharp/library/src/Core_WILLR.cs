@@ -836,7 +836,7 @@ public partial class Core
       }
    }
 
-   internal void WillrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
+   private void WillrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double tempReal = 0.0;

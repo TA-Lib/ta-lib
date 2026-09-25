@@ -855,7 +855,7 @@ public partial class Core
       }
    }
 
-   internal void CtiStepImpl( CtiStream sp, double inReal )
+   private void CtiStepImpl( CtiStream sp, double inReal )
    {
       double x = 0.0;
       double trailingX = 0.0;

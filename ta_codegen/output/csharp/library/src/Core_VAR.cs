@@ -788,7 +788,7 @@ public partial class Core
       }
    }
 
-   internal void VarStepImpl( VarStream sp, double inReal )
+   private void VarStepImpl( VarStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;

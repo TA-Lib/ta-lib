@@ -609,7 +609,7 @@ public partial class Core
       }
    }
 
-   internal void TrixStepImpl( TrixStream sp, double inReal )
+   private void TrixStepImpl( TrixStream sp, double inReal )
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;

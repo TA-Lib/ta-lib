@@ -383,7 +383,7 @@ public partial class Core
       }
    }
 
-   internal void Log10StepImpl( Log10Stream sp, double inReal )
+   private void Log10StepImpl( Log10Stream sp, double inReal )
    {
       sp.cur_outReal = Math.Log10(inReal);
    }

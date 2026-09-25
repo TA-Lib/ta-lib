@@ -777,7 +777,7 @@ public partial class Core
       }
    }
 
-   internal void LinearregAngleStepImpl( LinearregAngleStream sp, double inReal )
+   private void LinearregAngleStepImpl( LinearregAngleStream sp, double inReal )
    {
       double m = 0.0;
       int windowStart = 0;

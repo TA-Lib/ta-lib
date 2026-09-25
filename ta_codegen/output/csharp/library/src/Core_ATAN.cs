@@ -378,7 +378,7 @@ public partial class Core
       }
    }
 
-   internal void AtanStepImpl( AtanStream sp, double inReal )
+   private void AtanStepImpl( AtanStream sp, double inReal )
    {
       sp.cur_outReal = Math.Atan(inReal);
    }

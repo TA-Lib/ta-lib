@@ -29,7 +29,7 @@ There is **no `Dispose`**: a stream owns only managed state — its arrays, its 
 ```csharp
 using TALib;
 
-var core = new Core();
+var core = Core.Default;
 
 // Seed with warm-up history (>= SmaLookback(period) + 1 bars).
 double[] history = /* ...your closing prices... */;

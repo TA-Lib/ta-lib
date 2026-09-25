@@ -377,7 +377,7 @@ public partial class Core
       }
    }
 
-   internal void CosStepImpl( CosStream sp, double inReal )
+   private void CosStepImpl( CosStream sp, double inReal )
    {
       sp.cur_outReal = Math.Cos(inReal);
    }

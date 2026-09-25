@@ -854,7 +854,7 @@ public partial class Core
       }
    }
 
-   internal void VortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
+   private void VortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
    {
       double curTR = 0.0;
       double curVMP = 0.0;

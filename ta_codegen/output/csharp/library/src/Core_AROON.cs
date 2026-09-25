@@ -677,7 +677,7 @@ public partial class Core
       }
    }
 
-   internal void AroonStepImpl( AroonStream sp, double inHigh, double inLow )
+   private void AroonStepImpl( AroonStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       sp.x_inHigh[sp.today & sp.xMask] = inHigh;

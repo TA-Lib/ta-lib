@@ -768,7 +768,7 @@ public partial class Core
       }
    }
 
-   internal void MfiStepImpl( MfiStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void MfiStepImpl( MfiStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

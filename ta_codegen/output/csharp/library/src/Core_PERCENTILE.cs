@@ -794,7 +794,7 @@ public partial class Core
       }
    }
 
-   internal void PercentileStepImpl( PercentileStream sp, double inReal )
+   private void PercentileStepImpl( PercentileStream sp, double inReal )
    {
       double newValue = 0.0;
       double oldValue = 0.0;

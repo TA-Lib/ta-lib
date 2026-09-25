@@ -1059,7 +1059,7 @@ public partial class Core
       }
    }
 
-   internal void UltoscStepImpl( UltoscStream sp, double inHigh, double inLow, double inClose )
+   private void UltoscStepImpl( UltoscStream sp, double inHigh, double inLow, double inClose )
    {
       double trueLow = 0.0;
       double trueRange = 0.0;

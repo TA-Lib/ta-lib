@@ -524,7 +524,7 @@ public partial class Core
       }
    }
 
-   internal void WadStepImpl( WadStream sp, double inHigh, double inLow, double inClose )
+   private void WadStepImpl( WadStream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
       double trueExtreme = 0.0;

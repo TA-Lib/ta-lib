@@ -426,7 +426,7 @@ public partial class Core
       }
    }
 
-   internal void CumsumStepImpl( CumsumStream sp, double inReal )
+   private void CumsumStepImpl( CumsumStream sp, double inReal )
    {
       sp.total += inReal;
       sp.cur_outReal = sp.total;

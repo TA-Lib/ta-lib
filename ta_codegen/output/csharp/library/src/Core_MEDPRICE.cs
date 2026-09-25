@@ -401,7 +401,7 @@ public partial class Core
       }
    }
 
-   internal void MedpriceStepImpl( MedpriceStream sp, double inHigh, double inLow )
+   private void MedpriceStepImpl( MedpriceStream sp, double inHigh, double inLow )
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }

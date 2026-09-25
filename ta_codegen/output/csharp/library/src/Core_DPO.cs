@@ -552,7 +552,7 @@ public partial class Core
       }
    }
 
-   internal void DpoStepImpl( DpoStream sp, double inReal )
+   private void DpoStepImpl( DpoStream sp, double inReal )
    {
       double tempReal = 0.0;
       double dispVal = 0.0;

@@ -484,7 +484,7 @@ public partial class Core
       }
    }
 
-   internal void AdStepImpl( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void AdStepImpl( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

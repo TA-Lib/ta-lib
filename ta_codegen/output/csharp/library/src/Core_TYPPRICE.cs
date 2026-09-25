@@ -406,7 +406,7 @@ public partial class Core
       }
    }
 
-   internal void TyppriceStepImpl( TyppriceStream sp, double inHigh, double inLow, double inClose )
+   private void TyppriceStepImpl( TyppriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }

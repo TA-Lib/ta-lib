@@ -841,7 +841,7 @@ public partial class Core
       }
    }
 
-   internal void MedianStepImpl( MedianStream sp, double inReal )
+   private void MedianStepImpl( MedianStream sp, double inReal )
    {
       double newValue = 0.0;
       double oldValue = 0.0;

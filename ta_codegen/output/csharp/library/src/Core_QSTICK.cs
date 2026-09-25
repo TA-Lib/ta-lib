@@ -538,7 +538,7 @@ public partial class Core
       }
    }
 
-   internal void QstickStepImpl( QstickStream sp, double inOpen, double inClose )
+   private void QstickStepImpl( QstickStream sp, double inOpen, double inClose )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

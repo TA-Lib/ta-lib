@@ -714,7 +714,7 @@ public partial class Core
       }
    }
 
-   internal void DonchianStepImpl( DonchianStream sp, double inHigh, double inLow )
+   private void DonchianStepImpl( DonchianStream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;

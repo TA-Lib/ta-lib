@@ -498,7 +498,7 @@ public partial class Core
       }
    }
 
-   internal void PviStepImpl( PviStream sp, double inClose, double inVolume )
+   private void PviStepImpl( PviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;

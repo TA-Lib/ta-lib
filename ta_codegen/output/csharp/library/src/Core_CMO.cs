@@ -654,7 +654,7 @@ public partial class Core
       }
    }
 
-   internal void CmoStepImpl( CmoStream sp, double inReal )
+   private void CmoStepImpl( CmoStream sp, double inReal )
    {
       double gainDelta = 0.0;
       double tempValue1 = 0.0;

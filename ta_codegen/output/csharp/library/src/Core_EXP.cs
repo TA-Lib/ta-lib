@@ -377,7 +377,7 @@ public partial class Core
       }
    }
 
-   internal void ExpStepImpl( ExpStream sp, double inReal )
+   private void ExpStepImpl( ExpStream sp, double inReal )
    {
       sp.cur_outReal = Math.Exp(inReal);
    }

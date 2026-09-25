@@ -1180,7 +1180,7 @@ public partial class Core
       }
    }
 
-   internal void BetaStepImpl( BetaStream sp, double inReal0, double inReal1 )
+   private void BetaStepImpl( BetaStream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
       double denom = 0.0;

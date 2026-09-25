@@ -455,7 +455,7 @@ public partial class Core
       }
    }
 
-   internal void PvtStepImpl( PvtStream sp, double inClose, double inVolume )
+   private void PvtStepImpl( PvtStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       tempClose = inClose;

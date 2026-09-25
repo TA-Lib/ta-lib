@@ -468,7 +468,7 @@ public partial class Core
       }
    }
 
-   internal void MarketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
+   private void MarketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
    {
       /* A zero-volume bar would divide by zero. Neither reference guards
        * it -- they emit +/-Inf, or NaN when the range is zero too -- but

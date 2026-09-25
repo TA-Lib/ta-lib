@@ -506,7 +506,7 @@ public partial class Core
       }
    }
 
-   internal void SmaStepImpl( SmaStream sp, double inReal )
+   private void SmaStepImpl( SmaStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

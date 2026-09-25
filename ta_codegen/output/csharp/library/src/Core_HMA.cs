@@ -1271,7 +1271,7 @@ public partial class Core
       }
    }
 
-   internal void HmaStepImpl( HmaStream sp, double inReal )
+   private void HmaStepImpl( HmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

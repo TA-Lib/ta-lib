@@ -643,6 +643,10 @@ public static class BatchApiTest
               "OutRange GetHashCode agrees with Equals");
         Check(new OutRange(0, 0).IsEmpty && new OutRange(0, 0).Count == 0, "default OutRange is empty");
         Check(default(OutRange).IsEmpty, "default(OutRange) is empty");
+        Check(new OutRange(3, 7) == new OutRange(3, 7) && new OutRange(3, 7) != new OutRange(3, 8),
+              "OutRange has value == and !=");
+        Check(new OutRange(3, 7).ToString() == "OutRange { BegIdx = 3, Count = 7 }",
+              "OutRange.ToString names both components");
     }
 
     /// <summary>

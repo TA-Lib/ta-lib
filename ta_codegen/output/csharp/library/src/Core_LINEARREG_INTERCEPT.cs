@@ -772,7 +772,7 @@ public partial class Core
       }
    }
 
-   internal void LinearregInterceptStepImpl( LinearregInterceptStream sp, double inReal )
+   private void LinearregInterceptStepImpl( LinearregInterceptStream sp, double inReal )
    {
       double m = 0.0;
       int windowStart = 0;

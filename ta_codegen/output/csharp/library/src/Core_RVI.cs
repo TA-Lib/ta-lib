@@ -1112,7 +1112,7 @@ public partial class Core
       }
    }
 
-   internal void RviStepImpl( RviStream sp, double inReal )
+   private void RviStepImpl( RviStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;

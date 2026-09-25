@@ -928,7 +928,7 @@ public partial class Core
       }
    }
 
-   internal void SarStepImpl( SarStream sp, double inHigh, double inLow )
+   private void SarStepImpl( SarStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

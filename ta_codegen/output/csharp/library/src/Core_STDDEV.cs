@@ -504,7 +504,7 @@ public partial class Core
       }
    }
 
-   internal void StddevStepImpl( StddevStream sp, double inReal )
+   private void StddevStepImpl( StddevStream sp, double inReal )
    {
       double cur_outReal = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */

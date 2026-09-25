@@ -824,7 +824,7 @@ public partial class Core
       }
    }
 
-   internal void MacdStepImpl( MacdStream sp, double inReal )
+   private void MacdStepImpl( MacdStream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;

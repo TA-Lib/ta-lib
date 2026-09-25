@@ -583,7 +583,7 @@ public partial class Core
       }
    }
 
-   internal void PvoStepImpl( PvoStream sp, double inVolume )
+   private void PvoStepImpl( PvoStream sp, double inVolume )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;

@@ -549,7 +549,7 @@ public partial class Core
       }
    }
 
-   internal void RvirStepImpl( RvirStream sp, double inHigh, double inLow )
+   private void RvirStepImpl( RvirStream sp, double inHigh, double inLow )
    {
       double cur_tempHigh = 0.0;
       double cur_outReal = 0.0;

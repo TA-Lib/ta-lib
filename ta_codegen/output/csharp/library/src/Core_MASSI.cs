@@ -753,7 +753,7 @@ public partial class Core
       }
    }
 
-   internal void MassiStepImpl( MassiStream sp, double inHigh, double inLow )
+   private void MassiStepImpl( MassiStream sp, double inHigh, double inLow )
    {
       double hl = 0.0;
       double ratio = 0.0;

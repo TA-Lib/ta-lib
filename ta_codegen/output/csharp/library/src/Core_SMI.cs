@@ -1140,7 +1140,7 @@ public partial class Core
       }
    }
 
-   internal void SmiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
+   private void SmiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double num = 0.0;

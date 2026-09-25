@@ -33,6 +33,8 @@
 
 /* Hand-written library scaffolding; ta_codegen never opens this file. */
 
+using System.Globalization;
+
 namespace TALib;
 
 /// <summary>One candlestick threshold: how a candle dimension is measured
@@ -58,6 +60,14 @@ public sealed class CandleSetting
     /// <summary>The multiplier applied to that average to form the
     /// threshold.</summary>
     public double Factor => _factor;
+
+    /// <summary>For example
+    /// <c>CandleSetting { RangeType = HighLow, AvgPeriod = 10, Factor = 0.1 }</c>,
+    /// the same in every culture.</summary>
+    /// <returns>The three components.</returns>
+    public override string ToString() =>
+        string.Create(CultureInfo.InvariantCulture,
+            $"CandleSetting {{ RangeType = {_rangeType}, AvgPeriod = {_avgPeriod}, Factor = {_factor} }}");
 
     internal CandleSetting(RangeType rangeType, int avgPeriod, double factor)
     {

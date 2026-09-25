@@ -681,7 +681,7 @@ public partial class Core
       }
    }
 
-   internal void Cdlrisefall3methodsStepImpl( Cdlrisefall3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void Cdlrisefall3methodsStepImpl( Cdlrisefall3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;

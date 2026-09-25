@@ -717,7 +717,7 @@ public partial class Core
       }
    }
 
-   internal void CmouStepImpl( CmouStream sp, double inReal )
+   private void CmouStepImpl( CmouStream sp, double inReal )
    {
       double sum = 0.0;
       double diff = 0.0;

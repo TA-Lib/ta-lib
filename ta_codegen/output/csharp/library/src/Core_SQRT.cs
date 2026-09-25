@@ -383,7 +383,7 @@ public partial class Core
       }
    }
 
-   internal void SqrtStepImpl( SqrtStream sp, double inReal )
+   private void SqrtStepImpl( SqrtStream sp, double inReal )
    {
       sp.cur_outReal = Math.Sqrt(inReal);
    }

@@ -383,7 +383,7 @@ public partial class Core
       }
    }
 
-   internal void LnStepImpl( LnStream sp, double inReal )
+   private void LnStepImpl( LnStream sp, double inReal )
    {
       sp.cur_outReal = Math.Log(inReal);
    }

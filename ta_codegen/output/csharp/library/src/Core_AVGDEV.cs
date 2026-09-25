@@ -484,7 +484,7 @@ public partial class Core
       }
    }
 
-   internal void AvgdevStepImpl( AvgdevStream sp, double inReal )
+   private void AvgdevStepImpl( AvgdevStream sp, double inReal )
    {
       double todaySum = 0.0;
       double todayDev = 0.0;

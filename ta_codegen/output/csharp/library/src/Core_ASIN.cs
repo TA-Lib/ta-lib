@@ -383,7 +383,7 @@ public partial class Core
       }
    }
 
-   internal void AsinStepImpl( AsinStream sp, double inReal )
+   private void AsinStepImpl( AsinStream sp, double inReal )
    {
       sp.cur_outReal = Math.Asin(inReal);
    }

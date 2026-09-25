@@ -740,7 +740,7 @@ public partial class Core
       }
    }
 
-   internal void T3StepImpl( T3Stream sp, double inReal )
+   private void T3StepImpl( T3Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

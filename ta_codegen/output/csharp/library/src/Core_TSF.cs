@@ -780,7 +780,7 @@ public partial class Core
       }
    }
 
-   internal void TsfStepImpl( TsfStream sp, double inReal )
+   private void TsfStepImpl( TsfStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

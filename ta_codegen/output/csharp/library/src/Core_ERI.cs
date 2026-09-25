@@ -636,7 +636,7 @@ public partial class Core
       }
    }
 
-   internal void EriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
+   private void EriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod == 1 ) {
          double tempReal = 0.0;

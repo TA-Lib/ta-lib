@@ -379,7 +379,7 @@ public partial class Core
       }
    }
 
-   internal void CeilStepImpl( CeilStream sp, double inReal )
+   private void CeilStepImpl( CeilStream sp, double inReal )
    {
       sp.cur_outReal = Math.Ceiling(inReal);
    }

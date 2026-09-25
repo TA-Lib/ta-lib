@@ -739,7 +739,7 @@ public partial class Core
       }
    }
 
-   internal void TsiStepImpl( TsiStream sp, double inReal )
+   private void TsiStepImpl( TsiStream sp, double inReal )
    {
       double mom = 0.0;
       double absMom = 0.0;

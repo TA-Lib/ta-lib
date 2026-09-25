@@ -522,7 +522,7 @@ public partial class Core
       }
    }
 
-   internal void RvolStepImpl( RvolStream sp, double inVolume )
+   private void RvolStepImpl( RvolStream sp, double inVolume )
    {
       double baseline = 0.0;
       double todayVolume = 0.0;

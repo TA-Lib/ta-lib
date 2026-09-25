@@ -863,7 +863,7 @@ public partial class Core
       }
    }
 
-   internal void MavpStepImpl( MavpStream sp, double inReal, double inPeriods )
+   private void MavpStepImpl( MavpStream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {

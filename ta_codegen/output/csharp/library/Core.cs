@@ -52,8 +52,8 @@ namespace TALib;
 /// <see cref="RealDefault"/>, to select their documented default.
 /// <para>Per-instance settings — unstable periods and candlestick thresholds —
 /// take their documented defaults unless chosen up front with
-/// <see cref="Builder"/>. A <c>Core</c> whose settings are never mutated is safe
-/// to share read-only across threads.</para>
+/// <see cref="Builder"/>. A <c>Core</c> is immutable, so one instance can be
+/// shared across threads; <see cref="Default"/> is the all-defaults one.</para>
 /// </remarks>
 public sealed partial class Core
 {
@@ -119,8 +119,15 @@ public sealed partial class Core
     /* In CandleSettingType order. */
     internal readonly CandleSetting[] _candleSettings = (CandleSetting[])DefaultCandleSettings.Clone();
 
+    /// <summary>A shared <c>Core</c> with every setting at its documented
+    /// default.</summary>
+    /// <remarks>Prefer it to <c>new Core()</c> whenever a shared instance will
+    /// do.</remarks>
+    public static Core Default { get; } = new Core();
+
     /// <summary>Create a Core with every setting at its documented
     /// default.</summary>
+    /// <remarks><see cref="Default"/> is one already built.</remarks>
     public Core()
     {
     }

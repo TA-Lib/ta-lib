@@ -521,7 +521,7 @@ public partial class Core
       }
    }
 
-   internal void AdxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
+   private void AdxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;

@@ -958,7 +958,7 @@ public partial class Core
       }
    }
 
-   internal void DxStepImpl( DxStream sp, double inHigh, double inLow, double inClose )
+   private void DxStepImpl( DxStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double diffP = 0.0;

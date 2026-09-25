@@ -651,7 +651,7 @@ public partial class Core
       }
    }
 
-   internal void TemaStepImpl( TemaStream sp, double inReal )
+   private void TemaStepImpl( TemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

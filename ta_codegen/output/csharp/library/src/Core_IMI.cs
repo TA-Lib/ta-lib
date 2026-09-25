@@ -519,7 +519,7 @@ public partial class Core
       }
    }
 
-   internal void ImiStepImpl( ImiStream sp, double inOpen, double inClose )
+   private void ImiStepImpl( ImiStream sp, double inOpen, double inClose )
    {
       double upsum = 0.0;
       double downsum = 0.0;

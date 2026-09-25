@@ -631,7 +631,7 @@ public partial class Core
       }
    }
 
-   internal void CviStepImpl( CviStream sp, double inHigh, double inLow )
+   private void CviStepImpl( CviStream sp, double inHigh, double inLow )
    {
       double laggedEMA = 0.0;
       double tempReal = 0.0;

@@ -648,7 +648,7 @@ public partial class Core
       }
    }
 
-   internal void MinmaxindexStepImpl( MinmaxindexStream sp, double inReal )
+   private void MinmaxindexStepImpl( MinmaxindexStream sp, double inReal )
    {
       double tmpHigh = 0.0;
       double tmpLow = 0.0;

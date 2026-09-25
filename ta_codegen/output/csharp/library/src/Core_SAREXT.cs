@@ -1189,7 +1189,7 @@ public partial class Core
       }
    }
 
-   internal void SarextStepImpl( SarextStream sp, double inHigh, double inLow )
+   private void SarextStepImpl( SarextStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

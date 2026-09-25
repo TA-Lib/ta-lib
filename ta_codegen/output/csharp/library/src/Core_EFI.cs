@@ -617,7 +617,7 @@ public partial class Core
       }
    }
 
-   internal void EfiStepImpl( EfiStream sp, double inClose, double inVolume )
+   private void EfiStepImpl( EfiStream sp, double inClose, double inVolume )
    {
       if( sp.optInTimePeriod == 1 ) {
          double force = 0.0;

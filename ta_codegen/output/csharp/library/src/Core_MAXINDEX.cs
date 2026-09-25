@@ -548,7 +548,7 @@ public partial class Core
       }
    }
 
-   internal void MaxindexStepImpl( MaxindexStream sp, double inReal )
+   private void MaxindexStepImpl( MaxindexStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;

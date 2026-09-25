@@ -854,7 +854,7 @@ public partial class Core
       }
    }
 
-   internal void SupertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
+   private void SupertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;

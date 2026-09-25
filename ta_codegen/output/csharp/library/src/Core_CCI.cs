@@ -656,7 +656,7 @@ public partial class Core
       }
    }
 
-   internal void CciStepImpl( CciStream sp, double inHigh, double inLow, double inClose )
+   private void CciStepImpl( CciStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

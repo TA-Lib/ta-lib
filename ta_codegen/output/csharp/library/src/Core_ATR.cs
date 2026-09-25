@@ -661,7 +661,7 @@ public partial class Core
       }
    }
 
-   internal void AtrStepImpl( AtrStream sp, double inHigh, double inLow, double inClose )
+   private void AtrStepImpl( AtrStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;

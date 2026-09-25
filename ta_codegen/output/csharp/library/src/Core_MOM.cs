@@ -487,7 +487,7 @@ public partial class Core
       }
    }
 
-   internal void MomStepImpl( MomStream sp, double inReal )
+   private void MomStepImpl( MomStream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;

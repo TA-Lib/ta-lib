@@ -393,7 +393,7 @@ public partial class Core
       }
    }
 
-   internal void DivStepImpl( DivStream sp, double inReal0, double inReal1 )
+   private void DivStepImpl( DivStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }

@@ -1440,7 +1440,7 @@ public partial class Core
       }
    }
 
-   internal void HtDcphaseStepImpl( HtDcphaseStream sp, double inReal )
+   private void HtDcphaseStepImpl( HtDcphaseStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;

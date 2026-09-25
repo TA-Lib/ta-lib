@@ -670,7 +670,7 @@ public partial class Core
       }
    }
 
-   internal void KcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
+   private void KcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
    {
       double middle = 0.0;
       double tempReal = 0.0;

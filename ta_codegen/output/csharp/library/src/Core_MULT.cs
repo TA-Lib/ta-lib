@@ -395,7 +395,7 @@ public partial class Core
       }
    }
 
-   internal void MultStepImpl( MultStream sp, double inReal0, double inReal1 )
+   private void MultStepImpl( MultStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 * inReal1;
    }

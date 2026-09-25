@@ -377,7 +377,7 @@ public partial class Core
       }
    }
 
-   internal void SinStepImpl( SinStream sp, double inReal )
+   private void SinStepImpl( SinStream sp, double inReal )
    {
       sp.cur_outReal = Math.Sin(inReal);
    }

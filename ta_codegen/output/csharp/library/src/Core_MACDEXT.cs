@@ -819,7 +819,7 @@ public partial class Core
       }
    }
 
-   internal void MacdextStepImpl( MacdextStream sp, double inReal )
+   private void MacdextStepImpl( MacdextStream sp, double inReal )
    {
       double cur_slowMABuffer = 0.0;
       double cur_fastMABuffer = 0.0;

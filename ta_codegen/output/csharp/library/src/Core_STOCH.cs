@@ -985,7 +985,7 @@ public partial class Core
       }
    }
 
-   internal void StochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
+   private void StochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;

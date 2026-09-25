@@ -507,7 +507,7 @@ public partial class Core
       }
    }
 
-   internal void PercentrankStepImpl( PercentrankStream sp, double inReal )
+   private void PercentrankStepImpl( PercentrankStream sp, double inReal )
    {
       int i = 0;
       int count = 0;

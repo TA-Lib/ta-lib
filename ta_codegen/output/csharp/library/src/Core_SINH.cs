@@ -377,7 +377,7 @@ public partial class Core
       }
    }
 
-   internal void SinhStepImpl( SinhStream sp, double inReal )
+   private void SinhStepImpl( SinhStream sp, double inReal )
    {
       sp.cur_outReal = Math.Sinh(inReal);
    }

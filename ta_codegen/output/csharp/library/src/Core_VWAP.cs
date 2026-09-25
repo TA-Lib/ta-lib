@@ -666,7 +666,7 @@ public partial class Core
       }
    }
 
-   internal void VwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void VwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double typPrice = 0.0;
       double volume = 0.0;

@@ -608,7 +608,7 @@ public partial class Core
       }
    }
 
-   internal void DemaStepImpl( DemaStream sp, double inReal )
+   private void DemaStepImpl( DemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

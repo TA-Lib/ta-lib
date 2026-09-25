@@ -583,7 +583,7 @@ public partial class Core
       }
    }
 
-   internal void PpoStepImpl( PpoStream sp, double inReal )
+   private void PpoStepImpl( PpoStream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;

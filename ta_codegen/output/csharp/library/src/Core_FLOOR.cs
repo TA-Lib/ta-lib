@@ -379,7 +379,7 @@ public partial class Core
       }
    }
 
-   internal void FloorStepImpl( FloorStream sp, double inReal )
+   private void FloorStepImpl( FloorStream sp, double inReal )
    {
       sp.cur_outReal = Math.Floor(inReal);
    }

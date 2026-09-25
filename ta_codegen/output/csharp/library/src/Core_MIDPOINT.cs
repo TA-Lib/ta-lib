@@ -725,7 +725,7 @@ public partial class Core
       }
    }
 
-   internal void MidpointStepImpl( MidpointStream sp, double inReal )
+   private void MidpointStepImpl( MidpointStream sp, double inReal )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;

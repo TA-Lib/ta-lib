@@ -418,7 +418,7 @@ public partial class Core
       }
    }
 
-   internal void AvgpriceStepImpl( AvgpriceStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void AvgpriceStepImpl( AvgpriceStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }

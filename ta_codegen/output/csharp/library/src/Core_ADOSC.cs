@@ -680,7 +680,7 @@ public partial class Core
       }
    }
 
-   internal void AdoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void AdoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

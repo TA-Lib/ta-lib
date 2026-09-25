@@ -1426,8 +1426,8 @@ public sealed record FuncInfo
     internal InvokeThunk Invoke { get; }
 
     /// <summary>Begins a call whose arguments are bound at run time.</summary>
-    /// <returns>A fresh, unbound call against <see cref="Core"/>'s defaults.</returns>
-    public ParamHolder CreateCall() => new(this, new Core());
+    /// <returns>A fresh, unbound call against <see cref="Core.Default"/>.</returns>
+    public ParamHolder CreateCall() => new(this, Core.Default);
 
     /// <summary>Begins a call against a specific <see cref="Core"/>.</summary>
     /// <param name="core">The core whose settings the call should use.</param>

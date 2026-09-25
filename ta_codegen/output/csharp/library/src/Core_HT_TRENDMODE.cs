@@ -1678,7 +1678,7 @@ public partial class Core
       }
    }
 
-   internal void HtTrendmodeStepImpl( HtTrendmodeStream sp, double inReal )
+   private void HtTrendmodeStepImpl( HtTrendmodeStream sp, double inReal )
    {
       int i = 0;
       int j = 0;

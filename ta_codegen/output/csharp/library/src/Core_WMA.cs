@@ -770,7 +770,7 @@ public partial class Core
       }
    }
 
-   internal void WmaStepImpl( WmaStream sp, double inReal )
+   private void WmaStepImpl( WmaStream sp, double inReal )
    {
       int j = 0;
       int rw = 0;

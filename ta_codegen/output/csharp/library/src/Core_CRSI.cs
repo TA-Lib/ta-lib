@@ -652,7 +652,7 @@ public partial class Core
       }
    }
 
-   internal void CrsiStepImpl( CrsiStream sp, double inReal )
+   private void CrsiStepImpl( CrsiStream sp, double inReal )
    {
       double close = 0.0;
       double cur_tempStreak = 0.0;

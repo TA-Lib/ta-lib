@@ -766,7 +766,7 @@ public partial class Core
       }
    }
 
-   internal void LinearregSlopeStepImpl( LinearregSlopeStream sp, double inReal )
+   private void LinearregSlopeStepImpl( LinearregSlopeStream sp, double inReal )
    {
       int windowStart = 0;
       double tempValue1 = 0.0;

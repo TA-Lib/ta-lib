@@ -860,7 +860,7 @@ public partial class Core
       }
    }
 
-   internal void KamaStepImpl( KamaStream sp, double inReal )
+   private void KamaStepImpl( KamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

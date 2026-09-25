@@ -1398,7 +1398,7 @@ public partial class Core
       }
    }
 
-   internal void MamaStepImpl( MamaStream sp, double inReal )
+   private void MamaStepImpl( MamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

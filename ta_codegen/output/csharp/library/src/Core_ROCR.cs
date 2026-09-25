@@ -504,7 +504,7 @@ public partial class Core
       }
    }
 
-   internal void RocrStepImpl( RocrStream sp, double inReal )
+   private void RocrStepImpl( RocrStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

@@ -564,7 +564,7 @@ public partial class Core
       }
    }
 
-   internal void ApoStepImpl( ApoStream sp, double inReal )
+   private void ApoStepImpl( ApoStream sp, double inReal )
    {
       double cur_tempBuffer = 0.0;
       double cur_outReal = 0.0;

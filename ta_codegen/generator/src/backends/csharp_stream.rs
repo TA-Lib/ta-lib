@@ -1540,7 +1540,7 @@ fn peek_frame_arm_named(
     Some(out)
 }
 
-/// `internal void <base>StepImpl( <Class> sp, double bar... )` — the one
+/// `private void <base>StepImpl( <Class> sp, double bar... )` — the one
 /// per-bar transition; `Update` runs it on live state, `Peek` on a copy.
 ///
 /// It stays a method on `Core` rather than on the handle because transcribed
@@ -1571,7 +1571,7 @@ fn emit_step_sig(o: &mut String, func: &FuncDef) {
     let base = pascal_words(&base_name(func));
     let class = stream_class_name(func);
     let (sig_bars, _) = bar_params(func);
-    let _ = writeln!(o, "\n   internal void {base}StepImpl( {class} sp, {sig_bars} )");
+    let _ = writeln!(o, "\n   private void {base}StepImpl( {class} sp, {sig_bars} )");
     let _ = writeln!(o, "   {{");
 }
 

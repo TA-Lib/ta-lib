@@ -47,7 +47,7 @@ The **Core API** provides:
 
 To process a live feed one bar at a time instead, see the companion [C# Streaming API](/api/csharp/stream/).
 
-There is no initialization step and nothing to shut down. Where C requires `TA_Initialize` before any call and `TA_Shutdown` at exit, C# has `new Core()` (or a configured `Core.Builder()...Build()`) ready immediately; a `Core` owns only managed state, so an unreferenced one is simply garbage-collected.
+There is no initialization step and nothing to shut down. Where C requires `TA_Initialize` before any call and `TA_Shutdown` at exit, C# has `Core.Default` (or a configured `Core.Builder()...Build()`) ready immediately; a `Core` owns only managed state, so an unreferenced one is simply garbage-collected.
 
 ## 2.0 Add it to your project {#build}
 
@@ -95,7 +95,7 @@ For example, here is how to calculate a 30-day simple moving average (SMA) of da
 
 <pre>using TALib;
 
-var core = new Core();
+var core = Core.Default;
 
 double[] close = /* ...your closing prices... */;
 var outReal = new double[close.Length];
@@ -119,7 +119,7 @@ Arrays convert to spans implicitly, so the call above and a call passed a slice 
 
 If you do not provide enough data to calculate even one value, the call still succeeds and `r.Count` is 0 (`r.IsEmpty`).
 
-`OutRange` is a readonly struct with two components — `BegIdx` and `Count` — plus the conveniences `IsEmpty` and `Empty`. The component names match the C, Rust and Java surfaces (`outBegIdx` / `outNBElement`), so the same concept reads the same way in every backend.
+`OutRange` is a `readonly record struct` with two components — `BegIdx` and `Count` — plus the conveniences `IsEmpty` and `Empty`. They are C's `outBegIdx` / `outNBElement`, Java's `begIdx` / `count` and Rust's `beg_idx` / `count`.
 
 Every indicator also has a `ReadOnlySpan<float>` overload — see [4.4](#input_type).
 
@@ -209,7 +209,7 @@ Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts im
 
 ### 4.6 Threading {#multithreading}
 
-A `Core` is immutable once built, so it is safe to share read-only across threads and call any indicator concurrently — no locking, and no setup ordering to respect. To change a setting, build another `Core` with `Core.Builder()`.
+A `Core` is immutable once built, so it is safe to share read-only across threads and call any indicator concurrently — no locking, and no setup ordering to respect. `Core.Default` is the all-defaults instance. To change a setting, build another `Core` with `Core.Builder()`.
 
 ### 4.7 Trimming and NativeAOT {#aot}
 

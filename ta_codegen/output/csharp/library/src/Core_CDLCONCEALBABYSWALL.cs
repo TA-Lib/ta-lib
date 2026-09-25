@@ -598,7 +598,7 @@ public partial class Core
       }
    }
 
-   internal void CdlconcealbabyswallStepImpl( CdlconcealbabyswallStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void CdlconcealbabyswallStepImpl( CdlconcealbabyswallStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;

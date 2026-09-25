@@ -598,7 +598,7 @@ public partial class Core
       }
    }
 
-   internal void Cdl3blackcrowsStepImpl( Cdl3blackcrowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void Cdl3blackcrowsStepImpl( Cdl3blackcrowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;

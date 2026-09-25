@@ -874,7 +874,7 @@ public partial class Core
       }
    }
 
-   internal void CoppockStepImpl( CoppockStream sp, double inReal )
+   private void CoppockStepImpl( CoppockStream sp, double inReal )
    {
       int q = 0;
       int rw = 0;

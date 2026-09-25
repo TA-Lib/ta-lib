@@ -1376,7 +1376,7 @@ public partial class Core
       }
    }
 
-   internal void HtTrendlineStepImpl( HtTrendlineStream sp, double inReal )
+   private void HtTrendlineStepImpl( HtTrendlineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;

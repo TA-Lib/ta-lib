@@ -1481,7 +1481,7 @@ public partial class Core
       }
    }
 
-   internal void HtSineStepImpl( HtSineStream sp, double inReal )
+   private void HtSineStepImpl( HtSineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;

@@ -46,6 +46,7 @@
  */
 
 using System;
+using System.Globalization;
 
 namespace TALib.Test;
 
@@ -236,6 +237,29 @@ public static class CoreBuilderTest
         Check(doji.Factor == 0.1, "BodyDoji defaults to a 0.1 factor");
     }
 
+    private static void DefaultIsOneSharedInstance()
+    {
+        Check(ReferenceEquals(Core.Default, Core.Default), "Core.Default is one instance");
+    }
+
+    private static void CandleSettingToStringIgnoresTheCulture()
+    {
+        var comma = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+        comma.NumberFormat.NumberDecimalSeparator = ",";
+        CultureInfo saved = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = comma;
+            string text = Core.Default.CandleSettings(CandleSettingType.BodyDoji).ToString();
+            Check(text == "CandleSetting { RangeType = HighLow, AvgPeriod = 10, Factor = 0.1 }",
+                $"CandleSetting.ToString is culture-invariant, got {text}");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = saved;
+        }
+    }
+
     private static void CandleSettingOverridesOneLeavesTheRest()
     {
         Core core = Core.Builder()
@@ -399,6 +423,8 @@ public static class CoreBuilderTest
         BuiltCoreIsIsolatedFromTheBuilder();
         ToBuilderRoundTrips();
         CandleDefaultsAreTheDocumentedOnes();
+        DefaultIsOneSharedInstance();
+        CandleSettingToStringIgnoresTheCulture();
         CandleSettingOverridesOneLeavesTheRest();
         CandleSettingReachesTheIndicator();
         CandleMisuseThrows();

@@ -377,7 +377,7 @@ public partial class Core
       }
    }
 
-   internal void CoshStepImpl( CoshStream sp, double inReal )
+   private void CoshStepImpl( CoshStream sp, double inReal )
    {
       sp.cur_outReal = Math.Cosh(inReal);
    }

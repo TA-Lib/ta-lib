@@ -861,7 +861,7 @@ public partial class Core
       }
    }
 
-   internal void TrimaStepImpl( TrimaStream sp, double inReal )
+   private void TrimaStepImpl( TrimaStream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
          if( sp.ringCap_middleIdx == 0 ) {

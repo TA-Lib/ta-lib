@@ -612,7 +612,7 @@ public partial class Core
       }
    }
 
-   internal void Cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void Cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Near_rangeType = sp.cs_Near_rangeType;

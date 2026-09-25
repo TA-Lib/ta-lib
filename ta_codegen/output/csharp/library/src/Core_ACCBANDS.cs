@@ -723,7 +723,7 @@ public partial class Core
       }
    }
 
-   internal void AccbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
+   private void AccbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
    {
       double tempUpper = 0.0;
       double tempMiddle = 0.0;

@@ -565,7 +565,7 @@ public partial class Core
       }
    }
 
-   internal void AdrStepImpl( AdrStream sp, double inHigh, double inLow )
+   private void AdrStepImpl( AdrStream sp, double inHigh, double inLow )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

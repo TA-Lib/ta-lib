@@ -14,7 +14,7 @@ P/Invoke, no dependencies.
 ```csharp
 using TALib;
 
-var core = new Core();
+var core = Core.Default;
 
 double[] close = [ /* ...your closing prices... */ ];
 var outReal = new double[close.Length];
