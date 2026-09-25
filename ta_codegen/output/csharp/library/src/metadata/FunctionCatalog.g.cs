@@ -132,6 +132,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeAvgdev(),
             MakeAvgprice(),
             MakeBbands(),
+            MakeBbw(),
             MakeBeta(),
             MakeBop(),
             MakeCci(),
@@ -794,6 +795,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Bbands(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
+    private static FuncInfo MakeBbw() => new(
+        name: "BBW",
+        group: FunctionGroup.VolatilityIndicators,
+        hint: "Bollinger BandWidth",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
+            new OptInputInfo("optInNbDevUp", "Deviations up", "Deviation multiplier for upper band", OptInputFlags.None, new OptInputDomain.RealRange(-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2)),
+            new OptInputInfo("optInNbDevDn", "Deviations down", "Deviation multiplier for lower band", OptInputFlags.None, new OptInputDomain.RealRange(-3e37, 3e37, 2, 2.0, -2.0, 2.0, 0.2)),
+            new OptInputInfo("optInMAType", "MA Type", "Type of Moving Average", OptInputFlags.None, new OptInputDomain.IntegerList(MATypeValues, 0)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.BbwLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Bbw(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), c.RealOut(0)));
 
     private static FuncInfo MakeBeta() => new(
         name: "BETA",

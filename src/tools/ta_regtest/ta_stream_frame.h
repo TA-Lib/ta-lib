@@ -841,6 +841,48 @@ static TA_RetCode TA_BBANDS_SFrameClose( void *stream )
    return TA_BBANDS_Close( (TA_BBANDS_Stream *)stream );
 }
 
+static TA_RetCode TA_BBW_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_BBW_Open(
+               (TA_BBW_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_BBW_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_BBW_OpenAndFill(
+               (TA_BBW_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_BBW_SFrameClose( void *stream )
+{
+   return TA_BBW_Close( (TA_BBW_Stream *)stream );
+}
+
 static TA_RetCode TA_BETA_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8308,6 +8350,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      4, TA_VIn_AVGPRICE, 0, NULL, 1, TA_VOutIsInt_AVGPRICE },
    { "BBANDS", TA_BBANDS_SFrameOpen, TA_BBANDS_SFrameFill, TA_BBANDS_SFrameClose,
      1, TA_VIn_BBANDS, 4, TA_VOpt_BBANDS, 3, TA_VOutIsInt_BBANDS },
+   { "BBW", TA_BBW_SFrameOpen, TA_BBW_SFrameFill, TA_BBW_SFrameClose,
+     1, TA_VIn_BBW, 4, TA_VOpt_BBW, 1, TA_VOutIsInt_BBW },
    { "BETA", TA_BETA_SFrameOpen, TA_BETA_SFrameFill, TA_BETA_SFrameClose,
      2, TA_VIn_BETA, 1, TA_VOpt_BETA, 1, TA_VOutIsInt_BETA },
    { "BOP", TA_BOP_SFrameOpen, TA_BOP_SFrameFill, TA_BOP_SFrameClose,
@@ -8684,6 +8728,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 206
+#define TA_STREAM_TABLE_SIZE 207
 
 #endif /* TA_STREAM_FRAME_H */

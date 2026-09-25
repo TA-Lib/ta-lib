@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 3:0:2
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 2511
+function-count 2523
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -362,6 +362,16 @@ function TA_RetCode TA_BBANDS_OutRange(const TA_BBANDS_Stream *, int *, int *)
 function TA_RetCode TA_BBANDS_Peek(const TA_BBANDS_Stream *, double, double *, double *, double *)
 function TA_RetCode TA_BBANDS_Update(TA_BBANDS_Stream *, double, double *, double *, double *)
 function TA_RetCode TA_BBANDS_Value(const TA_BBANDS_Stream *, double *, double *, double *)
+function TA_RetCode TA_BBW(int, int, const double *, int, double, double, TA_MAType, int *, int *, double *)
+function TA_RetCode TA_BBW_Advance(TA_BBW_Stream *)
+function TA_RetCode TA_BBW_Clone(const TA_BBW_Stream *, TA_BBW_Stream **)
+function TA_RetCode TA_BBW_Close(TA_BBW_Stream *)
+function TA_RetCode TA_BBW_Open(TA_BBW_Stream **, const double *, int, int, double, double, TA_MAType, double *)
+function TA_RetCode TA_BBW_OpenAndFill(TA_BBW_Stream **, const double *, int, int, double, double, TA_MAType, int *, int *, double *)
+function TA_RetCode TA_BBW_OutRange(const TA_BBW_Stream *, int *, int *)
+function TA_RetCode TA_BBW_Peek(const TA_BBW_Stream *, double, double *)
+function TA_RetCode TA_BBW_Update(TA_BBW_Stream *, double, double *)
+function TA_RetCode TA_BBW_Value(const TA_BBW_Stream *, double *)
 function TA_RetCode TA_BETA(int, int, const double *, const double *, int, int *, int *, double *)
 function TA_RetCode TA_BETA_Advance(TA_BETA_Stream *)
 function TA_RetCode TA_BETA_Clone(const TA_BETA_Stream *, TA_BETA_Stream **)
@@ -2057,6 +2067,7 @@ function TA_RetCode TA_S_ATR(int, int, const float *, const float *, const float
 function TA_RetCode TA_S_AVGDEV(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_AVGPRICE(int, int, const float *, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_BBANDS(int, int, const float *, int, double, double, TA_MAType, int *, int *, double *, double *, double *)
+function TA_RetCode TA_S_BBW(int, int, const float *, int, double, double, TA_MAType, int *, int *, double *)
 function TA_RetCode TA_S_BETA(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_BOP(int, int, const float *, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_CCI(int, int, const float *, const float *, const float *, int, int *, int *, double *)
@@ -2493,6 +2504,7 @@ function int TA_ATR_Lookback(int)
 function int TA_AVGDEV_Lookback(int)
 function int TA_AVGPRICE_Lookback(void)
 function int TA_BBANDS_Lookback(int, double, double, TA_MAType)
+function int TA_BBW_Lookback(int, double, double, TA_MAType)
 function int TA_BETA_Lookback(int)
 function int TA_BOP_Lookback(void)
 function int TA_CCI_Lookback(int)

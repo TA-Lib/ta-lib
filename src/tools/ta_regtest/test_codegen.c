@@ -3333,6 +3333,46 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
             }
         }
     }
+
+    /* Asymmetric real vector, for two or more RealRange params: consecutive
+     * ones alternate between two fractions of their suggested ranges, so two
+     * adjacent params that share a range are unequal (BBANDS' deviations take
+     * their unequal arm). Keep the values
+     * off powers of two: a power-of-two multiplier makes its product exact,
+     * which hides whether one tier fused it into a multiply-add. */
+    {
+        static const double frac[2] = { 0.6, 0.85 };
+        unsigned int j;
+        int nReal = 0;
+        double avec[STREAM_MAX_OPT];
+        for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+            avec[j] = vec[0][j];
+        for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+        {
+            const TA_OptInputParameterInfo *oi;
+            const TA_RealRange *r;
+            double vv;
+            TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+            if( oi->type != TA_OptInput_RealRange ) continue;
+            r = (const TA_RealRange *)oi->dataSet;
+            if( !r || fabs(r->suggested_start) > 1e30 || fabs(r->suggested_end) > 1e30 ) continue;
+            vv = r->suggested_start + (r->suggested_end - r->suggested_start) * frac[nReal & 1];
+            if( vv < r->min || vv > r->max ) continue;
+            avec[i] = vv;
+            nReal++;
+        }
+        if( nReal >= 2 )
+        {
+            if( nvec >= STREAM_MAX_VEC ) { (*overflow)++; }
+            else
+            {
+                for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                    vec[nvec][j] = avec[j];
+                vecIsEnum[nvec] = 0;
+                nvec++;
+            }
+        }
+    }
     return nvec;
 }
 

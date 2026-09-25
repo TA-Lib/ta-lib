@@ -125,6 +125,82 @@ DEF_FUNCTION( BBANDS,
              );
 /* BBANDS END */
 
+/* BBW BEGIN */
+static const TA_RealRange TA_DEF_BBW_NbDevUp =
+{
+   TA_REAL_MIN,
+   TA_REAL_MAX,
+   2,
+   -2.0,
+   2.0,
+   0.2
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_BBW_NbDevUp =
+{
+   TA_OptInput_RealRange,
+   "optInNbDevUp",
+   0,
+
+   "Deviations up",
+   (const void *)&TA_DEF_BBW_NbDevUp,
+   2.0,
+   "Deviation multiplier for upper band",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_BBW_NbDevDn =
+{
+   TA_REAL_MIN,
+   TA_REAL_MAX,
+   2,
+   -2.0,
+   2.0,
+   0.2
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_BBW_NbDevDn =
+{
+   TA_OptInput_RealRange,
+   "optInNbDevDn",
+   0,
+
+   "Deviations down",
+   (const void *)&TA_DEF_BBW_NbDevDn,
+   2.0,
+   "Deviation multiplier for lower band",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_BBW_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_BBW_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_BBW_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_20_MINIMUM2,
+  &TA_DEF_UI_D_BBW_NbDevUp,
+  &TA_DEF_UI_D_BBW_NbDevDn,
+  &TA_DEF_UI_MA_Method,
+  NULL
+};
+
+DEF_FUNCTION( BBW,
+              TA_GroupId_VolatilityIndicators,
+              "Bollinger BandWidth",
+              TA_FUNC_FLG_STREAM
+             );
+/* BBW END */
+
 /* BETA BEGIN */
 static const TA_InputParameterInfo    *TA_BETA_Inputs[]    =
 {
@@ -181,6 +257,7 @@ DEF_FUNCTION( BOP,
 const TA_FuncDef *TA_DEF_TableB[] =
 {
    ADD_TO_TABLE(BBANDS),
+   ADD_TO_TABLE(BBW),
    ADD_TO_TABLE(BETA),
    ADD_TO_TABLE(BOP),
    NULL

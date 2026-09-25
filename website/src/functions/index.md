@@ -219,6 +219,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 - [ADR](/functions/adr.md) — Average Day Range
 - [ATR](/functions/atr.md) — Average True Range
+- [BBW](/functions/bbw.md) — Bollinger BandWidth
 - [CVI](/functions/cvi.md) — Chaikin's Volatility
 - [MASSI](/functions/massi.md) — Mass Index
 - [NATR](/functions/natr.md) — Normalized Average True Range

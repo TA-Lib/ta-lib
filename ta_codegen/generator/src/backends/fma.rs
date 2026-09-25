@@ -33,7 +33,7 @@
 /// Deliberately not accompanied by a count: a number written next to a list
 /// that grows is a comment that goes stale on the next indicator.
 pub const FUSING_INVENTORY: &[&str] = &[
-    "adosc", "atr", "bbands", "cdlabandonedbaby", "cdlmorningdojistar",
+    "adosc", "atr", "bbands", "bbw", "cdlabandonedbaby", "cdlmorningdojistar",
     "cdlmorningstar", "cdlpiercing", "cdlthrusting", "cvi", "dema", "efi",
     "ema", "eri", "fosc", "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine",
     "ht_trendline", "ht_trendmode", "kama", "kurtosis", "linearreg", "macd",

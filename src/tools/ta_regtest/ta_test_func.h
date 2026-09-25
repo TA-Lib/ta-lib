@@ -64,6 +64,7 @@ ErrorNumber test_func_kdj     ( TA_History *history );
 ErrorNumber test_func_dpo     ( TA_History *history );
 ErrorNumber test_func_percentrank( TA_History *history );
 ErrorNumber test_func_crsi     ( TA_History *history );
+ErrorNumber test_func_bbw      ( TA_History *history );
 ErrorNumber test_func_percentile( TA_History *history );
 ErrorNumber test_func_cvi     ( TA_History *history );
 ErrorNumber test_func_massi   ( TA_History *history );

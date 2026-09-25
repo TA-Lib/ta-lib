@@ -139,6 +139,7 @@ public final class Functions {
       put(m, f_AVGDEV());
       put(m, f_AVGPRICE());
       put(m, f_BBANDS());
+      put(m, f_BBW());
       put(m, f_BETA());
       put(m, f_BOP());
       put(m, f_CCI());
@@ -687,6 +688,39 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
             new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
             new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
+         ));
+   }
+
+   private static FuncInfo f_BBW() {
+      return new FuncInfo(
+         "BBW", "Volatility Indicators", "Bollinger BandWidth", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInNbDevUp", 0x00000000,
+               "Deviations up", "Deviation multiplier for upper band", 2.0,
+               -3e37, 3e37, 2, -2.0, 2.0, 0.2,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInNbDevDn", 0x00000000,
+               "Deviations down", "Deviation multiplier for lower band", 2.0,
+               -3e37, 3e37, 2, -2.0, 2.0, 0.2,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
+               "MA Type", "Type of Moving Average", 0.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA")
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 

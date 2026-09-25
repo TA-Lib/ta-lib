@@ -22,6 +22,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_AVGDEV.c \
 	ta_AVGPRICE.c \
 	ta_BBANDS.c \
+	ta_BBW.c \
 	ta_BETA.c \
 	ta_BOP.c \
 	ta_CCI.c \

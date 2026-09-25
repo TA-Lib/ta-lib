@@ -17,6 +17,7 @@ ATR                 Average True Range
 AVGDEV              Average Deviation
 AVGPRICE            Average Price
 BBANDS              Bollinger Bands
+BBW                 Bollinger BandWidth
 BETA                Beta
 BOP                 Balance Of Power
 CCI                 Commodity Channel Index

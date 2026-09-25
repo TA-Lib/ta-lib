@@ -475,6 +475,32 @@ unsigned int TA_BBANDS_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[2].data.optInReal, /* optInNbDevDn*/
                     (TA_MAType)params->optIn[3].data.optInInteger /* optInMAType*/ );
 }
+TA_RetCode TA_BBW_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_BBW(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInNbDevUp*/
+               params->optIn[2].data.optInReal, /* optInNbDevDn*/
+               (TA_MAType)params->optIn[3].data.optInInteger, /* optInMAType*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_BBW_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_BBW_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal, /* optInNbDevUp*/
+                    params->optIn[2].data.optInReal, /* optInNbDevDn*/
+                    (TA_MAType)params->optIn[3].data.optInInteger /* optInMAType*/ );
+}
 TA_RetCode TA_BETA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

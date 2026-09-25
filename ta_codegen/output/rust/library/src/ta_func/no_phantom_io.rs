@@ -1927,6 +1927,94 @@ fn legs_BBANDS(r: &mut Report) {
     r.legs_done("BBANDS", 1);
 }
 
+const V_BBW: &[(&str, i32, f64, f64, MAType)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("minimums", 2i32, -3e37f64, -3e37f64, MAType::DEFAULT),
+    ("optInMAType=SMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::SMA),
+    ("optInMAType=SMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::SMA),
+    ("optInMAType=EMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::EMA),
+    ("optInMAType=EMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::EMA),
+    ("optInMAType=WMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::WMA),
+    ("optInMAType=WMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::WMA),
+    ("optInMAType=DEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEMA),
+    ("optInMAType=DEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEMA),
+    ("optInMAType=TEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TEMA),
+    ("optInMAType=TEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TEMA),
+    ("optInMAType=TRIMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TRIMA),
+    ("optInMAType=TRIMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TRIMA),
+    ("optInMAType=KAMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::KAMA),
+    ("optInMAType=KAMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::KAMA),
+    ("optInMAType=MAMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::MAMA),
+    ("optInMAType=MAMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::MAMA),
+    ("optInMAType=T3", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::T3),
+    ("optInMAType=T3, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::T3),
+    ("optInMAType=HMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::HMA),
+    ("optInMAType=HMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::HMA),
+    ("optInMAType=DISABLED", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DISABLED),
+    ("optInMAType=DISABLED, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DISABLED),
+    ("optInMAType=DEFAULT", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("optInMAType=DEFAULT, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("optInMAType=ZLEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
+    ("optInMAType=ZLEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
+    ("optInMAType=RMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+    ("optInMAType=RMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+];
+
+fn sub_BBW(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) in V_BBW {
+        let Ok(lb) = core.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) else { continue; };
+        r.control("BBW", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.bbw_impl(0, lb, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("BBW", label); continue; }
+        r.quiet("BBW", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.bbw_impl(0, lb - 1, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_BBW(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInNbDevUp = Core::REAL_DEFAULT;
+    let optInNbDevDn = Core::REAL_DEFAULT;
+    let optInMAType = MAType::DEFAULT;
+    let Ok(lb) = core.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) else { r.no_legs("BBW"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("BBW", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.bbw_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("BBW", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.bbw_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("BBW", 1);
+}
+
 const V_BETA: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -17378,6 +17466,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("AVGDEV", sub_AVGDEV, legs_AVGDEV),
     ("AVGPRICE", sub_AVGPRICE, legs_AVGPRICE),
     ("BBANDS", sub_BBANDS, legs_BBANDS),
+    ("BBW", sub_BBW, legs_BBW),
     ("BETA", sub_BETA, legs_BETA),
     ("BOP", sub_BOP, legs_BOP),
     ("CCI", sub_CCI, legs_CCI),
@@ -17603,7 +17692,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 206, "probe count");
+    assert_eq!(PROBES.len(), 207, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

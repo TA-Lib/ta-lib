@@ -1774,6 +1774,109 @@ TA_LIB_API TA_RetCode TA_BBANDS_Advance( TA_BBANDS_Stream *stream );
 TA_LIB_API TA_RetCode TA_BBANDS_Clone( const TA_BBANDS_Stream *stream, TA_BBANDS_Stream **clone );
 
 /*
+ * TA_BBW - Bollinger BandWidth
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * optInNbDevUp:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
+ *    Deviation multiplier for upper band
+ * 
+ * optInNbDevDn:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
+ *    Deviation multiplier for lower band
+ * 
+ * optInMAType:
+ *    Type of Moving Average
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_BBW( int    startIdx,
+                              int    endIdx,
+                                         const double inReal[],
+                                         int           optInTimePeriod, /* From 2 to 100000 */
+                                         double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                         double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                         TA_MAType     optInMAType,
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_BBW( int    startIdx,
+                                int    endIdx,
+                                           const float  inReal[],
+                                           int           optInTimePeriod, /* From 2 to 100000 */
+                                           double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                           double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                           TA_MAType     optInMAType,
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_BBW_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                         double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                         double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                         TA_MAType     optInMAType );
+
+
+/*
+ * Streaming API for TA_BBW: incremental per-bar evaluation.
+ */
+typedef struct TA_BBW_Stream TA_BBW_Stream;
+
+TA_LIB_API TA_RetCode TA_BBW_Open( TA_BBW_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outReal );
+
+TA_LIB_API TA_RetCode TA_BBW_Update( TA_BBW_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_BBW_Peek( const TA_BBW_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_BBW_Close( TA_BBW_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_BBW( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_BBW_OpenAndFill( TA_BBW_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_BBW_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_BBW_Value( const TA_BBW_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_BBW reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_BBW_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_BBW_OutRange( const TA_BBW_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_BBW_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
+ */
+TA_LIB_API TA_RetCode TA_BBW_Advance( TA_BBW_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_BBW_Clone( const TA_BBW_Stream *stream, TA_BBW_Stream **clone );
+
+/*
  * TA_BETA - Beta
  * 
  * Input  = double, double

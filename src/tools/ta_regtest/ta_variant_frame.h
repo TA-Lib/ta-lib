@@ -923,6 +923,54 @@ static const TA_VOptSpec TA_VOpt_BBANDS[] = {
    { "optInMAType", TA_VOPT_ENUM, 0.0, 13.0, 0.0 },
 };
 
+static TA_RetCode TA_BBW_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_BBW(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_BBW_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_BBW(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_BBW[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_BBW[] = { 0 };
+static const TA_VOptSpec TA_VOpt_BBW[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
+   { "optInNbDevUp", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
+   { "optInNbDevDn", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 13.0, 0.0 },
+};
+
 static TA_RetCode TA_BETA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8742,6 +8790,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      4, TA_VIn_AVGPRICE, 0, NULL, 1, TA_VOutIsInt_AVGPRICE, 0 },
    { "BBANDS", TA_BBANDS_VFrameD, TA_BBANDS_VFrameS,
      1, TA_VIn_BBANDS, 4, TA_VOpt_BBANDS, 3, TA_VOutIsInt_BBANDS, 0 },
+   { "BBW", TA_BBW_VFrameD, TA_BBW_VFrameS,
+     1, TA_VIn_BBW, 4, TA_VOpt_BBW, 1, TA_VOutIsInt_BBW, 0 },
    { "BETA", TA_BETA_VFrameD, TA_BETA_VFrameS,
      2, TA_VIn_BETA, 1, TA_VOpt_BETA, 1, TA_VOutIsInt_BETA, 0 },
    { "BOP", TA_BOP_VFrameD, TA_BOP_VFrameS,
@@ -9118,6 +9168,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 206
+#define TA_VARIANT_TABLE_SIZE 207
 
 #endif /* TA_VARIANT_FRAME_H */

@@ -218,6 +218,15 @@ TA_RetCode TA_BBANDS_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_BBANDS_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_BBW_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_BBW_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_BETA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

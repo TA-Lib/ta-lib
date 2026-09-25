@@ -75,8 +75,8 @@ const INHERITED: &[(&str, &str)] = &[
 /// EMA; APO, PPO, PVO and KDJ default to a recursive average and so move even at
 /// defaults.
 const MATYPE_DEPENDENT: &[&str] = &[
-    "APO", "BBANDS", "KDJ", "MA", "MACDEXT", "MAVP", "PPO", "PVO", "STOCH", "STOCHF",
-    "STOCHRSI",
+    "APO", "BBANDS", "BBW", "KDJ", "MA", "MACDEXT", "MAVP", "PPO", "PVO", "STOCH",
+    "STOCHF", "STOCHRSI",
 ];
 
 #[test]

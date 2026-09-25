@@ -1900,9 +1900,13 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 12] = [
+    let expected: [(&str, &str); 13] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
+        ("BBW", "as KDJ -- var is handed outBegIdx/outNBElement themselves and BBW returns them \
+                 unmodified. Entered at the MA's begIdx its count is endIdx - max(startIdx, \
+                 ma_lookback, var_lookback) + 1, which is BBW's final count because bbw_lookback \
+                 delegates to bbands_lookback = max(ma_lookback, stddev_lookback -> var_lookback)"),
         ("CRSI", "as KDJ -- percentrank is handed outBegIdx/outNBElement themselves and CRSI \
                  returns the count unmodified, so the final count IS that callee's count. The \
                  rocp buffer it ranks is entered optInRankPeriod bars before startIdx, so that \

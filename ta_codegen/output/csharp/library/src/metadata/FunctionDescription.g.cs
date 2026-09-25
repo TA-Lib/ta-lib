@@ -986,6 +986,81 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- BBW -->
+	<FinancialFunction>
+		<Abbreviation>BBW</Abbreviation>
+		<ShortDescription>Bollinger BandWidth</ShortDescription>
+		<GroupId>Volatility Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Deviations up</Name>
+				<ShortDescription>Deviation multiplier for upper band</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>-3.000000e+37</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>-2.000000e+0</SuggestedStart>
+					<SuggestedEnd>2.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>2.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Deviations down</Name>
+				<ShortDescription>Deviation multiplier for lower band</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>-3.000000e+37</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>-2.000000e+0</SuggestedStart>
+					<SuggestedEnd>2.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>2.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>MA Type</Name>
+				<ShortDescription>Type of Moving Average</ShortDescription>
+				<Type>MA Type</Type>
+				<DefaultValue>0</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- BETA -->
 	<FinancialFunction>
 		<Abbreviation>BETA</Abbreviation>

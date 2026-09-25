@@ -113,6 +113,9 @@ final class Dispatch {
          case "BBANDS":
             return core.bbands(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+         case "BBW":
+            return core.bbw(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3), h.realOutput(0));
          case "BETA":
             return core.beta(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.realOutput(0));
@@ -723,6 +726,8 @@ final class Dispatch {
             return core.avgpriceLookback();
          case "BBANDS":
             return core.bbandsLookback(h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3));
+         case "BBW":
+            return core.bbwLookback(h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3));
          case "BETA":
             return core.betaLookback(h.intOpt(0));
          case "BOP":
