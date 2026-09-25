@@ -91,10 +91,10 @@ public sealed partial class Core
     /// already imprecise well below this cap.</para>
     /// <para>Identical in C, Rust and Java, so the same call is accepted or
     /// rejected the same way in all four.</para></remarks>
-    public const int MaxIndex = 100000000;
+    public const int IndexMax = 100000000;
 
     /* Sized by the id count, so the ALL wildcard gets no slot (#144). */
-    internal readonly int[] unstablePeriod = new int[FuncUnstIds.Count];
+    internal readonly int[] _unstablePeriod = new int[FuncUnstIds.Count];
 
     /* The 11 defaults, in CandleSettingType order, from
      * TA_RestoreCandleDefaultSettings in ta_global.c. ONE source of truth: both a
@@ -116,8 +116,8 @@ public sealed partial class Core
         new CandleSetting(RangeType.HighLow,  5,  0.05),  // Equal
     };
 
-    /* candleSettings[] in CandleSettingType order. */
-    internal readonly CandleSetting[] candleSettings = (CandleSetting[])DefaultCandleSettings.Clone();
+    /* In CandleSettingType order. */
+    internal readonly CandleSetting[] _candleSettings = (CandleSetting[])DefaultCandleSettings.Clone();
 
     /// <summary>Create a Core with every setting at its documented
     /// default.</summary>
@@ -129,8 +129,8 @@ public sealed partial class Core
      * builder's own array, so later builder calls cannot reach in here. */
     internal Core(CoreBuilder builder)
     {
-        unstablePeriod = builder.SnapshotUnstablePeriod();
-        candleSettings = builder.SnapshotCandleSettings();
+        _unstablePeriod = builder.SnapshotUnstablePeriod();
+        _candleSettings = builder.SnapshotCandleSettings();
     }
 
     /// <summary>Start building a <c>Core</c> with non-default settings.</summary>
@@ -145,7 +145,7 @@ public sealed partial class Core
     /// <returns>A builder carrying this instance's current settings.</returns>
     public CoreBuilder ToBuilder()
     {
-        return new CoreBuilder(unstablePeriod, candleSettings);
+        return new CoreBuilder(_unstablePeriod, _candleSettings);
     }
 
     /// <summary>Reads one candlestick threshold.</summary>
@@ -162,7 +162,7 @@ public sealed partial class Core
             throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
                 "not a single candlestick setting");
         }
-        return candleSettings[slot];
+        return _candleSettings[slot];
     }
 
     /// <summary>Reads the unstable period configured for one function.</summary>
@@ -183,7 +183,7 @@ public sealed partial class Core
             throw new ArgumentOutOfRangeException(nameof(id), id,
                 "not a function with a single unstable period");
         }
-        return unstablePeriod[slot];
+        return _unstablePeriod[slot];
     }
 
     /* The requested start after the lookback clamp -- max(startIdx, lookback) --
@@ -216,7 +216,7 @@ public sealed partial class Core
      * pins the rows named here. */
     internal static int ClampedStart(int startIdx, int endIdx, int lookback)
     {
-        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MaxIndex)
+        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > IndexMax)
         {
             return -1;
         }
@@ -307,7 +307,7 @@ public sealed partial class Core
     /* The RetCode -> exception mapping for the STREAMING tier. Deliberately not
      * a reuse of Failure(): the two tiers spell the same code differently. A
      * stream CAN still report OutOfRangeEndIndex (a history longer than
-     * MaxIndex + 1), and Failure() would render that as
+     * IndexMax + 1), and Failure() would render that as
      * ArgumentOutOfRangeException("endIdx") — meaningless to a caller whose
      * method has no endIdx parameter.
      *

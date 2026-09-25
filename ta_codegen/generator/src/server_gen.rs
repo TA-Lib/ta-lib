@@ -2681,17 +2681,17 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                rideGen++;\n");
     s.push_str("                int id = GetInt(p, \"id\", -1);\n");
     s.push_str("                int period = GetInt(p, \"period\", 0);\n");
-    // The same 0..=MaxIndex domain the C library enforces. Checked before any
+    // The same 0..=IndexMax domain the C library enforces. Checked before any
     // store, so a rejected call leaves every slot as it was (#186).
-    s.push_str("                if (period < 0 || period > Core.MaxIndex) {\n");
+    s.push_str("                if (period < 0 || period > Core.IndexMax) {\n");
     s.push_str("                    return \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\";\n");
     s.push_str("                }\n");
     s.push_str("                if (id == (int)FuncUnstId.ALL) {\n");
-    s.push_str("                    for (int i = 0; i < core.unstablePeriod.Length; i++) core.unstablePeriod[i] = period;\n");
+    s.push_str("                    for (int i = 0; i < core._unstablePeriod.Length; i++) core._unstablePeriod[i] = period;\n");
     s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("                }\n");
-    s.push_str("                if (id >= 0 && id < core.unstablePeriod.Length) {\n");
-    s.push_str("                    core.unstablePeriod[id] = period;\n");
+    s.push_str("                if (id >= 0 && id < core._unstablePeriod.Length) {\n");
+    s.push_str("                    core._unstablePeriod[id] = period;\n");
     s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("                }\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid id\\\"}\";\n");
@@ -2959,7 +2959,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         // the ta-lib-python #752 failure mode.)
         if func_unst_id(&func.name, enums).is_some() {
             s.push_str(&format!(
-                "        core.unstablePeriod[(int)FunctionCatalog.Default[\"{name}\"].UnstableId!.Value] = GetInt(p, \"unstablePeriod\", 0);\n",
+                "        core._unstablePeriod[(int)FunctionCatalog.Default[\"{name}\"].UnstableId!.Value] = GetInt(p, \"unstablePeriod\", 0);\n",
                 name = func.name
             ));
         }
@@ -4747,9 +4747,9 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         // `n` below drives every output allocation, so validating after it
         // would turn an out-of-range request into an 800MB-per-output
         // allocation and take the server down instead of returning a code.
-        if (startIdx < 0 || startIdx > Core.MaxIndex)
+        if (startIdx < 0 || startIdx > Core.IndexMax)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":12,\"outBegIdx\":0,\"outNBElement\":0}";
-        if (endIdx < 0 || endIdx > Core.MaxIndex || endIdx < startIdx)
+        if (endIdx < 0 || endIdx > Core.IndexMax || endIdx < startIdx)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":13,\"outBegIdx\":0,\"outNBElement\":0}";
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;
@@ -4772,7 +4772,7 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         }
 
         if (f.UnstableId is FuncUnstId unstId) {
-            core.unstablePeriod[(int)unstId] = GetInt(p, "unstablePeriod", 0);
+            core._unstablePeriod[(int)unstId] = GetInt(p, "unstablePeriod", 0);
         }
 
         for (int i = 0; i < f.OptInputs.Length; i++) {

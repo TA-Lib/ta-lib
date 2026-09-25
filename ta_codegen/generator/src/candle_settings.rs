@@ -288,14 +288,14 @@ pub fn emit_java_unpacking(settings: &BTreeSet<String>, indent: usize) -> String
 /// Emit C# unpacking lines for the given candle settings.
 ///
 /// ```csharp
-/// int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
-/// int BodyLong_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyLong].avgPeriod;
-/// double BodyLong_factor = this.candleSettings[(int)CandleSettingType.BodyLong].factor;
+/// int BodyLong_rangeType = (int)this._candleSettings[(int)CandleSettingType.BodyLong]._rangeType;
+/// int BodyLong_avgPeriod = this._candleSettings[(int)CandleSettingType.BodyLong]._avgPeriod;
+/// double BodyLong_factor = this._candleSettings[(int)CandleSettingType.BodyLong]._factor;
 /// ```
 ///
-/// The shipped-`Core.cs` access form: `candleSettings` is a `CandleSetting[]`
+/// The shipped-`Core.cs` access form: `_candleSettings` is a `CandleSetting[]`
 /// indexed by `CandleSettingType` values (C# enums cast with `(int)`, there is
-/// no `ordinal()`). `rangeType` is a `RangeType` enum there, cast to the `int`
+/// no `ordinal()`). `_rangeType` is a `RangeType` enum there, cast to the `int`
 /// local the candle ternaries compare against (`RealBody`=0, `HighLow`=1,
 /// `Shadows`=2) — the same values as the Java and C forms.
 pub fn emit_csharp_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
@@ -303,13 +303,13 @@ pub fn emit_csharp_unpacking(settings: &BTreeSet<String>, indent: usize) -> Stri
     let mut out = String::new();
     for setting in settings {
         out.push_str(&format!(
-            "{pad}int {setting}_rangeType = (int)this.candleSettings[(int)CandleSettingType.{setting}].rangeType;\n"
+            "{pad}int {setting}_rangeType = (int)this._candleSettings[(int)CandleSettingType.{setting}]._rangeType;\n"
         ));
         out.push_str(&format!(
-            "{pad}int {setting}_avgPeriod = this.candleSettings[(int)CandleSettingType.{setting}].avgPeriod;\n"
+            "{pad}int {setting}_avgPeriod = this._candleSettings[(int)CandleSettingType.{setting}]._avgPeriod;\n"
         ));
         out.push_str(&format!(
-            "{pad}double {setting}_factor = this.candleSettings[(int)CandleSettingType.{setting}].factor;\n"
+            "{pad}double {setting}_factor = this._candleSettings[(int)CandleSettingType.{setting}]._factor;\n"
         ));
     }
     out

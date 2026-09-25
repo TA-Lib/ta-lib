@@ -40,29 +40,29 @@ namespace TALib;
 /// factor a comparison is scaled by.</summary>
 public sealed class CandleSetting
 {
-    internal readonly RangeType rangeType;
-    internal readonly int avgPeriod;
-    internal readonly double factor;
+    internal readonly RangeType _rangeType;
+    internal readonly int _avgPeriod;
+    internal readonly double _factor;
 
     /* Read accessors, matching Java's. The fields stay internal because the
      * generated indicator bodies read them directly; these are what a caller
      * outside the assembly sees. */
 
     /// <summary>What the candle dimension is measured against.</summary>
-    public RangeType RangeType => rangeType;
+    public RangeType RangeType => _rangeType;
 
     /// <summary>How many prior bars are averaged (<c>0</c> means no averaging —
     /// the current candle only).</summary>
-    public int AvgPeriod => avgPeriod;
+    public int AvgPeriod => _avgPeriod;
 
     /// <summary>The multiplier applied to that average to form the
     /// threshold.</summary>
-    public double Factor => factor;
+    public double Factor => _factor;
 
     internal CandleSetting(RangeType rangeType, int avgPeriod, double factor)
     {
-        this.rangeType = rangeType;
-        this.avgPeriod = avgPeriod;
-        this.factor = factor;
+        _rangeType = rangeType;
+        _avgPeriod = avgPeriod;
+        _factor = factor;
     }
 }

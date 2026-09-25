@@ -436,8 +436,8 @@ public static class BatchApiTest
             () => core.Sma(-1, 199, input, 10, tiny),
             "negative startIdx still -> ArgumentOutOfRange", "startIdx");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.Sma(0, Core.MaxIndex + 1, input, 10, tiny),
-            "endIdx above MaxIndex still -> ArgumentOutOfRange", "endIdx");
+            () => core.Sma(0, Core.IndexMax + 1, input, 10, tiny),
+            "endIdx above IndexMax still -> ArgumentOutOfRange", "endIdx");
         CheckThrows<ArgumentException>(
             () => core.Sma(0, 199, input, 0, tiny),
             "out-of-range period still -> the parameter message", "bad parameter");
@@ -457,8 +457,8 @@ public static class BatchApiTest
             () => core.Sma(50, 10, ReadOnlySpan<double>.Empty, 10, tiny),
             "empty input does not mask endIdx < startIdx", "endIdx");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.Sma(0, Core.MaxIndex + 1, ReadOnlySpan<double>.Empty, 10, tiny),
-            "empty input does not mask endIdx above MaxIndex", "endIdx");
+            () => core.Sma(0, Core.IndexMax + 1, ReadOnlySpan<double>.Empty, 10, tiny),
+            "empty input does not mask endIdx above IndexMax", "endIdx");
         CheckThrows<ArgumentException>(
             () => core.Sma(0, 199, ReadOnlySpan<double>.Empty, 0, tiny),
             "empty input does not mask a bad parameter", "bad parameter");

@@ -870,7 +870,7 @@ fn emit_csharp_sv_func(
         s.push_str("            {\n");
         s.push_str("                int pc = lb + 1;\n");
         s.push_str("                if (pc <= svN - 1) {\n");
-        s.push_str("                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();\n");
+        s.push_str("                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();\n");
         s.push_str(&mdecls);
         s.push_str("                    try {\n");
         let _ = writeln!(
@@ -1118,7 +1118,7 @@ pub(crate) fn generate_csharp_stream_verify(
 
     // Live mutation of a BUILT Core -- the one thing the builder cannot express.
     s.push_str("    /* Overwrite a BUILT Core's live candle settings, in place.\n");
-    s.push_str("       `Core.candleSettings` is `internal readonly CandleSetting[]` -- the\n");
+    s.push_str("       `Core._candleSettings` is `internal readonly CandleSetting[]` -- the\n");
     s.push_str("       REFERENCE is readonly, the ELEMENTS are not -- and CandleSetting's\n");
     s.push_str("       constructor is internal. Both are reachable because the server csproj\n");
     s.push_str("       compiles the library sources into its own assembly.\n");
@@ -1131,9 +1131,9 @@ pub(crate) fn generate_csharp_stream_verify(
     s.push_str("       The caller saves and restores: every later leg in the round runs against\n");
     s.push_str("       the round's settings, not these. */\n");
     s.push_str("    static void SvMutateLiveCandles(Core c) {\n");
-    s.push_str("        for (int ci = 0; ci < c.candleSettings.Length; ci++) {\n");
-    s.push_str("            CandleSetting cs = c.candleSettings[ci];\n");
-    s.push_str("            c.candleSettings[ci] = new CandleSetting(\n");
+    s.push_str("        for (int ci = 0; ci < c._candleSettings.Length; ci++) {\n");
+    s.push_str("            CandleSetting cs = c._candleSettings[ci];\n");
+    s.push_str("            c._candleSettings[ci] = new CandleSetting(\n");
     s.push_str("                cs.RangeType == TALib.RangeType.Shadows ? TALib.RangeType.HighLow\n");
     s.push_str("                                                       : TALib.RangeType.Shadows,\n");
     s.push_str("                (cs.AvgPeriod + 7) % 13,\n");
@@ -1141,7 +1141,7 @@ pub(crate) fn generate_csharp_stream_verify(
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static void SvRestoreLiveCandles(Core c, CandleSetting[] saved) {\n");
-    s.push_str("        Array.Copy(saved, c.candleSettings, saved.Length);\n");
+    s.push_str("        Array.Copy(saved, c._candleSettings, saved.Length);\n");
     s.push_str("    }\n\n");
 
     let lookup = crate::streaming::FuncsLookup(funcs);

@@ -896,10 +896,10 @@ fn gen_func_inner(
     // Validation prologue. Omitted for the `Private` variant, whose callers are the
     // guarded cores that have already validated.
     if name_override.is_none() {
-        out.push_str("      if( (startIdx < 0) || (startIdx > MaxIndex) ) {\n");
+        out.push_str("      if( (startIdx < 0) || (startIdx > IndexMax) ) {\n");
         out.push_str("         return RetCode.OutOfRangeStartIndex ;\n");
         out.push_str("      }\n");
-        out.push_str("      if( (endIdx < 0) || (endIdx > MaxIndex) || (endIdx < startIdx)) {\n");
+        out.push_str("      if( (endIdx < 0) || (endIdx > IndexMax) || (endIdx < startIdx)) {\n");
         out.push_str("         return RetCode.OutOfRangeEndIndex ;\n");
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
@@ -2384,13 +2384,13 @@ fn render_func_call(
     if let Some(b) = SpecialBuiltin::from_name(fname) {
         match b {
             SpecialBuiltin::UnstablePeriod => {
-                // UNSTABLE_PERIOD(RSI) -> this.unstablePeriod[(int)FuncUnstId.Rsi]
+                // UNSTABLE_PERIOD(RSI) -> this._unstablePeriod[(int)FuncUnstId.Rsi]
                 // (C# enums cast to int; there is no ordinal()).
                 if let Some(Expr::Var(func_name)) = args.first() {
                     let variant = unst_variant_name(func_name);
-                    return format!("this.unstablePeriod[(int)FuncUnstId.{variant}]");
+                    return format!("this._unstablePeriod[(int)FuncUnstId.{variant}]");
                 }
-                "this.unstablePeriod[0]".to_string()
+                "this._unstablePeriod[0]".to_string()
             }
             pred @ (SpecialBuiltin::IsZero
             | SpecialBuiltin::IsZeroScaled

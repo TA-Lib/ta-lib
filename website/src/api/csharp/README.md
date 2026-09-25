@@ -139,7 +139,7 @@ The public methods throw rather than return a status code:
 
 | Condition | Exception |
 |---|---|
-| `startIdx`/`endIdx` negative, above `Core.MaxIndex`, or `endIdx < startIdx` | `TALibArgumentOutOfRangeException` |
+| `startIdx`/`endIdx` negative, above `Core.IndexMax`, or `endIdx < startIdx` | `TALibArgumentOutOfRangeException` |
 | An optional parameter outside its documented range | `TALibArgumentException` |
 | Two outputs overlapping, or an output *partially* overlapping an input | `TALibArgumentException` |
 
@@ -183,7 +183,7 @@ An index out of range, a type that does not match the declared parameter, or an 
 
 Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See [Unstable Period](/api/unstable-period/) for how to mitigate that.
 
-Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core.MaxIndex`](#index_range).
+Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core.IndexMax`](#index_range).
 
 Every function documentation page carries a [numerical-stability property](/functions/stability): how much the value at a given bar depends on where the series you passed in begins.
 
@@ -205,7 +205,7 @@ Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts im
 
 ### 4.5 Index Range {#index_range}
 
-`Core.MaxIndex` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
+`Core.IndexMax` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
 
 ### 4.6 Threading {#multithreading}
 

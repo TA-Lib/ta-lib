@@ -1427,9 +1427,9 @@ public static class StreamApiTest
     private static int _u4Rejects;
     private static int _u4Holds;
 
-    /// <summary>Rule U4: the last bar a stream can count is <c>MaxIndex</c>.</summary>
+    /// <summary>Rule U4: the last bar a stream can count is <c>IndexMax</c>.</summary>
     /// <remarks>
-    /// <para>No feed reaches it — <c>MaxIndex</c> is 100 million bars — and
+    /// <para>No feed reaches it — <c>IndexMax</c> is 100 million bars — and
     /// <c>Advance()</c> is the only call that moves the count without O(period) work
     /// per bar.</para>
     /// <para>What this adds over the generator's source-text gate is the throw itself:
@@ -1438,18 +1438,18 @@ public static class StreamApiTest
     /// The ceiling is on the BAR, <c>BegIdx + Count</c>, not on the count, so the
     /// trip count comes from the range the opener reported.</para>
     /// </remarks>
-    private static void TheLastBarAStreamCanCountIsMaxIndex()
+    private static void TheLastBarAStreamCanCountIsIndexMax()
     {
         var core = new Core();
         Core.SmaStream s = core.SmaOpen(Closes(60), 14);
         OutRange at = s.OutRange;
-        for (int i = at.BegIdx + at.Count; i <= Core.MaxIndex; i++)
+        for (int i = at.BegIdx + at.Count; i <= Core.IndexMax; i++)
         {
             s.Advance();
         }
         OutRange full = s.OutRange;
-        Check(full.BegIdx == at.BegIdx && full.BegIdx + full.Count == Core.MaxIndex + 1,
-              $"the last bar a stream counts is MaxIndex, reached ({full.BegIdx},{full.Count})");
+        Check(full.BegIdx == at.BegIdx && full.BegIdx + full.Count == Core.IndexMax + 1,
+              $"the last bar a stream counts is IndexMax, reached ({full.BegIdx},{full.Count})");
         _u4Ceilings++;
 
         /* Terminal, unlike a non-finite bar: the repeat is what proves no call
@@ -1457,7 +1457,7 @@ public static class StreamApiTest
         Check(RefusesPastTheCeiling(() => s.Advance())
                   && RefusesPastTheCeiling(() => s.Update(1.0))
                   && RefusesPastTheCeiling(() => s.Advance()),
-              "every counting call past MaxIndex must throw OutOfRangeEndIndex");
+              "every counting call past IndexMax must throw OutOfRangeEndIndex");
         Check(double.IsFinite(s.Peek(1.0)),
               "Peek counts no bar, so it stays answerable past the ceiling");
         _u4Rejects++;
@@ -1514,7 +1514,7 @@ public static class StreamApiTest
         CatalogueAgreesWithTheEmittedSurface();
         NonFiniteInputsAreRejected();
         ARejectedUpdateCostsNothingAndAdvanceCostsOneBar();
-        TheLastBarAStreamCanCountIsMaxIndex();
+        TheLastBarAStreamCanCountIsIndexMax();
 
         if (_failures == 0)
         {

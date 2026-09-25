@@ -747,15 +747,15 @@ public class TaCodegenServe {
                 rideGen++;
                 int id = GetInt(p, "id", -1);
                 int period = GetInt(p, "period", 0);
-                if (period < 0 || period > Core.MaxIndex) {
+                if (period < 0 || period > Core.IndexMax) {
                     return "{\"error\":\"Invalid unstable period value\"}";
                 }
                 if (id == (int)FuncUnstId.ALL) {
-                    for (int i = 0; i < core.unstablePeriod.Length; i++) core.unstablePeriod[i] = period;
+                    for (int i = 0; i < core._unstablePeriod.Length; i++) core._unstablePeriod[i] = period;
                     return "{\"status\":\"ok\"}";
                 }
-                if (id >= 0 && id < core.unstablePeriod.Length) {
-                    core.unstablePeriod[id] = period;
+                if (id >= 0 && id < core._unstablePeriod.Length) {
+                    core._unstablePeriod[id] = period;
                     return "{\"status\":\"ok\"}";
                 }
                 return "{\"error\":\"Invalid id\"}";
@@ -989,9 +989,9 @@ public class TaCodegenServe {
         // `n` below drives every output allocation, so validating after it
         // would turn an out-of-range request into an 800MB-per-output
         // allocation and take the server down instead of returning a code.
-        if (startIdx < 0 || startIdx > Core.MaxIndex)
+        if (startIdx < 0 || startIdx > Core.IndexMax)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":12,\"outBegIdx\":0,\"outNBElement\":0}";
-        if (endIdx < 0 || endIdx > Core.MaxIndex || endIdx < startIdx)
+        if (endIdx < 0 || endIdx > Core.IndexMax || endIdx < startIdx)
             return "{\"binder\":1,\"lookback\":-1,\"retCode\":13,\"outBegIdx\":0,\"outNBElement\":0}";
         int n = endIdx - startIdx + 1;
         if (n < 1) n = 1;
@@ -1014,7 +1014,7 @@ public class TaCodegenServe {
         }
 
         if (f.UnstableId is FuncUnstId unstId) {
-            core.unstablePeriod[(int)unstId] = GetInt(p, "unstablePeriod", 0);
+            core._unstablePeriod[(int)unstId] = GetInt(p, "unstablePeriod", 0);
         }
 
         for (int i = 0; i < f.OptInputs.Length; i++) {
@@ -1120,7 +1120,7 @@ public class TaCodegenServe {
     }
 
     /* Overwrite a BUILT Core's live candle settings, in place.
-       `Core.candleSettings` is `internal readonly CandleSetting[]` -- the
+       `Core._candleSettings` is `internal readonly CandleSetting[]` -- the
        REFERENCE is readonly, the ELEMENTS are not -- and CandleSetting's
        constructor is internal. Both are reachable because the server csproj
        compiles the library sources into its own assembly.
@@ -1133,9 +1133,9 @@ public class TaCodegenServe {
        The caller saves and restores: every later leg in the round runs against
        the round's settings, not these. */
     static void SvMutateLiveCandles(Core c) {
-        for (int ci = 0; ci < c.candleSettings.Length; ci++) {
-            CandleSetting cs = c.candleSettings[ci];
-            c.candleSettings[ci] = new CandleSetting(
+        for (int ci = 0; ci < c._candleSettings.Length; ci++) {
+            CandleSetting cs = c._candleSettings[ci];
+            c._candleSettings[ci] = new CandleSetting(
                 cs.RangeType == TALib.RangeType.Shadows ? TALib.RangeType.HighLow
                                                        : TALib.RangeType.Shadows,
                 (cs.AvgPeriod + 7) % 13,
@@ -1144,7 +1144,7 @@ public class TaCodegenServe {
     }
 
     static void SvRestoreLiveCandles(Core c, CandleSetting[] saved) {
-        Array.Copy(saved, c.candleSettings, saved.Length);
+        Array.Copy(saved, c._candleSettings, saved.Length);
     }
 
     static string Sv_AC(JsonElement req) {
@@ -5795,7 +5795,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdl2crowsStream sC = c2.Cdl2crowsOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -6010,7 +6010,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdl3blackcrowsStream sC = c2.Cdl3blackcrowsOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -6225,7 +6225,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdl3insideStream sC = c2.Cdl3insideOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -6440,7 +6440,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdl3linestrikeStream sC = c2.Cdl3linestrikeOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -6655,7 +6655,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdl3outsideStream sC = c2.Cdl3outsideOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -6870,7 +6870,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdl3starsinsouthStream sC = c2.Cdl3starsinsouthOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -7085,7 +7085,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdl3whitesoldiersStream sC = c2.Cdl3whitesoldiersOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -7301,7 +7301,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlabandonedbabyStream sC = c2.CdlabandonedbabyOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc], optInPenetration);
@@ -7516,7 +7516,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdladvanceblockStream sC = c2.CdladvanceblockOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -7731,7 +7731,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlbeltholdStream sC = c2.CdlbeltholdOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -7946,7 +7946,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlbreakawayStream sC = c2.CdlbreakawayOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -8161,7 +8161,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlclosingmarubozuStream sC = c2.CdlclosingmarubozuOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -8376,7 +8376,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlconcealbabyswallStream sC = c2.CdlconcealbabyswallOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -8591,7 +8591,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlcounterattackStream sC = c2.CdlcounterattackOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -8807,7 +8807,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdldarkcloudcoverStream sC = c2.CdldarkcloudcoverOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc], optInPenetration);
@@ -9022,7 +9022,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdldojiStream sC = c2.CdldojiOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -9237,7 +9237,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdldojistarStream sC = c2.CdldojistarOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -9452,7 +9452,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdldragonflydojiStream sC = c2.CdldragonflydojiOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -9667,7 +9667,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlengulfingStream sC = c2.CdlengulfingOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -9883,7 +9883,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdleveningdojistarStream sC = c2.CdleveningdojistarOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc], optInPenetration);
@@ -10099,7 +10099,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdleveningstarStream sC = c2.CdleveningstarOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc], optInPenetration);
@@ -10314,7 +10314,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlgapsidesidewhiteStream sC = c2.CdlgapsidesidewhiteOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -10529,7 +10529,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlgravestonedojiStream sC = c2.CdlgravestonedojiOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -10744,7 +10744,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlhammerStream sC = c2.CdlhammerOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -10959,7 +10959,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlhangingmanStream sC = c2.CdlhangingmanOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -11174,7 +11174,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlharamiStream sC = c2.CdlharamiOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -11389,7 +11389,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlharamicrossStream sC = c2.CdlharamicrossOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -11604,7 +11604,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlhighwaveStream sC = c2.CdlhighwaveOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -11819,7 +11819,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlhikkakeStream sC = c2.CdlhikkakeOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -12034,7 +12034,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlhikkakemodStream sC = c2.CdlhikkakemodOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -12249,7 +12249,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlhomingpigeonStream sC = c2.CdlhomingpigeonOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -12464,7 +12464,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdlidentical3crowsStream sC = c2.Cdlidentical3crowsOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -12679,7 +12679,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlinneckStream sC = c2.CdlinneckOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -12894,7 +12894,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlinvertedhammerStream sC = c2.CdlinvertedhammerOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -13109,7 +13109,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlkickingStream sC = c2.CdlkickingOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -13324,7 +13324,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlkickingbylengthStream sC = c2.CdlkickingbylengthOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -13539,7 +13539,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlladderbottomStream sC = c2.CdlladderbottomOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -13754,7 +13754,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdllongleggeddojiStream sC = c2.CdllongleggeddojiOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -13969,7 +13969,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdllonglineStream sC = c2.CdllonglineOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -14184,7 +14184,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlmarubozuStream sC = c2.CdlmarubozuOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -14399,7 +14399,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlmatchinglowStream sC = c2.CdlmatchinglowOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -14615,7 +14615,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlmatholdStream sC = c2.CdlmatholdOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc], optInPenetration);
@@ -14831,7 +14831,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlmorningdojistarStream sC = c2.CdlmorningdojistarOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc], optInPenetration);
@@ -15047,7 +15047,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlmorningstarStream sC = c2.CdlmorningstarOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc], optInPenetration);
@@ -15262,7 +15262,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlonneckStream sC = c2.CdlonneckOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -15477,7 +15477,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlpiercingStream sC = c2.CdlpiercingOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -15692,7 +15692,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlrickshawmanStream sC = c2.CdlrickshawmanOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -15907,7 +15907,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdlrisefall3methodsStream sC = c2.Cdlrisefall3methodsOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -16122,7 +16122,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlseparatinglinesStream sC = c2.CdlseparatinglinesOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -16337,7 +16337,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlshootingstarStream sC = c2.CdlshootingstarOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -16552,7 +16552,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlshortlineStream sC = c2.CdlshortlineOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -16767,7 +16767,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlspinningtopStream sC = c2.CdlspinningtopOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -16982,7 +16982,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlstalledpatternStream sC = c2.CdlstalledpatternOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -17197,7 +17197,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlsticksandwichStream sC = c2.CdlsticksandwichOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -17412,7 +17412,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdltakuriStream sC = c2.CdltakuriOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -17627,7 +17627,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdltasukigapStream sC = c2.CdltasukigapOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -17842,7 +17842,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdlthrustingStream sC = c2.CdlthrustingOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -18057,7 +18057,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.CdltristarStream sC = c2.CdltristarOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -18272,7 +18272,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdlunique3riverStream sC = c2.Cdlunique3riverOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -18487,7 +18487,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdlupsidegap2crowsStream sC = c2.Cdlupsidegap2crowsOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -18702,7 +18702,7 @@ public class TaCodegenServe {
             {
                 int pc = lb + 1;
                 if (pc <= svN - 1) {
-                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
+                    CandleSetting[] svSaved = (CandleSetting[])c2._candleSettings.Clone();
                     int[] m0 = new int[svN];
                     try {
                         Core.Cdlxsidegap3methodsStream sC = c2.Cdlxsidegap3methodsOpen(fz_o[..pc], fz_h[..pc], fz_l[..pc], fz_c[..pc]);
@@ -68719,7 +68719,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["ADX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["ADX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -69790,7 +69790,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["ATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["ATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -79877,7 +79877,7 @@ public class TaCodegenServe {
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["CMO"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["CMO"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -81709,7 +81709,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["DX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["DX"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -81976,7 +81976,7 @@ public class TaCodegenServe {
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["EMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["EMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -82907,7 +82907,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
-        core.unstablePeriod[(int)FunctionCatalog.Default["HA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["HA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -83178,7 +83178,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
-        core.unstablePeriod[(int)FunctionCatalog.Default["HT_DCPERIOD"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["HT_DCPERIOD"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -83306,7 +83306,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
-        core.unstablePeriod[(int)FunctionCatalog.Default["HT_DCPHASE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["HT_DCPHASE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -83434,7 +83434,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
-        core.unstablePeriod[(int)FunctionCatalog.Default["HT_PHASOR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["HT_PHASOR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -83565,7 +83565,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
-        core.unstablePeriod[(int)FunctionCatalog.Default["HT_SINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["HT_SINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -83696,7 +83696,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
-        core.unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDLINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDLINE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -83824,7 +83824,7 @@ public class TaCodegenServe {
             inReal = GetDoubleArray(p, "inReal");
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
-        core.unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDMODE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["HT_TRENDMODE"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -84087,7 +84087,7 @@ public class TaCodegenServe {
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["KAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["KAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -85947,7 +85947,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         double optInFastLimit = GetDouble(p, "optInFastLimit", 0.0);
         double optInSlowLimit = GetDouble(p, "optInSlowLimit", 0.0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["MAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["MAMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -87940,7 +87940,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["MINUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["MINUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -88077,7 +88077,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["MINUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["MINUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -88477,7 +88477,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["NATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["NATR"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -89141,7 +89141,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inClose = bench_mode == 0 ? default : inClose.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["PLUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["PLUS_DI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -89278,7 +89278,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
         ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["PLUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["PLUS_DM"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -90069,7 +90069,7 @@ public class TaCodegenServe {
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["RMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["RMA"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -90710,7 +90710,7 @@ public class TaCodegenServe {
         }
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["RSI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["RSI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -90840,7 +90840,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         int optInStdDevPeriod = GetInt(p, "optInStdDevPeriod", 0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["RVI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["RVI"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -93124,7 +93124,7 @@ public class TaCodegenServe {
         ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
         int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
         double optInVFactor = GetDouble(p, "optInVFactor", 0.0);
-        core.unstablePeriod[(int)FunctionCatalog.Default["T3"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
+        core._unstablePeriod[(int)FunctionCatalog.Default["T3"].UnstableId!.Value] = GetInt(p, "unstablePeriod", 0);
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the

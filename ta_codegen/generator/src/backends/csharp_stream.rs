@@ -22,7 +22,7 @@
 //!   not-serializable for free.
 //!
 //! - **The step stays a method on `Core`, not on the handle.** Transcribed
-//!   bodies read the unstable period as `this.unstablePeriod[(int)FuncUnstId.X]`,
+//!   bodies read the unstable period as `this._unstablePeriod[(int)FuncUnstId.X]`,
 //!   which only compiles inside a `Core` instance method; passing the handle in
 //!   measured indistinguishable from `this`.
 //!
@@ -885,7 +885,7 @@ fn emit_handle_class_with_members(
          caller chose not to take the fill."
     ));
     d.para(
-        "The last bar it can reach is <see cref=\"Core.MaxIndex\"/>; past that \
+        "The last bar it can reach is <see cref=\"Core.IndexMax\"/>; past that \
          <c>Update</c> and <c>Advance</c> throw.",
     );
     d.close("remarks");
@@ -913,7 +913,7 @@ fn emit_handle_class_with_members(
     );
     d.para(
         "Throws <see cref=\"System.ArgumentException\"/> once <see cref=\"OutRange\"/> has \
-         reached bar <see cref=\"Core.MaxIndex\"/>, the last one the batch tier can \
+         reached bar <see cref=\"Core.IndexMax\"/>, the last one the batch tier can \
          address and the last this handle will count. <c>Update</c> throws the same \
          there.",
     );
@@ -1030,7 +1030,7 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
 /// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
 /// cannot answer it before its parent).
 ///
-/// `>` and not `>=`: an opener may legally take `MaxIndex + 1` bars (rule S2),
+/// `>` and not `>=`: an opener may legally take `IndexMax + 1` bars (rule S2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
 /// one that has nowhere to go.
 ///
@@ -1039,7 +1039,7 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
 fn out_range_ceiling_guard(func: &FuncDef, indent: &str, what: &str) -> String {
     let n = base_name(func);
     format!(
-        "{indent}if( outRangeBegIdx + outRangeCount > Core.MaxIndex )\n\
+        "{indent}if( outRangeBegIdx + outRangeCount > Core.IndexMax )\n\
          {indent}   throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.OutOfRangeEndIndex);\n"
     )
 }
@@ -1111,7 +1111,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     );
     d.para(
         "Throws <see cref=\"System.ArgumentException\"/> once <see cref=\"OutRange\"/> has \
-         reached bar <see cref=\"Core.MaxIndex\"/>, which no re-feed clears: the handle \
+         reached bar <see cref=\"Core.IndexMax\"/>, which no re-feed clears: the handle \
          has run out of index domain and only a shorter history can start a new one.",
     );
     d.close("remarks");
@@ -1149,7 +1149,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     );
     d.para("Its cost does not grow with the period.");
     d.para(
-        "It counts no bar, so it keeps answering past the <see cref=\"Core.MaxIndex\"/> \
+        "It counts no bar, so it keeps answering past the <see cref=\"Core.IndexMax\"/> \
          ceiling <c>Update</c> stops at.",
     );
     d.close("remarks");
@@ -1544,7 +1544,7 @@ fn peek_frame_arm_named(
 /// per-bar transition; `Update` runs it on live state, `Peek` on a copy.
 ///
 /// It stays a method on `Core` rather than on the handle because transcribed
-/// bodies render unstable-period reads as `this.unstablePeriod[(int)FuncUnstId.X]`,
+/// bodies render unstable-period reads as `this._unstablePeriod[(int)FuncUnstId.X]`,
 /// which only compiles inside a `Core` instance method.
 #[allow(clippy::too_many_arguments)]
 fn emit_step(
@@ -1997,10 +1997,10 @@ fn emit_open_validation(
     let _ = writeln!(o, "         return RetCode.OutOfRangeStartIndex;");
     let _ = writeln!(o, "      }}");
     // The fill covers bars 0..historyLen-1, so its last bar is an index like any
-    // other and MaxIndex bounds it too (#180). Without this the streaming entry
+    // other and IndexMax bounds it too (#180). Without this the streaming entry
     // points would compute over exactly the ranges the batch call refuses, and
     // the two are required to agree bit for bit.
-    let _ = writeln!(o, "      if( historyLen > MaxIndex + 1 ) {{");
+    let _ = writeln!(o, "      if( historyLen > IndexMax + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
     let _ = writeln!(o, "      }}");
     let mismatches: Vec<String> = inputs[1..]
@@ -2578,7 +2578,7 @@ fn public_open_empty_guards(n: &str, verb: &str, inputs: &[String]) -> String {
     );
     let _ = writeln!(
         s,
-        "      if( {first}.Length > MaxIndex + 1 ) throw new TALibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is longer than MaxIndex + 1\", RetCode.OutOfRangeEndIndex);"
+        "      if( {first}.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is longer than IndexMax + 1\", RetCode.OutOfRangeEndIndex);"
     );
     for input in &inputs[1..] {
         let _ = writeln!(
@@ -2809,7 +2809,7 @@ fn emit_open_wrappers(
     d.exception(
         "System.ArgumentOutOfRangeException",
         "The history is empty — which is what a null array becomes, since a span cannot be \
-         null — or it is longer than <see cref=\"Core.MaxIndex\"/> + 1, the two index \
+         null — or it is longer than <see cref=\"Core.IndexMax\"/> + 1, the two index \
          faults an opener can have (rules S1 and S2).",
     );
     o.push('\n');
@@ -2908,7 +2908,7 @@ fn emit_open_wrappers(
     d.exception(
         "System.ArgumentOutOfRangeException",
         "The history is empty — which is what a null array becomes, since a span cannot be \
-         null — or it is longer than <see cref=\"Core.MaxIndex\"/> + 1, the two index \
+         null — or it is longer than <see cref=\"Core.IndexMax\"/> + 1, the two index \
          faults an opener can have (rules S1 and S2).",
     );
     o.push('\n');

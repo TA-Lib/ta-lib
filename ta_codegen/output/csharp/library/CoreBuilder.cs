@@ -73,49 +73,49 @@ namespace TALib;
 public sealed class CoreBuilder
 {
     /* Sized by the id count, so the ALL wildcard gets no slot (#144). */
-    private readonly int[] unstablePeriod;
+    private readonly int[] _unstablePeriod;
 
     /* In CandleSettingType order; the AllCandleSettings wildcard gets no slot. */
-    private readonly CandleSetting[] candleSettings;
+    private readonly CandleSetting[] _candleSettings;
 
     /// <summary>A builder seeded with TA-Lib's defaults.</summary>
     public CoreBuilder()
     {
-        unstablePeriod = new int[FuncUnstIds.Count];
+        _unstablePeriod = new int[FuncUnstIds.Count];
         // CandleSetting is immutable, so the default instances are shared, not copied.
-        candleSettings = (CandleSetting[])Core.DefaultCandleSettings.Clone();
+        _candleSettings = (CandleSetting[])Core.DefaultCandleSettings.Clone();
     }
 
     /* Seeded from an existing Core's settings (see Core.ToBuilder). */
     internal CoreBuilder(int[] seedPeriods, CandleSetting[] seedCandles)
     {
-        unstablePeriod = (int[])seedPeriods.Clone();
-        candleSettings = (CandleSetting[])seedCandles.Clone();
+        _unstablePeriod = (int[])seedPeriods.Clone();
+        _candleSettings = (CandleSetting[])seedCandles.Clone();
     }
 
     /// <summary>Sets the unstable period for one function, or for every
     /// function at once when given <see cref="FuncUnstId.ALL"/>.</summary>
     /// <param name="id">The function to configure, or <see cref="FuncUnstId.ALL"/>
     /// as the set-all wildcard, mirroring C's <c>TA_SetUnstablePeriod</c>.</param>
-    /// <param name="period">Extra warm-up bars, in <c>0</c>..<see cref="Core.MaxIndex"/>.</param>
+    /// <param name="period">Extra warm-up bars, in <c>0</c>..<see cref="Core.IndexMax"/>.</param>
     /// <returns>This builder, for chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="period"/> is
-    /// negative or above <see cref="Core.MaxIndex"/>, or <paramref name="id"/>
+    /// negative or above <see cref="Core.IndexMax"/>, or <paramref name="id"/>
     /// is neither a function id nor the wildcard. A rejected call writes
     /// nothing.</exception>
     public CoreBuilder UnstablePeriod(FuncUnstId id, int period)
     {
         /* The period is added to a lookback which is then used as an index, so an
          * unbounded one overflows that lookback negative and the function indexes
-         * far past the end of its input. MaxIndex is the ceiling the index space
+         * far past the end of its input. IndexMax is the ceiling the index space
          * already enforces on startIdx/endIdx; a warm-up longer than the largest
          * addressable series could never produce output, so nothing legitimate is
          * refused. C applies the same bound in TA_SetUnstablePeriod.
          */
-        if (period < 0 || period > Core.MaxIndex)
+        if (period < 0 || period > Core.IndexMax)
         {
             throw new ArgumentOutOfRangeException(nameof(period), period,
-                "unstable period must be in 0.." + Core.MaxIndex);
+                "unstable period must be in 0.." + Core.IndexMax);
         }
 
         /* A C# enum is NOT a closed domain -- (FuncUnstId)(-1) and (FuncUnstId)9999
@@ -125,9 +125,9 @@ public sealed class CoreBuilder
          */
         if (id == FuncUnstId.ALL)
         {
-            for (int i = 0; i < unstablePeriod.Length; i++)
+            for (int i = 0; i < _unstablePeriod.Length; i++)
             {
-                unstablePeriod[i] = period;
+                _unstablePeriod[i] = period;
             }
             return this;
         }
@@ -138,7 +138,7 @@ public sealed class CoreBuilder
             throw new ArgumentOutOfRangeException(nameof(id), id,
                 "not a function id, and not the ALL wildcard");
         }
-        unstablePeriod[slot] = period;
+        _unstablePeriod[slot] = period;
         return this;
     }
 
@@ -147,7 +147,7 @@ public sealed class CoreBuilder
     /// <param name="settingType">Which threshold to override.</param>
     /// <param name="rangeType">What the candle dimension is measured against.</param>
     /// <param name="avgPeriod">How many prior bars to average, in
-    /// <c>0</c>..<see cref="Core.MaxIndex"/>. <c>0</c> means no averaging.</param>
+    /// <c>0</c>..<see cref="Core.IndexMax"/>. <c>0</c> means no averaging.</param>
     /// <param name="factor">The multiplier applied to that average. Any value
     /// except NaN, negatives included.</param>
     /// <returns>This builder, for chaining.</returns>
@@ -161,7 +161,7 @@ public sealed class CoreBuilder
                                      int avgPeriod, double factor)
     {
         int slot = (int)settingType;
-        if (slot < 0 || slot >= candleSettings.Length)
+        if (slot < 0 || slot >= _candleSettings.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
                 "not a single candlestick setting");
@@ -180,10 +180,10 @@ public sealed class CoreBuilder
          * setting, so it is bounded like one: a negative starts the main loop
          * that many bars late while outBegIdx still reports startIdx, shifting
          * every value underneath a correct-looking index. */
-        if (avgPeriod < 0 || avgPeriod > Core.MaxIndex)
+        if (avgPeriod < 0 || avgPeriod > Core.IndexMax)
         {
             throw new ArgumentOutOfRangeException(nameof(avgPeriod), avgPeriod,
-                "avgPeriod must be in 0.." + Core.MaxIndex);
+                "avgPeriod must be in 0.." + Core.IndexMax);
         }
         /* Only NaN is refused -- a negative factor is an unusual but legal
          * threshold scale. NaN makes every comparison it feeds false, so the
@@ -194,7 +194,7 @@ public sealed class CoreBuilder
             throw new ArgumentOutOfRangeException(nameof(factor), factor,
                 "factor must not be NaN");
         }
-        candleSettings[slot] = new CandleSetting(rangeType, avgPeriod, factor);
+        _candleSettings[slot] = new CandleSetting(rangeType, avgPeriod, factor);
         return this;
     }
 
@@ -208,16 +208,16 @@ public sealed class CoreBuilder
     {
         if (settingType == CandleSettingType.AllCandleSettings)
         {
-            Array.Copy(Core.DefaultCandleSettings, candleSettings, candleSettings.Length);
+            Array.Copy(Core.DefaultCandleSettings, _candleSettings, _candleSettings.Length);
             return this;
         }
         int slot = (int)settingType;
-        if (slot < 0 || slot >= candleSettings.Length)
+        if (slot < 0 || slot >= _candleSettings.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
                 "not a candlestick setting, and not the wildcard");
         }
-        candleSettings[slot] = Core.DefaultCandleSettings[slot];
+        _candleSettings[slot] = Core.DefaultCandleSettings[slot];
         return this;
     }
 
@@ -233,11 +233,11 @@ public sealed class CoreBuilder
      * arrays, so later builder calls cannot reach into a built Core. */
     internal int[] SnapshotUnstablePeriod()
     {
-        return (int[])unstablePeriod.Clone();
+        return (int[])_unstablePeriod.Clone();
     }
 
     internal CandleSetting[] SnapshotCandleSettings()
     {
-        return (CandleSetting[])candleSettings.Clone();
+        return (CandleSetting[])_candleSettings.Clone();
     }
 }

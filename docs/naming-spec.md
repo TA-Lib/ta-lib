@@ -95,10 +95,13 @@ their enum rather than splitting it.
 
 | constant | C (frozen) | Rust | Java | C# |
 |---|---|---|---|---|
-| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_MAX_INDEX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `MAX_INDEX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `MAX_INDEX` | `RealDefault`, `IntegerDefault`, `MaxIndex` |
+| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_MAX_INDEX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `MAX_INDEX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `MAX_INDEX` | `RealDefault`, `IntegerDefault`, `IndexMax` |
 
 Screaming snake is the Java and Rust rule and the C inheritance; .NET spells
-constants PascalCase, so C# takes `RealDefault` through `MaxIndex`.
+constants PascalCase. `IndexMax` alone reverses C's word order, matching
+`RealMax` and `IntegerMax`: `MaxIndex` would differ only by case from the
+`Maxindex` indicator, which VB.NET cannot call and CA1708 reports. The constant
+is renamed, never the indicator.
 
 ## 6. Failures
 

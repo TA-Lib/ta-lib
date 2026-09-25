@@ -116,7 +116,7 @@ pub fn guarded_docs(
     b.exception(
         "System.ArgumentOutOfRangeException",
         "<c>startIdx</c> or <c>endIdx</c> is negative or above \
-         <see cref=\"Core.MaxIndex\"/>, or <c>endIdx &lt; startIdx</c>.",
+         <see cref=\"Core.IndexMax\"/>, or <c>endIdx &lt; startIdx</c>.",
     );
     b.exception(
         "System.ArgumentException",
