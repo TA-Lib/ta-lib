@@ -27,9 +27,8 @@
 //! - There is no `close`: a handle is ordinary heap state and GC suffices.
 //!   Handles are deliberately NOT serializable; the sanctioned checkpoint story
 //!   is re-opening from retained history.
-//! - `peek` runs a non-committing frame against the live handle: its cost is
-//!   flat in the period, and what it allocates per call is bounded by the
-//!   indicator, never by the period. `clone()` exposes the copy constructor as
+//! - `peek` runs a non-committing frame against the live handle: what it
+//!   allocates per call is bounded by the indicator, never by the period. `clone()` exposes the copy constructor as
 //!   an independent stream — arrays clone, sub-streams clone recursively, and
 //!   only the `Core` reference is shared (settings identity is the contract).
 //! - Multi-output functions write a per-function `<N>Out` the CALLER owns and
@@ -1080,9 +1079,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&PeekFrame>) {
          \x20      * Evaluate a forming bar without committing — bit-identical to what the\n\
          \x20      * next {{@code update}} with the same bar would {verb} — the same\n\
          \x20      * transition, with every store it would make carried in a local instead.\n\
-         \x20      * Never writes this handle, so peeks may\n\
-         \x20      * run concurrently with each other, and its cost does not grow with the\n\
-         \x20      * period.\n\
+         \x20      * Never writes this handle, so peeks may run concurrently with each other.\n\
          \x20      * <p>It counts no bar, so it keeps answering past the\n\
          \x20      * {{@link Core#INDEX_MAX}} ceiling {{@code update}} stops at.\n\
          \x20      */"

@@ -1215,7 +1215,6 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          return — the same transition, with every store it would make carried in a local \
          instead. Never writes this handle, so peeks may run concurrently with each other.",
     );
-    d.para("Its cost does not grow with the period.");
     d.para(
         "It counts no bar, so it keeps answering past the <see cref=\"Core.IndexMax\"/> \
          ceiling <c>Update</c> stops at.",

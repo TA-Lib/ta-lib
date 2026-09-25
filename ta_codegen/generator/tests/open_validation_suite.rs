@@ -1053,8 +1053,8 @@ fn csharp_accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
 ///
 /// Structural for the same reason the C, Rust and Java sweeps are — a `Peek`
 /// that copied and then wrote the copy would still answer correctly, so no
-/// value gate can see the difference. What it costs is the flat-in-period cost
-/// the frame is for.
+/// value gate can see the difference. What it costs is the frame's
+/// flat-in-period overhead, which is what the frame is for.
 ///
 /// The one allocation a frame is allowed is a fixed-size accumulator: a C#
 /// array field is a reference, so a localized one must be cloned or the frame

@@ -685,9 +685,8 @@ impl TrixStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// allocates nothing and copies no buffer, so its cost does not grow with
-    /// the period, and it writes no part of the handle — peeks may run
-    /// concurrently with each other.
+    /// writes no part of the handle, so peeks may run concurrently with each
+    /// other.
     ///
     /// # Errors
     ///

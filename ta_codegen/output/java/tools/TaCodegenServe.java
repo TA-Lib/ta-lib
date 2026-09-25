@@ -844,9 +844,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -1856,9 +1854,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -2561,9 +2557,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -3070,9 +3064,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -3573,9 +3565,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -4281,9 +4271,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -5055,9 +5043,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -6237,9 +6223,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -7298,9 +7282,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -8062,9 +8044,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -8877,9 +8857,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -9625,9 +9603,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -10520,9 +10496,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -11202,9 +11176,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -11625,9 +11597,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -12335,9 +12305,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -13050,9 +13018,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -13582,9 +13548,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -14655,9 +14619,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -15799,9 +15761,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -16977,9 +16937,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -18196,9 +18154,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -18900,9 +18856,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -19717,9 +19671,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -20490,9 +20442,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -21317,9 +21267,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -22144,9 +22092,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -22876,9 +22822,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -23728,9 +23672,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -24816,9 +24758,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -25866,9 +25806,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -26968,9 +26906,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -27972,9 +27908,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -28764,9 +28698,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -29578,9 +29510,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -30362,9 +30292,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -31183,9 +31111,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -31981,9 +31907,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -32677,9 +32601,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -33420,9 +33342,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -34220,9 +34140,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -34925,9 +34843,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -35751,9 +35667,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -36683,9 +36597,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -37534,9 +37446,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -38350,9 +38260,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -39217,9 +39125,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -40199,9 +40105,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -41116,9 +41020,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -41982,9 +41884,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -42805,9 +42705,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -43590,9 +43488,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -44474,9 +44370,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -45352,9 +45246,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -46199,9 +46091,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -47054,9 +46944,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -47894,9 +47782,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -48753,9 +48639,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -49596,9 +49480,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -50404,9 +50286,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -51180,9 +51060,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -51932,9 +51810,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -52687,9 +52563,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -53413,9 +53287,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -54253,9 +54125,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -55229,9 +55099,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -56164,9 +56032,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -57000,9 +56866,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -57771,9 +57635,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -58577,9 +58439,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -59481,9 +59341,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -60405,9 +60263,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -61301,9 +61157,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -62115,9 +61969,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -62821,9 +62673,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -63686,9 +63536,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -64585,9 +64433,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -65386,9 +65232,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -66185,9 +66029,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -66992,9 +66834,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -67775,9 +67615,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -68576,9 +68414,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -69414,9 +69250,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -70159,9 +69993,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -70683,9 +70515,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -71426,9 +71256,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -72316,9 +72144,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -73196,9 +73022,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -74287,9 +74111,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -75585,9 +75407,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -76669,9 +76489,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -77091,9 +76909,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -77773,9 +77589,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -78715,9 +78529,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -79615,9 +79427,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -80307,9 +80117,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -81091,9 +80899,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -81692,9 +81498,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -82390,9 +82194,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -83225,9 +83027,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -84329,9 +84129,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -85420,9 +85218,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -86199,9 +85995,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -86986,9 +86780,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -87876,9 +87668,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -88511,9 +88301,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -88931,9 +88719,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -89617,9 +89403,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -90507,9 +90291,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -91441,9 +91223,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -92818,9 +92598,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -95124,9 +94902,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -97077,9 +96853,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -99100,9 +98874,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -101056,9 +100828,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -103174,9 +102944,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -105417,9 +105185,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -107055,9 +106821,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -108026,9 +107790,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -109222,9 +108984,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -110079,9 +109839,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -111036,9 +110794,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -112199,9 +111955,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -113314,9 +113068,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -114415,9 +114167,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -115512,9 +115262,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -116315,9 +116063,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -116743,9 +116489,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -117568,9 +117312,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -119042,9 +118784,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -120132,9 +119872,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -121084,9 +120822,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -122597,9 +122333,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -124248,9 +123982,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -125093,9 +124825,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -126213,9 +125943,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -127025,9 +126753,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -127732,9 +127458,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -128690,9 +128414,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -129495,9 +129217,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -130280,9 +130000,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -131298,9 +131016,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -132273,9 +131989,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -133161,9 +132875,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -133866,9 +133578,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -134762,9 +134472,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -135636,9 +135344,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -136846,9 +136552,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -138230,9 +137934,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -139136,9 +138838,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -139658,9 +139358,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -140449,9 +140147,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -141222,9 +140918,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -141789,9 +141483,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -142654,9 +142346,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -143512,9 +143202,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -144585,9 +144273,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -145971,9 +145657,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -146965,9 +146649,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -147578,9 +147260,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -148297,9 +147977,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -148897,9 +148575,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -149512,9 +149188,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -150239,9 +149913,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -150867,9 +150539,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -151507,9 +151177,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -152148,9 +151816,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -152791,9 +152457,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -153586,9 +153250,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -154876,9 +154538,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -155958,9 +155618,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -156631,9 +156289,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -157602,9 +157258,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -159195,9 +158849,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -160204,9 +159856,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -160624,9 +160274,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -161169,9 +160817,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -162380,9 +162026,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -163302,9 +162946,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -163846,9 +163488,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -164870,9 +164510,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -166171,9 +165809,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -167255,9 +166891,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -167832,9 +167466,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -168360,9 +167992,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -169287,9 +168917,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -170417,9 +170045,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -171063,9 +170689,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -171485,9 +171109,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -172175,9 +171797,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -172898,9 +172518,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -173841,9 +173459,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -175148,9 +174764,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -176010,9 +175624,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -177171,9 +176783,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -177812,9 +177422,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -178833,9 +178441,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -180083,9 +179689,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -181008,9 +180612,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -181970,9 +181572,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -183045,9 +182645,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -184005,9 +183603,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -184787,9 +184383,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -185342,9 +184936,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -186189,9 +185781,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -187183,9 +186773,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -188395,9 +187983,7 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
-           * Never writes this handle, so peeks may
-           * run concurrently with each other, and its cost does not grow with the
-           * period.
+           * Never writes this handle, so peeks may run concurrently with each other.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
            */
@@ -188695,7 +188281,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c39a123408884a38";
+    static final String SPLICED_GENCODE_DIGEST = "28b72e405a735b81";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

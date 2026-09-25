@@ -609,8 +609,9 @@ fn only_a_step_storing_a_buffer_in_a_loop_splits_its_state() {
 ///
 /// The property is structural, not a value one: a peek that copied and then
 /// wrote the copy would still answer correctly, so no value gate can see it.
-/// What it costs is the thing the frame exists to buy — a peek whose cost does
-/// not grow with the period — and the only place that is visible is here.
+/// What it costs is the thing the frame exists to buy — a peek frame whose own
+/// overhead does not grow with the period — and the only place that is visible
+/// is here.
 ///
 /// The accumulator half pins Rust's share of a decision that must be identical
 /// in all four backends; the other three sweeps cannot see a Rust-only

@@ -758,8 +758,8 @@ fn accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
 /// No tier copies a handle to peek it — swept over the whole corpus.
 ///
 /// Structural, because no value gate can see it: a peek that copied and then
-/// wrote the copy would still answer correctly. What it costs is the
-/// flat-in-period cost the frame is for.
+/// wrote the copy would still answer correctly. What it costs is the frame's
+/// flat-in-period overhead, which is what the frame is for.
 #[test]
 fn no_java_peek_copies_the_handle() {
     /// The handle's own fields: a declaration at the class's own indent
@@ -984,8 +984,8 @@ fn no_java_peek_copies_the_handle() {
             //
             // ONE copy is contract-legal, and only one: a FIXED-SIZE
             // accumulator, an array the batch body declares with a literal
-            // dimension. The frame's job is that its cost not grow with the
-            // period, and such a copy cannot. Read off the emitted declaration,
+            // dimension. The frame's job is that its own overhead not grow with
+            // the period, and such a copy cannot. Read off the emitted declaration,
             // never a name list, so a period-sized buffer can never qualify.
             //
             // It stays an offender for a SHIPPED function even so. The emitter

@@ -20,8 +20,7 @@ This file is the contract and the shape. The error model is
    `TA_INSUFFICIENT_HISTORY` — the library's one recoverable condition, which is
    why it carries its own code. The history may be freed afterwards.
 2. **`update(handle, bar) → value`** — once per CLOSED bar. Always produces the
-   new value, at a cost that does not grow with the period: the handle is sized at
-   open.
+   new value; the handle is sized at open.
 3. **`peek(handle, bar) → value`** — a provisional bar, evaluated without
    committing. Call it as often as the forming bar is revised.
 4. **`close(handle)`** — explicit in C, nothing in the managed backends.
@@ -63,12 +62,11 @@ a handle buffer becomes two locals — the slot it targeted and the value it hel
 can reach this bar is deleted outright. Nothing else about the body changes, so
 it is the same numbers in the same order.
 
-What that buys is the cost model. No backend copies a handle's BUFFERS: peek's
-overhead is a fixed number of bytes where the buffers are a function of the
-period, which is the difference between a peek that is flat in the period and
-one that is not. No backend copies the struct either: a state field the frame
-writes becomes a local of the same name, seeded from the handle, and in C the
-handle is bound `const` so a frame that stored through it would not compile.
+What that buys is the cost model. No backend copies a handle's BUFFERS, so the
+frame's own overhead is a fixed number of bytes whatever the period. No backend
+copies the struct either: a state field the frame writes becomes a local of the
+same name, seeded from the handle, and in C the handle is bound `const` so a
+frame that stored through it would not compile.
 Java and C# additionally offer the accumulators to the shadow
 rewrite, because a managed array field is a reference and localizing one means
 cloning it; a clone survives only where the rewrite refuses, which no shipped

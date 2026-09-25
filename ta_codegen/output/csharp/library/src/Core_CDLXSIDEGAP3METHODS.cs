@@ -491,7 +491,6 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>Its cost does not grow with the period.</para>
       /// <para>It counts no bar, so it keeps answering past the
       /// <see cref="Core.IndexMax"/> ceiling <c>Update</c> stops at.</para>
       /// </remarks>

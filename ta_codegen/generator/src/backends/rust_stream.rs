@@ -17,8 +17,7 @@
 //! Deliberate simplifications vs the C emitter (see design spec):
 //! - `peek(&self)` runs a second frame of the transition that commits nothing,
 //!   as C does. The handle is never written — which is what keeps the signature
-//!   `&self` and the handle `Sync` — and no buffer is copied, so the cost is
-//!   flat in the period.
+//!   `&self` and the handle `Sync` — and no buffer is copied.
 //! - Drop replaces Close; RAII replaces every OOM-unwind ladder.
 //! - `historyLen` is the FIRST input slice's length: empty is
 //!   `Err(OutOfRangeStartIndex)` (rule S1), and a multi-input open additionally
@@ -3146,9 +3145,8 @@ fn emit_update_and_peek(
         "    /// Evaluate a forming bar without committing — bit-identical to what the\n\
          \x20   /// next `update` with the same bar would return: the same transition,\n\
          \x20   /// rewritten so every store it would make lives in a local instead. It\n\
-         \x20   /// allocates nothing and copies no buffer, so its cost does not grow with\n\
-         \x20   /// the period, and it writes no part of the handle — peeks may run\n\
-         \x20   /// concurrently with each other.\n\
+         \x20   /// writes no part of the handle, so peeks may run concurrently with each\n\
+         \x20   /// other.\n\
          \x20   ///\n\
          \x20   /// # Errors\n\
          \x20   ///\n\

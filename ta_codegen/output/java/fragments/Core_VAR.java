@@ -598,9 +598,7 @@
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
-       * Never writes this handle, so peeks may
-       * run concurrently with each other, and its cost does not grow with the
-       * period.
+       * Never writes this handle, so peeks may run concurrently with each other.
        * <p>It counts no bar, so it keeps answering past the
        * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
        */
