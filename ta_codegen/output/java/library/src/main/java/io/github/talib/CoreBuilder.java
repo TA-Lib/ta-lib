@@ -92,7 +92,7 @@ public final class CoreBuilder {
     *
     * @throws NullPointerException if {@code id} is null
     * @throws IllegalArgumentException if {@code period} is negative or above
-    *         {@link Core#MAX_INDEX}
+    *         {@link Core#INDEX_MAX}
     */
    public CoreBuilder unstablePeriod(FuncUnstId id, int period) {
       if (id == null) {
@@ -103,14 +103,14 @@ public final class CoreBuilder {
       }
       /* The period is added to a lookback which is then used as an index, so an
        * unbounded one overflows that lookback negative and the function indexes
-       * far past the end of its input. MAX_INDEX is the ceiling the index space
+       * far past the end of its input. INDEX_MAX is the ceiling the index space
        * already enforces on startIdx/endIdx; a warm-up longer than the largest
        * addressable series could never produce output, so nothing legitimate is
        * refused. C applies the same bound in TA_SetUnstablePeriod.
        */
-      if (period > Core.MAX_INDEX) {
+      if (period > Core.INDEX_MAX) {
          throw new IllegalArgumentException(
-            "unstablePeriod must be <= " + Core.MAX_INDEX + ", got " + period);
+            "unstablePeriod must be <= " + Core.INDEX_MAX + ", got " + period);
       }
       if (id == FuncUnstId.ALL) {
          java.util.Arrays.fill(unstablePeriod, period);
@@ -132,7 +132,7 @@ public final class CoreBuilder {
     * @throws IllegalArgumentException if {@code settingType} is
     *         {@link CandleSettingType#ALL_CANDLE_SETTINGS} (not a single-setting
     *         target), if {@code avgPeriod} is outside {@code 0..}{@link
-    *         Core#MAX_INDEX}, or if {@code factor} is NaN
+    *         Core#INDEX_MAX}, or if {@code factor} is NaN
     */
    public CoreBuilder candleSetting(CandleSettingType settingType, RangeType rangeType,
       int avgPeriod, double factor) {
@@ -149,9 +149,9 @@ public final class CoreBuilder {
       if (avgPeriod < 0) {
          throw new IllegalArgumentException("avgPeriod must be >= 0, got " + avgPeriod);
       }
-      if (avgPeriod > Core.MAX_INDEX) {
+      if (avgPeriod > Core.INDEX_MAX) {
          throw new IllegalArgumentException(
-            "avgPeriod must be <= " + Core.MAX_INDEX + ", got " + avgPeriod);
+            "avgPeriod must be <= " + Core.INDEX_MAX + ", got " + avgPeriod);
       }
       if (Double.isNaN(factor)) {
          throw new IllegalArgumentException("factor must not be NaN");

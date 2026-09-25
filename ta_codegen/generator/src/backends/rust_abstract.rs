@@ -929,15 +929,15 @@ fn emit_binder(
          \x20   ///\n\
          \x20   /// # Errors\n\
          \x20   /// [`RetCode::OutOfRangeStartIndex`] if `start_idx` exceeds\n\
-         \x20   /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds\n\
+         \x20   /// [`Core::INDEX_MAX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds\n\
          \x20   /// it or is below `start_idx`, and [`RetCode::BadParam`] if a required\n\
          \x20   /// input or output was never bound, if the function rejects its\n\
          \x20   /// parameters, or if a bound buffer is too short: every input must\n\
          \x20   /// cover `end_idx`, and every output must hold the count actually\n\
          \x20   /// produced, `end_idx - max(start_idx, lookback) + 1`.\n\
          \x20   pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {\n\
-         \x20       if start_idx > Core::MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }\n\
-         \x20       if end_idx > Core::MAX_INDEX || end_idx < start_idx {\n\
+         \x20       if start_idx > Core::INDEX_MAX { return Err(RetCode::OutOfRangeStartIndex); }\n\
+         \x20       if end_idx > Core::INDEX_MAX || end_idx < start_idx {\n\
          \x20           return Err(RetCode::OutOfRangeEndIndex);\n\
          \x20       }\n\
          \x20       // The buffer bounds are the PUBLIC entry point's, which every arm\n\

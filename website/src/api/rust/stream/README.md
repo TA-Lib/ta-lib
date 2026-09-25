@@ -36,7 +36,7 @@ let history: Vec<f64> = /* ...your closing prices... */;
 let (mut s, last) = core.sma_open(&history, 30)?;   // stream + value at the last history bar
 
 // Each time a bar closes:
-let v = s.update(new_close)?;                        // Err on a non-finite bar, or past MAX_INDEX
+let v = s.update(new_close)?;                        // Err on a non-finite bar, or past INDEX_MAX
 
 // Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
 let provisional = s.peek(forming_close)?;            // state left unchanged
@@ -44,7 +44,7 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. They also reject a bar past `Core::MAX_INDEX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. They also reject a bar past `Core::INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range.
 
 ## Rules
 
@@ -104,7 +104,7 @@ s.advance()?;               // a bar you skipped, counted
 
 The first three return no `Result`: they read what the stream already holds, so
 there is nothing to reject. `advance()` returns one — it moves the range, and the
-range cannot pass `Core::MAX_INDEX`.
+range cannot pass `Core::INDEX_MAX`.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
 

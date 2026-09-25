@@ -391,7 +391,7 @@ typedef enum
   TA_UNSTABLE_BOUND_NOT_REJECTED   = 1534,
   TA_UNSTABLE_BOUND_WROTE_ANYWAY   = 1535,
 
-  /* Cross-language TA_MAX_INDEX bound (#180) */
+  /* Cross-language TA_INDEX_MAX bound (#180) */
   TA_INDEX_RANGE_XLANG_CALL_FAILED = 1540,
   TA_INDEX_RANGE_XLANG_MISMATCH    = 1541,
 

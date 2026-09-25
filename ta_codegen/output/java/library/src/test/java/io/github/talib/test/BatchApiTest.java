@@ -414,11 +414,11 @@ public class BatchApiTest {
             () -> Core.DEFAULT.sma(0, 199, in, 0, tiny),
             "out-of-range period still -> the parameter message", "bad parameter");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.sma(0, Core.MAX_INDEX + 1, in, 10, tiny),
-            "endIdx above MAX_INDEX still -> IndexOutOfBounds", "endIdx");
+            () -> Core.DEFAULT.sma(0, Core.INDEX_MAX + 1, in, 10, tiny),
+            "endIdx above INDEX_MAX still -> IndexOutOfBounds", "endIdx");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.sma(Core.MAX_INDEX + 5, Core.MAX_INDEX + 9, in, 10, tiny),
-            "startIdx above MAX_INDEX still -> IndexOutOfBounds", "startIdx");
+            () -> Core.DEFAULT.sma(Core.INDEX_MAX + 5, Core.INDEX_MAX + 9, in, 10, tiny),
+            "startIdx above INDEX_MAX still -> IndexOutOfBounds", "startIdx");
     }
 
     /**
@@ -787,8 +787,8 @@ public class BatchApiTest {
             () -> Core.DEFAULT.sma(50, 10, in, 10, (double[]) null),
             "endIdx < startIdx outranks a null output", "endIdx");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.sma(0, Core.MAX_INDEX + 1, (double[]) null, 10, out),
-            "an endIdx above MAX_INDEX outranks a null input", "endIdx");
+            () -> Core.DEFAULT.sma(0, Core.INDEX_MAX + 1, (double[]) null, 10, out),
+            "an endIdx above INDEX_MAX outranks a null input", "endIdx");
 
         // The control, and what makes the three above about ORDER rather than
         // about the null check having been deleted: with the indices valid, the

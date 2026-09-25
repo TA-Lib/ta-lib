@@ -709,7 +709,7 @@ fn emit_handle_class_with_members(
          \x20      * {{@code clone()}} carries it verbatim. A plain\n\
          \x20      * {{@code open}} hands back only the last value, a subset of this range,\n\
          \x20      * because the caller chose not to take the fill.\n\
-         \x20      * <p>The last bar it can reach is {{@link Core#MAX_INDEX}}; past that\n\
+         \x20      * <p>The last bar it can reach is {{@link Core#INDEX_MAX}}; past that\n\
          \x20      * {{@code update}} and {{@code advance}} throw\n\
          \x20      * {{@link IndexOutOfBoundsException}}.\n\
          \x20      */\n\
@@ -726,7 +726,7 @@ fn emit_handle_class_with_members(
          \x20      * and that will not be re-fed, or a session with no print. Without it\n\
          \x20      * two handles on one feed drift a bar apart when only one of them skips.\n\
          \x20      * <p>Throws {{@link IndexOutOfBoundsException}} once {{@link #outRange()}}\n\
-         \x20      * has reached bar {{@link Core#MAX_INDEX}}, the last one the batch tier\n\
+         \x20      * has reached bar {{@link Core#INDEX_MAX}}, the last one the batch tier\n\
          \x20      * can address and the last this handle will count. {{@code update}}\n\
          \x20      * throws the same there.\n\
          \x20      */\n\
@@ -881,7 +881,7 @@ fn assert_single_output(func: &FuncDef, site: &str) {
 /// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
 /// cannot answer it before its parent).
 ///
-/// `>` and not `>=`: an opener may legally take `MAX_INDEX + 1` bars (rule S2),
+/// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule S2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
 /// one that has nowhere to go.
 ///
@@ -889,7 +889,7 @@ fn assert_single_output(func: &FuncDef, site: &str) {
 /// `requireHistory` spells it for rule S2 and not as a fourth exception type.
 fn out_range_ceiling_guard(func: &FuncDef, indent: &str, verb: &str) -> String {
     format!(
-        "{indent}if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )\n\
+        "{indent}if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )\n\
          {indent}   throw failure(\"{} {verb}\", RetCode.OUT_OF_RANGE_END_INDEX);\n",
         func.name
     )
@@ -975,7 +975,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          \x20      * retains its state, so a single non-finite bar would poison every\n\
          \x20      * later value it produces.\n\
          \x20      * <p>Throws {{@link IndexOutOfBoundsException}} once {{@link #outRange()}}\n\
-         \x20      * has reached bar {{@link Core#MAX_INDEX}}, which no re-feed clears: the\n\
+         \x20      * has reached bar {{@link Core#INDEX_MAX}}, which no re-feed clears: the\n\
          \x20      * handle has run out of index domain and only a shorter history can\n\
          \x20      * start a new one.\n\
          \x20      */"
@@ -1026,7 +1026,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&PeekFrame>) {
          \x20      * run concurrently with each other, and its cost does not grow with the\n\
          \x20      * period.\n\
          \x20      * <p>It counts no bar, so it keeps answering past the\n\
-         \x20      * {{@link Core#MAX_INDEX}} ceiling {{@code update}} stops at.\n\
+         \x20      * {{@link Core#INDEX_MAX}} ceiling {{@code update}} stops at.\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} peek( {sig_bars}{sink} ) {{");
@@ -1812,10 +1812,10 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &H
     let _ = writeln!(o, "         return RetCode.OUT_OF_RANGE_START_INDEX;");
     let _ = writeln!(o, "      }}");
     // The fill covers bars 0..historyLen-1, so its last bar is an index like any
-    // other and MAX_INDEX bounds it too (#180). Without this the streaming
+    // other and INDEX_MAX bounds it too (#180). Without this the streaming
     // entry points would compute over exactly the ranges the batch call refuses,
     // and the two are required to agree bit for bit.
-    let _ = writeln!(o, "      if( historyLen > MAX_INDEX + 1 ) {{");
+    let _ = writeln!(o, "      if( historyLen > INDEX_MAX + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OUT_OF_RANGE_END_INDEX;");
     let _ = writeln!(o, "      }}");
     let mismatches: Vec<String> = inputs[1..]

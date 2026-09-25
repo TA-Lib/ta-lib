@@ -166,8 +166,8 @@ On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the inp
 | Code | Meaning |
 |------|---------|
 | `RetCode::BadParam` | An optional parameter is outside its documented range, or a slice is too short: every input must cover `startIdx..=endIdx`, and every output must hold the number of values produced for that range. |
-| `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::MAX_INDEX` (100,000,000). |
-| `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::MAX_INDEX`, or below `startIdx`. |
+| `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::INDEX_MAX` (100,000,000). |
+| `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::INDEX_MAX`, or below `startIdx`. |
 
 `RetCode` also carries `Success` — the code C returns and the one the other ports expose — plus `AllocErr` and `InternalError`, which the safe Rust code paths do not produce.
 
@@ -219,7 +219,7 @@ Optional parameters left unset carry the same default sentinel an omitted argume
 
 Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See [Unstable Period](/api/unstable-period/) for how to mitigate that.
 
-Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core::MAX_INDEX`](#index_range).
+Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core::INDEX_MAX`](#index_range).
 
 Every function documentation page carries a [numerical-stability property](/functions/stability): how much the value at a given bar depends on where the series you passed in begins.
 
@@ -243,7 +243,7 @@ argument once, as `RetCode::BadParam`.
 
 ### 4.4 Index Range {#index_range}
 
-`Core::MAX_INDEX` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
+`Core::INDEX_MAX` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
 
 ### 4.5 Threading {#multithreading}
 

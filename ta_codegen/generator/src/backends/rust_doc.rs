@@ -104,14 +104,14 @@ pub fn guarded_docs(
     if func.optional_inputs.is_empty() {
         d.paragraph(
             "Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` \
-             exceeds [`Core::MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` \
+             exceeds [`Core::INDEX_MAX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` \
              exceeds it or is below `startIdx`. A range shorter than the lookback is not an \
              error: it is [`Ok`] with a zero [`OutRange::count`].",
         );
     } else {
         d.paragraph(
             "Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` \
-             exceeds [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds \
+             exceeds [`Core::INDEX_MAX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds \
              it or is below `startIdx`, and [`RetCode::BadParam`] when an optional parameter is \
              outside its documented range. A range shorter than the lookback is not an error: \
              it is [`Ok`] with a zero [`OutRange::count`].",

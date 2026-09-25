@@ -436,7 +436,7 @@ static int json_appendc(char *buf, int buf_size, int pos, char c) {
  * asked for -- while the Rust and Java servers, which range-check a 64-bit
  * parse, rejected the same request. Saturating fails closed instead: no
  * parameter in the library has a legal domain reaching INT_MAX (the widest
- * integer range is 100000, and the index ceiling is TA_MAX_INDEX = 1e8), so a
+ * integer range is 100000, and the index ceiling is TA_INDEX_MAX = 1e8), so a
  * saturated value is refused by whatever validation the field already has.
  *
  * INT_MIN is deliberately NOT the negative clamp: it is TA_INTEGER_DEFAULT,
@@ -1458,7 +1458,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    static final int INTEGER_DEFAULT = Integer.MIN_VALUE;\n");
     s.push_str("    static final int INTEGER_MIN = Integer.MIN_VALUE + 1;\n");
     s.push_str("    static final int INTEGER_MAX = Integer.MAX_VALUE;\n");
-    s.push_str("    static final int MAX_INDEX = 100000000;\n");
+    s.push_str("    static final int INDEX_MAX = 100000000;\n");
     // Sized by the id count, so the wildcard gets no slot -- matching the
     // shipped CoreBuilder (#144).
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");
@@ -1524,10 +1524,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireIndexRange(String funcName, int startIdx, int endIdx) {\n");
-    s.push_str("        if (startIdx < 0 || startIdx > MAX_INDEX) {\n");
+    s.push_str("        if (startIdx < 0 || startIdx > INDEX_MAX) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");
     s.push_str("        }\n");
-    s.push_str("        if (endIdx < 0 || endIdx > MAX_INDEX || endIdx < startIdx) {\n");
+    s.push_str("        if (endIdx < 0 || endIdx > INDEX_MAX || endIdx < startIdx) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
@@ -1547,7 +1547,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        if (historyLen < 1) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");
     s.push_str("        }\n");
-    s.push_str("        if (historyLen > MAX_INDEX + 1) {\n");
+    s.push_str("        if (historyLen > INDEX_MAX + 1) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
@@ -1784,9 +1784,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            rideGen++;\n");
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
-    // The same 0..=MAX_INDEX domain the C library enforces. Checked before any
+    // The same 0..=INDEX_MAX domain the C library enforces. Checked before any
     // store, so a rejected call leaves every slot as it was (#186).
-    s.push_str("            if (period < 0 || period > Core.MAX_INDEX) {\n");
+    s.push_str("            if (period < 0 || period > Core.INDEX_MAX) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\"; \n");
     s.push_str("            }\n");
     // FuncUnstId.ALL is the "set all" sentinel (matches C TA_SetUnstablePeriod).
@@ -1821,7 +1821,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            if (rangeType < 0 || rangeType > RangeType.SHADOWS.ordinal()) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
     s.push_str("            }\n");
-    s.push_str("            if (avgPeriod < 0 || avgPeriod > Core.MAX_INDEX) {\n");
+    s.push_str("            if (avgPeriod < 0 || avgPeriod > Core.INDEX_MAX) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
     s.push_str("            }\n");
     s.push_str("            if (Double.isNaN(factor)) {\n");
@@ -2910,7 +2910,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         // outside the timing loop. Guarded on bench_mode, same as Java's
         // null-when-unused: endIdx+1 can exceed the array's real length on
         // purpose (the index-range boundary sweep sends endIdx near
-        // TA_MAX_INDEX on a small array to prove the batch call's OWN
+        // TA_INDEX_MAX on a small array to prove the batch call's OWN
         // validation rejects it) -- AsSpan's own bounds check would throw
         // ArgumentOutOfRangeException before that validation ever runs if
         // this were unconditional, on every plain batch call, not just the
@@ -4313,11 +4313,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
     // clamping, and the driver compares retCodes.
     let raw_start = params["startIdx"].as_i64().unwrap_or(0);
     let raw_end = params["endIdx"].as_i64().unwrap_or(0);
-    if raw_start < 0 || raw_start > Core::MAX_INDEX as i64 {
+    if raw_start < 0 || raw_start > Core::INDEX_MAX as i64 {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeStartIndex));
     }
-    if raw_end < 0 || raw_end > Core::MAX_INDEX as i64 || raw_end < raw_start {
+    if raw_end < 0 || raw_end > Core::INDEX_MAX as i64 || raw_end < raw_start {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeEndIndex));
     }

@@ -915,7 +915,7 @@ static ErrorNumber sf_advance( void )
    }
    sfAdvNullRejects++;
 
-   /* Rule U4, which no feed reaches: TA_MAX_INDEX is 100 million bars, and
+   /* Rule U4, which no feed reaches: TA_INDEX_MAX is 100 million bars, and
     * Advance is the only call that moves the count without O(period) work.
     *
     * The ceiling is on the BAR -- outRangeBegIdx + outRangeCount -- not on the
@@ -929,7 +929,7 @@ static ErrorNumber sf_advance( void )
       if( TA_SMA_Open( &s, sfClose, warm, 10, &seed ) != TA_SUCCESS )
          return TA_STREAM_ADVANCE_SETUP_FAILED;
       SF_ADV_READ( SMA, "SMA(ceiling)", s, b0, n0 );
-      for( k = b0 + n0; k <= TA_MAX_INDEX; k++ )
+      for( k = b0 + n0; k <= TA_INDEX_MAX; k++ )
       {
          if( TA_SMA_Advance( s ) != TA_SUCCESS )
          {
@@ -939,10 +939,10 @@ static ErrorNumber sf_advance( void )
          }
       }
       SF_ADV_READ( SMA, "SMA(ceiling)", s, b1, n1 );
-      if( b1 != b0 || b1 + n1 != TA_MAX_INDEX + 1 )
+      if( b1 != b0 || b1 + n1 != TA_INDEX_MAX + 1 )
       {
          printf( "  SMA(ceiling): the last bar counted was %d, expected %d\n",
-                 b1 + n1 - 1, TA_MAX_INDEX );
+                 b1 + n1 - 1, TA_INDEX_MAX );
          TA_SMA_Close( s );
          return TA_STREAM_ADVANCE_WRONG_COUNT;
       }
@@ -955,7 +955,7 @@ static ErrorNumber sf_advance( void )
           TA_SMA_Update( s, sfClose[warm], &v ) != TA_OUT_OF_RANGE_END_INDEX ||
           TA_SMA_Advance( s ) != TA_OUT_OF_RANGE_END_INDEX )
       {
-         printf( "  SMA(ceiling): a call past TA_MAX_INDEX was not refused\n" );
+         printf( "  SMA(ceiling): a call past TA_INDEX_MAX was not refused\n" );
          TA_SMA_Close( s );
          return TA_STREAM_ADVANCE_NOT_REJECTED;
       }

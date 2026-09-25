@@ -87,9 +87,9 @@ TA_LIB_API TA_RetCode TA_HA( int    startIdx,
    double tempLow;
    double tempClose;
 
-   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( !inOpen )
@@ -246,9 +246,9 @@ TA_RetCode TA_S_HA( int    startIdx,
    double tempLow;
    double tempClose;
 
-   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
+   if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
+   if( (endIdx < 0) || (endIdx > TA_INDEX_MAX) || (endIdx < startIdx) )
       return TA_OUT_OF_RANGE_END_INDEX;
 
    if( !inOpen )
@@ -432,7 +432,7 @@ static TA_RetCode TA_HA_OpenImpl( struct TA_HA_Stream **stream, const double inO
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
    {
@@ -604,7 +604,7 @@ TA_LIB_API TA_RetCode TA_HA_Open( TA_HA_Stream **stream, const double inOpen[], 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
    return TA_HA_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outHAOpen, outHAHigh, outHALow, outHAClose );
 }
@@ -614,7 +614,7 @@ TA_LIB_API TA_RetCode TA_HA_OpenAndFill( TA_HA_Stream **stream, const double inO
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
    if( (const void *)outHAOpen == (const void *)inOpen || (const void *)outHAOpen == (const void *)inHigh || (const void *)outHAOpen == (const void *)inLow || (const void *)outHAOpen == (const void *)inClose || (const void *)outHAHigh == (const void *)inOpen || (const void *)outHAHigh == (const void *)inHigh || (const void *)outHAHigh == (const void *)inLow || (const void *)outHAHigh == (const void *)inClose || (const void *)outHALow == (const void *)inOpen || (const void *)outHALow == (const void *)inHigh || (const void *)outHALow == (const void *)inLow || (const void *)outHALow == (const void *)inClose || (const void *)outHAClose == (const void *)inOpen || (const void *)outHAClose == (const void *)inHigh || (const void *)outHAClose == (const void *)inLow || (const void *)outHAClose == (const void *)inClose || (const void *)outHAOpen == (const void *)outHAHigh || (const void *)outHAOpen == (const void *)outHALow || (const void *)outHAOpen == (const void *)outHAClose || (const void *)outHAHigh == (const void *)outHALow || (const void *)outHAHigh == (const void *)outHAClose || (const void *)outHALow == (const void *)outHAClose ) return TA_BAD_PARAM;
    return TA_HA_OpenAndFillInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose );
@@ -629,7 +629,7 @@ TA_RetCode TA_HA_OpenAndFillInternal( struct TA_HA_Stream **stream, const double
 TA_LIB_API TA_RetCode TA_HA_Update( TA_HA_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outHAOpen, double *outHAHigh, double *outHALow, double *outHAClose )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_INDEX_MAX )
       return TA_OUT_OF_RANGE_END_INDEX;
    if( !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
@@ -716,7 +716,7 @@ TA_LIB_API TA_RetCode TA_HA_OutRange( const TA_HA_Stream *stream, int *outBegIdx
 TA_LIB_API TA_RetCode TA_HA_Advance( TA_HA_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_INDEX_MAX )
       return TA_OUT_OF_RANGE_END_INDEX;
    stream->outRangeCount++;
    return TA_SUCCESS;

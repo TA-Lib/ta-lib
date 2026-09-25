@@ -132,7 +132,7 @@ Misuse throws rather than returning a return code:
 
 | Mistake | Exception |
 |---|---|
-| `startIdx`/`endIdx` negative, above `Core.MAX_INDEX`, or `endIdx < startIdx` | `TALibIndexException` |
+| `startIdx`/`endIdx` negative, above `Core.INDEX_MAX`, or `endIdx < startIdx` | `TALibIndexException` |
 | Optional parameter outside its documented range | `TALibArgumentException` |
 | Two outputs sharing one array | `TALibArgumentException` |
 | An array too short for the range requested, including an `endIdx` past the end of the input | `TALibArgumentException` |
@@ -185,7 +185,7 @@ Streamable functions carry the `FuncFlags.STREAMING` bit in `FuncInfo#flags()` â
 
 Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See [Unstable Period](/api/unstable-period/) for how to mitigate that.
 
-Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core.MAX_INDEX`](#index_range).
+Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at [`Core.INDEX_MAX`](#index_range).
 
 Every function documentation page carries a [numerical-stability property](/functions/stability): how much the value at a given bar depends on where the series you passed in begins.
 
@@ -213,7 +213,7 @@ Because the two overloads differ only in the input array type, a bare `null` arg
 
 ### 4.5 Index Range {#index_range}
 
-`Core.MAX_INDEX` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
+`Core.INDEX_MAX` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
 
 ### 4.6 Threading {#multithreading}
 

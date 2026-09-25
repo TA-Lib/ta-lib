@@ -642,7 +642,7 @@ fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
         );
         let _ = writeln!(
             s,
-            "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
+            "        if {first}.len() > Self::INDEX_MAX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
         );
     }
     let _ = writeln!(s, "        let _guardLb = self.{}_lookback({})?;", common::snake_words(&func.name), lb_args.join(", "));
@@ -1267,12 +1267,12 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
 /// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
 /// cannot answer it before its parent).
 ///
-/// `>` and not `>=`: an opener may legally take `MAX_INDEX + 1` bars (rule S2),
+/// `>` and not `>=`: an opener may legally take `INDEX_MAX + 1` bars (rule S2),
 /// so a handle can be born holding the last bar in the domain and it is the NEXT
 /// one that has nowhere to go.
 fn out_range_ceiling_guard(indent: &str) -> String {
     format!(
-        "{indent}if self.out.beg_idx + self.out.count > Core::MAX_INDEX {{\n\
+        "{indent}if self.out.beg_idx + self.out.count > Core::INDEX_MAX {{\n\
          {indent}    return Err(RetCode::OutOfRangeEndIndex);\n\
          {indent}}}\n"
     )
@@ -2089,17 +2089,17 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         "        if {first}.is_empty() {{\n            return Err(RetCode::OutOfRangeStartIndex);\n        }}"
     );
     // Input-size ceiling. The fill covers bars 0..historyLen-1, so its last bar
-    // is an index like any other and TA_MAX_INDEX bounds it too (#180) —
+    // is an index like any other and TA_INDEX_MAX bounds it too (#180) —
     // otherwise the streaming entry points would compute over exactly the
     // ranges the batch call refuses, and the two are required to agree bit for
-    // bit. MAX_INDEX + 1 is below i32::MAX, so this subsumes the C-parity
+    // bit. INDEX_MAX + 1 is below i32::MAX, so this subsumes the C-parity
     // ceiling it replaces: C's `historyLen` is an `int`, and the AIA tier
     // carries batch-absolute i32 cursors that a longer warm-up would wrap at
     // the capture cast (update() would panic where batch succeeds). Rejecting
     // up front keeps "no panics post-open" true.
     let _ = writeln!(
         o,
-        "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
+        "        if {first}.len() > Self::INDEX_MAX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
     // Rule S3 before the buffer rules: an out-of-domain parameter is its own
     // fault, not a length one, and B5/S5 are specified after B3/S3.
@@ -3047,7 +3047,7 @@ fn emit_update_and_peek(
          \x20   /// happens.\n\
          \x20   ///\n\
          \x20   /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached\n\
-         \x20   /// bar [`Core::MAX_INDEX`], which no re-feed clears: the handle has run\n\
+         \x20   /// bar [`Core::INDEX_MAX`], which no re-feed clears: the handle has run\n\
          \x20   /// out of index domain and only a shorter history can start a new one."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Update\")]");
@@ -3097,7 +3097,7 @@ fn emit_update_and_peek(
          \x20   /// [`RetCode::BadParam`] if any bar value is not finite, on the same test\n\
          \x20   /// `update` applies, and a rejected peek changes nothing at all. Not\n\
          \x20   /// [`RetCode::OutOfRangeEndIndex`]: `peek` counts no bar, so it keeps\n\
-         \x20   /// answering past the [`Core::MAX_INDEX`] ceiling `update` stops at."
+         \x20   /// answering past the [`Core::INDEX_MAX`] ceiling `update` stops at."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Peek\")]");
     let _ = writeln!(o, "    pub fn peek(&self, {sig_bars}) -> Result<{vt}, RetCode> {{");
@@ -3160,7 +3160,7 @@ fn emit_update_and_peek(
          \x20   /// only the last value, a subset of this range, because the caller chose\n\
          \x20   /// not to take the fill.\n\
          \x20   ///\n\
-         \x20   /// The last bar it can reach is [`Core::MAX_INDEX`]; past that `update`\n\
+         \x20   /// The last bar it can reach is [`Core::INDEX_MAX`]; past that `update`\n\
          \x20   /// and `advance` answer [`RetCode::OutOfRangeEndIndex`].\n\
          \x20   #[doc(alias = \"TA_{n}_OutRange\")]\n\
          \x20   pub fn out_range(&self) -> OutRange {{\n\
@@ -3180,7 +3180,7 @@ fn emit_update_and_peek(
          \x20   /// # Errors\n\
          \x20   ///\n\
          \x20   /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached\n\
-         \x20   /// bar [`Core::MAX_INDEX`] — the last one the batch tier can address, and\n\
+         \x20   /// bar [`Core::INDEX_MAX`] — the last one the batch tier can address, and\n\
          \x20   /// the last this handle will count. `update` answers the same there.\n\
          \x20   #[doc(alias = \"TA_{n}_Advance\")]\n\
          \x20   pub fn advance(&mut self) -> Result<(), RetCode> {{\n\

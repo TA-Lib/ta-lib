@@ -258,7 +258,7 @@ fn test_c_synth_private_omits_validation() {
 /// to the blank line that closes the checks. The index guards are followed by a
 /// blank line of their own, so the prologue ends at the SECOND one.
 fn c_batch_prologues(c: &str) -> Vec<&str> {
-    const HEAD: &str = "if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )";
+    const HEAD: &str = "if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )";
     let mut out = Vec::new();
     let mut from = 0;
     while let Some(rel) = c[from..].find(HEAD) {
@@ -1347,7 +1347,7 @@ fn test_rust_synth_private_omits_validation() {
     assert!(
         !out.rust.contains("pub fn synth4_private("),
         "Rust synth4_private must not be crate-public: it is the one entry point with no \
-         validation prologue, so a `pub` here bypasses the TA_MAX_INDEX bound (#180)"
+         validation prologue, so a `pub` here bypasses the TA_INDEX_MAX bound (#180)"
     );
 }
 

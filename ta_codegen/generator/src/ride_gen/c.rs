@@ -90,7 +90,7 @@ static unsigned long long sr_bits(double v)
 
 /* How many elements the request actually carries for `name`. The handler throws
  * this away, and an endIdx past the end of a short array is deliberately sent
- * (the TA_MAX_INDEX probe) -- sizing the replay off endIdx reads whatever the
+ * (the TA_INDEX_MAX probe) -- sizing the replay off endIdx reads whatever the
  * previous request left in the global buffer, with no error. Counted here
  * rather than captured at the parse site so nothing lands outside the guard.
  * -1 means the field is absent. */

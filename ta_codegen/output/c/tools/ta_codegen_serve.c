@@ -275,7 +275,7 @@ static int json_appendc(char *buf, int buf_size, int pos, char c) {
  * asked for -- while the Rust and Java servers, which range-check a 64-bit
  * parse, rejected the same request. Saturating fails closed instead: no
  * parameter in the library has a legal domain reaching INT_MAX (the widest
- * integer range is 100000, and the index ceiling is TA_MAX_INDEX = 1e8), so a
+ * integer range is 100000, and the index ceiling is TA_INDEX_MAX = 1e8), so a
  * saturated value is refused by whatever validation the field already has.
  *
  * INT_MIN is deliberately NOT the negative clamp: it is TA_INTEGER_DEFAULT,
@@ -60245,7 +60245,7 @@ static unsigned long long sr_bits(double v)
 
 /* How many elements the request actually carries for `name`. The handler throws
  * this away, and an endIdx past the end of a short array is deliberately sent
- * (the TA_MAX_INDEX probe) -- sizing the replay off endIdx reads whatever the
+ * (the TA_INDEX_MAX probe) -- sizing the replay off endIdx reads whatever the
  * previous request left in the global buffer, with no error. Counted here
  * rather than captured at the parse site so nothing lands outside the guard.
  * -1 means the field is absent. */

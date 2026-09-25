@@ -272,7 +272,7 @@ fn rust_circbuf_class_layout_shares_one_crossover_guard() {
     );
 }
 
-/// `TA_MAX_INDEX` is stated as a literal in five hand-written places across four
+/// `TA_INDEX_MAX` is stated as a literal in five hand-written places across four
 /// languages plus the Java test server's embedded `Core` (#180). Nothing in the
 /// build makes them agree — the generated prologues reference the *symbol*, so a
 /// raised cap in `ta_defs.h` alone would leave C accepting calls the other three
@@ -281,18 +281,18 @@ fn rust_circbuf_class_layout_shares_one_crossover_guard() {
 /// This is the parity check. It reads the value out of each surface and requires
 /// one distinct value. Adding a fifth binding means adding it here.
 #[test]
-fn ta_max_index_agrees_across_every_surface() {
+fn ta_index_max_agrees_across_every_surface() {
     use std::path::Path;
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
 
     // (file, the text immediately preceding the literal)
     let surfaces: &[(&str, &str)] = &[
-        ("include/ta_defs.h", "#define TA_MAX_INDEX "),
-        ("ta_codegen/generator/templates/rust/types.rs", "pub const MAX_INDEX: usize = "),
+        ("include/ta_defs.h", "#define TA_INDEX_MAX "),
+        ("ta_codegen/generator/templates/rust/types.rs", "pub const INDEX_MAX: usize = "),
         ("ta_codegen/output/java/library/src/main/java/io/github/talib/Core.java",
-         "public static final int MAX_INDEX = "),
+         "public static final int INDEX_MAX = "),
         ("ta_codegen/output/csharp/library/Core.cs", "public const int IndexMax = "),
-        ("ta_codegen/generator/src/server_gen.rs", "static final int MAX_INDEX = "),
+        ("ta_codegen/generator/src/server_gen.rs", "static final int INDEX_MAX = "),
     ];
 
     let mut seen: Vec<(String, u64)> = Vec::new();
@@ -317,13 +317,13 @@ fn ta_max_index_agrees_across_every_surface() {
     for (rel, value) in &seen {
         assert_eq!(
             *value, first,
-            "TA_MAX_INDEX disagrees: {rel} says {value}, {} says {first}",
+            "TA_INDEX_MAX disagrees: {rel} says {value}, {} says {first}",
             seen[0].0
         );
     }
     // Pin the shipped value too, so raising the cap is a deliberate edit here
     // and not something a backend picks up silently.
-    assert_eq!(first, 100_000_000, "TA_MAX_INDEX changed; update the docs and CHANGELOG with it");
+    assert_eq!(first, 100_000_000, "TA_INDEX_MAX changed; update the docs and CHANGELOG with it");
 }
 
 /// Every `CIRCBUF_INIT` allocation-failure path must release the buffers the

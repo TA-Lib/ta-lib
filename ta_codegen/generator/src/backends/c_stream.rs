@@ -357,14 +357,14 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
 /// pointer, so it is a precondition for reporting anything at all rather than an
 /// argument competing with the pair.
 ///
-/// The ceiling is `TA_MAX_INDEX + 1` because the implied `endIdx` is
+/// The ceiling is `TA_INDEX_MAX + 1` because the implied `endIdx` is
 /// `historyLen - 1`. Without it the streaming entry points would compute over
 /// exactly the ranges the batch call refuses, and the two are required to agree
 /// bit for bit (#180).
 fn index_pair_guards() -> &'static str {
     concat!(
         "   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;\n",
-        "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;\n"
+        "   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;\n"
     )
 }
 
@@ -372,12 +372,12 @@ fn index_pair_guards() -> &'static str {
 /// (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle cannot
 /// answer it before its parent).
 ///
-/// `>` and not `>=`: an opener may legally take `TA_MAX_INDEX + 1` bars (rule
+/// `>` and not `>=`: an opener may legally take `TA_INDEX_MAX + 1` bars (rule
 /// S2), so a handle can be born holding the last bar in the domain and it is the
 /// NEXT one that has nowhere to go.
 fn step_index_guard() -> &'static str {
     concat!(
-        "   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )\n",
+        "   if( stream->outRangeBegIdx + stream->outRangeCount > TA_INDEX_MAX )\n",
         "      return TA_OUT_OF_RANGE_END_INDEX;\n"
     )
 }
@@ -1033,11 +1033,11 @@ pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Str
     // OutRange / Advance: declared unconditionally too — every tier's struct
     // leads with the range head these two read.
     let out_range = format!(
-        "\n/*\n * OutRange: the bars this stream has an output for, in the input series'\n * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range\n * TA_{n} reports over the same bars. Open seeds it; every accepted Update and every\n * TA_{n}_Advance adds one; a rejected Update and a Peek change nothing. The\n * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer\n * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.\n */\n{};\n",
+        "\n/*\n * OutRange: the bars this stream has an output for, in the input series'\n * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range\n * TA_{n} reports over the same bars. Open seeds it; every accepted Update and every\n * TA_{n}_Advance adds one; a rejected Update and a Peek change nothing. The\n * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer\n * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.\n */\n{};\n",
         out_range_signature(func)
     );
     let advance = format!(
-        "\n/*\n * Advance: count one bar this stream was not fed (one an Update rejected and\n * that will not be re-fed, or a session with no print). The range moves by one\n * and nothing else does, so TA_{n}_Value keeps answering the previous output,\n * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has\n * reached TA_MAX_INDEX.\n */\n{};\n",
+        "\n/*\n * Advance: count one bar this stream was not fed (one an Update rejected and\n * that will not be re-fed, or a session with no print). The range moves by one\n * and nothing else does, so TA_{n}_Value keeps answering the previous output,\n * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has\n * reached TA_INDEX_MAX.\n */\n{};\n",
         advance_signature(func)
     );
     format!(
@@ -2441,7 +2441,7 @@ fn dispatch_identity_cond_on_handle(
 ///
 /// The three differ in exactly four places — the signature, which pointers are
 /// checked, what the identity path hands back, and which callee entry point
-/// each arm delegates to. Everything else (the `TA_MAX_INDEX` bound, the
+/// each arm delegates to. Everything else (the `TA_INDEX_MAX` bound, the
 /// optional-param validation, the handle allocation, the arm switch and the
 /// cleanup tail) is one text emitted once, so a fourth mode costs a variant
 /// and four arms rather than a fourth copy of the body.

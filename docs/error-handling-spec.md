@@ -101,7 +101,7 @@ of the first value written, in the input series' coordinates, and how many value
 follow it. C returns the two numbers through the `*outBegIdx` / `*outNBElement`
 out-parameters; the other three carry them as one `OutRange` value.
 
-**`MAX_INDEX`.** The addressable index ceiling, 100 000 000, identical in all
+**`INDEX_MAX`.** The addressable index ceiling, 100 000 000, identical in all
 four backends.
 
 **Range.** A real or integer optional parameter's range is the `range:` field
@@ -151,8 +151,8 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
-| B1 | `startIdx` outside `[0, MAX_INDEX]` | `TA_OUT_OF_RANGE_START_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| B2 | `endIdx` outside `[0, MAX_INDEX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B1 | `startIdx` outside `[0, INDEX_MAX]` | `TA_OUT_OF_RANGE_START_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B2 | `endIdx` outside `[0, INDEX_MAX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — any declared input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>&nbsp; | —<br>[2] |
 | B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[3] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
@@ -181,7 +181,7 @@ has what happens instead.
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | S1 | The history is empty — the implied `startIdx` of 0 names no bar (`historyLen < 1`) | `TA_OUT_OF_RANGE_START_INDEX` | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] |
-| S2 | The history is longer than `MAX_INDEX + 1` — the implied `endIdx` of `historyLen - 1` leaves the index domain | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] |
+| S2 | The history is longer than `INDEX_MAX + 1` — the implied `endIdx` of `historyLen - 1` leaves the index domain | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] | ⚠️<br>[5] |
 | S3 | An optional parameter is outside its documented range | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | S4 | A required argument was not supplied — the handle, any declared input, any output | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>[6] | —<br>[2] |
 | S5 | A buffer is too short: every declared input must be the history's length, and an `OpenAndFill` output must hold `historyLen - lookback`, the count the fill writes | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[3] | ✅<br>[7] | ✅<br>[7] | ✅<br>[7] |
@@ -277,7 +277,7 @@ array arrives as an empty span, so S1 *is* how an absent history is reported
 probed only in C, which takes `historyLen` as a bare `int`, so the rejection
 answers before a bar is read. The other three derive the length from the array
 they are handed, so provoking it needs a 100 000 001-element allocation; the
-legal upper edge, a history of exactly `MAX_INDEX + 1` bars, is out of reach
+legal upper edge, a history of exactly `INDEX_MAX + 1` bars, is out of reach
 everywhere for the same reason.
 
 [6] The presence checks sit on the public frame, because `<N>_OpenImpl` reads the
@@ -317,7 +317,7 @@ not a capacity fault: the value is still computed, the handle still reports it,
 and nothing is written out (footnote [6], Appendix F).
 
 [8] All four converge on `TA_INSUFFICIENT_HISTORY`, which leaves a history
-*longer* than `MAX_INDEX + 1` (rule S2) as this tier's only producer of
+*longer* than `INDEX_MAX + 1` (rule S2) as this tier's only producer of
 `TA_OUT_OF_RANGE_END_INDEX` — U4 is the other, one tier down. Verified as
 uniform, not incidental: across every streaming function in every backend, each
 short-history arm reports this code and no other. What the four answered before the code existed, and why
@@ -336,7 +336,7 @@ handed to `Update` or `Peek` is a single value.
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | U1 | The handle was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
-| U4 | The bar this call would COUNT leaves the index domain: `begIdx + count > MAX_INDEX`. `Update` and `Advance` only — `Peek` is exempt for performance, and counts no bar | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| U4 | The bar this call would COUNT leaves the index domain: `begIdx + count > INDEX_MAX`. `Update` and `Advance` only — `Peek` is exempt for performance, and counts no bar | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U2 | The output was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | —<br>&nbsp; |
 | U6a | An output is **declined** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[10] | n/a<br>[10] | n/a<br>[10] |
 | U3 | **Per bar**, after the rules above: the bar is non-finite | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
@@ -353,7 +353,7 @@ Part 3's *Intermediate overflow* governs and this rule does not.
 
 **U4 is the one rejection that does not clear.** It is S2 read one bar at a
 time: the next bar's index is `begIdx + count`, and once that leaves
-`[0, MAX_INDEX]` the handle is being asked for a bar `TA_<N>(startIdx, endIdx)`
+`[0, INDEX_MAX]` the handle is being asked for a bar `TA_<N>(startIdx, endIdx)`
 refuses to address — so `Update` and `Advance` both answer it and neither moves
 anything, permanently. The recovery is a new handle over a shorter history, not a
 re-feed. `Advance` is in the section header because of it: U1 is the only other
@@ -377,7 +377,7 @@ that, MAVP's bank would be left with its leading slots stepped and the parent's
 count unmoved.
 
 No cross-language gate can reach U4 — `stream_verify` runs 240 bars and
-`MAX_INDEX` is 100 000 000 — so it is pinned by one source gate and one runtime
+`INDEX_MAX` is 100 000 000 — so it is pinned by one source gate and one runtime
 probe per backend. `only_an_accepted_bar_advances_the_range` asserts the guard's
 *position* — first, with only C's handle check allowed in front of it — the code
 it names, and its ABSENCE from `Peek`, in all four backends over the whole
@@ -470,7 +470,7 @@ handle **and** for either NULL out-parameter. The other three read a field on an
 object that cannot be absent.
 
 **Advancing it** answers two: `TA_BAD_PARAM` for a NULL handle, which C alone
-can be handed, and U4 once the range has reached `TA_MAX_INDEX`, which every
+can be handed, and U4 once the range has reached `TA_INDEX_MAX`, which every
 backend answers. Rust spells the second as `Result<(), RetCode>`; Java and C#
 throw, since a `void` accessor has nowhere else to put it.
 
@@ -491,17 +491,17 @@ Global settings in C; a builder producing an immutable core in Rust, Java and C#
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | G1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>[13] | ✅<br>[13] | ✅<br>&nbsp; |
-| G2 | The unstable period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G2 | The unstable period is within `[0, INDEX_MAX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | G3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️<br>[14] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | G4 | The candlestick range type is in domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; |
-| G5 | The candlestick average period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G5 | The candlestick average period is within `[0, INDEX_MAX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | G6 | The candlestick factor is not NaN [17] | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | G7 | A rejected setting leaves the configuration unchanged | — | ✅<br>&nbsp; | ✅<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 The bounds in G2 and G5 are not arbitrary. Both values are added to a lookback
 which is then used as an index: unbounded, the lookback overflows negative and
 the function indexes far past the end of its input, while still reporting
-success. `MAX_INDEX` is the ceiling the index domain already enforces, and a
+success. `INDEX_MAX` is the ceiling the index domain already enforces, and a
 warm-up longer than the largest addressable series could never produce output, so
 nothing legitimate is refused.
 
@@ -543,7 +543,7 @@ is not enforced, deliberately: checking it would cost a pass over every input
 array on every call, to reject values no caller sends.
 
 Two things the bound is not. It is not an accuracy guarantee, in the same way
-`TA_MAX_INDEX` bounds the index axis without promising anything about precision.
+`TA_INDEX_MAX` bounds the index axis without promising anything about precision.
 And it is not the range the gates exercise: the fuzz corpus tops out around 1e9
 (`FUZZ_EXTREME`), so between 1e9 and 3e37 the domain rests on the arithmetic
 rather than on measurement.
@@ -683,7 +683,7 @@ is the language's.
 
 The stream accessor answers the same question in all four: the bars this handle
 has an output for. An open over `historyLen` bars starts at `(lookback,
-historyLen - lookback)`, and `begIdx + count` never passes `MAX_INDEX + 1` —
+historyLen - lookback)`, and `begIdx + count` never passes `INDEX_MAX + 1` —
 rule U4 refuses the bar that would take it there. `Open`, `Update` and `Peek` still hand back one value rather than a
 range. The range's two members are named for each language:
 `beg_idx` / `count` in Rust, `begIdx` / `count` in Java, `BegIdx` / `Count` in
@@ -872,7 +872,7 @@ time: C is handed bare pointers and has no sizes to check against.
 | ~~5~~ | — | — | *Withdrawn, not fixed.* Partial output↔input overlap in C. Decided in #225: detection stops at buffer identity, and partial overlap is unspecified — rule N8 and Appendix E. Numbering left as-is so existing references to items 8 and 9 keep pointing at the same rows. |
 | ~~6~~ | Java | S4 | *Fixed.* A null history, or a null `OpenAndFill` output, yielded a raw JVM exception from inside the algorithm — the length was read straight off the array, and an output faulted in the fill loop. The public openers now check every argument, and item 13 fixed the order they are checked in. |
 | ~~7~~ | C# | S1 | *Fixed.* The empty-history *message* omitted the cross-language `<NAME> open: ` prefix. Taken with item 13, as predicted: the two were faults of one line. |
-| ~~8~~ | all | S7 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S2) down with it — see footnote [8]. |
+| ~~8~~ | all | S7 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `INDEX_MAX + 1` history (S2) down with it — see footnote [8]. |
 | ~~9~~ | Rust, Java, C# | S5 | *Fixed.* `OpenAndFill` validated no output capacity, unlike the batch tier which does, so an undersized output faulted inside the fill with the buffer already partly written — a raw index exception in Java and C#, a panic in Rust. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`, the count the fill writes. (C still cannot — no sizes.) Rust used to be a partial exception by accident: its `OpenAndFill` distinctness guard rejected two *empty* outputs before the fill could fault, so that one undersized shape answered `BadParam` where every other answered a panic — and where C# faulted, its `Overlaps` being false for an empty span. #262 excluded empty operands from both guards, and now the capacity check answers that shape and every other one alike. |
 | ~~10~~ | C | — | *Obsolete.* `TA_SetCompatibility` accepted any value and echoed it back from the getter; a domain check was added, and #388 then removed the behaviour it selected. The pair is kept declared for source compatibility and is now inert, so it carries no domain to be in. Numbering left as-is, as for item 5. |
 | ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |

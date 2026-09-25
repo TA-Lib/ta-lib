@@ -3874,7 +3874,7 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
     return TA_TEST_PASS;
 }
 
-/* TA_MAX_INDEX must bound startIdx/endIdx in EVERY backend, not just C
+/* TA_INDEX_MAX must bound startIdx/endIdx in EVERY backend, not just C
  * (issue #180). Without this, deleting the cap from java.rs, csharp.rs or
  * rust_lang.rs leaves every gate green: test_abstract.c's index-range gate
  * drives the in-process C library only, and no other driver sends an index
@@ -3882,14 +3882,14 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
  *
  * SPANS ARE DELIBERATELY TINY. The servers size their output buffers
  * `endIdx - startIdx + 1` BEFORE dispatching, so the obvious probe
- * (startIdx=0, endIdx=TA_MAX_INDEX+1) would allocate 800MB per output on each
+ * (startIdx=0, endIdx=TA_INDEX_MAX+1) would allocate 800MB per output on each
  * server and test the allocator rather than the guard. Every pair below spans
  * at most two elements while still being out of range.
  *
  * Two cases C covers that this cannot, by construction:
  *  - negative indices: JSON numbers reach the servers through unsigned parses,
  *    so a negative startIdx is not expressible over the wire.
- *  - endIdx == TA_MAX_INDEX accepted: proving it needs a call that gets PAST
+ *  - endIdx == TA_INDEX_MAX accepted: proving it needs a call that gets PAST
  *    the range check, i.e. a real 800MB-per-array call. test_abstract.c reaches
  *    it in-process instead, via an out-of-range optional parameter.
  * What is left is exactly the part that can diverge silently: the two
@@ -3921,14 +3921,14 @@ static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage
                                           int *nbRejectCases)
 {
     static const XlangIndexRangeCase CASES[] = {
-        { TA_MAX_INDEX+1, TA_MAX_INDEX+1, TA_OUT_OF_RANGE_START_INDEX,
-          "startIdx > TA_MAX_INDEX", NULL },
-        { TA_MAX_INDEX,   TA_MAX_INDEX+1, TA_OUT_OF_RANGE_END_INDEX,
-          "endIdx > TA_MAX_INDEX", NULL },
+        { TA_INDEX_MAX+1, TA_INDEX_MAX+1, TA_OUT_OF_RANGE_START_INDEX,
+          "startIdx > TA_INDEX_MAX", NULL },
+        { TA_INDEX_MAX,   TA_INDEX_MAX+1, TA_OUT_OF_RANGE_END_INDEX,
+          "endIdx > TA_INDEX_MAX", NULL },
         { 10,             9,              TA_OUT_OF_RANGE_END_INDEX,
           "endIdx < startIdx", NULL },
-        { TA_MAX_INDEX,   TA_MAX_INDEX-1, TA_OUT_OF_RANGE_END_INDEX,
-          "startIdx == TA_MAX_INDEX accepted", NULL },
+        { TA_INDEX_MAX,   TA_INDEX_MAX-1, TA_OUT_OF_RANGE_END_INDEX,
+          "startIdx == TA_INDEX_MAX accepted", NULL },
         /* Valid indices, out-of-domain period: the catch-all, on a call every
          * backend has to reject the same way. `optInTimePeriod` is spelled
          * explicitly rather than left absent, because an absent field is a
@@ -4130,10 +4130,10 @@ static ErrorNumber test_unstable_wildcard(CodegenPipe *cp, const CodegenLanguage
  * sent was legal.
  *
  * Three things are asserted, in the order that makes each one non-vacuous:
- *   1. TA_MAX_INDEX itself is ACCEPTED. Without this the whole check passes
+ *   1. TA_INDEX_MAX itself is ACCEPTED. Without this the whole check passes
  *      against a server that rejects everything, and a guard tightened by one
  *      ships unnoticed.
- *   2. TA_MAX_INDEX + 1 and 2^31-1 are REJECTED, on the single-id path and on
+ *   2. TA_INDEX_MAX + 1 and 2^31-1 are REJECTED, on the single-id path and on
  *      the set-all wildcard alike.
  *   3. A rejected call WROTE NOTHING. This is the half an "it errored" check
  *      cannot see, and the half C's own test pins (test_internals.c). ADOSC is
@@ -4147,9 +4147,9 @@ static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *
     #define UB_FAST  3
     #define UB_SLOW  10
     TA_Real h[UB_NBBAR], l[UB_NBBAR], c[UB_NBBAR], v[UB_NBBAR];
-    /* Values every backend must refuse. TA_MAX_INDEX+1 is the first one past the
+    /* Values every backend must refuse. TA_INDEX_MAX+1 is the first one past the
      * ceiling; 2^31-1 is the value that overflowed the lookback negative. */
-    const long long rejects[2] = { (long long)TA_MAX_INDEX + 1, 2147483647LL };
+    const long long rejects[2] = { (long long)TA_INDEX_MAX + 1, 2147483647LL };
     const int ids[2] = { (int)TA_FUNC_UNST_EMA, (int)TA_FUNC_UNST_ALL };
     const int marker = 4;   /* the good value a rejected call must not disturb */
     int expected, i, k, r;
@@ -4163,17 +4163,17 @@ static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *
         v[i] = 1000.0 + (double)((i * 3) % 17) * 10.0;
     }
 
-    /* (1) The ceiling is a bound, not an off-by-one: TA_MAX_INDEX is legal. */
+    /* (1) The ceiling is a bound, not an off-by-one: TA_INDEX_MAX is legal. */
     for( k = 0; k < 2; k++ )
     {
         codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
                 "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%d}}",
-                ids[k], (int)TA_MAX_INDEX);
+                ids[k], (int)TA_INDEX_MAX);
         if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
             || json_is_error(respBuf) )
         {
-            printf("  UNSTABLE BOUND [%s]: id %d rejected the TA_MAX_INDEX ceiling (%d), "
-                   "which C accepts: %s\n", lang->display, ids[k], (int)TA_MAX_INDEX, respBuf);
+            printf("  UNSTABLE BOUND [%s]: id %d rejected the TA_INDEX_MAX ceiling (%d), "
+                   "which C accepts: %s\n", lang->display, ids[k], (int)TA_INDEX_MAX, respBuf);
             return TA_UNSTABLE_BOUND_CEILING;
         }
     }
@@ -4457,7 +4457,7 @@ static ErrorNumber test_codegen_for_language(
         }
     }
 
-    /* TA_MAX_INDEX bounds startIdx/endIdx in this backend too (#180); the
+    /* TA_INDEX_MAX bounds startIdx/endIdx in this backend too (#180); the
      * expectation comes from the in-process C contract. */
     if( ctx.error == TA_TEST_PASS )
     {
@@ -4482,7 +4482,7 @@ static ErrorNumber test_codegen_for_language(
         }
     }
 
-    /* The value domain that wildcard leaves untested: TA_MAX_INDEX accepted,
+    /* The value domain that wildcard leaves untested: TA_INDEX_MAX accepted,
      * anything above it refused with no write, on every server (#186). Also
      * leaves the server back at all-zeros. */
     if( ctx.error == TA_TEST_PASS )

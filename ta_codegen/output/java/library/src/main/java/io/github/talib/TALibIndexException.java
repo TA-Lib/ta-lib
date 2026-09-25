@@ -42,7 +42,7 @@ package io.github.talib;
 
 /**
  * {@code startIdx} or {@code endIdx} is outside {@code [0, }{@link
- * Core#MAX_INDEX}{@code ]}, or {@code endIdx} precedes {@code startIdx}.
+ * Core#INDEX_MAX}{@code ]}, or {@code endIdx} precedes {@code startIdx}.
  *
  * <p>An {@link IndexOutOfBoundsException}, which is what the API documents and
  * what a caller catches; {@link #retCode()} distinguishes

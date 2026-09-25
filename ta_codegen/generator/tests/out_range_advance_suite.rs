@@ -118,10 +118,9 @@ fn body_of(src: &str, sig: impl Fn(&str) -> bool) -> String {
     src[j..=k].to_string()
 }
 
-/// The one spelling per backend of the advance and of a U3 rejection. The
-/// advance used to be matched on the `MAX_INDEX` clamp that wrapped it; rule U4
-/// answers that bound ahead of the step instead, so what is left to match is the
-/// increment itself.
+/// The one spelling per backend of the advance and of a U3 rejection. Rule U4
+/// answers the index bound ahead of the step, so what is matched is the increment
+/// itself.
 fn spellings(lang: &str) -> (&'static str, &'static str) {
     match lang {
         "c" => ("outRangeCount++", "return TA_BAD_PARAM;"),
@@ -135,9 +134,9 @@ fn spellings(lang: &str) -> (&'static str, &'static str) {
 /// Rule U4's condition, per backend.
 fn ceiling_needle(lang: &str) -> &'static str {
     match lang {
-        "c" => "stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX",
-        "rust" => "if self.out.beg_idx + self.out.count > Core::MAX_INDEX {",
-        "java" => "if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )",
+        "c" => "stream->outRangeBegIdx + stream->outRangeCount > TA_INDEX_MAX",
+        "rust" => "if self.out.beg_idx + self.out.count > Core::INDEX_MAX {",
+        "java" => "if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )",
         "csharp" => "if( outRangeBegIdx + outRangeCount > Core.IndexMax )",
         other => panic!("unknown backend {other}"),
     }
@@ -155,7 +154,7 @@ fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
     if lang == "c" {
         let want = concat!(
             "   if( !stream ) return TA_BAD_PARAM;\n",
-            "   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )\n",
+            "   if( stream->outRangeBegIdx + stream->outRangeCount > TA_INDEX_MAX )\n",
             "      return TA_OUT_OF_RANGE_END_INDEX;\n"
         );
         assert!(

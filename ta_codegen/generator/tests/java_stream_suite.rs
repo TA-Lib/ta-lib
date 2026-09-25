@@ -101,7 +101,7 @@ fn test_java_sma_ring_stream_section() {
     assert!(s.contains("sp.cur_outReal ="));
     // Open body: the early-success no-data guard maps to InsufficientHistory,
     // which the wrapper types. It used to BORROW OutOfRangeEndIndex in band,
-    // which also meant a history LONGER than MAX_INDEX + 1 -- the only other
+    // which also meant a history LONGER than INDEX_MAX + 1 -- the only other
     // producer of that code -- surfaced as "history shorter than lookback + 1".
     assert!(s.contains("return RetCode.INSUFFICIENT_HISTORY ;"));
     assert!(!s.contains("return RetCode.OUT_OF_RANGE_END_INDEX ;"),

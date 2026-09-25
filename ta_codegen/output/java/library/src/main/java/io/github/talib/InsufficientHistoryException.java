@@ -47,7 +47,7 @@ package io.github.talib;
  * catch separately (accumulate more bars and retry). An out-of-range
  * parameter, a null argument or aliased output arrays throw
  * {@link TALibArgumentException}; a history that is empty or longer than
- * {@link Core#MAX_INDEX} + 1 bars throws {@link TALibIndexException}.
+ * {@link Core#INDEX_MAX} + 1 bars throws {@link TALibIndexException}.
  *
  * <p>Still an {@link IllegalArgumentException} by inheritance, so an existing
  * {@code catch} keeps working, and it reports

@@ -36,13 +36,13 @@ double[] history = /* ...your closing prices... */;
 Core.SmaStream s = core.smaOpen(history, 30); // value() starts at the last history bar
 
 // Each time a bar closes:
-double v = s.update(newClose);                  // throws on a non-finite bar, or past MAX_INDEX
+double v = s.update(newClose);                  // throws on a non-finite bar, or past INDEX_MAX
 
 // Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
 double provisional = s.peek(formingClose);      // state left unchanged
 ```
 
-`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, what `update` and `peek` reject is invalid input such as NaN or ±Inf; `update` also rejects a bar past `Core.MAX_INDEX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()`; `value()` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
+`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, what `update` and `peek` reject is invalid input such as NaN or ±Inf; `update` also rejects a bar past `Core.INDEX_MAX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()`; `value()` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
@@ -132,8 +132,8 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | Call | Behaviour |
 |------|-----------|
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
-| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` once the range has reached bar `Core.MAX_INDEX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no value, and no range. |
-| `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.MAX_INDEX`, the last index the batch API addresses. |
+| `update` / `peek` | <ul><li>`IllegalArgumentException` on invalid input such as NaN or ±Inf</li><li>`IndexOutOfBoundsException` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all — no state, no value, and no range. |
+| `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses. |
 | `value()` / `clone` / `outRange` | Never throw. `value(out)` throws `IllegalArgumentException` on a null sink, as `update` and `peek` do. |
 
 ## Discovering streamable functions

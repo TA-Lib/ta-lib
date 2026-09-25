@@ -4,8 +4,9 @@ This is what the tree spells today, and what a new backend or a new indicator
 must follow.
 
 One canonical name per function. Each backend spells that one name with its own
-conventions. **C is frozen**: no row changes its column, and every other backend
-is free to differ from it.
+conventions. **C is frozen**: no row changes its column except by adding a name
+that keeps the old one as an alias, and every other backend is free to differ
+from it.
 
 ## How to read the tables
 
@@ -95,13 +96,11 @@ their enum rather than splitting it.
 
 | constant | C (frozen) | Rust | Java | C# |
 |---|---|---|---|---|
-| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_MAX_INDEX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `MAX_INDEX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `MAX_INDEX` | `RealDefault`, `IntegerDefault`, `IndexMax` |
+| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_INDEX_MAX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `RealDefault`, `IntegerDefault`, `IndexMax` |
 
 Screaming snake is the Java and Rust rule and the C inheritance; .NET spells
-constants PascalCase. `IndexMax` alone reverses C's word order, matching
-`RealMax` and `IntegerMax`: `MaxIndex` would differ only by case from the
-`Maxindex` indicator, which VB.NET cannot call and CA1708 reports. The constant
-is renamed, never the indicator.
+constants PascalCase. A bound puts the noun first, as `TA_REAL_MAX` and
+`TA_INTEGER_MAX` do.
 
 ## 6. Failures
 

@@ -188,8 +188,8 @@ it is TA_SMA_Lookback.</p>
 | `TA_LIB_NOT_INITIALIZE` | [TA_Initialize](#init) was not called, or did not succeed. |
 | `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
 | `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. Fatal: nothing about the call is defined past it. |
-| `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_MAX_INDEX](#index_range). |
-| `TA_OUT_OF_RANGE_END_INDEX` | endIdx is negative, above [TA_MAX_INDEX](#index_range), or below startIdx. |
+| `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_INDEX_MAX](#index_range). |
+| `TA_OUT_OF_RANGE_END_INDEX` | endIdx is negative, above [TA_INDEX_MAX](#index_range), or below startIdx. |
 
 <p>The full list is the TA_RetCode enumeration in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_defs.h">ta_defs.h</a>. Rather than mapping the codes yourself, <b>TA_SetRetCodeInfo</b> turns any of them - including one this version of the library does not know - into a printable name and description:</p>
 
@@ -235,7 +235,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 <a id="unstable_period"></a>
 <p>Your value changed when you fed the same bar more history? That is by design: recursive functions converge as history accumulates. See <a href="/api/unstable-period/">Unstable Period</a> for how to mitigate that.</p>
-<p>Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at <a href="#index_range">TA_MAX_INDEX</a>.</p>
+<p>Rounding is a separate axis: floating-point error accumulates over a very long series, which is one reason a call is capped at <a href="#index_range">TA_INDEX_MAX</a>.</p>
 <p>Every function documentation page carries a <a href="/functions/stability">numerical-stability property</a>: how much the value at a given bar depends on where the series you passed in begins.</p>
 
 ### 4.3 Candlestick Settings {#candle_settings}
@@ -271,16 +271,16 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 ### 4.5 Index Range {#index_range}
 
-<p><b>TA_MAX_INDEX</b> is the largest value startIdx or endIdx may take: <b>100,000,000</b>. A call outside the range is rejected rather than computed:</p>
+<p><b>TA_INDEX_MAX</b> is the largest value startIdx or endIdx may take: <b>100,000,000</b>. A call outside the range is rejected rather than computed:</p>
 
 | Condition | Return code |
 |-----------|-------------|
-| `startIdx < 0` or `startIdx > TA_MAX_INDEX` | `TA_OUT_OF_RANGE_START_INDEX` |
-| `endIdx < 0`, `endIdx > TA_MAX_INDEX`, or `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` |
+| `startIdx < 0` or `startIdx > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_START_INDEX` |
+| `endIdx < 0`, `endIdx > TA_INDEX_MAX`, or `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` |
 
 <p>For context on the size: 100 million one-minute bars is about 190 years of 24/7 data, or over a millennium of a regular equity session (6.5 hours/day, 252 sessions/year).</p>
 
-<p><code>TA_MAX_INDEX</code> is a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.</p>
+<p><code>TA_INDEX_MAX</code> is a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.</p>
 
 ### 4.6 High-performance Multi-threading {#multithreading}
 

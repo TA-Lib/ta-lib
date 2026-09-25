@@ -41,6 +41,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - Java: `FuncUnstId.COUNT` is no longer public. javac copied its value into every caller, so
   a table sized by it went stale after a jar upgrade. Iterate `FuncUnstId.values()`, skipping
   `ALL`, instead. (#444)
+- C: the index ceiling is now `TA_INDEX_MAX`, named like `TA_REAL_MAX` and `TA_INTEGER_MAX`.
+  The old name still works. (#448)
+- Java: `Core.MAX_INDEX` is renamed `Core.INDEX_MAX`. (#448)
 
 ### Fixed
 - (#434) VAR, STDDEV, BBANDS, CORREL, RVI and RVIR no longer return stale values, or rebuild

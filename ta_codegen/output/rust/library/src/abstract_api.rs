@@ -3766,15 +3766,15 @@ impl<'a> ParamHolder<'a> {
     ///
     /// # Errors
     /// [`RetCode::OutOfRangeStartIndex`] if `start_idx` exceeds
-    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds
+    /// [`Core::INDEX_MAX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds
     /// it or is below `start_idx`, and [`RetCode::BadParam`] if a required
     /// input or output was never bound, if the function rejects its
     /// parameters, or if a bound buffer is too short: every input must
     /// cover `end_idx`, and every output must hold the count actually
     /// produced, `end_idx - max(start_idx, lookback) + 1`.
     pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {
-        if start_idx > Core::MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }
-        if end_idx > Core::MAX_INDEX || end_idx < start_idx {
+        if start_idx > Core::INDEX_MAX { return Err(RetCode::OutOfRangeStartIndex); }
+        if end_idx > Core::INDEX_MAX || end_idx < start_idx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         // The buffer bounds are the PUBLIC entry point's, which every arm

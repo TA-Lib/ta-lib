@@ -473,7 +473,7 @@ static ErrorNumber testStreamShortHistory( void )
    }
 
    /* Rule S2, the other half of the history bound: `historyLen - 1` is the
-    * implied `endIdx`, so a history longer than MAX_INDEX + 1 leaves the index
+    * implied `endIdx`, so a history longer than INDEX_MAX + 1 leaves the index
     * domain. Only C can be probed cheaply -- it takes `historyLen` as a bare
     * `int`, so the rejection answers before a bar is read; the other three
     * derive it from the array and would need a 100 000 001-element one. The
@@ -486,10 +486,10 @@ static ErrorNumber testStreamShortHistory( void )
       TA_RetCode rc;
       struct { const char *name; TA_RetCode rc; } cases[3];
 
-      cases[0].name = "TA_SMA_Open(historyLen=MAX_INDEX+2)";
-      cases[0].rc   = TA_SMA_Open( &st, bars, TA_MAX_INDEX + 2, 30, &v );
-      cases[1].name = "TA_SMA_OpenAndFill(historyLen=MAX_INDEX+2)";
-      cases[1].rc   = TA_SMA_OpenAndFill( &st, bars, TA_MAX_INDEX + 2, 30, &beg, &nb, out );
+      cases[0].name = "TA_SMA_Open(historyLen=INDEX_MAX+2)";
+      cases[0].rc   = TA_SMA_Open( &st, bars, TA_INDEX_MAX + 2, 30, &v );
+      cases[1].name = "TA_SMA_OpenAndFill(historyLen=INDEX_MAX+2)";
+      cases[1].rc   = TA_SMA_OpenAndFill( &st, bars, TA_INDEX_MAX + 2, 30, &beg, &nb, out );
       cases[2].name = "TA_SMA_Open(historyLen=INT_MAX)";
       cases[2].rc   = TA_SMA_Open( &st, bars, 2147483647, 30, &v );
 
@@ -1535,10 +1535,10 @@ static ErrorNumber testUnstablePeriodBounds( void )
    /* The VALUE dimension. The id has been bounded since #144; the period never
     * was, and it is added to a lookback that is then used as an index -- so a
     * huge one overflows the lookback NEGATIVE and the call indexes ~2^31 bars
-    * forward. TA_MAX_INDEX is the ceiling the index space already uses, and a
+    * forward. TA_INDEX_MAX is the ceiling the index space already uses, and a
     * warm-up beyond it could never produce output anyway.
     */
-   if( TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_MAX_INDEX + 1 ) != TA_BAD_PARAM ||
+   if( TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX + 1 ) != TA_BAD_PARAM ||
        TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 2147483647u ) != TA_BAD_PARAM ||
        TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 4294967295u ) != TA_BAD_PARAM ||
        TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 2147483647u ) != TA_BAD_PARAM )
@@ -1557,10 +1557,10 @@ static ErrorNumber testUnstablePeriodBounds( void )
    }
 
    /* The ceiling itself is accepted: the guard is a bound, not an off-by-one. */
-   if( TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_MAX_INDEX ) != TA_SUCCESS ||
-       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != (unsigned int)TA_MAX_INDEX )
+   if( TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_INDEX_MAX ) != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != (unsigned int)TA_INDEX_MAX )
    {
-      printf( "\nFailed: TA_SetUnstablePeriod rejected the TA_MAX_INDEX ceiling\n" );
+      printf( "\nFailed: TA_SetUnstablePeriod rejected the TA_INDEX_MAX ceiling\n" );
       return TA_INTERNAL_UNST_VALUE_FAIL;
    }
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 7 );
@@ -1725,7 +1725,7 @@ static int checkDoji( const double *inOpen, const double *inHigh,
  * TA_SetCandleSettings validated `settingType` and nothing else, so a negative
  * `avgPeriod` reached all 61 CDL* bodies: CDLDOJI's lookback returned -1 while
  * TA_CDLDOJI returned TA_SUCCESS with every value shifted under an *outBegIdx
- * still reporting startIdx. Above TA_MAX_INDEX is the mirror image -- the
+ * still reporting startIdx. Above TA_INDEX_MAX is the mirror image -- the
  * `max(...)+N` lookbacks overflow signed-negative into that same state
  * (-2147483647 out of CDLEVENINGDOJISTAR in practice).
  *
@@ -1784,11 +1784,11 @@ static ErrorNumber testCandleSettingsBounds( void )
    }
 
    /* The other end: an avgPeriod above the index space overflows the
-    * `max(...)+N` lookbacks. TA_MAX_INDEX is the ceiling TA_SetUnstablePeriod
+    * `max(...)+N` lookbacks. TA_INDEX_MAX is the ceiling TA_SetUnstablePeriod
     * already uses for the same reason -- a warm-up longer than the largest
     * addressable series can never produce output.
     */
-   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, TA_MAX_INDEX+1, 0.1 ) != TA_BAD_PARAM ||
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, TA_INDEX_MAX+1, 0.1 ) != TA_BAD_PARAM ||
        TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, INT_MAX, 0.1 ) != TA_BAD_PARAM )
    {
       printf( "\nFailed: TA_SetCandleSettings accepted an avgPeriod that overflows the lookback\n" );
@@ -1872,23 +1872,23 @@ static ErrorNumber testCandleSettingsBounds( void )
 
    /* The valid domain still works, bounds included -- the guards are bounds,
     * not off-by-ones. avgPeriod 0 is the "compare with the current candle"
-    * mode the defaults use for ShadowLong/ShadowVeryLong, and TA_MAX_INDEX is
+    * mode the defaults use for ShadowLong/ShadowVeryLong, and TA_INDEX_MAX is
     * the ceiling itself.
     */
    if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_RealBody, 0, 0.1 ) != TA_SUCCESS ||
-       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, TA_MAX_INDEX, 0.1 ) != TA_SUCCESS ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, TA_INDEX_MAX, 0.1 ) != TA_SUCCESS ||
        TA_SetCandleSettings( TA_Equal, TA_RangeType_HighLow, 5, 0.05 ) != TA_SUCCESS )
    {
       printf( "\nFailed: TA_SetCandleSettings rejected a valid setting\n" );
       return TA_INTERNAL_CANDLE_BOUND_FAIL_4;
    }
 
-   /* At TA_MAX_INDEX the lookback swallows the whole series, so the tiers must
+   /* At TA_INDEX_MAX the lookback swallows the whole series, so the tiers must
     * still agree on an empty result rather than the call inventing one.
     */
    if( checkDoji( inOpen, inHigh, inLow, inClose ) != 0 )
    {
-      printf( "\nFailed: TA_CDLDOJI produced output at an avgPeriod of TA_MAX_INDEX\n" );
+      printf( "\nFailed: TA_CDLDOJI produced output at an avgPeriod of TA_INDEX_MAX\n" );
       return TA_INTERNAL_CANDLE_BOUND_FAIL_4;
    }
 

@@ -891,10 +891,10 @@ fn gen_argument_checks(func: &FuncDef, snake: &str) -> String {
     // a cross-indicator call -- but they have to be HERE, ahead of the buffer
     // bounds, or a malformed range answers the wrong code. They also make
     // `endIdx + 1` below non-overflowing.
-    out.push_str("        if startIdx > Self::MAX_INDEX {\n");
+    out.push_str("        if startIdx > Self::INDEX_MAX {\n");
     out.push_str("            return Err(RetCode::OutOfRangeStartIndex);\n");
     out.push_str("        }\n");
-    out.push_str("        if endIdx > Self::MAX_INDEX || endIdx < startIdx {\n");
+    out.push_str("        if endIdx > Self::INDEX_MAX || endIdx < startIdx {\n");
     out.push_str("            return Err(RetCode::OutOfRangeEndIndex);\n");
     out.push_str("        }\n");
     if func.inputs.is_empty() && func.outputs.is_empty() {
@@ -970,15 +970,15 @@ fn gen_guarded_func(
     out.push_str("    ) -> RetCode {\n");
 
     // Range check. `usize` makes C's two negative-index conditions
-    // unrepresentable, so MAX_INDEX is what gives OutOfRangeStartIndex a
+    // unrepresentable, so INDEX_MAX is what gives OutOfRangeStartIndex a
     // producer here at all. The end-index arm answers OutOfRangeEndIndex to
     // match C and the crate's own abstract tier (#180; C6 of #179). No gate can
     // see this arm: the JSON-RPC server re-implements C's guard, so the crate's
     // own answer never reaches the driver.
-    out.push_str("        if startIdx > Self::MAX_INDEX {\n");
+    out.push_str("        if startIdx > Self::INDEX_MAX {\n");
     out.push_str("            return RetCode::OutOfRangeStartIndex;\n");
     out.push_str("        }\n");
-    out.push_str("        if endIdx > Self::MAX_INDEX || endIdx < startIdx {\n");
+    out.push_str("        if endIdx > Self::INDEX_MAX || endIdx < startIdx {\n");
     out.push_str("            return RetCode::OutOfRangeEndIndex;\n");
     out.push_str("        }\n");
 
@@ -1530,7 +1530,7 @@ fn gen_private_func_inner(
     // `pub(crate)`, not `pub`: C makes `TA_XXX_Private` file-`static` and Java/C#
     // make theirs package-private/internal, so a `pub` here was the one backend
     // where a caller could reach an entry point with no validation prologue --
-    // and therefore no TA_MAX_INDEX bound (#180). Cross-indicator calls are all
+    // and therefore no TA_INDEX_MAX bound (#180). Cross-indicator calls are all
     // in-crate, so nothing legitimate loses access.
     // #[inline] enables cross-module inlining for cross-indicator calls
     out.push_str("    #[inline]\n");

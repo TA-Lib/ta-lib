@@ -305,8 +305,8 @@ fn dispatch_open_modes_differ_only_where_intended() {
     // with the batch call bit for bit.
     for (what, body) in modes {
         assert!(
-            body.contains("if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"),
-            "{what} lost the TA_MAX_INDEX bound:\n{body}"
+            body.contains("if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"),
+            "{what} lost the TA_INDEX_MAX bound:\n{body}"
         );
         assert!(
             body.contains("TA_Malloc( sizeof(*sp) )") && body.contains("if( !sp ) return TA_ALLOC_ERR;"),

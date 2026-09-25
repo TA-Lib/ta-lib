@@ -317,25 +317,25 @@ fn a_rejected_bar_costs_nothing_and_the_caller_chooses() {
     assert_eq!(s.out_range().count, at.count + 2, "and the handle is still usable");
 }
 
-/// Rule U4, which no feed-driven test can reach: `MAX_INDEX` is 100 million
+/// Rule U4, which no feed-driven test can reach: `INDEX_MAX` is 100 million
 /// bars, and `advance` is the only call that moves the count without also doing
 /// O(period) work per bar.
 ///
 /// The ceiling is on the BAR, `beg_idx + count`, not on the count — a handle
-/// warmed to a lookback of 13 tops out 13 short of `MAX_INDEX` — so the trip
+/// warmed to a lookback of 13 tops out 13 short of `INDEX_MAX` — so the trip
 /// count is computed from the range the opener actually reported.
 #[test]
-fn the_last_bar_a_stream_can_count_is_max_index() {
+fn the_last_bar_a_stream_can_count_is_index_max() {
     let core = Core::new();
     let (_, _, close, _, _) = series(N);
     let (mut s, _) = core.sma_open(&close[..WARM], 14).expect("open");
     let at = s.out_range();
     assert_eq!(at.beg_idx + at.count, WARM, "the opener reports the bars it consumed");
-    for _ in 0..(Core::MAX_INDEX + 1 - at.beg_idx - at.count) {
+    for _ in 0..(Core::INDEX_MAX + 1 - at.beg_idx - at.count) {
         s.advance().expect("inside the index domain");
     }
     let full = s.out_range();
-    assert_eq!(full.beg_idx + full.count, Core::MAX_INDEX + 1, "the last bar is MAX_INDEX");
+    assert_eq!(full.beg_idx + full.count, Core::INDEX_MAX + 1, "the last bar is INDEX_MAX");
 
     // Past it, every call that would COUNT a bar answers the same code, and none
     // of them moves anything. Terminal, unlike the non-finite rejection above:

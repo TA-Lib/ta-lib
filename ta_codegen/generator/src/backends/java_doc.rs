@@ -105,7 +105,7 @@ pub fn guarded_docs(
     b.tag(
         "throws IndexOutOfBoundsException",
         "if {@code startIdx} or {@code endIdx} is negative or above \
-         {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.",
+         {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.",
     );
     b.tag(
         "throws IllegalArgumentException",

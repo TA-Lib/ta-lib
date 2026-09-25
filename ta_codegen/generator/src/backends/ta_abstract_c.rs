@@ -3029,7 +3029,7 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20* Returns TA_BAD_PARAM unless settingType names a single setting\n\
          \x20* (TA_AllCandleSettings selects 'all' for the restore call below,\n\
          \x20* not here), rangeType is a TA_RangeType member, avgPeriod is\n\
-         \x20* between 0 and TA_MAX_INDEX, and factor is not NaN.\n\
+         \x20* between 0 and TA_INDEX_MAX, and factor is not NaN.\n\
          \x20*/\n\
          TA_LIB_API TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,\n\
          \x20                                TA_RangeType rangeType, \n\

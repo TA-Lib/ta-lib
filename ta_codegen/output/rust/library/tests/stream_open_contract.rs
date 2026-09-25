@@ -14,7 +14,7 @@
 //! the servers hand every opener an output the length of the whole history, so
 //! nothing cross-language reaches a short one.
 //!
-//! Rules S4 (an absent argument) and S2 (a history past `MAX_INDEX`) are not
+//! Rules S4 (an absent argument) and S2 (a history past `INDEX_MAX`) are not
 //! here: a slice cannot be absent, and provoking S2 needs a 100 000 001-element
 //! allocation.
 

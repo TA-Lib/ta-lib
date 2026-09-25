@@ -701,7 +701,7 @@ public class StreamSmokeTest {
     private static int u4Holds = 0;
 
     /** {@code advance()} run out to the ceiling, the one thrown rejection no
-     *  feed can reach: {@code MAX_INDEX} is 100 million bars and this is the
+     *  feed can reach: {@code INDEX_MAX} is 100 million bars and this is the
      *  only call that moves the count without O(period) work per bar.
      *
      *  <p>What it adds over the generator's source-text gate is the throw
@@ -712,16 +712,16 @@ public class StreamSmokeTest {
      *
      *  <p>The ceiling is on the BAR, {@code begIdx + count}, not on the count,
      *  so the trip count comes from the range the opener reported. */
-    private static void theLastBarAStreamCanCountIsMaxIndex(Core core, double[] close) {
+    private static void theLastBarAStreamCanCountIsIndexMax(Core core, double[] close) {
         final Core.SmaStream s =
             core.smaOpen(java.util.Arrays.copyOf(close, 60), 14);
         final OutRange at = s.outRange();
-        for (int i = at.begIdx() + at.count(); i <= Core.MAX_INDEX; i++) {
+        for (int i = at.begIdx() + at.count(); i <= Core.INDEX_MAX; i++) {
             s.advance();
         }
         final OutRange full = s.outRange();
-        check(full.begIdx() == at.begIdx() && full.begIdx() + full.count() == Core.MAX_INDEX + 1,
-              "the last bar a stream counts is MAX_INDEX, reached " + full);
+        check(full.begIdx() == at.begIdx() && full.begIdx() + full.count() == Core.INDEX_MAX + 1,
+              "the last bar a stream counts is INDEX_MAX, reached " + full);
         u4Ceilings++;
 
         /* Terminal, unlike a non-finite bar: the repeat is what proves no call
@@ -730,7 +730,7 @@ public class StreamSmokeTest {
         check(refusesPastTheCeiling(s::advance)
                   && refusesPastTheCeiling(() -> s.update(close[60]))
                   && refusesPastTheCeiling(s::advance),
-              "every counting call past MAX_INDEX must throw IndexOutOfBoundsException");
+              "every counting call past INDEX_MAX must throw IndexOutOfBoundsException");
         check(Double.isFinite(s.peek(close[60])),
               "peek counts no bar, so it stays answerable past the ceiling");
         u4Rejects++;
@@ -1742,7 +1742,7 @@ public class StreamSmokeTest {
 
         nonFiniteInputsAreRejected(core, open, high, low, close);
         aRejectedUpdateCostsNothingAndAdvanceCostsOneBar(core, open, high, low, close);
-        theLastBarAStreamCanCountIsMaxIndex(core, close);
+        theLastBarAStreamCanCountIsIndexMax(core, close);
         peekAndCopyHoldOnEveryHandle(core);
 
 

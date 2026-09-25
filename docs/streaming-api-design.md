@@ -35,7 +35,7 @@ contract.
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
 it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
 `out_range()`, `outRange()`, `OutRange`. It is the batch tier's range and lives
-in the batch tier's domain, so the last bar a handle can reach is `MAX_INDEX`:
+in the batch tier's domain, so the last bar a handle can reach is `INDEX_MAX`:
 past it `update` and `advance` refuse, permanently. Which calls move
 it, and how the refusal is spelled, are `docs/error-handling-spec.md` §2.4's
 business.
@@ -46,7 +46,7 @@ backends as `OutRange` is. It moves the count by one and nothing else, so
 the skipped bar's output is the previous one, held. It exists because a rejected
 `update` changes nothing: a caller with a corrected value re-feeds the bar, and
 one without says so here rather than letting two handles on one feed drift a bar
-apart. The `MAX_INDEX` ceiling is what makes it fallible in the three
+apart. The `INDEX_MAX` ceiling is what makes it fallible in the three
 backends where it was not already: C's has always returned a `TA_RetCode`, Rust's
 became `Result<(), RetCode>`, and Java's and C#'s stay `void` and throw.
 

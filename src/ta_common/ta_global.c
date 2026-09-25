@@ -154,12 +154,12 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
      * it is bounded like one (#185). A negative one starts the main loop that
      * many bars late while *outBegIdx still reports startIdx -- every value
      * shifted under a correct-looking index, and a lookback reporting negative
-     * while the call returns TA_SUCCESS. TA_MAX_INDEX is the ceiling
+     * while the call returns TA_SUCCESS. TA_INDEX_MAX is the ceiling
      * TA_SetUnstablePeriod already uses for the same reason: above it the
      * `max(...)+N` lookbacks overflow signed-negative into that same state, and
      * a warm-up longer than the largest addressable series could never produce
      * output. */
-    if( avgPeriod < 0 || avgPeriod > TA_MAX_INDEX )
+    if( avgPeriod < 0 || avgPeriod > TA_INDEX_MAX )
         return TA_BAD_PARAM;
 
     /* factor scales a threshold, never an index, so any finite value is legal.
