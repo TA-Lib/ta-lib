@@ -82,12 +82,6 @@ public class TALibArgumentException : ArgumentException, ITALibFailure
         _retCode = retCode;
     }
 
-    internal TALibArgumentException(string message, Exception? innerException, RetCode retCode)
-        : base(message, innerException)
-    {
-        _retCode = retCode;
-    }
-
     /// <inheritdoc/>
     public RetCode RetCode => _retCode;
 }
@@ -96,7 +90,7 @@ public class TALibArgumentException : ArgumentException, ITALibFailure
 /// <c>[0, Core.IndexMax]</c>, or <c>endIdx</c> precedes <c>startIdx</c>.</summary>
 /// <remarks><see cref="ITALibFailure.RetCode"/> distinguishes the two, which the
 /// exception's <c>ParamName</c> can only hint at.</remarks>
-public class TALibArgumentOutOfRangeException : ArgumentOutOfRangeException, ITALibFailure
+public sealed class TALibArgumentOutOfRangeException : ArgumentOutOfRangeException, ITALibFailure
 {
     private readonly RetCode _retCode;
 
@@ -114,7 +108,7 @@ public class TALibArgumentOutOfRangeException : ArgumentOutOfRangeException, ITA
 /// an allocation, or an invariant it owns.</summary>
 /// <remarks>Neither is expected in normal use — an allocation failure aborts the
 /// process long before it reaches here.</remarks>
-public class TALibInvalidOperationException : InvalidOperationException, ITALibFailure
+public sealed class TALibInvalidOperationException : InvalidOperationException, ITALibFailure
 {
     private readonly RetCode _retCode;
 

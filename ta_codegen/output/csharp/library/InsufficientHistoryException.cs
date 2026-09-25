@@ -59,29 +59,8 @@ namespace TALib;
 /// </remarks>
 public sealed class InsufficientHistoryException : TALibArgumentException
 {
-    /// <summary>Create the exception with a message.</summary>
-    /// <param name="message">What was too short, carrying the
-    /// <c>"&lt;NAME&gt; open: "</c> prefix the other language bindings use.</param>
-    public InsufficientHistoryException(string message)
+    internal InsufficientHistoryException(string message)
         : base(message, RetCode.InsufficientHistory)
-    {
-    }
-
-    /// <summary>Create the exception with a message and the offending parameter
-    /// name.</summary>
-    /// <param name="message">What was too short.</param>
-    /// <param name="paramName">The parameter that was too short.</param>
-    public InsufficientHistoryException(string message, string? paramName)
-        : base(message, paramName, RetCode.InsufficientHistory)
-    {
-    }
-
-    /// <summary>Create the exception with a message and an underlying
-    /// cause.</summary>
-    /// <param name="message">What was too short.</param>
-    /// <param name="innerException">The underlying cause.</param>
-    public InsufficientHistoryException(string message, Exception? innerException)
-        : base(message, innerException, RetCode.InsufficientHistory)
     {
     }
 }
