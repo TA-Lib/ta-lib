@@ -31,7 +31,7 @@ Repeat whenever you need to refresh the makefiles.
 
 Prerequisites: CMake 3.18+, a C compiler (clang or gcc), and the Rust toolchain (`rustup`).
 
-For cross-language server testing (`servers`, `regtest` targets), also: JDK (`javac` + `java`) and the .NET SDK (`dotnet`) that `global.json` pins, or a later feature band. The `libraries` target additionally needs `unzip`, for the committed Maven wrapper.
+For cross-language server testing (`servers`, `regtest` targets), also: JDK (`javac` + `java`) and the .NET SDK (`dotnet`) that `global.json` pins, or a later patch of its band. The `libraries` target additionally needs `unzip`, for the committed Maven wrapper.
 
 ```
 scripts/build.py                # Build the C library + all C tools (CMake)

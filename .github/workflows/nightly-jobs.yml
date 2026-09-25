@@ -154,7 +154,6 @@ jobs:
       - name: Install WiX (Windows x64)
         if: runner.os == 'Windows'
         shell: cmd
-        # Outside the checkout: global.json pins an SDK this job never installs.
         working-directory: ${{ runner.temp }}
         run: dotnet tool install --global wix --version 7.0.0 && echo %USERPROFILE%\.dotnet\tools>>%GITHUB_PATH%
 

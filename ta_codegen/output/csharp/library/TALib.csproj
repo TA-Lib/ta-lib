@@ -51,9 +51,8 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <!-- Maps the build path to /_/, so every clone builds the same DLL and none
-         leaks a local path; Debug keeps local paths for the debugger. Pack from
-         a clone whose origin is TA-Lib/ta-lib: an exported tree or a fork packs
+    <!-- Maps the build path to /_/, so the DLL embeds no local path; Debug keeps
+         local paths for the debugger. An exported tree or a fork's clone packs
          without a warning, with the local path in the DLL or SourceLink
          pointing at the fork. -->
     <ContinuousIntegrationBuild Condition="'$(Configuration)' == 'Release'">true</ContinuousIntegrationBuild>
