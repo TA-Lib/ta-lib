@@ -124127,10 +124127,6 @@ class Core {
                 bucketStart = bucketEnd;
              }
           }
-          /* Pointer-inequality guard, not finalIsAllocated: in backends where the
-           * scratch election materializes as a copy (Rust), the copy-back must
-           * always run; in C/Java the non-aliased self-copy is skipped.
-           */
           if( localFinalArray != outReal ) {
              System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
           }
@@ -186801,7 +186797,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "f35daa29be74202c";
+    static final String SPLICED_GENCODE_DIGEST = "286a6a1f97600cb7";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

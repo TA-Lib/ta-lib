@@ -15,6 +15,10 @@
 //! tests pin: they pass identically before and after it, because they check
 //! numeric invariance, not the absence of an allocation.
 //!
+//! `MAVP` elects `outReal` the same way: its per-period passes write into the
+//! caller's slice rather than a copy of it. The last two tests hold it to the
+//! same properties, over periods that vary bar by bar.
+//!
 //! Three independent properties, each of which a mis-election would break:
 //!
 //! 1. **Composition.** `BBANDS` must be bit-identical to `MA` + `STDDEV`
@@ -304,4 +308,77 @@ fn bbands_is_independent_of_output_slice_capacity() {
     }
     eprintln!("BBANDS vs output slice capacity: {compared} bit-exact comparisons");
     assert!(compared > 200, "only {compared} comparisons ran");
+}
+
+/// Per-bar periods spanning, and straddling, `MAVP_MIN..=MAVP_MAX`.
+fn periods(n: usize, seed: u64) -> Vec<f64> {
+    series(n, seed).iter().map(|x| (x * 7.3) % 40.0).collect()
+}
+const MAVP_MIN: i32 = 2;
+const MAVP_MAX: i32 = 30;
+
+fn mavp(core: &Core, input: &[f64], per: &[f64], matype: MAType, cap: usize, fill: f64) -> Bands {
+    let mut out = vec![fill; cap];
+    let res = core.mavp(0, input.len() - 1, input, per, MAVP_MIN, MAVP_MAX, matype, &mut out);
+    let (rc, beg, nb) = match res {
+        Ok(r) => (RetCode::Success, r.beg_idx, r.count),
+        Err(e) => (e, 0, 0),
+    };
+    out.truncate(nb);
+    Bands { rc, beg, nb, upper: Vec::new(), middle: out, lower: Vec::new() }
+}
+
+#[test]
+fn mavp_is_ma_at_each_bars_own_period() {
+    let core = Core::new();
+    let mut compared = 0usize;
+    for &matype in &[MAType::SMA, MAType::EMA, MAType::WMA] {
+        for n in [31usize, 32, 40, 100, 1000] {
+            let input = series(n, n as u64 * 31);
+            let per = periods(n, n as u64 * 17 + 5);
+            let got = mavp(&core, &input, &per, matype, n, f64::NAN);
+            assert_eq!(got.rc, RetCode::Success, "matype={matype:?} n={n}");
+            for (i, g) in got.middle.iter().enumerate() {
+                let t = got.beg + i;
+                let p = if !(per[t] >= f64::from(MAVP_MIN)) {
+                    MAVP_MIN
+                } else if per[t] > f64::from(MAVP_MAX) {
+                    MAVP_MAX
+                } else {
+                    per[t] as i32
+                };
+                // From the start bar MAVP's pass for this period uses; an MA fills forward,
+                // so the pass ending earlier does not change these values.
+                let mut ma = vec![f64::NAN; n];
+                let r = core.ma(got.beg, n - 1, &input, p, matype, &mut ma).expect("ma");
+                let w = ma[t - r.beg_idx];
+                assert_eq!(g.to_bits(), w.to_bits(), "matype={matype:?} n={n} bar={t} period={p}: {g} vs {w}");
+                compared += 1;
+            }
+        }
+    }
+    eprintln!("MAVP vs MA at each period: {compared} bit-exact comparisons");
+    assert!(compared > 2000, "only {compared} comparisons ran");
+}
+
+#[test]
+fn mavp_ignores_the_prior_contents_and_capacity_of_its_output() {
+    let core = Core::new();
+    let mut compared = 0usize;
+    for &matype in &[MAType::SMA, MAType::EMA] {
+        for n in [31usize, 50, 500] {
+            let input = series(n, n as u64 * 3);
+            let per = periods(n, n as u64 + 11);
+            let base = mavp(&core, &input, &per, matype, n, 0.0);
+            assert!(base.rc == RetCode::Success && base.nb > 0, "matype={matype:?} n={n}");
+            for (cap, fill) in [(n, f64::NAN), (n, 1e300), (n * 10, -1.0), (n * 100, f64::NAN)] {
+                let other = mavp(&core, &input, &per, matype, cap, fill);
+                let ctx = format!("matype={matype:?} n={n} cap={cap} fill={fill:?}");
+                assert_eq!((other.rc, other.beg, other.nb), (base.rc, base.beg, base.nb), "{ctx}");
+                assert_same_bits("outReal", &other.middle, &base.middle, &ctx);
+                compared += 1;
+            }
+        }
+    }
+    assert!(compared >= 24, "only {compared} comparisons ran");
 }

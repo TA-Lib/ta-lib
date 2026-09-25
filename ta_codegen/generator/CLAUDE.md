@@ -236,21 +236,21 @@ its input-alias guard and its copy-back statically dead here.
 
 The rule is stated over the IR and names no function, buffer or MA type: match an
 `if`/`else if`/…/`else` chain whose *every* condition is an input↔output pointer
-equality and whose *every* arm is only `scratch = someOutput;`; take the terminal
-`else`'s mapping; delete the chain and rename through the rest of the enclosing
-block; drop any guard that became a self-comparison. That last clause is
-load-bearing: left in place, `BBANDS`' copy-back would read and write the same
-`&mut` slice in one statement, which is E0502.
+equality — false in Rust, so only the terminal `else` runs — and whose terminal
+`else` is only `scratch = someOutput;`; take that mapping; delete the chain and
+rename through the rest of the enclosing block; drop any guard that became a
+self-comparison. That last clause is load-bearing: left in place, `BBANDS`'
+copy-back would read and write the same `&mut` slice in one statement, which is
+E0502.
 
-Requiring *every* arm to be an election is what declines `STOCH`, `STOCHF` and
-`MAVP`: each mixes an allocation and an `…IsAllocated = 1;` flag into a branch,
-which is a genuine in-place defence rather than an election. Tolerating one
-allocating arm would reach them — a widening of the rule for a later change,
-never a per-function case. An election stops at the end of the block holding it,
-so `BBANDS`' general MA path and both stream paths keep their real allocations,
-and the pass backs off entirely if the local is assigned again while in scope.
-`rust_scratch_election_declines_arms_that_allocate` sweeps every indicator and
-asserts the pass fires for `bbands` alone.
+The arms before the terminal `else` may hold anything, so `MAVP`'s allocating
+in-place arm does not stop its election. `STOCH` and `STOCHF` are declined: their
+terminal `else` allocates the buffer Rust really needs (and their condition is an
+`||` of equalities, not a bare one). An election stops at the end
+of the block holding it, so `BBANDS`' general MA path and both stream paths keep
+their real allocations, and the pass backs off entirely if the local is assigned
+again while in scope. `rust_scratch_election_takes_only_the_arm_rust_reaches`
+sweeps every indicator and asserts the pass fires for `bbands` and `mavp` alone.
 
 The other backends assign the reference directly and must see no change from
 this: `generate` then `git diff` over `src/ta_func/`, `output/java/` and

@@ -5974,10 +5974,12 @@ type ElectionMap = HashMap<String, String>;
 /// The rule, stated over the IR and over nothing else — no function name, no
 /// buffer name, no MA type appears anywhere in this pass:
 ///
-/// 1. match an `if`/`else if`/…/`else` chain whose *every* condition is an
-///    input↔output pointer equality and whose *every* arm is only
-///    `scratch = someOutput;` elections ([`Self::election_chain`]);
-/// 2. take the terminal `else`'s mapping — the binding safe Rust always reaches;
+/// 1. match an `if`/`else if`/…/`else` chain whose *every* condition is a bare
+///    input↔output pointer equality, and whose terminal `else` — the only arm
+///    safe Rust reaches — is only `scratch = someOutput;` elections
+///    ([`Self::election_chain`]); the arms before it are dead and may hold
+///    anything, such as `MAVP`'s allocating in-place arm;
+/// 2. take that terminal `else`'s mapping;
 /// 3. delete the chain and rename those scratch names to their elected outputs
 ///    through the rest of the enclosing block;
 /// 4. drop any guard the rename has turned into a self-comparison.
@@ -5985,11 +5987,9 @@ type ElectionMap = HashMap<String, String>;
 /// Being general is not the same as being greedy, and clause 1 is where the
 /// restraint lives:
 ///
-/// * `STOCH`, `STOCHF` and `MAVP` mix an allocation and an `…IsAllocated = 1;`
-///   flag into a branch, so their arms are not elections and the chain is
-///   rejected. Their output is byte-for-byte unchanged. Tolerating one allocating
-///   arm would reach them, and is a widening of *this rule* for a later change —
-///   never a per-function case.
+/// * a condition that is not a bare equality, such as `STOCH`'s and `STOCHF`'s
+///   `out == inHigh || out == inLow || ...`, rejects the chain, and so does a
+///   terminal `else` that allocates.
 /// * an election reaches only the end of its own block. `BBANDS` elects inside
 ///   `if( optInMAType == TA_MAType_SMA ) { ... }`, so the general MA path that
 ///   follows keeps its genuine `vec![0.0; ...]` allocations, and so do both
@@ -6003,8 +6003,7 @@ type ElectionMap = HashMap<String, String>;
 ///   alone, because the rename would then be wrong. The fallback is exactly
 ///   today's `.to_vec()`.
 ///
-/// `BBANDS` is currently the only function in `input/` written in this shape, but
-/// the pass never asks which function it is looking at; anything added in that
+/// The pass never asks which function it is looking at; anything added in that
 /// shape benefits automatically, and the other three backends stay byte-identical
 /// because the pass does not run for them.
 struct ScratchElection<'a> {
@@ -6028,7 +6027,14 @@ pub(crate) fn elect_output_scratch(func: &FuncDef) -> FuncDef {
         let mut locals = std::collections::HashSet::new();
         collect_array_locals(body, &mut locals);
         let pass = ScratchElection { inputs: &inputs, outputs: &outputs, locals: &locals };
-        *body = pass.block(body, &ElectionMap::new(), &[]);
+        let elected = pass.block(body, &ElectionMap::new(), &[]);
+        // A local every use of which the election renamed is no longer declared.
+        let dead: std::collections::HashSet<&String> =
+            locals.iter().filter(|l| references_var(body.iter(), l) && !references_var(elected.iter(), l)).collect();
+        *body = elected
+            .into_iter()
+            .filter(|s| !matches!(s, Statement::VarDecl { name, .. } if dead.contains(name)))
+            .collect();
     }
     out
 }
@@ -6056,8 +6062,7 @@ fn election_note(elected: &[(String, String)]) -> Vec<String> {
     for (local, out) in elected {
         lines.push(format!("  C's `{local}` is `{out}`"));
     }
-    lines.push("This function therefore allocates nothing, exactly as the C does.".to_string());
-    lines.push("The aliasing arms, the input-alias guard and the copy-back are all".to_string());
+    lines.push("C's aliasing arms and any guard or copy-back they need are".to_string());
     lines.push("unreachable here: `&[T]` and `&mut [T]` parameters can never".to_string());
     lines.push("overlap, and neither can two `&mut [T]`. See issue #146.".to_string());
     lines
@@ -6170,42 +6175,19 @@ impl ScratchElection<'_> {
         out
     }
 
-    /// Match a whole `if`/`else if`/…/`else` chain that is *nothing but* a
-    /// scratch-buffer election, and return the terminal `else`'s mapping — the
-    /// binding safe Rust always reaches. `None` leaves the statement alone.
-    ///
-    /// All four conditions have to hold at once:
-    ///
-    /// 1. every link's condition is a bare pointer equality between an array
-    ///    *parameter* pair Rust decides statically (an input against an output);
-    /// 2. every `then` arm consists only of `local = someOutput;` elections
-    ///    (comments aside) and elects at least one;
-    /// 3. the chain ends in an `else` that does the same;
-    /// 4. nothing else appears in any arm.
-    ///
-    /// (4) is what keeps the pass conservative rather than greedy, and it is the
-    /// clause that declines `STOCH`, `STOCHF` and `MAVP`: their arms mix an
-    /// allocation and a `…IsAllocated = 1;` flag into the branch, so they are not
-    /// elections — they are a genuine in-place defence with a real buffer to
-    /// allocate. `MAVP` is inverted as well (the allocation in the `then`, the
-    /// election in the `else`), so (2) rejects it on the first link. Reaching those
-    /// needs a matcher that tolerates one allocating arm; that is a widening of
-    /// this rule, not a special case bolted onto it.
+    /// Clause 1 of [`ScratchElection`]: the terminal `else`'s mapping of a
+    /// matching chain, or `None` to leave the statement alone.
     ///
     /// Matching happens *before* [`Self::descend`] recurses (see
     /// [`ScratchElection`]): a pass that walked the child blocks first would
     /// collapse an inner `else if` link and silently truncate the chain.
     fn election_chain(&self, stmt: &Statement) -> Option<Vec<(String, String)>> {
-        let Statement::If { condition, then_body, else_body, .. } = stmt else {
+        let Statement::If { condition, else_body, .. } = stmt else {
             return None;
         };
-        // (1) the link's own condition.
         if !self.is_alias_test(condition) {
             return None;
         }
-        // (2) the `then` arm elects, and does nothing else.
-        self.arm_elections(then_body)?;
-        // (3)/(4) either the chain continues, or this `else` is the terminal arm.
         let executable: Vec<&Statement> = else_body
             .iter()
             .filter(|s| !matches!(s, Statement::Comment(_)))
@@ -6368,9 +6350,8 @@ fn tail_always_returns<'a, I: Iterator<Item = &'a Statement>>(rest: I) -> bool {
 }
 
 /// True if `name` is still read or written somewhere in `rest`. An election with
-/// no uses left in scope is dead code — `STOCH`/`STOCHF` write theirs on the
-/// unreachable aliasing arm — and eliding it would change the generated text
-/// without removing any work, so those are left exactly as they are.
+/// no uses left in scope is dead code, and eliding it would change the generated
+/// text without removing any work, so those are left exactly as they are.
 fn references_var<'a, I: Iterator<Item = &'a Statement>>(rest: I, name: &str) -> bool {
     let stmts: Vec<Statement> = rest.cloned().collect();
     let mut found = false;

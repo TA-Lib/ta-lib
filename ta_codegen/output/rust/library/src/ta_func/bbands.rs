@@ -254,8 +254,7 @@ impl Core {
             // directly in the caller's slices:
             //   C's `tempBuffer1` is `outRealMiddleBand`
             //   C's `tempBuffer2` is `outRealUpperBand`
-            // This function therefore allocates nothing, exactly as the C does.
-            // The aliasing arms, the input-alias guard and the copy-back are all
+            // C's aliasing arms and any guard or copy-back they need are
             // unreachable here: `&[T]` and `&mut [T]` parameters can never
             // overlap, and neither can two `&mut [T]`. See issue #146.
             // One pass with two independent recurrences: the SMA running sum (maTotal,

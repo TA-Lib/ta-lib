@@ -169,7 +169,6 @@ impl Core {
         let mut sortedIdx: Vec<i32> = Vec::new();
         let mut bucketOfs: Vec<i32> = Vec::new();
         let mut localOutputArray: Vec<f64> = Vec::new();
-        let mut localFinalArray: Vec<f64> = Vec::new();
         let mut finalIsAllocated: usize = 0_usize;
         let mut localBegIdx: usize = 0_usize;
         let mut localNbElement: usize = 0_usize;
@@ -223,12 +222,12 @@ impl Core {
         // scratch buffer and copied once at the end. A regular call writes
         // straight to outReal and skips both the allocation and the copy.
         finalIsAllocated = 0;
-        if outReal.as_ptr() == inReal.as_ptr() {
-            finalIsAllocated = 1;
-            localFinalArray = vec![0.0_f64; (outputSize * 1) as usize];
-        } else {
-            localFinalArray = outReal.to_vec();
-        }
+        // Rust: C's pointer election here is a rename, so the calculation runs
+        // directly in the caller's slices:
+        //   C's `localFinalArray` is `outReal`
+        // C's aliasing arms and any guard or copy-back they need are
+        // unreachable here: `&[T]` and `&mut [T]` parameters can never
+        // overlap, and neither can two `&mut [T]`. See issue #146.
         // Read the caller array of period, truncate to min/max, and track the
         // range of periods actually used so all later work is sized by the data,
         // not by optInMaxPeriod. The floor at 1 (and on minUsed's start value)
@@ -309,7 +308,7 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            let _xr0 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localFinalArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
+            let _xr0 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
             localBegIdx = _xr0.beg_idx;
             localNbElement = _xr0.count;
             retCode = RetCode::Success;
@@ -388,7 +387,7 @@ impl Core {
             let _n = ((bucketEnd - bucketStart) * 1) as usize;
             let _di = (firstOccurrence) as usize;
             let _si = (firstOccurrence) as usize;
-            localFinalArray[_di.._di + _n].copy_from_slice(&localOutputArray[_si.._si + _n]);
+            outReal[_di.._di + _n].copy_from_slice(&localOutputArray[_si.._si + _n]);
         };
                     } else {
                         i = bucketStart;
@@ -397,7 +396,7 @@ impl Core {
                             let _w0 = &sortedIdx[i..][.._wn];
                             for _wk in 0.._wn {
                                 tempInt = _w0[_wk];
-                                localFinalArray[(tempInt) as usize] = localOutputArray[(tempInt) as usize];
+                                outReal[(tempInt) as usize] = ((localOutputArray[(tempInt) as usize]) as f64);
                                 i += 1;
                             }
                         }
@@ -406,17 +405,6 @@ impl Core {
                 bucketStart = bucketEnd;
             }
             curPeriod = (maxUsed as usize) + 1;
-        }
-        // Pointer-inequality guard, not finalIsAllocated: in backends where the
-        // scratch election materializes as a copy (Rust), the copy-back must
-        // always run; in C/Java the non-aliased self-copy is skipped.
-        if localFinalArray.as_ptr() != outReal.as_ptr() {
-            {
-            let _n = (outputSize * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (0) as usize;
-            outReal[_di.._di + _n].copy_from_slice(&localFinalArray[_si.._si + _n]);
-        };
         }
         // Done. Inform the caller of the success.
         (*outBegIdx) = startIdx;

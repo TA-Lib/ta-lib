@@ -2282,19 +2282,11 @@ fn rust_bbands_elects_output_scratch_only_in_the_sma_fast_path() {
     );
 }
 
-/// Being general is not the same as being greedy. The matcher requires *every* arm
-/// of the chain to be nothing but `scratch = someOutput;` elections, and that one
-/// clause is what declines `STOCH`, `STOCHF` and `MAVP`: each mixes an allocation
-/// and a `…IsAllocated = 1;` flag into a branch, so the branch is a genuine
-/// in-place defence with a real buffer to allocate rather than an election.
-/// `MAVP` is inverted as well — the allocation sits in the `then` and the election
-/// in the `else` — so it is rejected on the very first link.
-///
-/// Their generated Rust must come out byte-for-byte as it was. That non-firing is
-/// what lets the PR assert the other three backends were untouched, so it is
-/// pinned here rather than left to `git diff`.
+/// Only the terminal `else` of an election chain runs in Rust. That elects `MAVP`,
+/// whose allocating arm is the in-place one Rust never takes, and declines `STOCH`
+/// and `STOCHF`, whose terminal `else` allocates the buffer Rust needs.
 #[test]
-fn rust_scratch_election_declines_arms_that_allocate() {
+fn rust_scratch_election_takes_only_the_arm_rust_reaches() {
     let registry = make_registry();
     let helpers = make_helpers();
 
@@ -2312,23 +2304,20 @@ fn rust_scratch_election_declines_arms_that_allocate() {
         );
     }
 
-    // `MAVP` is the inverted case, and the one a looser matcher reaches first.
+    // `MAVP` elects: no staging copy in, none back, and its passes write the caller's slice.
     let (func, enums) = load_indicator("mavp");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let code: String = rust_out.lines().filter(|l| !l.trim_start().starts_with("//")).collect::<Vec<_>>().join("\n");
     assert!(
-        rust_out.contains("localFinalArray = outReal.to_vec();"),
-        "MAVP's election must be left as it is: {rust_out}"
+        !code.contains(".to_vec()") && !code.contains("localFinalArray["),
+        "MAVP must run in outReal, not in a copy of it: {rust_out}"
     );
     assert!(
-        rust_out.contains("localFinalArray = vec![0.0_f64;"),
-        "MAVP must keep the allocation in its `then` arm: {rust_out}"
-    );
-    assert!(
-        rust_out.contains("localFinalArray.as_ptr() != outReal.as_ptr()"),
-        "MAVP must keep its copy-back guard: {rust_out}"
+        code.contains("optInMAType, outReal)"),
+        "MAVP's single-period pass must write outReal directly: {rust_out}"
     );
 
-    // The pass must not have fired for a single function other than `BBANDS`. The
+    // The pass must not have fired for a function other than those two. The
     // election note is emitted exactly when an election is installed, so its
     // absence across the whole `input/` tree is the non-firing proof — and it is
     // proven over every indicator rather than a hand-picked list, so a widening of
@@ -2343,8 +2332,8 @@ fn rust_scratch_election_declines_arms_that_allocate() {
     }
     assert_eq!(
         fired,
-        vec!["bbands".to_string()],
-        "the scratch election must fire for BBANDS and nothing else"
+        vec!["bbands".to_string(), "mavp".to_string()],
+        "the scratch election must fire for BBANDS and MAVP and nothing else"
     );
 }
 

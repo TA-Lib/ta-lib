@@ -321,10 +321,6 @@
             bucketStart = bucketEnd;
          }
       }
-      /* Pointer-inequality guard, not finalIsAllocated: in backends where the
-       * scratch election materializes as a copy (Rust), the copy-back must
-       * always run; in C/Java the non-aliased self-copy is skipped.
-       */
       if( localFinalArray != outReal ) {
          System.arraycopy(localFinalArray, 0, outReal, 0, outputSize * 1);
       }
