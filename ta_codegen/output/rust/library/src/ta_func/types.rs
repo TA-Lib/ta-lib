@@ -163,10 +163,10 @@ pub enum FuncUnstId {
 }
 
 impl FuncUnstId {
-    /// Number of [`FuncUnstId`] function ids — the size of the unstable-period
-    /// table. Not an id, and not [`FuncUnstId::ALL`]. Mirrors C's
-    /// `TA_FUNC_UNST_COUNT` and Java's `FuncUnstId.COUNT`.
-    pub const COUNT: usize = 27;
+    /// Size of the unstable-period table: one past the highest function id.
+    /// [`FuncUnstId::ALL`] selects every slot and is not one. Mirrors C's
+    /// `TA_FUNC_UNST_COUNT`.
+    pub(crate) const COUNT: usize = 27;
 }
 
 /// What a candlestick setting measures a candle against. Mirrors the C
@@ -268,29 +268,31 @@ impl CandleSettings {
 #[non_exhaustive]
 pub enum CandleSettingType {
     /// Selects [`CandleSettings::body_long`].
-    BodyLong,
+    BodyLong = 0,
     /// Selects [`CandleSettings::body_very_long`].
-    BodyVeryLong,
+    BodyVeryLong = 1,
     /// Selects [`CandleSettings::body_short`].
-    BodyShort,
+    BodyShort = 2,
     /// Selects [`CandleSettings::body_doji`].
-    BodyDoji,
+    BodyDoji = 3,
     /// Selects [`CandleSettings::shadow_long`].
-    ShadowLong,
+    ShadowLong = 4,
     /// Selects [`CandleSettings::shadow_very_long`].
-    ShadowVeryLong,
+    ShadowVeryLong = 5,
     /// Selects [`CandleSettings::shadow_short`].
-    ShadowShort,
+    ShadowShort = 6,
     /// Selects [`CandleSettings::shadow_very_short`].
-    ShadowVeryShort,
+    ShadowVeryShort = 7,
     /// Selects [`CandleSettings::near`].
-    Near,
+    Near = 8,
     /// Selects [`CandleSettings::far`].
-    Far,
+    Far = 9,
     /// Selects [`CandleSettings::equal`].
-    Equal,
-    /// Wildcard sentinel — not a valid target for a single setting.
-    AllCandleSettings,
+    Equal = 10,
+    /// Selects every setting; not a valid target for a single setting. Pinned
+    /// at 11 like C's `TA_AllCandleSettings`, and not a count: a setting added
+    /// later takes 12.
+    AllCandleSettings = 11,
 }
 
 /// Provides access to all TA-Lib technical-analysis functions.
@@ -954,6 +956,11 @@ mod tests {
             .build()
             .unwrap_err();
         assert_eq!(err, RetCode::BadParam);
+    }
+
+    #[test]
+    fn the_candle_wildcard_is_pinned_at_11() {
+        assert_eq!(CandleSettingType::AllCandleSettings as i32, 11);
     }
 
     #[test]

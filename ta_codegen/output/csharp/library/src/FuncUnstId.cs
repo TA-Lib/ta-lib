@@ -102,8 +102,8 @@ public enum FuncUnstId
 /// <summary>Companion constants for <see cref="FuncUnstId"/>.</summary>
 internal static class FuncUnstIds
 {
-    /// <summary>Number of function ids — the size of the unstable-period
-    /// table. Not an id, and not <see cref="FuncUnstId.ALL"/>. Mirrors C's
-    /// TA_FUNC_UNST_COUNT.</summary>
+    /// <summary>Size of the unstable-period table: one past the highest
+    /// function id. <see cref="FuncUnstId.ALL"/> selects every slot and is
+    /// not one. Mirrors C's TA_FUNC_UNST_COUNT.</summary>
     public const int Count = 27;
 }

@@ -1814,7 +1814,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            int rangeType = jsonInt(json, \"rangeType\");\n");
     s.push_str("            int avgPeriod = jsonInt(json, \"avgPeriod\");\n");
     s.push_str("            double factor = jsonF64Bits(json, \"factorBits\", 1.0);\n");
-    s.push_str("            if (settingType < 0 || settingType >= CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {\n");
+    s.push_str("            if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()\n");
+    s.push_str("                || settingType < 0 || settingType >= core.candleSettings.length) {\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
     s.push_str("            }\n");
     s.push_str("            if (rangeType < 0 || rangeType > RangeType.SHADOWS.ordinal()) {\n");
@@ -1836,12 +1837,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"restore_candle_default_settings\\\"\")) {\n");
     s.push_str("            rideGen++;\n");
     s.push_str("            int settingType = jsonInt(json, \"settingType\");\n");
-    s.push_str("            if (settingType < 0 || settingType > CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {\n");
-    s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting type\\\"}\";\n");
-    s.push_str("            }\n");
     s.push_str("            if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {\n");
     s.push_str("                System.arraycopy(Core.DEFAULT_CANDLE_SETTINGS, 0, core.candleSettings, 0,\n");
     s.push_str("                    core.candleSettings.length);\n");
+    s.push_str("            } else if (settingType < 0 || settingType >= core.candleSettings.length) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting type\\\"}\";\n");
     s.push_str("            } else {\n");
     s.push_str("                core.candleSettings[settingType] = Core.DEFAULT_CANDLE_SETTINGS[settingType];\n");
     s.push_str("            }\n");

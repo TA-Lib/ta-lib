@@ -88,6 +88,10 @@ typedef struct
   void *global;
 } TA_ModuleControl;
 
+/* Settings in candleSettings[], indexed by TA_CandleSettingType. Excludes
+ * TA_AllCandleSettings, which is a pinned selector, not a count. */
+#define TA_NB_CANDLE_SETTING 11
+
 /* This is the hidden implementation of TA_Libc. */
 typedef struct
 {
@@ -104,7 +108,7 @@ typedef struct
    unsigned int unstablePeriod[TA_FUNC_UNST_COUNT];
 
    /* For handling the candlestick global settings */
-   TA_CandleSetting candleSettings[TA_AllCandleSettings];
+   TA_CandleSetting candleSettings[TA_NB_CANDLE_SETTING];
 
 } TA_LibcPriv;
 

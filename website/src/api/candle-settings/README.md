@@ -106,7 +106,7 @@ Java takes its own constant case, `CandleSettingType.BODY_LONG`.
 | `Far`             | HighLow  | 5  | 0.6  |
 | `Equal`           | HighLow  | 5  | 0.05 |
 
-`AllCandleSettings` targets every setting at once. It is meaningful only for C's
+`AllCandleSettings` targets every setting at once. It is meaningful only to the
 restore call.
 
 ## See also

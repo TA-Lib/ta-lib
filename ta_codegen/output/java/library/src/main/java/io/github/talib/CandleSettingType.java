@@ -59,5 +59,7 @@ public enum CandleSettingType
     NEAR,
     FAR,
     EQUAL,
+    /** Selects every setting. Its ordinal is C's pinned 11, and it is not a
+     *  count: a setting added later is declared after it. */
     ALL_CANDLE_SETTINGS
 };

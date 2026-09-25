@@ -256,6 +256,8 @@ typedef enum {
     TA_Near              =  8,
     TA_Far               =  9,
     TA_Equal             = 10,
+    /* TA_RestoreCandleDefaultSettings only: selects every setting. Pinned at 11
+     * and not a count: a setting added later takes 12. */
     TA_AllCandleSettings = 11
 } TA_CandleSettingType;
 

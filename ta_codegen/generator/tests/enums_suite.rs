@@ -657,4 +657,17 @@ fn rust_index_domain_never_narrows_to_i32() {
     }
 }
 
+#[test]
+fn java_funcunstid_count_is_not_public() {
+    let java = std::fs::read_to_string(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../output/java/library/src/main/java/io/github/talib/FuncUnstId.java"),
+    )
+    .expect("FuncUnstId.java");
+    assert!(
+        java.contains("\tstatic final int COUNT = ") && !java.contains("public static final int COUNT"),
+        "a public COUNT is a constant javac copies into callers, stale after a jar upgrade:\n{java}"
+    );
+}
+
 // ---------------------------------------------------------------------------

@@ -335,6 +335,7 @@ public static class CoreBuilderTest
         CheckThrows<ArgumentOutOfRangeException>(
             () => new Core().CandleSettings(CandleSettingType.AllCandleSettings),
             "AllCandleSettings has no single value to read -> ArgumentOutOfRangeException");
+        Check((int)CandleSettingType.AllCandleSettings == 11, "AllCandleSettings is pinned at C's 11");
     }
 
     private static void CandleBoundsAreBoundsNotOffByOnes()

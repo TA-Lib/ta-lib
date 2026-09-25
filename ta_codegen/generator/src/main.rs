@@ -1065,9 +1065,9 @@ fn verify_hand_maintained_funcunstid(
     // FuncUnstId::COUNT sizes the crate's unstable-period array. The template is
     // copied verbatim, so the literal cannot be interpolated -- check it here
     // instead, or adding an indicator would leave the array one slot short. The
-    // needle is anchored on the impl block, not on `pub const COUNT` alone, which
-    // is a spelling other types in the crate also use.
-    let want_count = format!("pub const COUNT: usize = {};", fu.variants.len());
+    // needle is anchored on the impl block, not on the declaration alone, which
+    // other types in the crate also spell.
+    let want_count = format!("pub(crate) const COUNT: usize = {};", fu.variants.len());
     let counted = src
         .find("impl FuncUnstId {")
         .and_then(|i| src[i..].find('}').map(|j| &src[i..i + j]))

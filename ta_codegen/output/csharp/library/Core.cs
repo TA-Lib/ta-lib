@@ -164,7 +164,8 @@ public sealed partial class Core
     public CandleSetting CandleSettings(CandleSettingType settingType)
     {
         int slot = (int)settingType;
-        if (slot < 0 || slot >= DefaultCandleSettings.Length)
+        if (settingType == CandleSettingType.AllCandleSettings
+            || slot < 0 || slot >= DefaultCandleSettings.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
                 "not a single candlestick setting");

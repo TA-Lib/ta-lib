@@ -193,7 +193,7 @@ static int          g_unstInitialized[SV_MAX_PIPES];
  * C library was actually holding", and only the library knows that. There is no
  * public getter, so this reads the global the setter writes -- the same thing
  * test_internals.c does. */
-static TA_CandleSetting g_lastCandle[SV_MAX_PIPES][TA_AllCandleSettings];
+static TA_CandleSetting g_lastCandle[SV_MAX_PIPES][TA_NB_CANDLE_SETTING];
 static int              g_candleInitialized[SV_MAX_PIPES];
 static int              g_candleSyncs;   /* non-vacuity: settings pushed, all pipes */
 
@@ -385,7 +385,7 @@ static ErrorNumber sync_candle_settings(int pipeIdx)
          * all. Both were latent only because the first caller happens to be at
          * the defaults already. Snapshot, read, put back, then fall through to
          * the delta loop so the caller's real settings are what gets sent. */
-        TA_CandleSetting saved[TA_AllCandleSettings];
+        TA_CandleSetting saved[TA_NB_CANDLE_SETTING];
         memcpy(saved, TA_Globals->candleSettings, sizeof(saved));
         TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
         memcpy(g_lastCandle[pipeIdx], TA_Globals->candleSettings, sizeof(saved));
@@ -394,7 +394,7 @@ static ErrorNumber sync_candle_settings(int pipeIdx)
         /* deliberately no return: the loop below pushes the caller's deltas */
     }
 
-    for( int i = 0; i < (int)TA_AllCandleSettings; i++ )
+    for( int i = 0; i < TA_NB_CANDLE_SETTING; i++ )
     {
         const TA_CandleSetting *cur  = &TA_Globals->candleSettings[i];
         const TA_CandleSetting *last = &g_lastCandle[pipeIdx][i];

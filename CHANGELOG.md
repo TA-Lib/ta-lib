@@ -37,6 +37,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   per bar as a 10000-bar one. A longer period is now rejected.
 - The i386 `.deb` now uses SSE2 instead of x87, so its values match the other packages. It
   needs an SSE2 CPU. (#443)
+- Java: `FuncUnstId.COUNT` is no longer public. javac copied its value into every caller, so
+  a table sized by it went stale after a jar upgrade. Iterate `FuncUnstId.values()`, skipping
+  `ALL`, instead. (#444)
 
 ### Fixed
 - (#434) VAR, STDDEV, BBANDS, CORREL, RVI and RVIR no longer return stale values, or rebuild

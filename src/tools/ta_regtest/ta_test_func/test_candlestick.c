@@ -11212,10 +11212,10 @@ static ErrorNumber apply_cdl_globals( const TA_CDLGlobals *g )
 
    /* One row per setting, in TA_CandleSettingType order, or the loop below
     * would set the wrong slots. Constant-folded away when it holds. */
-   if( sizeof(field)/sizeof(field[0]) != (size_t)TA_AllCandleSettings )
+   if( sizeof(field)/sizeof(field[0]) != (size_t)TA_NB_CANDLE_SETTING )
       return TA_CDLSET_SETTING_REJECTED;
 
-   for( i = 0; i < (int)TA_AllCandleSettings; i++ )
+   for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )
    {
       TA_RangeType rt;
       int          avg;
@@ -11313,7 +11313,7 @@ static ErrorNumber cdl_setting_coverage( const TA_History *history, int perSetti
 
    if( !outA || !outB ) { free(outA); free(outB); return TA_CDLSET_CALL_FAILED; }
 
-   for( st = 0; st < (int)TA_AllCandleSettings; st++ )
+   for( st = 0; st < TA_NB_CANDLE_SETTING; st++ )
    {
       perSetting[st] = 0;
       for( r = 1; r < (int)NB_CDL_GLOBALS && errNb == TA_TEST_PASS; r++ )
@@ -11553,12 +11553,12 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
       static const char *SETTING_NAME[] = {
          "BodyLong","BodyVeryLong","BodyShort","BodyDoji","ShadowLong",
          "ShadowVeryLong","ShadowShort","ShadowVeryShort","Near","Far","Equal" };
-      int perSetting[TA_AllCandleSettings];
+      int perSetting[TA_NB_CANDLE_SETTING];
       int st, inert = 0;
       errNb = cdl_setting_coverage( history, perSetting );
       if( errNb != TA_TEST_PASS )
          return errNb;
-      for( st = 0; st < (int)TA_AllCandleSettings; st++ )
+      for( st = 0; st < TA_NB_CANDLE_SETTING; st++ )
       {
          /* BodyVeryLong is exempt BY MEASUREMENT, not by convenience: it is in
           * the public setter's domain and no shipped candlestick reads it. */

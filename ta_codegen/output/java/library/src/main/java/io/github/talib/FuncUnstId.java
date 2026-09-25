@@ -80,9 +80,9 @@ public enum FuncUnstId {
 	   *  Pinned, so adding an indicator can never move it. */
 	             ALL(65535);
 
-	/** Number of function ids — the size of the unstable-period table.
-	 *  Not an id, and not {@link #ALL}. Mirrors C's TA_FUNC_UNST_COUNT. */
-	public static final int COUNT = 27;
+	/* Size of the unstable-period table: one past the highest function id.
+	 * ALL selects every slot and is not one. Mirrors C's TA_FUNC_UNST_COUNT. */
+	static final int COUNT = 27;
 
 	private final int value;
 

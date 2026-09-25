@@ -188555,7 +188555,8 @@ public class TaCodegenServe {
             int rangeType = jsonInt(json, "rangeType");
             int avgPeriod = jsonInt(json, "avgPeriod");
             double factor = jsonF64Bits(json, "factorBits", 1.0);
-            if (settingType < 0 || settingType >= CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {
+            if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()
+                || settingType < 0 || settingType >= core.candleSettings.length) {
                 return "{\"error\":\"Invalid candle setting\"}";
             }
             if (rangeType < 0 || rangeType > RangeType.SHADOWS.ordinal()) {
@@ -188574,12 +188575,11 @@ public class TaCodegenServe {
         else if (json.contains("\"restore_candle_default_settings\"")) {
             rideGen++;
             int settingType = jsonInt(json, "settingType");
-            if (settingType < 0 || settingType > CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {
-                return "{\"error\":\"Invalid candle setting type\"}";
-            }
             if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS.ordinal()) {
                 System.arraycopy(Core.DEFAULT_CANDLE_SETTINGS, 0, core.candleSettings, 0,
                     core.candleSettings.length);
+            } else if (settingType < 0 || settingType >= core.candleSettings.length) {
+                return "{\"error\":\"Invalid candle setting type\"}";
             } else {
                 core.candleSettings[settingType] = Core.DEFAULT_CANDLE_SETTINGS[settingType];
             }

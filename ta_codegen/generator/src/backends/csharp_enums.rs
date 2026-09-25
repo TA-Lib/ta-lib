@@ -165,9 +165,9 @@ pub fn render_funcunstid(enums: &HashMap<String, EnumDef>) -> String {
 
     s.push_str("/// <summary>Companion constants for <see cref=\"FuncUnstId\"/>.</summary>\n");
     s.push_str("internal static class FuncUnstIds\n{\n");
-    s.push_str("    /// <summary>Number of function ids — the size of the unstable-period\n");
-    s.push_str("    /// table. Not an id, and not <see cref=\"FuncUnstId.ALL\"/>. Mirrors C's\n");
-    s.push_str("    /// TA_FUNC_UNST_COUNT.</summary>\n");
+    s.push_str("    /// <summary>Size of the unstable-period table: one past the highest\n");
+    s.push_str("    /// function id. <see cref=\"FuncUnstId.ALL\"/> selects every slot and is\n");
+    s.push_str("    /// not one. Mirrors C's TA_FUNC_UNST_COUNT.</summary>\n");
     s.push_str(&format!(
         "    public const int Count = {};\n",
         fu.variants.len()

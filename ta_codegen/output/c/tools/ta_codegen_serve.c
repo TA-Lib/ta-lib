@@ -516,7 +516,7 @@ static int sv_xtier_ne(double a, double b, int *zsign) {
 }
 static void sv_candle_avg(int mode) {
     int i;
-    for( i = 0; i < (int)TA_AllCandleSettings; i++ )
+    for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )
         TA_SetCandleSettings( (TA_CandleSettingType)i,
                               mode == 2 ? TA_RangeType_Shadows : TA_Globals->candleSettings[i].rangeType,
                               mode == 1 ? 0 : (mode == 0 ? TA_Globals->candleSettings[i].avgPeriod + 3 : TA_Globals->candleSettings[i].avgPeriod),
@@ -59928,7 +59928,7 @@ static unsigned long long sr_ambient(unsigned long long h)
         unsigned int k = TA_GetUnstablePeriod( (TA_FuncUnstId)i );
         h = fuzz_hash_bytes(h, &k, sizeof(k));
     }
-    for( i = 0; i < (int)TA_AllCandleSettings; i++ )
+    for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )
         h = fuzz_hash_bytes(h, &TA_Globals->candleSettings[i], sizeof(TA_CandleSetting));
     return h;
 }

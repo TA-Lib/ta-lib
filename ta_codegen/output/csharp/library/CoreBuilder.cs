@@ -161,7 +161,8 @@ public sealed class CoreBuilder
                                      int avgPeriod, double factor)
     {
         int slot = (int)settingType;
-        if (slot < 0 || slot >= _candleSettings.Length)
+        if (settingType == CandleSettingType.AllCandleSettings
+            || slot < 0 || slot >= _candleSettings.Length)
         {
             throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
                 "not a single candlestick setting");

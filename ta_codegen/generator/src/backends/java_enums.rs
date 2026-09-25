@@ -34,7 +34,6 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
     // function ids the ordinal equals the C value. `ALL` is the one exception:
     // it carries C's pinned 65535, which no ordinal can express, so every
     // constant declares its value explicitly and `value()` exposes it.
-    // `COUNT` sizes the table.
     let mut body = String::from("public enum FuncUnstId {\n");
     body.push('\t');
     body.push('\n');
@@ -46,9 +45,9 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
     body.push_str("\t   *  Pinned, so adding an indicator can never move it. */\n");
     body.push_str("\t             ALL(65535);\n");
     body.push('\n');
-    body.push_str("\t/** Number of function ids — the size of the unstable-period table.\n");
-    body.push_str("\t *  Not an id, and not {@link #ALL}. Mirrors C's TA_FUNC_UNST_COUNT. */\n");
-    body.push_str(&format!("\tpublic static final int COUNT = {};\n", fu.variants.len()));
+    body.push_str("\t/* Size of the unstable-period table: one past the highest function id.\n");
+    body.push_str("\t * ALL selects every slot and is not one. Mirrors C's TA_FUNC_UNST_COUNT. */\n");
+    body.push_str(&format!("\tstatic final int COUNT = {};\n", fu.variants.len()));
     body.push('\n');
     body.push_str("\tprivate final int value;\n");
     body.push('\n');

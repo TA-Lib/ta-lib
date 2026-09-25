@@ -66,7 +66,7 @@ static unsigned long long sr_ambient(unsigned long long h)
         unsigned int k = TA_GetUnstablePeriod( (TA_FuncUnstId)i );
         h = fuzz_hash_bytes(h, &k, sizeof(k));
     }
-    for( i = 0; i < (int)TA_AllCandleSettings; i++ )
+    for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )
         h = fuzz_hash_bytes(h, &TA_Globals->candleSettings[i], sizeof(TA_CandleSetting));
     return h;
 }

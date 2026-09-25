@@ -62,6 +62,7 @@ public enum CandleSettingType
     Far = 9,
     /// <summary>Two prices are "equal" (within tolerance).</summary>
     Equal = 10,
-    /// <summary>Wildcard: all settings at once (also the table size).</summary>
+    /// <summary>Selects every setting. Pinned at 11, and not a count: a
+    /// setting added later takes 12.</summary>
     AllCandleSettings = 11,
 }

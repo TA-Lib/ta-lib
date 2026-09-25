@@ -392,10 +392,18 @@ public class CoreApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.unstablePeriod(FuncUnstId.ALL),
             "FuncUnstId.ALL has no single value to read -> IAE");
-        // The writer accepts All (set-all wildcard) but must reject None the same
-        // way the reader does, rather than indexing off the end of the array.
-        check(FuncUnstId.ALL.value() == 65535 && FuncUnstId.COUNT == FuncUnstId.values().length - 1,
-            "FuncUnstId.ALL is pinned at 65535 and COUNT covers every function id");
+        FuncUnstId[] ids = FuncUnstId.values();
+        boolean idsIndexTheTable = FuncUnstId.ALL.value() == 65535
+            && ids[ids.length - 1] == FuncUnstId.ALL;
+        for (FuncUnstId id : ids) {
+            if (id != FuncUnstId.ALL) {
+                idsIndexTheTable &= id.value() == id.ordinal();
+            }
+        }
+        check(idsIndexTheTable,
+            "FuncUnstId.ALL is pinned at 65535 and every other id indexes the table by its value");
+        check(CandleSettingType.ALL_CANDLE_SETTINGS.ordinal() == 11,
+            "ALL_CANDLE_SETTINGS is pinned at C's 11");
     }
 
     /**

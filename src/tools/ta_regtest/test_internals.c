@@ -1109,6 +1109,27 @@ static ErrorNumber testBatchArgumentContract( void )
    return freeLib();
 }
 
+/* No default: gcc and clang then refuse to build this file until a new
+ * TA_CandleSettingType member is named here, which leads to its pin row. */
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic error "-Wswitch"
+#endif
+static void candleSettingsAreAllPinned( TA_CandleSettingType t )
+{
+   switch( t )
+   {
+   case TA_BodyLong: case TA_BodyVeryLong: case TA_BodyShort: case TA_BodyDoji:
+   case TA_ShadowLong: case TA_ShadowVeryLong: case TA_ShadowShort:
+   case TA_ShadowVeryShort: case TA_Near: case TA_Far: case TA_Equal:
+   case TA_AllCandleSettings:
+      break;
+   }
+}
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 /* The published value of every enumerator that has ever shipped, pinned.
  *
  * TA_MAType and TA_FuncUnstId are ABI: wrappers record these numbers and pass
@@ -1127,11 +1148,7 @@ static ErrorNumber testBatchArgumentContract( void )
  * generated from the same enums.yaml that generates this header, and the
  * generator already fails if the hand-maintained Rust copy drifts from it.
  *
- * TA_RetCode is NOT in enums.yaml and nothing generates its Rust, Java or C#
- * copies -- each is hand-written, and the number a backend puts on the wire is
- * carried by the member there (Rust `as_c_int`, Java `asCInt`, C#'s explicit
- * discriminants). So for TA_RetCode this file pins the C numbering only, and
- * cross-language agreement is what the ta_regtest server comparison tests.
+ * TA_RetCode is NOT in enums.yaml; this file pins its C numbering only.
  */
 static ErrorNumber testEnumValueContract( void )
 {
@@ -1214,9 +1231,8 @@ static ErrorNumber testEnumValueContract( void )
    };
 
    /* TA_SetCandleSettings takes both of these from the caller, so they are ABI
-    * on the same terms. TA_AllCandleSettings is the count as well as the "all"
-    * selector -- it sizes TA_Globals->candleSettings[] -- so it is pinned last
-    * and excluded from the member count below, like TA_FUNC_UNST_ALL. */
+    * on the same terms. TA_AllCandleSettings is a selector, not a setting: it is
+    * pinned, and excluded from the setting count below like TA_FUNC_UNST_ALL. */
    static const EnumPin candlePins[] = {
       { "TA_BodyLong",           0, TA_BodyLong },
       { "TA_BodyVeryLong",       1, TA_BodyVeryLong },
@@ -1347,16 +1363,15 @@ static ErrorNumber testEnumValueContract( void )
       }
    }
 
-   /* Same completeness rule as the unstable ids: TA_AllCandleSettings doubles as
-    * the member count, so a new setting that does not gain a row here would sit
-    * unpinned. It also sizes the defaults table in ta_global.c -- see the guard
-    * there, which turns the same mistake into a clean error rather than a read
-    * past the end. */
-   if( (int)TA_AllCandleSettings != nbCandleTypes )
+   /* Same completeness rule as the unstable ids. */
+   candleSettingsAreAllPinned( TA_BodyLong );
+   if( TA_NB_CANDLE_SETTING != nbCandleTypes )
    {
-      printf( "\nFailed: TA_AllCandleSettings is %d but %d setting(s) are pinned. Add\n"
-              "        the new setting's row to candlePins[] (append only).\n",
-              (int)TA_AllCandleSettings, nbCandleTypes );
+      printf( "\nFailed: TA_NB_CANDLE_SETTING is %d but %d setting(s) are pinned. A new\n"
+              "        setting takes 12 (TA_AllCandleSettings stays 11): give it a row in\n"
+              "        candlePins[] and a case in candleSettingsAreAllPinned(), raise\n"
+              "        TA_NB_CANDLE_SETTING, and follow the check in ta_global.c on index 11.\n",
+              TA_NB_CANDLE_SETTING, nbCandleTypes );
       return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
    }
 
@@ -1838,7 +1853,9 @@ static ErrorNumber testCandleSettingsBounds( void )
    if( TA_SetCandleSettings( TA_AllCandleSettings, TA_RangeType_HighLow, 10, 0.1 ) != TA_BAD_PARAM ||
        TA_SetCandleSettings( (TA_CandleSettingType)-1, TA_RangeType_HighLow, 10, 0.1 ) != TA_BAD_PARAM ||
        TA_SetCandleSettings( (TA_CandleSettingType)-1000000, TA_RangeType_HighLow, 10, 0.1 ) != TA_BAD_PARAM ||
-       TA_RestoreCandleDefaultSettings( (TA_CandleSettingType)-1 ) != TA_BAD_PARAM )
+       TA_SetCandleSettings( (TA_CandleSettingType)TA_NB_CANDLE_SETTING, TA_RangeType_HighLow, 10, 0.1 ) != TA_BAD_PARAM ||
+       TA_RestoreCandleDefaultSettings( (TA_CandleSettingType)-1 ) != TA_BAD_PARAM ||
+       TA_RestoreCandleDefaultSettings( (TA_CandleSettingType)(TA_NB_CANDLE_SETTING + 1) ) != TA_BAD_PARAM )
    {
       printf( "\nFailed: TA_SetCandleSettings accepted an out-of-domain settingType\n" );
       return TA_INTERNAL_CANDLE_BOUND_FAIL_3;

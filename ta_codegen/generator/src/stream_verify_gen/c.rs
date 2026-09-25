@@ -1187,7 +1187,7 @@ pub(crate) fn generate_c_stream_verify(
     // TA_STREAM Shadows arithmetic, which no default setting exercises).
     s.push_str("static void sv_candle_avg(int mode) {\n");
     s.push_str("    int i;\n");
-    s.push_str("    for( i = 0; i < (int)TA_AllCandleSettings; i++ )\n");
+    s.push_str("    for( i = 0; i < TA_NB_CANDLE_SETTING; i++ )\n");
     s.push_str("        TA_SetCandleSettings( (TA_CandleSettingType)i,\n");
     s.push_str("                              mode == 2 ? TA_RangeType_Shadows : TA_Globals->candleSettings[i].rangeType,\n");
     s.push_str("                              mode == 1 ? 0 : (mode == 0 ? TA_Globals->candleSettings[i].avgPeriod + 3 : TA_Globals->candleSettings[i].avgPeriod),\n");
