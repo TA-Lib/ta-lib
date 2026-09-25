@@ -127,7 +127,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#marketfiLookback} is a <b>success
+    * valid range that ends before {@link Core#marketfiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -136,7 +136,8 @@
     * @param inLow Low price of each bar.
     * @param inVolume Volume of each bar.
     * @param outReal Range travelled per unit of volume, per bar. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, marketfiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -200,7 +201,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#marketfiLookback} is a <b>success
+    * valid range that ends before {@link Core#marketfiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -209,7 +210,8 @@
     * @param inLow Low price of each bar.
     * @param inVolume Volume of each bar.
     * @param outReal Range travelled per unit of volume, per bar. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, marketfiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -340,7 +342,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MARKETFI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MARKETFI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MARKETFI update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inVolume");
          core.marketfiStepImpl(this, inHigh, inLow, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -358,7 +360,7 @@
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MARKETFI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MARKETFI peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inVolume");
          MarketfiStream sp = this;
          double cur_outReal = 0.0;
          /* A zero-volume bar would divide by zero. Neither reference guards
@@ -492,12 +494,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MARKETFI openAndFill", inHigh.length, startIdx, marketfiLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MARKETFI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
+      throw streamFailure("MARKETFI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind marketfiOpen (composition seam). */
    MarketfiStream marketfiOpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
@@ -513,12 +512,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MARKETFI open: history shorter than lookback + 1");
+         throw insufficientHistory("MARKETFI open", inHigh.length, startIdx, marketfiLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MARKETFI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MARKETFI open: " + retCode, retCode);
+      throw streamFailure("MARKETFI open", retCode);
    }
    /**
     * Open a live MARKETFI stream over the warm-up history; the handle's
@@ -563,7 +559,7 @@
       requireHistoryLength("MARKETFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MARKETFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("MARKETFI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MARKETFI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

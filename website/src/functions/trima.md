@@ -55,6 +55,7 @@ TA-Lib Definition: [`trima.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C | [`ta_TRIMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TRIMA.c) |
 | Rust | [`trima.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/trima.rs) |
 | Java | [`Core_TRIMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TRIMA.java) |
+| C# | [`Core_TRIMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TRIMA.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

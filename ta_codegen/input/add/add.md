@@ -17,18 +17,6 @@ outReal[i] = inReal0[i] + inReal1[i]
 
 - `outReal` — Element-wise sum of the two inputs
 
-## Implementation
-
-TA-Lib Definition: [`add.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/add/add.c) · [`add.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/add/add.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ADD.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADD.c) |
-| Rust | [`add.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/add.rs) |
-| Java | [`Core_ADD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADD.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Vector Add, Vector Arithmetic Add

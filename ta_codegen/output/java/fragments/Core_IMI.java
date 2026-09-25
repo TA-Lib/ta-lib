@@ -162,8 +162,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#imiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#imiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -173,7 +173,8 @@
     *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal IMI oscillator value, 0-100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, imiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -224,8 +225,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#imiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#imiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -235,7 +236,8 @@
     *        (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal IMI oscillator value, 0-100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, imiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -371,7 +373,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("IMI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("IMI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("IMI update", !Double.isFinite(inOpen) ? "inOpen" : "inClose");
          core.imiStepImpl(this, inOpen, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -389,7 +391,7 @@
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("IMI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("IMI peek", !Double.isFinite(inOpen) ? "inOpen" : "inClose");
          ImiStream sp = this;
          double upsum = 0.0;
          double downsum = 0.0;
@@ -570,12 +572,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("IMI openAndFill", inOpen.length, startIdx, imiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("IMI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("IMI openAndFill: " + retCode, retCode);
+      throw streamFailure("IMI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind imiOpen (composition seam). */
    ImiStream imiOpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
@@ -591,12 +590,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("IMI open: history shorter than lookback + 1");
+         throw insufficientHistory("IMI open", inOpen.length, startIdx, imiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("IMI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("IMI open: " + retCode, retCode);
+      throw streamFailure("IMI open", retCode);
    }
    /**
     * Open a live IMI stream over the warm-up history; the handle's
@@ -639,7 +635,7 @@
       requireHistoryLength("IMI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("IMI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("IMI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("IMI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

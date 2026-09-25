@@ -26,7 +26,3 @@ outRequired[i] = real_i; outFirstOptional[i] = real_i / 2; outSecondOptional[i] 
 - `outFirstOptional` — Half the bar, declinable
 - `outRequired` — The bar itself, always written
 - `outSecondOptional` — A quarter of the bar, declinable
-
-## Implementation
-
-TA-Lib Definition: [`synth10.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth10/synth10.c) · [`synth10.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth10/synth10.yaml)

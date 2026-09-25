@@ -23,18 +23,6 @@ This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middl
 
 - `optInTimePeriod` — Window length over which the high/low extremes are taken
 
-## Implementation
-
-TA-Lib Definition: [`midprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midprice/midprice.c) · [`midprice.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midprice/midprice.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MIDPRICE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MIDPRICE.c) |
-| Rust | [`midprice.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/midprice.rs) |
-| Java | [`Core_MIDPRICE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MIDPRICE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Midpoint Price

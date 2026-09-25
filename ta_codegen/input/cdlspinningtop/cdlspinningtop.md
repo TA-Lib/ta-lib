@@ -27,18 +27,6 @@ One candle where: upper shadow > real body AND lower shadow > real body AND real
 | 0 | No pattern |
 | 100 | Matching white spinning top (indecision; color only — not a bullish call) |
 
-## Implementation
-
-TA-Lib Definition: [`cdlspinningtop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlspinningtop/cdlspinningtop.c) · [`cdlspinningtop.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlspinningtop/cdlspinningtop.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLSPINNINGTOP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLSPINNINGTOP.c) |
-| Rust | [`cdlspinningtop.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlspinningtop.rs) |
-| Java | [`Core_CDLSPINNINGTOP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLSPINNINGTOP.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Spinning Top

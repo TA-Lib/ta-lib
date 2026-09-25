@@ -25,18 +25,6 @@ period>1: seed = sum of first (period-1) -DM1; then Wilder smooth each bar:
 
 - `optInTimePeriod` — Wilder smoothing period
 
-## Implementation
-
-TA-Lib Definition: [`minus_dm.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_dm/minus_dm.c) · [`minus_dm.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_dm/minus_dm.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MINUS_DM.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MINUS_DM.c) |
-| Rust | [`minus_dm.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/minus_dm.rs) |
-| Java | [`Core_MINUS_DM.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MINUS_DM.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Minus Directional Movement, -DM

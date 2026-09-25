@@ -1,6 +1,6 @@
 ---
 title: Rust Streaming API
-description: "Rust streaming API for live feeds: a stream carries indicator state from bar to bar at O(1) per update, bit-identical to the batch calls."
+description: "Rust streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history, bit-identical to the batch calls."
 toc: false
 ---
 
@@ -8,7 +8,7 @@ toc: false
 The Rust API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/rust/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole slice.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, cost at most time proportional to its length. Every value is **bit-identical** to what the [batch method](/api/rust/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole slice.
 
 Each streamable function adds two constructors on `Core` and a handful of methods on its stream:
 

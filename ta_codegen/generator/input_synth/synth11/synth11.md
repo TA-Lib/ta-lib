@@ -26,7 +26,3 @@ outAbove[i] = 1 if real_i > 0 else 0; outBelow[i] = 1 if real_i < 0 else 0; outL
 - `outAbove` — 1 when the bar is above zero, 0 otherwise
 - `outBelow` — 1 when the bar is below zero, 0 otherwise
 - `outLarge` — 1 when the bar is above 1000, 0 otherwise
-
-## Implementation
-
-TA-Lib Definition: [`synth11.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth11/synth11.c) · [`synth11.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth11/synth11.yaml)

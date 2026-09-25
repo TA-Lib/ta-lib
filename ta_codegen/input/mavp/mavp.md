@@ -28,18 +28,6 @@ p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal
 - `optInMaxPeriod` — Upper clamp for the per-bar period
 - `optInMAType` — Moving-average type applied
 
-## Implementation
-
-TA-Lib Definition: [`mavp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mavp/mavp.c) · [`mavp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mavp/mavp.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MAVP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MAVP.c) |
-| Rust | [`mavp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/mavp.rs) |
-| Java | [`Core_MAVP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MAVP.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Moving Average Variable Period, Variable Period Moving Average

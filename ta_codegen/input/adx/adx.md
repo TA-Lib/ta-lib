@@ -26,18 +26,6 @@ Wilder's Average Directional Movement Index, a smoothed measure of trend strengt
 
 - `optInTimePeriod` — Smoothing/averaging period for DM, TR, and ADX
 
-## Implementation
-
-TA-Lib Definition: [`adx.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adx/adx.c) · [`adx.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adx/adx.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ADX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADX.c) |
-| Rust | [`adx.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adx.rs) |
-| Java | [`Core_ADX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADX.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Average Directional Movement Index, Average Directional Index

@@ -31,18 +31,6 @@ Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open
 | 0 | No pattern |
 | 100 | Homing Pigeon detected — a bullish reversal signal, most meaningful after a downtrend (unverified by the function) |
 
-## Implementation
-
-TA-Lib Definition: [`cdlhomingpigeon.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhomingpigeon/cdlhomingpigeon.c) · [`cdlhomingpigeon.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhomingpigeon/cdlhomingpigeon.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLHOMINGPIGEON.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHOMINGPIGEON.c) |
-| Rust | [`cdlhomingpigeon.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlhomingpigeon.rs) |
-| Java | [`Core_CDLHOMINGPIGEON.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLHOMINGPIGEON.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Homing Pigeon

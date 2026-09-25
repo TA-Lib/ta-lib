@@ -32,18 +32,6 @@ The result is NaN when `s² = 0`, that is when every value in the window is equa
 
 - `optInTimePeriod` — Number of trailing values in the window
 
-## Implementation
-
-TA-Lib Definition: [`kurtosis.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kurtosis/kurtosis.c) · [`kurtosis.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kurtosis/kurtosis.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_KURTOSIS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_KURTOSIS.c) |
-| Rust | [`kurtosis.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kurtosis.rs) |
-| Java | [`Core_KURTOSIS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KURTOSIS.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Excess Kurtosis, Sample Excess Kurtosis, KURT

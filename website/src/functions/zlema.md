@@ -65,6 +65,7 @@ TA-Lib Definition: [`zlema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C | [`ta_ZLEMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ZLEMA.c) |
 | Rust | [`zlema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/zlema.rs) |
 | Java | [`Core_ZLEMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ZLEMA.java) |
+| C# | [`Core_ZLEMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ZLEMA.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

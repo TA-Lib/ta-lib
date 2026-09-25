@@ -43,8 +43,8 @@ namespace TALib;
 public enum RetCode
 {
     /// <summary>The call succeeded (<c>TA_SUCCESS</c> = 0). A valid range
-    /// shorter than the lookback is a success with zero output values, not a
-    /// failure.</summary>
+    /// that ends before the lookback is a success with zero output values, not
+    /// a failure.</summary>
     Success = 0,
     /// <summary>A parameter is out of its documented range, or two output
     /// arrays alias each other (<c>TA_BAD_PARAM</c> = 2).</summary>
@@ -69,8 +69,8 @@ public enum RetCode
     OutOfRangeEndIndex = 13,
     /// <summary>A stream opener was given fewer than <c>lookback + 1</c> bars
     /// (<c>TA_INSUFFICIENT_HISTORY</c> = 17) — the library's one recoverable
-    /// condition. Streaming only: a batch range shorter than the lookback is
-    /// <see cref="Success"/> with a zero count.</summary>
+    /// condition. Streaming only: a batch range that ends before the lookback
+    /// is <see cref="Success"/> with a zero count.</summary>
     InsufficientHistory = 17,
     /// <summary>An unexpected internal error (<c>TA_INTERNAL_ERROR</c> =
     /// 5000).</summary>

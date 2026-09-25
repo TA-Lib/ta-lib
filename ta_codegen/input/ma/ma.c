@@ -97,7 +97,7 @@ TA_RetCode ma(int startIdx, int endIdx,
    int nbElement;
    int outIdx, todayIdx;
 
-   /* Nothing to produce: the range is shorter than the lookback. Answer here
+   /* Nothing to produce: the range ends before the lookback. Answer here
     * rather than forwarding.
     *
     * The VALUE is the same either way: ma_lookback returns exactly the lookback

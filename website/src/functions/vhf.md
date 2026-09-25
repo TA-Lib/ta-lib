@@ -61,6 +61,7 @@ TA-Lib Definition: [`vhf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_VHF.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_VHF.c) |
 | Rust | [`vhf.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vhf.rs) |
 | Java | [`Core_VHF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VHF.java) |
+| C# | [`Core_VHF.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VHF.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

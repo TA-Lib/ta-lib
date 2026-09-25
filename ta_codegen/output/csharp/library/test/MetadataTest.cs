@@ -651,15 +651,16 @@ public static class MetadataTest
     /* --------------------------------------- the two call paths must agree, bitwise */
 
     /// <summary>
-    /// Every function driven both through <see cref="ParamHolder"/> and through
-    /// its typed method, with the outputs compared bit for bit.
+    /// Every function driven twice through <see cref="ParamHolder"/>, with the
+    /// outputs compared bit for bit.
     /// </summary>
-    /// <remarks>The typed arm is reached reflectively and reads nothing from the
-    /// catalogue except the argument shapes, so a transposed input, a wrong slot
-    /// index or a wrong parameter order in a generated thunk cannot produce
-    /// identical doubles by accident. (The library itself uses no reflection —
-    /// this is test scaffolding, and the shipped assembly is built with
-    /// <c>IsAotCompatible</c>.)</remarks>
+    /// <remarks>This arm binds each optional parameter to its declared default and
+    /// alternates the price-binding overload; <see cref="TypedCall"/> binds the
+    /// sentinels and one component at a time. Agreement proves the sentinels
+    /// resolve to the defaults and the two price-binding overloads agree. Both
+    /// arms reach the typed method through the same thunk, so a thunk that
+    /// transposes arguments is caught by <c>abstract_call</c> in the JSON-RPC
+    /// server, which is compared against C, not here.</remarks>
     private static void BothCallPathsAgree()
     {
         int compared = 0;
@@ -800,20 +801,6 @@ public static class MetadataTest
             $"almost every comparison produced values ({withValues}/{compared}) — an all-empty run compares nothing");
     }
 
-    /// <summary>Checks the typed overload exists with the catalogue's declared shapes, then
-    /// invokes with SENTINEL options to compare against the caller's explicit-default call.</summary>
-    /// <remarks>
-    /// <para>Not an independent code path, and it stopped being one when the API took spans: a
-    /// span is a ref struct and cannot be boxed into <c>MethodInfo.Invoke</c>'s
-    /// <c>object[]</c>, so reflective invocation of this API is impossible. Shape LOOKUP still
-    /// works, and that half is still reflective.</para>
-    /// <para>What the value comparison still proves is sentinel resolution (#162/#182): path A
-    /// binds each optional parameter to its declared default, this path binds the sentinel, and
-    /// they must agree. For the functions with NO optional inputs the two calls are identical,
-    /// so for those this degrades to a determinism check — say so rather than imply otherwise.
-    /// Binder-thunk-versus-typed-wrapper agreement is covered instead by <c>abstract_call</c> in
-    /// the JSON-RPC server, which <c>test_abstract.c</c> compares against C per function.</para>
-    /// </remarks>
     /// <summary>The canonical name as the C# surface spells it: `HT_TRENDLINE` -> `HtTrendline`.</summary>
     private static string Folded(string canonical)
     {
@@ -829,6 +816,8 @@ public static class MetadataTest
         return sb.ToString();
     }
 
+    /// <summary>Checks the typed overload exists with the catalogue's declared shapes, then
+    /// calls it with SENTINEL options to compare against the caller's explicit-default call.</summary>
     private static OutRange? TypedCall(FuncInfo f, double[][] realOut, int[][] intOut)
     {
         // The catalogue's declared shapes must name a real typed overload. This

@@ -56,6 +56,7 @@ TA-Lib Definition: [`minus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C | [`ta_MINUS_DI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MINUS_DI.c) |
 | Rust | [`minus_di.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/minus_di.rs) |
 | Java | [`Core_MINUS_DI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MINUS_DI.java) |
+| C# | [`Core_MINUS_DI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MINUS_DI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

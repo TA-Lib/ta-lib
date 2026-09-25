@@ -60,6 +60,7 @@ TA-Lib Definition: [`plus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C | [`ta_PLUS_DI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_PLUS_DI.c) |
 | Rust | [`plus_di.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/plus_di.rs) |
 | Java | [`Core_PLUS_DI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_PLUS_DI.java) |
+| C# | [`Core_PLUS_DI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PLUS_DI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -24,18 +24,6 @@ EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
 
 - `optInTimePeriod` — Smoothing period for both EMA passes
 
-## Implementation
-
-TA-Lib Definition: [`dema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dema/dema.c) · [`dema.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dema/dema.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_DEMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_DEMA.c) |
-| Rust | [`dema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/dema.rs) |
-| Java | [`Core_DEMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_DEMA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Double Exponential Moving Average

@@ -270,8 +270,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#efiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#efiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -280,7 +280,8 @@
     * @param optInTimePeriod EMA period applied to the force series (default 13;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Smoothed force. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, efiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -345,8 +346,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#efiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#efiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -355,7 +356,8 @@
     * @param optInTimePeriod EMA period applied to the force series (default 13;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Smoothed force. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, efiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -493,7 +495,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("EFI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("EFI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("EFI update", !Double.isFinite(inClose) ? "inClose" : "inVolume");
          core.efiStepImpl(this, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -511,7 +513,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("EFI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("EFI peek", !Double.isFinite(inClose) ? "inClose" : "inVolume");
          EfiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod == 1 ) {
@@ -783,12 +785,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("EFI openAndFill", inClose.length, startIdx, efiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("EFI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("EFI openAndFill: " + retCode, retCode);
+      throw streamFailure("EFI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind efiOpen (composition seam). */
    EfiStream efiOpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -804,12 +803,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("EFI open: history shorter than lookback + 1");
+         throw insufficientHistory("EFI open", inClose.length, startIdx, efiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("EFI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("EFI open: " + retCode, retCode);
+      throw streamFailure("EFI open", retCode);
    }
    /**
     * Open a live EFI stream over the warm-up history; the handle's
@@ -852,7 +848,7 @@
       requireHistoryLength("EFI openAndFill", "inVolume", inVolume.length, inClose.length);
       requireLength("EFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("EFI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("EFI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

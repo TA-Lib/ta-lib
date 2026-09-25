@@ -1017,8 +1017,8 @@ const CATALOG_DOC: &str = r#"/// <summary>
 /// <para>Generated from the same definitions as the indicators themselves, so it
 /// cannot drift from them. Immutable and safe to use from any thread.</para>
 /// <para>Scope is the guarded, double-precision batch API — the same surface C's
-/// <c>ta_abstract</c> and Rust's <c>abstract_api</c> describe. Streaming handles,
-/// <c>float[]</c> overloads are not catalogued.</para>
+/// <c>ta_abstract</c> and Rust's <c>abstract_api</c> describe. Streaming handles and
+/// the <c>float</c> overloads are not catalogued.</para>
 /// </remarks>
 "#;
 
@@ -1259,7 +1259,7 @@ public abstract record OptInputDomain
 
         /// <summary>The list in C's <c>"0=SMA;1=EMA;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
-        public string ToValueListString() => string.Join(";", Values.Select(v => $"{v.Value}={v.Name}"));
+        public string ToValueListString() => string.Join(";", Values.Select(v => FormattableString.Invariant($"{v.Value}={v.Name}")));
     }
 
     /// <summary>A fixed set of named real choices.</summary>
@@ -1282,7 +1282,7 @@ public abstract record OptInputDomain
 
         /// <summary>The list in C's <c>"value=name;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
-        public string ToValueListString() => string.Join(";", Values.Select(v => $"{v.Value}={v.Name}"));
+        public string ToValueListString() => string.Join(";", Values.Select(v => FormattableString.Invariant($"{v.Value}={v.Name}")));
     }
 }
 

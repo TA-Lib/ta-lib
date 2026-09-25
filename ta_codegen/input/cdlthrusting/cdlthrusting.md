@@ -28,18 +28,6 @@ A two-candle pattern: a long black candle followed by a white candle that opens 
 | -100 | Thrusting pattern detected: bearish continuation |
 | 0 | No pattern |
 
-## Implementation
-
-TA-Lib Definition: [`cdlthrusting.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlthrusting/cdlthrusting.c) · [`cdlthrusting.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlthrusting/cdlthrusting.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLTHRUSTING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLTHRUSTING.c) |
-| Rust | [`cdlthrusting.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlthrusting.rs) |
-| Java | [`Core_CDLTHRUSTING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLTHRUSTING.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Thrusting Pattern, Thrusting Line

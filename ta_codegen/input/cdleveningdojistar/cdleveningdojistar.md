@@ -30,18 +30,6 @@ A three-candle bearish reversal pattern: a long white candle, a doji that gaps u
 
 - `optInPenetration` — Fraction of the 1st real body the 3rd candle's close must penetrate; larger demands a deeper close into the first body
 
-## Implementation
-
-TA-Lib Definition: [`cdleveningdojistar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdleveningdojistar/cdleveningdojistar.c) · [`cdleveningdojistar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdleveningdojistar/cdleveningdojistar.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLEVENINGDOJISTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLEVENINGDOJISTAR.c) |
-| Rust | [`cdleveningdojistar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdleveningdojistar.rs) |
-| Java | [`Core_CDLEVENINGDOJISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLEVENINGDOJISTAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Evening Doji Star

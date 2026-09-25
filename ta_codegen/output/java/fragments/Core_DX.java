@@ -578,8 +578,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#dxLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#dxLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -589,7 +589,8 @@
     * @param optInTimePeriod Smoothing period for the DM and TR sums (default
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal DX directional movement index value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, dxLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -654,8 +655,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#dxLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#dxLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -665,7 +666,8 @@
     * @param optInTimePeriod Smoothing period for the DM and TR sums (default
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal DX directional movement index value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, dxLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -817,7 +819,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("DX update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("DX update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("DX update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.dxStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -835,7 +837,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("DX peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("DX peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          DxStream sp = this;
          double tempReal = 0.0;
          double diffP = 0.0;
@@ -1338,12 +1340,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("DX openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("DX openAndFill", inHigh.length, startIdx, dxLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("DX openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("DX openAndFill: " + retCode, retCode);
+      throw streamFailure("DX openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind dxOpen (composition seam). */
    DxStream dxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1359,12 +1358,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("DX open: history shorter than lookback + 1");
+         throw insufficientHistory("DX open", inHigh.length, startIdx, dxLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("DX open: internal error", retCode);
-      }
-      throw new TALibArgumentException("DX open: " + retCode, retCode);
+      throw streamFailure("DX open", retCode);
    }
    /**
     * Open a live DX stream over the warm-up history; the handle's
@@ -1411,7 +1407,7 @@
       requireHistoryLength("DX openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("DX openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("DX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("DX openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

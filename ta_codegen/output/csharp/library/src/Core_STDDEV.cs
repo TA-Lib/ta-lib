@@ -121,7 +121,7 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Same shape as the guard in apo and bbands: the variance below runs on the
@@ -233,8 +233,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StddevLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>StddevLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -245,25 +250,33 @@ public partial class Core
    /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">Standard deviation at each bar, scaled by optInNbDev. Must hold at least
-   /// <c>endIdx - startIdx + 1</c> values.</param>
+   /// <c>endIdx - max(startIdx, StddevLookback(...)) + 1</c> values, the count
+   /// the call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output partially overlaps an input.
+   /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Var(int, int, ReadOnlySpan{double}, int, double, Span{double})"/>
+   /// <seealso cref="Core.Bbands(int, int, ReadOnlySpan{double}, int, double, double, MAType, Span{double}, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Stddev( int startIdx,
                            int endIdx,
                            ReadOnlySpan<double> inReal,
@@ -304,8 +317,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StddevLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>StddevLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -316,27 +334,35 @@ public partial class Core
    /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
    /// <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outReal">Standard deviation at each bar, scaled by optInNbDev. Must hold at least
-   /// <c>endIdx - startIdx + 1</c> values.</param>
+   /// <c>endIdx - max(startIdx, StddevLookback(...)) + 1</c> values, the count
+   /// the call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. An output and
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output overlaps an input. An output and
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
-   /// overlap of their byte ranges is rejected.</exception>
+   /// overlap of their byte ranges is rejected.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Var(int, int, ReadOnlySpan{double}, int, double, Span{double})"/>
+   /// <seealso cref="Core.Bbands(int, int, ReadOnlySpan{double}, int, double, double, MAType, Span{double}, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Stddev( int startIdx,
                            int endIdx,
                            ReadOnlySpan<float> inReal,
@@ -452,7 +478,7 @@ public partial class Core
       {
          if( outRangeBegIdx + outRangeCount > Core.IndexMax )
             throw Core.StreamFailure("STDDEV", "update", RetCode.OutOfRangeEndIndex);
-         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STDDEV", "update", RetCode.BadParam);
+         if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("STDDEV", "update", nameof(inReal));
          core.StddevStepImpl(this, inReal);
          outRangeCount++;
          return cur_outReal;
@@ -473,7 +499,7 @@ public partial class Core
       /// it.</returns>
       public double Peek( double inReal )
       {
-         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STDDEV", "peek", RetCode.BadParam);
+         if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("STDDEV", "peek", nameof(inReal));
          StddevStream sp = this;
          double cur_outReal = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -551,7 +577,7 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Same shape as the guard in apo and bbands: the variance below runs on the
@@ -614,6 +640,9 @@ public partial class Core
       if( retCode == RetCode.Success ) {
          return sp;
       }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("STDDEV", "openAndFill", nameof(inReal), inReal.Length, startIdx, StddevLookback(optInTimePeriod, optInNbDev));
+      }
       throw StreamFailure("STDDEV", "openAndFill", retCode);
    }
 
@@ -627,6 +656,9 @@ public partial class Core
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("STDDEV", "open", nameof(inReal), inReal.Length, startIdx, StddevLookback(optInTimePeriod, optInNbDev));
       }
       throw StreamFailure("STDDEV", "open", retCode);
    }

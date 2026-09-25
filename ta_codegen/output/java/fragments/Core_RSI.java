@@ -333,16 +333,17 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rsiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rsiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Price series (typically close)
     * @param optInTimePeriod Lookback for the gain/loss averaging (default 14;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param outReal RSI value. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    * @param outReal RSI value. Must hold at least
+    *        {@code endIdx - max(startIdx, rsiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -392,16 +393,17 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rsiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rsiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Price series (typically close)
     * @param optInTimePeriod Lookback for the gain/loss averaging (default 14;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-    * @param outReal RSI value. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    * @param outReal RSI value. Must hold at least
+    *        {@code endIdx - max(startIdx, rsiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -536,7 +538,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("RSI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RSI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("RSI update", "inReal");
          core.rsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -554,7 +556,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RSI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("RSI peek", "inReal");
          RsiStream sp = this;
          double gainDelta = 0.0;
          double tempValue1 = 0.0;
@@ -824,12 +826,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("RSI openAndFill", inReal.length, startIdx, rsiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("RSI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("RSI openAndFill: " + retCode, retCode);
+      throw streamFailure("RSI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind rsiOpen (composition seam). */
    RsiStream rsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -845,12 +844,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("RSI open: history shorter than lookback + 1");
+         throw insufficientHistory("RSI open", inReal.length, startIdx, rsiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("RSI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("RSI open: " + retCode, retCode);
+      throw streamFailure("RSI open", retCode);
    }
    /**
     * Open a live RSI stream over the warm-up history; the handle's
@@ -889,7 +885,7 @@
       int guardOutLen = openFillCount("RSI openAndFill", inReal.length, rsiLookback(optInTimePeriod));
       requireLength("RSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("RSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("RSI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

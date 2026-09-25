@@ -31,18 +31,6 @@ The two windows are deliberately not co-terminal: the extrema span `optInTimePer
 
 - `optInTimePeriod` — Number of trailing closes spanned by the range
 
-## Implementation
-
-TA-Lib Definition: [`vhf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vhf/vhf.c) · [`vhf.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vhf/vhf.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_VHF.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_VHF.c) |
-| Rust | [`vhf.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vhf.rs) |
-| Java | [`Core_VHF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VHF.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Vertical Horizontal Filter

@@ -381,7 +381,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
     * at the same bar. Two intermediate buffers are allocated so the input may
     * safely alias an output (it is only read here).
     */
-   /* Nothing to produce: the range is shorter than the lookback. Return before
+   /* Nothing to produce: the range ends before the lookback. Return before
     * touching anything.
     *
     * Without this the moving average below runs first, and for the MA types whose
@@ -389,7 +389,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
     * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
     * computes a middle band the empty standard deviation then discards.
     * Observably identical (the empty deviation already yields 0,0 here), but it
-    * is the difference between "a range shorter than the lookback reads nothing"
+    * is the difference between "a range that ends before the lookback reads nothing"
     * being true of this function and being false: with a caller-supplied inReal
     * that stops short of endIdx, that discarded work is an out-of-bounds read.
     * The SMA fast path above needs no such guard - its own lookback IS the
@@ -904,7 +904,7 @@ static TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream **stream, const do
        * at the same bar. Two intermediate buffers are allocated so the input may
        * safely alias an output (it is only read here).
        */
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the moving average below runs first, and for the MA types whose
@@ -912,7 +912,7 @@ static TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream **stream, const do
        * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
        * computes a middle band the empty standard deviation then discards.
        * Observably identical (the empty deviation already yields 0,0 here), but it
-       * is the difference between "a range shorter than the lookback reads nothing"
+       * is the difference between "a range that ends before the lookback reads nothing"
        * being true of this function and being false: with a caller-supplied inReal
        * that stops short of endIdx, that discarded work is an out-of-bounds read.
        * The SMA fast path above needs no such guard - its own lookback IS the

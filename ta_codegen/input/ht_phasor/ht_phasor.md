@@ -23,18 +23,6 @@ I and Q are the Cartesian coordinates of the rotating cycle vector — the same 
 - `outInPhase` — In-phase component (detrender delayed 3 bars)
 - `outQuadrature` — Quadrature component (Q1 of the Hilbert Transform)
 
-## Implementation
-
-TA-Lib Definition: [`ht_phasor.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_phasor/ht_phasor.c) · [`ht_phasor.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_phasor/ht_phasor.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_HT_PHASOR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HT_PHASOR.c) |
-| Rust | [`ht_phasor.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ht_phasor.rs) |
-| Java | [`Core_HT_PHASOR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HT_PHASOR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Hilbert Transform Phasor, InPhase Quadrature

@@ -95,7 +95,7 @@ pub fn guarded_docs(
     d.paragraph(
         "On success, an [`OutRange`]: `beg_idx` is the index of the first value written, \
          in the input series' coordinates, and `count` is how many were written. A range \
-         shorter than the lookback succeeds with `count == 0`.",
+         that ends before the lookback succeeds with `count == 0`.",
     );
 
     d.blank();
@@ -105,16 +105,16 @@ pub fn guarded_docs(
         d.paragraph(
             "Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` \
              exceeds [`Core::INDEX_MAX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` \
-             exceeds it or is below `startIdx`. A range shorter than the lookback is not an \
-             error: it is [`Ok`] with a zero [`OutRange::count`].",
+             exceeds it or is below `startIdx`. A range that ends before the lookback is not \
+             an error: it is [`Ok`] with a zero [`OutRange::count`].",
         );
     } else {
         d.paragraph(
             "Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` \
              exceeds [`Core::INDEX_MAX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds \
              it or is below `startIdx`, and [`RetCode::BadParam`] when an optional parameter is \
-             outside its documented range. A range shorter than the lookback is not an error: \
-             it is [`Ok`] with a zero [`OutRange::count`].",
+             outside its documented range. A range that ends before the lookback is not an \
+             error: it is [`Ok`] with a zero [`OutRange::count`].",
         );
     }
     d.blank();

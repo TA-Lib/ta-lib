@@ -56,6 +56,7 @@ TA-Lib Definition: [`cdltasukigap.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | C | [`ta_CDLTASUKIGAP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLTASUKIGAP.c) |
 | Rust | [`cdltasukigap.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdltasukigap.rs) |
 | Java | [`Core_CDLTASUKIGAP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLTASUKIGAP.java) |
+| C# | [`Core_CDLTASUKIGAP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLTASUKIGAP.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -68,6 +68,7 @@ TA-Lib Definition: [`cvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_CVI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CVI.c) |
 | Rust | [`cvi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cvi.rs) |
 | Java | [`Core_CVI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CVI.java) |
+| C# | [`Core_CVI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CVI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

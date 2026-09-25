@@ -31,18 +31,6 @@ ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
 - `optInTimePeriod2` — Bars for another averaging window
 - `optInTimePeriod3` — Bars for another averaging window
 
-## Implementation
-
-TA-Lib Definition: [`ultosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ultosc/ultosc.c) · [`ultosc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ultosc/ultosc.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ULTOSC.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ULTOSC.c) |
-| Rust | [`ultosc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ultosc.rs) |
-| Java | [`Core_ULTOSC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ULTOSC.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Ultimate Oscillator, UO

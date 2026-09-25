@@ -62,6 +62,7 @@ TA-Lib Definition: [`median.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C | [`ta_MEDIAN.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MEDIAN.c) |
 | Rust | [`median.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/median.rs) |
 | Java | [`Core_MEDIAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MEDIAN.java) |
+| C# | [`Core_MEDIAN.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MEDIAN.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

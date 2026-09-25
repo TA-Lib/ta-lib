@@ -63,4 +63,9 @@ public sealed class InsufficientHistoryException : TALibArgumentException
         : base(message, RetCode.InsufficientHistory)
     {
     }
+
+    internal InsufficientHistoryException(string message, string paramName)
+        : base(message, paramName, RetCode.InsufficientHistory)
+    {
+    }
 }

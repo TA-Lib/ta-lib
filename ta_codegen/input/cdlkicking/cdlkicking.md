@@ -27,18 +27,6 @@ Two-candle pattern of two opposite-color marubozu (long bodies with very short s
 | 0 | No pattern |
 | 100 | Bullish Kicking: the second (gapping) marubozu closed white |
 
-## Implementation
-
-TA-Lib Definition: [`cdlkicking.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkicking/cdlkicking.c) · [`cdlkicking.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkicking/cdlkicking.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLKICKING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLKICKING.c) |
-| Rust | [`cdlkicking.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlkicking.rs) |
-| Java | [`Core_CDLKICKING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLKICKING.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Kicking

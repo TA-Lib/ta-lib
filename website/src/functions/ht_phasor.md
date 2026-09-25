@@ -51,6 +51,7 @@ TA-Lib Definition: [`ht_phasor.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | C | [`ta_HT_PHASOR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HT_PHASOR.c) |
 | Rust | [`ht_phasor.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ht_phasor.rs) |
 | Java | [`Core_HT_PHASOR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HT_PHASOR.java) |
+| C# | [`Core_HT_PHASOR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_PHASOR.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

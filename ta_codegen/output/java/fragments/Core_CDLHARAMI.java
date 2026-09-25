@@ -240,8 +240,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlharamiLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlharamiLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -252,7 +252,9 @@
     * @param outInteger +100/+80 when the long 1st candle is black (bullish),
     *        -100/-80 when it is white (bearish), 0 otherwise; 80 when the two real
     *        bodies share an end, 100 when the 1st body strictly overhangs both ends of
-    *        the 2nd. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        the 2nd. Must hold at least
+    *        {@code endIdx - max(startIdx, cdlharamiLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -312,8 +314,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlharamiLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlharamiLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -324,7 +326,9 @@
     * @param outInteger +100/+80 when the long 1st candle is black (bullish),
     *        -100/-80 when it is white (bearish), 0 otherwise; 80 when the two real
     *        bodies share an end, 100 when the 1st body strictly overhangs both ends of
-    *        the 2nd. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        the 2nd. Must hold at least
+    *        {@code endIdx - max(startIdx, cdlharamiLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -490,7 +494,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLHARAMI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLHARAMI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLHARAMI update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlharamiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -508,7 +512,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLHARAMI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLHARAMI peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdlharamiStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -787,12 +791,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLHARAMI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLHARAMI openAndFill", inOpen.length, startIdx, cdlharamiLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLHARAMI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLHARAMI openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLHARAMI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlharamiOpen (composition seam). */
    CdlharamiStream cdlharamiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -808,12 +809,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLHARAMI open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLHARAMI open", inOpen.length, startIdx, cdlharamiLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLHARAMI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLHARAMI open: " + retCode, retCode);
+      throw streamFailure("CDLHARAMI open", retCode);
    }
    /**
     * Open a live CDLHARAMI stream over the warm-up history; the handle's
@@ -862,7 +860,7 @@
       requireHistoryLength("CDLHARAMI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHARAMI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLHARAMI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLHARAMI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -62,6 +62,7 @@ TA-Lib Definition: [`kurtosis.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C | [`ta_KURTOSIS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_KURTOSIS.c) |
 | Rust | [`kurtosis.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kurtosis.rs) |
 | Java | [`Core_KURTOSIS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KURTOSIS.java) |
+| C# | [`Core_KURTOSIS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KURTOSIS.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

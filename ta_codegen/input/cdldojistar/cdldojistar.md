@@ -32,18 +32,6 @@ Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: d
 | 0 | No pattern |
 | 100 | Doji Star gapping down after a strong decline — waning momentum, a bullish warning if it appears in a downtrend |
 
-## Implementation
-
-TA-Lib Definition: [`cdldojistar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldojistar/cdldojistar.c) · [`cdldojistar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldojistar/cdldojistar.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLDOJISTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLDOJISTAR.c) |
-| Rust | [`cdldojistar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdldojistar.rs) |
-| Java | [`Core_CDLDOJISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLDOJISTAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Doji Star

@@ -69,6 +69,7 @@ TA-Lib Definition: [`massi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C | [`ta_MASSI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MASSI.c) |
 | Rust | [`massi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/massi.rs) |
 | Java | [`Core_MASSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MASSI.java) |
+| C# | [`Core_MASSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MASSI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

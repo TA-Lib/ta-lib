@@ -41,6 +41,7 @@ TA-Lib Definition: [`ht_sine.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C | [`ta_HT_SINE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HT_SINE.c) |
 | Rust | [`ht_sine.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ht_sine.rs) |
 | Java | [`Core_HT_SINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HT_SINE.java) |
+| C# | [`Core_HT_SINE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_SINE.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

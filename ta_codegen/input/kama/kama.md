@@ -27,18 +27,6 @@ KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
 
 - `optInTimePeriod` — Lookback window for the efficiency ratio
 
-## Implementation
-
-TA-Lib Definition: [`kama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kama/kama.c) · [`kama.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kama/kama.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_KAMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_KAMA.c) |
-| Rust | [`kama.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kama.rs) |
-| Java | [`Core_KAMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KAMA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Kaufman Adaptive Moving Average, Kaufman's Adaptive Moving Average

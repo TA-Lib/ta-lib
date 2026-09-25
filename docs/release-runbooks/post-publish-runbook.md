@@ -25,8 +25,8 @@ C release, and each language publish in `README.md`'s order.
 
 (PP2) Add a `## [0.7.3] Not Released Yet` entry at the top of CHANGELOG.md.
 
-(PP3) Run `./scripts/sync.py`. Besides the version, it points the website install page at the release just published and records that release in `ABI.released` (needs gcc and network). Commit, push dev, then `./scripts/merge.py`; the push to main deploys the website. Confirm with:
+(PP3) Run `./scripts/sync.py`. Besides the version, it points every website page that advertises a published version at that registry's latest release, and records the C release in `ABI.released` (needs gcc and network). Commit, push dev, then `./scripts/merge.py`; the push to main deploys the website. Confirm with:
 
 ```bash
-./scripts/sync-website.py --check   # non-zero if the page is behind, or the release could not be looked up
+./scripts/sync-website.py --check   # non-zero if a page is behind, or a release could not be looked up
 ```

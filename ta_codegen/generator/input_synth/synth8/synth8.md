@@ -28,7 +28,3 @@ outAvgShadows[i] = candleAverage(ShadowShort, sum, bar i); outAvgCurrentBar[i] =
 
 - `outAvgShadows` — Candle average over a `Shadows` window
 - `outAvgCurrentBar` — Candle average with `avgPeriod` zero, reading the current bar
-
-## Implementation
-
-TA-Lib Definition: [`synth8.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth8/synth8.c) · [`synth8.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth8/synth8.yaml)

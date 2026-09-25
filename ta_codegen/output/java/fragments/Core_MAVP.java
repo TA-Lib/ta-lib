@@ -508,8 +508,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#mavpLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#mavpLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -524,7 +524,8 @@
     *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
     *        the default).
     * @param outReal variable-period moving average. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -586,8 +587,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#mavpLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#mavpLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -602,7 +603,8 @@
     *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
     *        the default).
     * @param outReal variable-period moving average. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, mavpLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -746,7 +748,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MAVP update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TALibArgumentException("MAVP update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MAVP update", !Double.isFinite(inReal) ? "inReal" : "inPeriods");
          core.mavpStepImpl(this, inReal, inPeriods);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -764,7 +766,7 @@
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new TALibArgumentException("MAVP peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MAVP peek", !Double.isFinite(inReal) ? "inReal" : "inPeriods");
          MavpStream sp = this;
          int cp = (int)inPeriods;
          if( cp < sp.optInMinPeriod ) {
@@ -965,12 +967,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MAVP open: history shorter than lookback + 1");
+         throw insufficientHistory("MAVP open", inReal.length, startIdx, mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MAVP open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MAVP open: " + retCode, retCode);
+      throw streamFailure("MAVP open", retCode);
    }
    /**
     * Open a live MAVP stream over the warm-up history; the handle's
@@ -1024,10 +1023,7 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MAVP openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MAVP openAndFill", inReal.length, 0, mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MAVP openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MAVP openAndFill: " + retCode, retCode);
+      throw streamFailure("MAVP openAndFill", retCode);
    }

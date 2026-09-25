@@ -27,7 +27,3 @@ outInteger[i] = ((2 × optInTimePeriod + fold(inReal[i])) & 65535) | (hits << 16
 ## Parameters
 
 - `optInTimePeriod` — Period the negative index is wrapped by
-
-## Implementation
-
-TA-Lib Definition: [`synth3.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth3/synth3.c) · [`synth3.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth3/synth3.yaml)

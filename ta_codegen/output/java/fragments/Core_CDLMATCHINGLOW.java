@@ -180,7 +180,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlmatchinglowLookback} is a
+    * valid range that ends before {@link Core#cdlmatchinglowLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -191,7 +191,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 when the pattern is present, 0 otherwise. Only +100
     *        is ever emitted (matching low is always bullish); never -100. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, cdlmatchinglowLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -251,7 +252,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlmatchinglowLookback} is a
+    * valid range that ends before {@link Core#cdlmatchinglowLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -262,7 +263,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 when the pattern is present, 0 otherwise. Only +100
     *        is ever emitted (matching low is always bullish); never -100. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, cdlmatchinglowLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -415,7 +417,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLMATCHINGLOW update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLMATCHINGLOW update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLMATCHINGLOW update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlmatchinglowStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -433,7 +435,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLMATCHINGLOW peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLMATCHINGLOW peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdlmatchinglowStream sp = this;
          int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -622,12 +624,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLMATCHINGLOW openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLMATCHINGLOW openAndFill", inOpen.length, startIdx, cdlmatchinglowLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLMATCHINGLOW openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLMATCHINGLOW openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLMATCHINGLOW openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlmatchinglowOpen (composition seam). */
    CdlmatchinglowStream cdlmatchinglowOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -643,12 +642,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLMATCHINGLOW open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLMATCHINGLOW open", inOpen.length, startIdx, cdlmatchinglowLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLMATCHINGLOW open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLMATCHINGLOW open: " + retCode, retCode);
+      throw streamFailure("CDLMATCHINGLOW open", retCode);
    }
    /**
     * Open a live CDLMATCHINGLOW stream over the warm-up history; the handle's
@@ -697,7 +693,7 @@
       requireHistoryLength("CDLMATCHINGLOW openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMATCHINGLOW openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLMATCHINGLOW openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLMATCHINGLOW openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -31,19 +31,6 @@ The first bar of the requested range has no previous close, so the first output 
 
 - `outReal` — Cumulative accumulation/distribution
 
-## Implementation
-
-TA-Lib Definition: [`wad.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wad/wad.c) · [`wad.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/wad/wad.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_WAD.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_WAD.c) |
-| Rust | [`wad.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/wad.rs) |
-| Java | [`Core_WAD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_WAD.java) |
-| C# | [`Core_WAD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WAD.cs) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## See Also
 
 AD · ADOSC · NVI · OBV · PVI

@@ -31,18 +31,6 @@ Two candles. First: black (close1 < open1) with a long real body (realbody > can
 | -100 | In-Neck pattern detected: bearish continuation |
 | 0 | No pattern |
 
-## Implementation
-
-TA-Lib Definition: [`cdlinneck.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlinneck/cdlinneck.c) · [`cdlinneck.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlinneck/cdlinneck.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLINNECK.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLINNECK.c) |
-| Rust | [`cdlinneck.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlinneck.rs) |
-| Java | [`Core_CDLINNECK.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLINNECK.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 In-Neck Pattern, In-Neck Line

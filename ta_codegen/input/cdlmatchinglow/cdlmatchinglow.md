@@ -31,18 +31,6 @@ Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open)
 | 0 | No pattern |
 | 100 | Matching Low detected — bullish reversal signal (shared support close after two black candles) |
 
-## Implementation
-
-TA-Lib Definition: [`cdlmatchinglow.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmatchinglow/cdlmatchinglow.c) · [`cdlmatchinglow.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmatchinglow/cdlmatchinglow.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLMATCHINGLOW.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLMATCHINGLOW.c) |
-| Rust | [`cdlmatchinglow.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlmatchinglow.rs) |
-| Java | [`Core_CDLMATCHINGLOW.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLMATCHINGLOW.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Matching Low

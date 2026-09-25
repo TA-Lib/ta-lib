@@ -391,8 +391,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#vortexLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#vortexLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -402,9 +402,11 @@
     * @param optInTimePeriod Number of bars in the rolling sums (default 14;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outPlusVI Positive vortex line (+VI) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMinusVI Negative vortex line (−VI) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -471,8 +473,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#vortexLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#vortexLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -482,9 +484,11 @@
     * @param optInTimePeriod Number of bars in the rolling sums (default 14;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outPlusVI Positive vortex line (+VI) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMinusVI Negative vortex line (−VI) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, vortexLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -648,7 +652,7 @@
             throw failure("VORTEX update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("VORTEX update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("VORTEX update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("VORTEX update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.vortexStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.plusVI = this.cur_outPlusVI;
@@ -668,7 +672,7 @@
       public void peek( double inHigh, double inLow, double inClose, VortexOut out ) {
          requireArgument("VORTEX peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("VORTEX peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("VORTEX peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          VortexStream sp = this;
          double curTR = 0.0;
          double curVMP = 0.0;
@@ -1183,12 +1187,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("VORTEX openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("VORTEX openAndFill", inHigh.length, startIdx, vortexLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("VORTEX openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("VORTEX openAndFill: " + retCode, retCode);
+      throw streamFailure("VORTEX openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind vortexOpen (composition seam). */
    VortexStream vortexOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1205,12 +1206,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("VORTEX open: history shorter than lookback + 1");
+         throw insufficientHistory("VORTEX open", inHigh.length, startIdx, vortexLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("VORTEX open: internal error", retCode);
-      }
-      throw new TALibArgumentException("VORTEX open: " + retCode, retCode);
+      throw streamFailure("VORTEX open", retCode);
    }
    /**
     * Open a live VORTEX stream over the warm-up history; the handle's
@@ -1258,7 +1256,7 @@
       requireLength("VORTEX openAndFill", "outPlusVI", outPlusVI, guardOutLen);
       requireLength("VORTEX openAndFill", "outMinusVI", outMinusVI, guardOutLen);
       if( (Object)outPlusVI == (Object)inHigh || (Object)outPlusVI == (Object)inLow || (Object)outPlusVI == (Object)inClose || (Object)outMinusVI == (Object)inHigh || (Object)outMinusVI == (Object)inLow || (Object)outMinusVI == (Object)inClose || (Object)outPlusVI == (Object)outMinusVI ) {
-         throw new TALibArgumentException("VORTEX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("VORTEX openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

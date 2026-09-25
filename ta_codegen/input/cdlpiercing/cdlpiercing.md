@@ -26,18 +26,6 @@ Two-candle pattern: a long black candle followed by a long white candle that ope
 | 0 | No pattern |
 | 100 | Piercing pattern detected — bullish reversal signal |
 
-## Implementation
-
-TA-Lib Definition: [`cdlpiercing.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlpiercing/cdlpiercing.c) · [`cdlpiercing.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlpiercing/cdlpiercing.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLPIERCING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLPIERCING.c) |
-| Rust | [`cdlpiercing.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlpiercing.rs) |
-| Java | [`Core_CDLPIERCING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLPIERCING.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Piercing Pattern, Piercing Line

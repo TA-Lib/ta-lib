@@ -76,14 +76,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cosLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cosLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values, treated as angles in radians.
     * @param outReal Cosine of each input value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cosLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -132,14 +133,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cosLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cosLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values, treated as angles in radians.
     * @param outReal Cosine of each input value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cosLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -265,7 +267,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("COS update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("COS update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("COS update", "inReal");
          core.cosStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -283,7 +285,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("COS peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("COS peek", "inReal");
          CosStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.cos(inReal);
@@ -357,12 +359,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("COS openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("COS openAndFill", inReal.length, startIdx, cosLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("COS openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("COS openAndFill: " + retCode, retCode);
+      throw streamFailure("COS openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cosOpen (composition seam). */
    CosStream cosOpenInternal( double inReal[], int startIdx )
@@ -378,12 +377,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("COS open: history shorter than lookback + 1");
+         throw insufficientHistory("COS open", inReal.length, startIdx, cosLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("COS open: internal error", retCode);
-      }
-      throw new TALibArgumentException("COS open: " + retCode, retCode);
+      throw streamFailure("COS open", retCode);
    }
    /**
     * Open a live COS stream over the warm-up history; the handle's
@@ -420,7 +416,7 @@
       int guardOutLen = openFillCount("COS openAndFill", inReal.length, cosLookback());
       requireLength("COS openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("COS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("COS openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

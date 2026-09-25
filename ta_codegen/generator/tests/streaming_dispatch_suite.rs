@@ -633,8 +633,8 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
         std::fs::read_to_string(root.join("ta_codegen/output/java/tools/TaCodegenServe.java"))
             .expect("the generated Java server");
 
-    // All ten, not the four the gate started with: `checkLength` is where rule
-    // S5's rejection actually happens, and `failure` is the whole RetCode ->
+    // Every helper both copies carry: `checkLength` is where rule S5's
+    // rejection actually happens, and `failure` is the whole RetCode ->
     // exception mapping. Adding one is a line (issue #271 item 3).
     for sig in [
         "static RuntimeException failure(String funcName, RetCode retCode) {",
@@ -648,6 +648,9 @@ fn the_java_argument_helpers_agree_between_the_library_and_the_server() {
         "static void requireHistory(String funcName, int historyLen) {",
         "static void requireIndexRange(String funcName, int startIdx, int endIdx) {",
         "static void requireArgument(String funcName, String argName, Object argument) {",
+        "static RuntimeException streamFailure(String funcName, RetCode retCode) {",
+        "static InsufficientHistoryException insufficientHistory(String funcName, int historyLen, int startIdx, int lookback) {",
+        "static TALibArgumentException nonFiniteBar(String funcName, String argName) {",
     ] {
         assert_eq!(
             method(&core, sig, "Core.java"),

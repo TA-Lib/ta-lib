@@ -276,7 +276,7 @@ public static class DivZeroTest
     {
         // The control for the case above: the tier's own contract is unchanged,
         // so "does not reject a zero divisor" cannot be read as "rejects
-        // nothing". The MESSAGE is checked, not just the type -- see
+        // nothing". The CODE is checked, not just the type -- see
         // StreamApiTest.ThrowsBadParam for why.
         var core = new Core();
         Core.DivStream s = core.DivOpen(new[] { 1.0 }, new[] { 2.0 });
@@ -302,7 +302,7 @@ public static class DivZeroTest
             _failures++;
             Console.WriteLine($"  FAIL: {what} accepted a non-finite bar ({bad})");
         }
-        catch (ArgumentException e) when (e.Message.EndsWith(": BadParam", StringComparison.Ordinal))
+        catch (ArgumentException e) when (e is ITALibFailure { RetCode: RetCode.BadParam })
         {
             /* expected */
         }

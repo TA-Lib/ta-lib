@@ -107,11 +107,14 @@ fn test_java_sma_ring_stream_section() {
     assert!(!s.contains("return RetCode.OUT_OF_RANGE_END_INDEX ;"),
             "the borrowed in-band code is gone from the open body");
     // The message names the function as the metadata registry spells it, with
-    // no C `TA_` prefix (that is C's namespacing, meaningless on a classpath).
-    assert!(s.contains("throw new InsufficientHistoryException(\"SMA open:"));
-    // Carrying, not a plain JDK type: the code has to be recoverable from every
-    // failure the library raises, on this ladder as much as the batch one.
-    assert!(s.contains("throw new TALibStateException(\"SMA open: internal error\", retCode);"));
+    // no C `TA_` prefix (that is C's namespacing, meaningless on a classpath),
+    // and carries the counts: the history's length and the bars the core tested.
+    assert!(s.contains(
+        "throw insufficientHistory(\"SMA open\", inReal.length, startIdx, smaLookback(optInTimePeriod));"
+    ));
+    // Every other code goes through the shared mapping, which is what makes it
+    // recoverable from the thrown object on this ladder as on the batch one.
+    assert!(s.contains("throw streamFailure(\"SMA open\", retCode);"));
     assert!(!s.contains("\"TA_SMA open:"), "no C-namespaced prefix survives");
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.
@@ -621,8 +624,8 @@ fn java_public_fill_keeps_the_aliasing_guards() {
         "output-vs-output guard survives on the public fill:\n{body}"
     );
     assert!(
-        body.contains("throw new TALibArgumentException(\"ACCBANDS openAndFill: \" + RetCode.BAD_PARAM, RetCode.BAD_PARAM);"),
-        "the guard throws the same text the retired ladder produced:\n{body}"
+        body.contains("throw streamFailure(\"ACCBANDS openAndFill\", RetCode.BAD_PARAM);"),
+        "the guard throws through the opener's shared mapping:\n{body}"
     );
     // Paired negatives: both are false today only because the guard moved UP,
     // so a re-render that pushes it back down fails the positive above.

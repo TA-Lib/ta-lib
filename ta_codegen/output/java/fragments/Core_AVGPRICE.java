@@ -91,7 +91,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#avgpriceLookback} is a <b>success
+    * valid range that ends before {@link Core#avgpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -101,7 +101,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outReal Per-bar average of the four OHLC prices. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, avgpriceLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -157,7 +158,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#avgpriceLookback} is a <b>success
+    * valid range that ends before {@link Core#avgpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -167,7 +168,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outReal Per-bar average of the four OHLC prices. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, avgpriceLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -298,7 +300,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("AVGPRICE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("AVGPRICE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("AVGPRICE update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.avgpriceStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -316,7 +318,7 @@
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("AVGPRICE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("AVGPRICE peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          AvgpriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
@@ -395,12 +397,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("AVGPRICE openAndFill", inOpen.length, startIdx, avgpriceLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("AVGPRICE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
+      throw streamFailure("AVGPRICE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind avgpriceOpen (composition seam). */
    AvgpriceStream avgpriceOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -416,12 +415,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("AVGPRICE open: history shorter than lookback + 1");
+         throw insufficientHistory("AVGPRICE open", inOpen.length, startIdx, avgpriceLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("AVGPRICE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("AVGPRICE open: " + retCode, retCode);
+      throw streamFailure("AVGPRICE open", retCode);
    }
    /**
     * Open a live AVGPRICE stream over the warm-up history; the handle's
@@ -470,7 +466,7 @@
       requireHistoryLength("AVGPRICE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("AVGPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("AVGPRICE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("AVGPRICE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

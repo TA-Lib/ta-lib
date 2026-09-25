@@ -28,18 +28,6 @@ The standard form is exponential — APO with EMA and periods 12/26 is the fast-
 - `optInSlowPeriod` — Period of the slow moving average
 - `optInMAType` — Moving-average type used for both MAs
 
-## Implementation
-
-TA-Lib Definition: [`apo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/apo/apo.c) · [`apo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/apo/apo.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_APO.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_APO.c) |
-| Rust | [`apo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/apo.rs) |
-| Java | [`Core_APO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_APO.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Absolute Price Oscillator

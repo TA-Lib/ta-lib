@@ -352,8 +352,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#varLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#varLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -364,7 +364,8 @@
     *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
     *        default).
     * @param outReal Rolling population variance. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, varLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -419,8 +420,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#varLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#varLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -431,7 +432,8 @@
     *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
     *        default).
     * @param outReal Rolling population variance. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, varLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -586,7 +588,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("VAR update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("VAR update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("VAR update", "inReal");
          core.varStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -604,7 +606,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("VAR peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("VAR peek", "inReal");
          VarStream sp = this;
          double tempReal = 0.0;
          double meanValue1 = 0.0;
@@ -1025,12 +1027,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("VAR openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("VAR openAndFill", inReal.length, startIdx, varLookback(optInTimePeriod, optInNbDev));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("VAR openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("VAR openAndFill: " + retCode, retCode);
+      throw streamFailure("VAR openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind varOpen (composition seam). */
    VarStream varOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
@@ -1046,12 +1045,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("VAR open: history shorter than lookback + 1");
+         throw insufficientHistory("VAR open", inReal.length, startIdx, varLookback(optInTimePeriod, optInNbDev));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("VAR open: internal error", retCode);
-      }
-      throw new TALibArgumentException("VAR open: " + retCode, retCode);
+      throw streamFailure("VAR open", retCode);
    }
    /**
     * Open a live VAR stream over the warm-up history; the handle's
@@ -1090,7 +1086,7 @@
       int guardOutLen = openFillCount("VAR openAndFill", inReal.length, varLookback(optInTimePeriod, optInNbDev));
       requireLength("VAR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("VAR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("VAR openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

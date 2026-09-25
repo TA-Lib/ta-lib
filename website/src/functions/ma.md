@@ -59,6 +59,7 @@ TA-Lib Definition: [`ma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C | [`ta_MA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MA.c) |
 | Rust | [`ma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ma.rs) |
 | Java | [`Core_MA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MA.java) |
+| C# | [`Core_MA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MA.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

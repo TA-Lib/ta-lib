@@ -1063,8 +1063,8 @@ fn advance_out_range(indent: &str) -> String {
 /// The rejection changes nothing at all — the produced-bar count included.
 /// Counting a bar the caller declined to commit is `Advance()`'s job.
 ///
-/// Routed through `Core.StreamFailure` so the message prefix and the exception
-/// type match the open rejections exactly.
+/// The condition stays one test; which input failed is worked out only on the
+/// throw path, so the accepting path is unchanged.
 fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
@@ -1073,7 +1073,12 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
     let n = base_name(func);
     let conds: Vec<String> = bars.iter().map(|b| format!("!double.IsFinite({b})")).collect();
     let cond = conds.join(" || ");
-    let throw = format!("throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);");
+    let (last, rest) = bars.split_last().expect("non-empty");
+    let mut name = format!("nameof({last})");
+    for b in rest.iter().rev() {
+        name = format!("!double.IsFinite({b}) ? nameof({b}) : {name}");
+    }
+    let throw = format!("throw Core.NonFiniteBar(\"{n}\", \"{what}\", {name});");
     format!("{indent}if( {cond} ) {throw}\n")
 }
 
@@ -2470,19 +2475,27 @@ fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: 
 
 /// The reject-conversion tail shared by `OpenInternal` / `OpenAndFill`.
 ///
-/// One `throw StreamFailure(...)` per site rather than Java's four-line ladder:
-/// the mapping (typed insufficient-history, `InvalidOperationException` for a
-/// capture invariant, `ArgumentException` for everything else) is single-sourced
-/// in `Core.StreamFailure`, which is also what makes the message prefix
-/// `"<NAME> open: "` the gate greps for impossible to drift per function.
-///
-/// Deliberately not `Core.Failure`: that maps `OutOfRangeEndIndex` to
-/// `ArgumentOutOfRangeException("endIdx")`, meaningless for a caller with no
-/// `endIdx` parameter.
-fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
+/// Rule S7 is answered with its counts; every other code goes through
+/// `Core.StreamFailure`, which single-sources the `"<NAME> <verb>: "` prefix the
+/// stream gate greps. `anchor` is the seam's `startIdx`, or `None` at a public
+/// frame (anchor 0).
+fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str, anchor: Option<&str>) {
     let n = func.name.to_uppercase();
+    let history = &streaming::input_array_names(func)[0];
+    let lookback = format!(
+        "{}Lookback({})",
+        pascal_words(&base_name(func)),
+        func.optional_inputs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ")
+    );
+    let anchor = anchor.unwrap_or("0");
     let _ = writeln!(o, "      if( retCode == RetCode.Success ) {{");
     let _ = writeln!(o, "         return sp;");
+    let _ = writeln!(o, "      }}");
+    let _ = writeln!(o, "      if( retCode == RetCode.InsufficientHistory ) {{");
+    let _ = writeln!(
+        o,
+        "         throw InsufficientHistory(\"{n}\", \"{what}\", nameof({history}), {history}.Length, {anchor}, {lookback});"
+    );
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      throw StreamFailure(\"{n}\", \"{what}\", retCode);");
 }
@@ -2554,7 +2567,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     // composed sub-handle is opened through (issue #241).
     let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx;");
     let _ = writeln!(o, "      sp.outRangeCount = outNBElement;");
-    emit_reject_conversion(o, func, "openAndFill");
+    emit_reject_conversion(o, func, "openAndFill", Some("startIdx"));
     let _ = writeln!(o, "   }}");
 }
 
@@ -2754,7 +2767,7 @@ fn emit_open_wrappers(
             in_fwd.join(", ")
         );
     }
-    emit_reject_conversion(o, func, "open");
+    emit_reject_conversion(o, func, "open", Some("startIdx"));
     let _ = writeln!(o, "   }}");
 
     // --- public Open ---------------------------------------------------------
@@ -2954,7 +2967,7 @@ fn emit_open_wrappers(
         );
         let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx;");
         let _ = writeln!(o, "      sp.outRangeCount = outNBElement;");
-        emit_reject_conversion(o, func, "openAndFill");
+        emit_reject_conversion(o, func, "openAndFill", None);
     }
     let _ = writeln!(o, "   }}");
 }

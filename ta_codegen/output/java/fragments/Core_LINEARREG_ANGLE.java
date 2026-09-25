@@ -341,7 +341,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#linearregAngleLookback} is a
+    * valid range that ends before {@link Core#linearregAngleLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -350,7 +350,9 @@
     * @param optInTimePeriod Number of points in the regression window (default
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Regression line slope expressed as an angle in degrees.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least
+    *        {@code endIdx - max(startIdx, linearregAngleLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -403,7 +405,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#linearregAngleLookback} is a
+    * valid range that ends before {@link Core#linearregAngleLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -412,7 +414,9 @@
     * @param optInTimePeriod Number of points in the regression window (default
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Regression line slope expressed as an angle in degrees.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least
+    *        {@code endIdx - max(startIdx, linearregAngleLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -567,7 +571,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("LINEARREG_ANGLE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LINEARREG_ANGLE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("LINEARREG_ANGLE update", "inReal");
          core.linearregAngleStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -585,7 +589,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LINEARREG_ANGLE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("LINEARREG_ANGLE peek", "inReal");
          LinearregAngleStream sp = this;
          double m = 0.0;
          int windowStart = 0;
@@ -1037,12 +1041,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("LINEARREG_ANGLE openAndFill", inReal.length, startIdx, linearregAngleLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
+      throw streamFailure("LINEARREG_ANGLE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind linearregAngleOpen (composition seam). */
    LinearregAngleStream linearregAngleOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1058,12 +1059,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("LINEARREG_ANGLE open: history shorter than lookback + 1");
+         throw insufficientHistory("LINEARREG_ANGLE open", inReal.length, startIdx, linearregAngleLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("LINEARREG_ANGLE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("LINEARREG_ANGLE open: " + retCode, retCode);
+      throw streamFailure("LINEARREG_ANGLE open", retCode);
    }
    /**
     * Open a live LINEARREG_ANGLE stream over the warm-up history; the handle's
@@ -1102,7 +1100,7 @@
       int guardOutLen = openFillCount("LINEARREG_ANGLE openAndFill", inReal.length, linearregAngleLookback(optInTimePeriod));
       requireLength("LINEARREG_ANGLE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("LINEARREG_ANGLE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("LINEARREG_ANGLE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

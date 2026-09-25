@@ -38,18 +38,6 @@ J = 3*K - 2*D
 - `optInSlowD_Period` — Smoothing period for the D signal line
 - `optInSlowD_MAType` — MA type used for the D line
 
-## Implementation
-
-TA-Lib Definition: [`kdj.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kdj/kdj.c) · [`kdj.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kdj/kdj.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_KDJ.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_KDJ.c) |
-| Rust | [`kdj.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kdj.rs) |
-| Java | [`Core_KDJ.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KDJ.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 KDJ Indicator, Random Index, Stochastic KDJ, K D J lines

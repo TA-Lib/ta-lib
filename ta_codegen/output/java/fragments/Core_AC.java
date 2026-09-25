@@ -380,8 +380,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#acLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#acLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -398,8 +398,9 @@
     *        selects the default).
     * @param outReal Distance of the Awesome Oscillator (<a
     *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
-    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        average, centred on zero. Must hold at least
+    *        {@code endIdx - max(startIdx, acLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -469,8 +470,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#acLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#acLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -487,8 +488,9 @@
     *        selects the default).
     * @param outReal Distance of the Awesome Oscillator (<a
     *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
-    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        average, centred on zero. Must hold at least
+    *        {@code endIdx - max(startIdx, acLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -652,7 +654,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("AC update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AC update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("AC update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          core.acStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -670,7 +672,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("AC peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("AC peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          AcStream sp = this;
          double medianPrice = 0.0;
          double osc = 0.0;
@@ -1048,12 +1050,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("AC openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("AC openAndFill", inHigh.length, startIdx, acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("AC openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("AC openAndFill: " + retCode, retCode);
+      throw streamFailure("AC openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind acOpen (composition seam). */
    AcStream acOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -1069,12 +1068,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("AC open: history shorter than lookback + 1");
+         throw insufficientHistory("AC open", inHigh.length, startIdx, acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("AC open: internal error", retCode);
-      }
-      throw new TALibArgumentException("AC open: " + retCode, retCode);
+      throw streamFailure("AC open", retCode);
    }
    /**
     * Open a live AC stream over the warm-up history; the handle's
@@ -1117,7 +1113,7 @@
       requireHistoryLength("AC openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("AC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("AC openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("AC openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

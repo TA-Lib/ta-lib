@@ -61,6 +61,7 @@ TA-Lib Definition: [`pvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_PVI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_PVI.c) |
 | Rust | [`pvi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/pvi.rs) |
 | Java | [`Core_PVI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_PVI.java) |
+| C# | [`Core_PVI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PVI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -168,7 +168,7 @@ public partial class Core
          return RetCode.BadParam ;
       }
       lookbackTotal = KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
-      /* Nothing to produce: the range is shorter than the lookback. Answering here
+      /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.
        */
@@ -298,8 +298,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>KdjLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>KdjLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -322,29 +327,40 @@ public partial class Core
    /// 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outK">Raw stochastic smoothed by SlowK_Period MA. Must hold at least <c>endIdx -
-   /// startIdx + 1</c> values.</param>
+   /// max(startIdx, KdjLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <param name="outD">Signal line: K smoothed by SlowD_Period MA. Must hold at least <c>endIdx -
-   /// startIdx + 1</c> values.</param>
+   /// max(startIdx, KdjLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <param name="outJ">Divergence line, three parts K less two parts D. Must hold at least
-   /// <c>endIdx - startIdx + 1</c> values.</param>
+   /// <c>endIdx - max(startIdx, KdjLookback(...)) + 1</c> values, the count the
+   /// call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output partially overlaps an input.
+   /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Stoch(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, MAType, int, MAType, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Stochf(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, MAType, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Rma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Ma(int, int, ReadOnlySpan{double}, int, MAType, Span{double})"/>
    public OutRange Kdj( int startIdx,
                         int endIdx,
                         ReadOnlySpan<double> inHigh,
@@ -406,8 +422,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>KdjLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>KdjLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -430,31 +451,42 @@ public partial class Core
    /// 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outK">Raw stochastic smoothed by SlowK_Period MA. Must hold at least <c>endIdx -
-   /// startIdx + 1</c> values.</param>
+   /// max(startIdx, KdjLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <param name="outD">Signal line: K smoothed by SlowD_Period MA. Must hold at least <c>endIdx -
-   /// startIdx + 1</c> values.</param>
+   /// max(startIdx, KdjLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <param name="outJ">Divergence line, three parts K less two parts D. Must hold at least
-   /// <c>endIdx - startIdx + 1</c> values.</param>
+   /// <c>endIdx - max(startIdx, KdjLookback(...)) + 1</c> values, the count the
+   /// call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. An output and
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output overlaps an input. An output and
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
-   /// overlap of their byte ranges is rejected.</exception>
+   /// overlap of their byte ranges is rejected.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Stoch(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, MAType, int, MAType, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Stochf(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, int, int, MAType, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Rma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Ma(int, int, ReadOnlySpan{double}, int, MAType, Span{double})"/>
    public OutRange Kdj( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inHigh,
@@ -607,7 +639,7 @@ public partial class Core
       {
          if( outRangeBegIdx + outRangeCount > Core.IndexMax )
             throw Core.StreamFailure("KDJ", "update", RetCode.OutOfRangeEndIndex);
-         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("KDJ", "update", RetCode.BadParam);
+         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("KDJ", "update", !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          core.KdjStepImpl(this, inHigh, inLow, inClose);
          outRangeCount++;
          return new KdjValue(cur_outK, cur_outD, cur_outJ);
@@ -630,7 +662,7 @@ public partial class Core
       /// it.</returns>
       public KdjValue Peek( double inHigh, double inLow, double inClose )
       {
-         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("KDJ", "peek", RetCode.BadParam);
+         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("KDJ", "peek", !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          KdjStream sp = this;
          double cur_outK = 0.0;
          double cur_outD = 0.0;
@@ -736,7 +768,7 @@ public partial class Core
       Span<double> sc_outD = outStride == 1 ? outD : new double[historyLen];
       Span<double> sc_outJ = outStride == 1 ? outJ : new double[historyLen];
       lookbackTotal = KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
-      /* Nothing to produce: the range is shorter than the lookback. Answering here
+      /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.
        */
@@ -786,6 +818,9 @@ public partial class Core
       if( retCode == RetCode.Success ) {
          return sp;
       }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("KDJ", "openAndFill", nameof(inHigh), inHigh.Length, startIdx, KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+      }
       throw StreamFailure("KDJ", "openAndFill", retCode);
    }
 
@@ -801,6 +836,9 @@ public partial class Core
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("KDJ", "open", nameof(inHigh), inHigh.Length, startIdx, KdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
       }
       throw StreamFailure("KDJ", "open", retCode);
    }

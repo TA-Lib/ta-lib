@@ -27,18 +27,6 @@ FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Fore
 
 - `optInTimePeriod` — Number of bars in the regression window
 
-## Implementation
-
-TA-Lib Definition: [`fosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fosc/fosc.c) · [`fosc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fosc/fosc.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_FOSC.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_FOSC.c) |
-| Rust | [`fosc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/fosc.rs) |
-| Java | [`Core_FOSC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_FOSC.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Forecast Oscillator

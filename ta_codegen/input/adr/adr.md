@@ -34,18 +34,6 @@ The average is a plain SMA, so there is no seeding convention and none of the cr
 
 - `optInTimePeriod` — Number of bar ranges averaged. Published conventions differ and none is authoritative: TradingView's ADR indicator page works its example over 7 bars, TC2000's over 10, and the Qullamaggie screener community reads "ADR" as 20. The value shipped here is ATR's, so the two volatility measures are comparable out of the box.
 
-## Implementation
-
-TA-Lib Definition: [`adr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adr/adr.c) · [`adr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adr/adr.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ADR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADR.c) |
-| Rust | [`adr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adr.rs) |
-| Java | [`Core_ADR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Average Daily Range

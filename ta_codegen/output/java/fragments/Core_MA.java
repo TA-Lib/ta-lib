@@ -122,7 +122,7 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
       }
-      /* Nothing to produce: the range is shorter than the lookback. Answer here
+      /* Nothing to produce: the range ends before the lookback. Answer here
        * rather than forwarding.
        *
        * The VALUE is the same either way: ma_lookback returns exactly the lookback
@@ -384,8 +384,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#maLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#maLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -397,7 +397,8 @@
     *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -465,8 +466,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#maLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#maLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -478,7 +479,8 @@
     *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, maLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -666,7 +668,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MA update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MA update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MA update", "inReal");
          core.maStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -684,7 +686,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MA peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MA peek", "inReal");
          MaStream sp = this;
          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
             return inReal;
@@ -1238,12 +1240,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MA open: history shorter than lookback + 1");
+         throw insufficientHistory("MA open", inReal.length, startIdx, maLookback(optInTimePeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MA open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MA open: " + retCode, retCode);
+      throw streamFailure("MA open", retCode);
    }
    /**
     * Open a live MA stream over the warm-up history; the handle's
@@ -1293,12 +1292,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MA openAndFill", inReal.length, 0, maLookback(optInTimePeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MA openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);
+      throw streamFailure("MA openAndFill", retCode);
    }
    /* maOpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MaStream maOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
@@ -1311,10 +1307,7 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MA openAndFill", inReal.length, startIdx, maLookback(optInTimePeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MA openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MA openAndFill: " + retCode, retCode);
+      throw streamFailure("MA openAndFill", retCode);
    }

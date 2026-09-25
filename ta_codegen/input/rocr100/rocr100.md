@@ -20,18 +20,6 @@ $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeri
 
 - `optInTimePeriod` — Lookback distance (bars back) for the reference price
 
-## Implementation
-
-TA-Lib Definition: [`rocr100.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocr100/rocr100.c) · [`rocr100.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocr100/rocr100.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ROCR100.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ROCR100.c) |
-| Rust | [`rocr100.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rocr100.rs) |
-| Java | [`Core_ROCR100.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ROCR100.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Rate of Change Ratio 100 Scale, MO

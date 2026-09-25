@@ -373,20 +373,31 @@ public static class StreamApiTest
             () => core.SmaOpen(closes, 0),
             "an out-of-range period throws ArgumentException");
 
-        // The message carries the stable "<NAME> open: " prefix.
+        // The message carries the stable "<NAME> open: " prefix, and the counts.
+        ShortHistoryMessage(() => core.SmaOpen(closes[..lookback], period),
+            "SMA open: history has length " + lookback + ", needs " + (lookback + 1));
+        // The dispatch tier converts the code on its own frame.
+        int maLb = core.MaLookback(10, MAType.EMA);
+        ShortHistoryMessage(() => core.MaOpenAndFill(closes[..maLb], 10, MAType.EMA, new double[closes.Length]),
+            "MA openAndFill: history has length " + maLb + ", needs " + (maLb + 1));
+    }
+
+    private static void ShortHistoryMessage(Action open, string want)
+    {
         _checks++;
         try
         {
-            core.SmaOpen(closes[..lookback], period);
+            open();
             _failures++;
-            Console.WriteLine("  FAIL: expected a short-history rejection");
+            Console.WriteLine("  FAIL: expected a short-history rejection: " + want);
         }
         catch (InsufficientHistoryException e)
         {
-            if (!e.Message.StartsWith("SMA open:", StringComparison.Ordinal))
+            if (!e.Message.StartsWith(want + " (Parameter '", StringComparison.Ordinal) || e.ParamName != "inReal")
             {
                 _failures++;
-                Console.WriteLine("  FAIL: reject message lacks the \"SMA open:\" prefix: " + e.Message);
+                Console.WriteLine("  FAIL: short-history message \"" + e.Message + "\", expected \"" + want
+                                  + "\" naming the history");
             }
         }
     }
@@ -776,9 +787,10 @@ public static class StreamApiTest
     /// <remarks>
     /// <para>This is the C# half of a property no value gate can see, and the
     /// only backend where it is worth measuring at runtime: a C# array field is
-    /// a reference, so a frame that copied one would allocate — and RyuJIT does
-    /// not stack-allocate arrays, so the bytes are real. Java's escape analysis
-    /// can hide the same copy, and C and Rust never had it.</para>
+    /// a reference, so a frame that copied one would allocate. The JIT may
+    /// stack-allocate a small copy it proves does not escape, as Java's escape
+    /// analysis may, so a zero here can hide a copy but a nonzero is always
+    /// real. C and Rust never had it.</para>
     /// <para>HT_DCPERIOD is the sharpest case in the corpus, with eight
     /// <c>double[3]</c> accumulators — 384 B per call when they are copied. SMA
     /// is the control: no accumulator, so it reads zero either way, and a run
@@ -932,12 +944,13 @@ public static class StreamApiTest
     private static int _nfBar;
     private static int _nfState;
 
-    /* The MESSAGE is checked, not just the type. InsufficientHistoryException
+    /* The CODE is checked, not just the type. InsufficientHistoryException
        derives from ArgumentException, so asserting the base type alone would let
        "rejected because the history was too short" pass as "rejected the
        non-finite value" -- and every probe here deliberately supplies enough
-       history, so the confusion would surface only the day a lookback grew. */
-    private static void ThrowsBadParam(string what, Action body)
+       history, so the confusion would surface only the day a lookback grew.
+       `paramName`, when given, is the argument the rejection must name. */
+    private static void ThrowsBadParam(string what, Action body, string? paramName = null)
     {
         _checks++;
         try
@@ -946,7 +959,8 @@ public static class StreamApiTest
             _failures++;
             Console.WriteLine("  FAIL: " + what + " (no exception thrown)");
         }
-        catch (ArgumentException e) when (e.Message.EndsWith(": BadParam", StringComparison.Ordinal))
+        catch (ArgumentException e) when (e is ITALibFailure { RetCode: RetCode.BadParam }
+                                          && (paramName is null || e.ParamName == paramName))
         {
             /* expected */
         }
@@ -963,9 +977,10 @@ public static class StreamApiTest
         _nfOpen++;
     }
 
-    private static void BarMustReject(string what, Action body)
+    private static void BarMustReject(string what, string paramName, Action body)
     {
-        ThrowsBadParam(what + ": Update/Peek must reject a non-finite bar", body);
+        ThrowsBadParam(what + ": Update/Peek must reject a non-finite bar naming " + paramName,
+                       body, paramName);
         _nfBar++;
     }
 
@@ -1030,44 +1045,44 @@ public static class StreamApiTest
 
             var sa = core.SmaOpen(c, 14);
             var sb = core.SmaOpen(c, 14);
-            BarMustReject("SMA.Update", () => sa.Update(v));
-            BarMustReject("SMA.Peek", () => sa.Peek(v));
+            BarMustReject("SMA.Update", "inReal", () => sa.Update(v));
+            BarMustReject("SMA.Peek", "inReal", () => sa.Peek(v));
             StateMustHold("SMA", sa.Update(closes[warm]), sb.Update(closes[warm]));
 
             var da = core.MinusDiOpen(h, l, c, 14);
             var db = core.MinusDiOpen(h, l, c, 14);
-            BarMustReject("MINUS_DI.Update(high)", () => da.Update(v, lows[warm], closes[warm]));
-            BarMustReject("MINUS_DI.Update(low)", () => da.Update(highs[warm], v, closes[warm]));
-            BarMustReject("MINUS_DI.Update(close)", () => da.Update(highs[warm], lows[warm], v));
-            BarMustReject("MINUS_DI.Peek", () => da.Peek(v, lows[warm], closes[warm]));
+            BarMustReject("MINUS_DI.Update(high)", "inHigh", () => da.Update(v, lows[warm], closes[warm]));
+            BarMustReject("MINUS_DI.Update(low)", "inLow", () => da.Update(highs[warm], v, closes[warm]));
+            BarMustReject("MINUS_DI.Update(close)", "inClose", () => da.Update(highs[warm], lows[warm], v));
+            BarMustReject("MINUS_DI.Peek", "inHigh", () => da.Peek(v, lows[warm], closes[warm]));
             StateMustHold("MINUS_DI",
                 da.Update(highs[warm], lows[warm], closes[warm]),
                 db.Update(highs[warm], lows[warm], closes[warm]));
 
             var ma = core.MaOpen(c, 14, MAType.EMA);
             var mb = core.MaOpen(c, 14, MAType.EMA);
-            BarMustReject("MA.Update", () => ma.Update(v));
-            BarMustReject("MA.Peek", () => ma.Peek(v));
+            BarMustReject("MA.Update", "inReal", () => ma.Update(v));
+            BarMustReject("MA.Peek", "inReal", () => ma.Peek(v));
             StateMustHold("MA", ma.Update(closes[warm]), mb.Update(closes[warm]));
 
             /* Period 1 is the dispatch identity arm: it copies the bar to the
                output and never reaches a sub-stream, so a check delegated to the
                sub would miss it. */
             var mi = core.MaOpen(c, 1, MAType.SMA);
-            BarMustReject("MA(identity).Update", () => mi.Update(v));
-            BarMustReject("MA(identity).Peek", () => mi.Peek(v));
+            BarMustReject("MA(identity).Update", "inReal", () => mi.Update(v));
+            BarMustReject("MA(identity).Peek", "inReal", () => mi.Peek(v));
 
             var va = core.MavpOpen(c, p, 2, 30, MAType.SMA);
             var vb = core.MavpOpen(c, p, 2, 30, MAType.SMA);
-            BarMustReject("MAVP.Update(real)", () => va.Update(v, p[0]));
-            BarMustReject("MAVP.Update(period)", () => va.Update(closes[warm], v));
-            BarMustReject("MAVP.Peek(period)", () => va.Peek(closes[warm], v));
+            BarMustReject("MAVP.Update(real)", "inReal", () => va.Update(v, p[0]));
+            BarMustReject("MAVP.Update(period)", "inPeriods", () => va.Update(closes[warm], v));
+            BarMustReject("MAVP.Peek(period)", "inPeriods", () => va.Peek(closes[warm], v));
             StateMustHold("MAVP", va.Update(closes[warm], p[0]), vb.Update(closes[warm], p[0]));
 
             var ba = core.BbandsOpen(c, 20, 2.0, 2.0, MAType.SMA);
             var bb = core.BbandsOpen(c, 20, 2.0, 2.0, MAType.SMA);
-            BarMustReject("BBANDS.Update", () => ba.Update(v));
-            BarMustReject("BBANDS.Peek", () => ba.Peek(v));
+            BarMustReject("BBANDS.Update", "inReal", () => ba.Update(v));
+            BarMustReject("BBANDS.Peek", "inReal", () => ba.Peek(v));
             var bav = ba.Update(closes[warm]);
             var bbv = bb.Update(closes[warm]);
             StateMustHold("BBANDS.upper", bav.RealUpperBand, bbv.RealUpperBand);
@@ -1075,8 +1090,8 @@ public static class StreamApiTest
 
             var ka = core.StochOpen(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
             var kb = core.StochOpen(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
-            BarMustReject("STOCH.Update", () => ka.Update(v, lows[warm], closes[warm]));
-            BarMustReject("STOCH.Peek", () => ka.Peek(highs[warm], v, closes[warm]));
+            BarMustReject("STOCH.Update", "inHigh", () => ka.Update(v, lows[warm], closes[warm]));
+            BarMustReject("STOCH.Peek", "inLow", () => ka.Peek(highs[warm], v, closes[warm]));
             var kav = ka.Update(highs[warm], lows[warm], closes[warm]);
             var kbv = kb.Update(highs[warm], lows[warm], closes[warm]);
             StateMustHold("STOCH.slowK", kav.SlowK, kbv.SlowK);
@@ -1084,9 +1099,9 @@ public static class StreamApiTest
 
             var ja = core.CdldojiOpen(o, h, l, c);
             var jb = core.CdldojiOpen(o, h, l, c);
-            BarMustReject("CDLDOJI.Update(open)",
+            BarMustReject("CDLDOJI.Update(open)", "inOpen",
                 () => ja.Update(v, highs[warm], lows[warm], closes[warm]));
-            BarMustReject("CDLDOJI.Peek(close)",
+            BarMustReject("CDLDOJI.Peek(close)", "inClose",
                 () => ja.Peek(opens[warm], highs[warm], lows[warm], v));
             Check(ja.Update(opens[warm], highs[warm], lows[warm], closes[warm])
                     == jb.Update(opens[warm], highs[warm], lows[warm], closes[warm]),

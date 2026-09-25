@@ -64,6 +64,9 @@ pub trait LanguageBackend {
     /// Short backend identifier used on the CLI (`c`, `rust`, `java`, `csharp`).
     fn name(&self) -> &'static str;
 
+    /// The language as a reader names it (`C`, `Rust`, `Java`, `C#`).
+    fn label(&self) -> &'static str;
+
     /// Render the per-indicator source for `func`.
     fn generate(
         &self,
@@ -181,6 +184,9 @@ impl LanguageBackend for CBackend {
     fn name(&self) -> &'static str {
         "c"
     }
+    fn label(&self) -> &'static str {
+        "C"
+    }
     fn generate(
         &self,
         func: &FuncDef,
@@ -246,6 +252,9 @@ pub struct RustBackend;
 impl LanguageBackend for RustBackend {
     fn name(&self) -> &'static str {
         "rust"
+    }
+    fn label(&self) -> &'static str {
+        "Rust"
     }
     fn generate(
         &self,
@@ -315,6 +324,9 @@ impl LanguageBackend for JavaBackend {
     fn name(&self) -> &'static str {
         "java"
     }
+    fn label(&self) -> &'static str {
+        "Java"
+    }
     fn generate(
         &self,
         func: &FuncDef,
@@ -379,6 +391,9 @@ pub struct CSharpBackend;
 impl LanguageBackend for CSharpBackend {
     fn name(&self) -> &'static str {
         "csharp"
+    }
+    fn label(&self) -> &'static str {
+        "C#"
     }
     fn generate(
         &self,

@@ -158,7 +158,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlxsidegap3methodsLookback} is a
+    * valid range that ends before {@link Core#cdlxsidegap3methodsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -170,7 +170,9 @@
     * @param outInteger +100 when the two same-color candles are white
     *        (bullish/upside continuation), -100 when black (bearish/downside
     *        continuation), 0 otherwise. Equals candlecolor(1st candle) * 100. Must
-    *        hold at least {@code endIdx - startIdx + 1} values.
+    *        hold at least
+    *        {@code endIdx - max(startIdx, cdlxsidegap3methodsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -232,7 +234,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlxsidegap3methodsLookback} is a
+    * valid range that ends before {@link Core#cdlxsidegap3methodsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -244,7 +246,9 @@
     * @param outInteger +100 when the two same-color candles are white
     *        (bullish/upside continuation), -100 when black (bearish/downside
     *        continuation), 0 otherwise. Equals candlecolor(1st candle) * 100. Must
-    *        hold at least {@code endIdx - startIdx + 1} values.
+    *        hold at least
+    *        {@code endIdx - max(startIdx, cdlxsidegap3methodsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -383,7 +387,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLXSIDEGAP3METHODS update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLXSIDEGAP3METHODS update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLXSIDEGAP3METHODS update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlxsidegap3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -401,7 +405,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLXSIDEGAP3METHODS peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLXSIDEGAP3METHODS peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          Cdlxsidegap3methodsStream sp = this;
          int cur_outInteger = 0;
          if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
@@ -567,12 +571,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLXSIDEGAP3METHODS openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLXSIDEGAP3METHODS openAndFill", inOpen.length, startIdx, cdlxsidegap3methodsLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLXSIDEGAP3METHODS openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLXSIDEGAP3METHODS openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlxsidegap3methodsOpen (composition seam). */
    Cdlxsidegap3methodsStream cdlxsidegap3methodsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -588,12 +589,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLXSIDEGAP3METHODS open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLXSIDEGAP3METHODS open", inOpen.length, startIdx, cdlxsidegap3methodsLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLXSIDEGAP3METHODS open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLXSIDEGAP3METHODS open: " + retCode, retCode);
+      throw streamFailure("CDLXSIDEGAP3METHODS open", retCode);
    }
    /**
     * Open a live CDLXSIDEGAP3METHODS stream over the warm-up history; the handle's
@@ -642,7 +640,7 @@
       requireHistoryLength("CDLXSIDEGAP3METHODS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLXSIDEGAP3METHODS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLXSIDEGAP3METHODS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLXSIDEGAP3METHODS openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

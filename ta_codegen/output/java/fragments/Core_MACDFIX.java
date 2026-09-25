@@ -351,8 +351,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#macdfixLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#macdfixLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -360,11 +360,14 @@
     * @param optInSignalPeriod Smoothing period for the signal line (default 9;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outMACD Fixed EMA12 minus EMA26. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDSignal EMA of the MACD line. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDHist MACD minus signal. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -424,8 +427,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#macdfixLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#macdfixLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -433,11 +436,14 @@
     * @param optInSignalPeriod Smoothing period for the signal line (default 9;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outMACD Fixed EMA12 minus EMA26. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDSignal EMA of the MACD line. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDHist MACD minus signal. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdfixLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -587,7 +593,7 @@
             throw failure("MACDFIX update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("MACDFIX update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MACDFIX update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MACDFIX update", "inReal");
          core.macdfixStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -608,7 +614,7 @@
       public void peek( double inReal, MacdfixOut out ) {
          requireArgument("MACDFIX peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MACDFIX peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MACDFIX peek", "inReal");
          MacdfixStream sp = this;
          double macdValue = 0.0;
          double tempReal = 0.0;
@@ -899,12 +905,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MACDFIX openAndFill", inReal.length, startIdx, macdfixLookback(optInSignalPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MACDFIX openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
+      throw streamFailure("MACDFIX openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind macdfixOpen (composition seam). */
    MacdfixStream macdfixOpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
@@ -922,12 +925,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MACDFIX open: history shorter than lookback + 1");
+         throw insufficientHistory("MACDFIX open", inReal.length, startIdx, macdfixLookback(optInSignalPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MACDFIX open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MACDFIX open: " + retCode, retCode);
+      throw streamFailure("MACDFIX open", retCode);
    }
    /**
     * Open a live MACDFIX stream over the warm-up history; the handle's
@@ -968,7 +968,7 @@
       requireLength("MACDFIX openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDFIX openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TALibArgumentException("MACDFIX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MACDFIX openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

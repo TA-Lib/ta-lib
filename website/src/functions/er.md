@@ -62,6 +62,7 @@ TA-Lib Definition: [`er.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C | [`ta_ER.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ER.c) |
 | Rust | [`er.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/er.rs) |
 | Java | [`Core_ER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ER.java) |
+| C# | [`Core_ER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ER.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -55,6 +55,7 @@ TA-Lib Definition: [`cdlkicking.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C | [`ta_CDLKICKING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLKICKING.c) |
 | Rust | [`cdlkicking.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlkicking.rs) |
 | Java | [`Core_CDLKICKING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLKICKING.java) |
+| C# | [`Core_CDLKICKING.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLKICKING.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

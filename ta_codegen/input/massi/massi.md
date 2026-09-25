@@ -39,18 +39,6 @@ Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod
 - `optInFastPeriod` — Number of bars in each of the two exponential averages of the high-low range
 - `optInSlowPeriod` — Number of bars the ratio is summed over
 
-## Implementation
-
-TA-Lib Definition: [`massi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/massi/massi.c) · [`massi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/massi/massi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MASSI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MASSI.c) |
-| Rust | [`massi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/massi.rs) |
-| Java | [`Core_MASSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MASSI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Mass Index, Dorsey Mass Index, Reversal Bulge

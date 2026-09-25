@@ -22,18 +22,6 @@ SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=
 
 - `optInTimePeriod` — Number of bars in the regression window
 
-## Implementation
-
-TA-Lib Definition: [`linearreg_slope.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_slope/linearreg_slope.c) · [`linearreg_slope.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_slope/linearreg_slope.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_LINEARREG_SLOPE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_LINEARREG_SLOPE.c) |
-| Rust | [`linearreg_slope.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/linearreg_slope.rs) |
-| Java | [`Core_LINEARREG_SLOPE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_LINEARREG_SLOPE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Linear Regression Slope, LSMA slope, least squares slope

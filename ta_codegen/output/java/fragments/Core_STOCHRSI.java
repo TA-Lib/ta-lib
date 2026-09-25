@@ -266,7 +266,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#stochrsiLookback} is a <b>success
+    * valid range that ends before {@link Core#stochrsiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -284,9 +284,11 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -350,7 +352,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#stochrsiLookback} is a <b>success
+    * valid range that ends before {@link Core#stochrsiLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -368,9 +370,11 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, stochrsiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -518,7 +522,7 @@
             throw failure("STOCHRSI update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("STOCHRSI update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("STOCHRSI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("STOCHRSI update", "inReal");
          core.stochrsiStepImpl(this, inReal);
          this.outRangeCount++;
          out.fastK = this.cur_outFastK;
@@ -538,7 +542,7 @@
       public void peek( double inReal, StochrsiOut out ) {
          requireArgument("STOCHRSI peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("STOCHRSI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("STOCHRSI peek", "inReal");
          StochrsiStream sp = this;
          double cur_tempRSIBuffer = 0.0;
          double cur_outFastK = 0.0;
@@ -751,12 +755,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("STOCHRSI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("STOCHRSI openAndFill", inReal.length, startIdx, stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("STOCHRSI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("STOCHRSI openAndFill: " + retCode, retCode);
+      throw streamFailure("STOCHRSI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind stochrsiOpen (composition seam). */
    StochrsiStream stochrsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -773,12 +774,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("STOCHRSI open: history shorter than lookback + 1");
+         throw insufficientHistory("STOCHRSI open", inReal.length, startIdx, stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("STOCHRSI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("STOCHRSI open: " + retCode, retCode);
+      throw streamFailure("STOCHRSI open", retCode);
    }
    /**
     * Open a live STOCHRSI stream over the warm-up history; the handle's
@@ -820,7 +818,7 @@
       requireLength("STOCHRSI openAndFill", "outFastK", outFastK, guardOutLen);
       requireLength("STOCHRSI openAndFill", "outFastD", outFastD, guardOutLen);
       if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
-         throw new TALibArgumentException("STOCHRSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("STOCHRSI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

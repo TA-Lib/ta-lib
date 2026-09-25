@@ -31,18 +31,6 @@ Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2
 | 0 | No pattern |
 | 100 | Bullish Separating Lines: the second candle (belt hold) closed white |
 
-## Implementation
-
-TA-Lib Definition: [`cdlseparatinglines.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlseparatinglines/cdlseparatinglines.c) · [`cdlseparatinglines.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlseparatinglines/cdlseparatinglines.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLSEPARATINGLINES.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLSEPARATINGLINES.c) |
-| Rust | [`cdlseparatinglines.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlseparatinglines.rs) |
-| Java | [`Core_CDLSEPARATINGLINES.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLSEPARATINGLINES.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Separating Lines

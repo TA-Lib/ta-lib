@@ -27,18 +27,6 @@ ADOSC = fastEMA - slowEMA
 - `optInFastPeriod` — Period of the fast A/D EMA
 - `optInSlowPeriod` — Period of the slow A/D EMA
 
-## Implementation
-
-TA-Lib Definition: [`adosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adosc/adosc.c) · [`adosc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adosc/adosc.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ADOSC.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADOSC.c) |
-| Rust | [`adosc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adosc.rs) |
-| Java | [`Core_ADOSC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADOSC.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Chaikin A/D Oscillator, Chaikin Oscillator

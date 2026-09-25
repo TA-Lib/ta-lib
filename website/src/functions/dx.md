@@ -57,6 +57,7 @@ TA-Lib Definition: [`dx.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C | [`ta_DX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_DX.c) |
 | Rust | [`dx.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/dx.rs) |
 | Java | [`Core_DX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_DX.java) |
+| C# | [`Core_DX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DX.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

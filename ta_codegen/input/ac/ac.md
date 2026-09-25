@@ -29,19 +29,6 @@ AC_t = AO_t − SMA(AO, signal)_t
 - `optInSlowPeriod` — Number of bars in the long moving average of the median price.
 - `optInSignalPeriod` — Number of bars in the moving average taken over the oscillator.
 
-## Implementation
-
-TA-Lib Definition: [`ac.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ac/ac.c) · [`ac.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ac/ac.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_AC.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_AC.c) |
-| Rust | [`ac.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ac.rs) |
-| Java | [`Core_AC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_AC.java) |
-| C# | [`Core_AC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AC.cs) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Accelerator Oscillator, Decelerator Oscillator, Accelerator/Decelerator, Bill Williams Accelerator, AC Oscillator

@@ -166,8 +166,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#percentrankLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#percentrankLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -176,8 +176,9 @@
     *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param outReal Percentage of the preceding window strictly below the
-    *        current value, 0 to 100. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        current value, 0 to 100. Must hold at least
+    *        {@code endIdx - max(startIdx, percentrankLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -243,8 +244,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#percentrankLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#percentrankLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -253,8 +254,9 @@
     *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param outReal Percentage of the preceding window strictly below the
-    *        current value, 0 to 100. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        current value, 0 to 100. Must hold at least
+    *        {@code endIdx - max(startIdx, percentrankLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -388,7 +390,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("PERCENTRANK update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("PERCENTRANK update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PERCENTRANK update", "inReal");
          core.percentrankStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -406,7 +408,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("PERCENTRANK peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PERCENTRANK peek", "inReal");
          PercentrankStream sp = this;
          int i = 0;
          int count = 0;
@@ -558,12 +560,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PERCENTRANK openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("PERCENTRANK openAndFill", inReal.length, startIdx, percentrankLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PERCENTRANK openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("PERCENTRANK openAndFill: " + retCode, retCode);
+      throw streamFailure("PERCENTRANK openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind percentrankOpen (composition seam). */
    PercentrankStream percentrankOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -579,12 +578,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PERCENTRANK open: history shorter than lookback + 1");
+         throw insufficientHistory("PERCENTRANK open", inReal.length, startIdx, percentrankLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PERCENTRANK open: internal error", retCode);
-      }
-      throw new TALibArgumentException("PERCENTRANK open: " + retCode, retCode);
+      throw streamFailure("PERCENTRANK open", retCode);
    }
    /**
     * Open a live PERCENTRANK stream over the warm-up history; the handle's
@@ -623,7 +619,7 @@
       int guardOutLen = openFillCount("PERCENTRANK openAndFill", inReal.length, percentrankLookback(optInTimePeriod));
       requireLength("PERCENTRANK openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("PERCENTRANK openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("PERCENTRANK openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

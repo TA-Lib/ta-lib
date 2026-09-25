@@ -38,18 +38,6 @@ The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePer
 - `optInTimePeriod` — Number of bars in the exponential average of the high-low spread
 - `optInROCPeriod` — How many bars back the percent change reaches
 
-## Implementation
-
-TA-Lib Definition: [`cvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cvi/cvi.c) · [`cvi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cvi/cvi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CVI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CVI.c) |
-| Rust | [`cvi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cvi.rs) |
-| Java | [`Core_CVI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CVI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Chaikin Volatility, Chaikin's Volatility, CHV

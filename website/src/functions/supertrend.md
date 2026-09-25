@@ -71,6 +71,7 @@ TA-Lib Definition: [`supertrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C | [`ta_SUPERTREND.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SUPERTREND.c) |
 | Rust | [`supertrend.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/supertrend.rs) |
 | Java | [`Core_SUPERTREND.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SUPERTREND.java) |
+| C# | [`Core_SUPERTREND.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SUPERTREND.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -31,18 +31,6 @@ Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < Shado
 | 0 | No pattern |
 | 100 | Dragonfly Doji detected — a potential reversal; direction (bullish/bearish) must be read from the prevailing trend, which this function does not check |
 
-## Implementation
-
-TA-Lib Definition: [`cdldragonflydoji.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldragonflydoji/cdldragonflydoji.c) · [`cdldragonflydoji.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldragonflydoji/cdldragonflydoji.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLDRAGONFLYDOJI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLDRAGONFLYDOJI.c) |
-| Rust | [`cdldragonflydoji.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdldragonflydoji.rs) |
-| Java | [`Core_CDLDRAGONFLYDOJI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLDRAGONFLYDOJI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Dragonfly Doji

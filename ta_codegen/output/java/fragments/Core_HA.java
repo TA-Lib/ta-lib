@@ -290,8 +290,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#haLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#haLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -300,13 +300,17 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outHAOpen Heikin-Ashi open. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outHAHigh Heikin-Ashi high. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outHALow Heikin-Ashi low. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outHAClose Heikin-Ashi close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -386,8 +390,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#haLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#haLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -396,13 +400,17 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outHAOpen Heikin-Ashi open. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outHAHigh Heikin-Ashi high. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outHALow Heikin-Ashi low. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outHAClose Heikin-Ashi close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, haLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -551,7 +559,7 @@
             throw failure("HA update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("HA update", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("HA update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("HA update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.haStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.haOpen = this.cur_outHAOpen;
@@ -573,7 +581,7 @@
       public void peek( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
          requireArgument("HA peek", "out", out);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("HA peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("HA peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          HaStream sp = this;
          double haHigh = 0.0;
          double haLow = 0.0;
@@ -856,12 +864,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("HA openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("HA openAndFill", inOpen.length, startIdx, haLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("HA openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("HA openAndFill: " + retCode, retCode);
+      throw streamFailure("HA openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind haOpen (composition seam). */
    HaStream haOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -880,12 +885,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("HA open: history shorter than lookback + 1");
+         throw insufficientHistory("HA open", inOpen.length, startIdx, haLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("HA open: internal error", retCode);
-      }
-      throw new TALibArgumentException("HA open: " + retCode, retCode);
+      throw streamFailure("HA open", retCode);
    }
    /**
     * Open a live HA stream over the warm-up history; the handle's
@@ -937,7 +939,7 @@
       requireLength("HA openAndFill", "outHALow", outHALow, guardOutLen);
       requireLength("HA openAndFill", "outHAClose", outHAClose, guardOutLen);
       if( (Object)outHAOpen == (Object)inOpen || (Object)outHAOpen == (Object)inHigh || (Object)outHAOpen == (Object)inLow || (Object)outHAOpen == (Object)inClose || (Object)outHAHigh == (Object)inOpen || (Object)outHAHigh == (Object)inHigh || (Object)outHAHigh == (Object)inLow || (Object)outHAHigh == (Object)inClose || (Object)outHALow == (Object)inOpen || (Object)outHALow == (Object)inHigh || (Object)outHALow == (Object)inLow || (Object)outHALow == (Object)inClose || (Object)outHAClose == (Object)inOpen || (Object)outHAClose == (Object)inHigh || (Object)outHAClose == (Object)inLow || (Object)outHAClose == (Object)inClose || (Object)outHAOpen == (Object)outHAHigh || (Object)outHAOpen == (Object)outHALow || (Object)outHAOpen == (Object)outHAClose || (Object)outHAHigh == (Object)outHALow || (Object)outHAHigh == (Object)outHAClose || (Object)outHALow == (Object)outHAClose ) {
-         throw new TALibArgumentException("HA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("HA openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

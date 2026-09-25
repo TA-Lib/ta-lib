@@ -217,8 +217,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdldojistarLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdldojistarLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -229,7 +229,8 @@
     * @param outInteger Emits +100 or -100 on a hit, 0 otherwise. Value is
     *        -candlecolor(candle1)*100: -100 when candle 1 is white (gap up), +100 when
     *        candle 1 is black (gap down) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdldojistarLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -295,8 +296,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdldojistarLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdldojistarLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -307,7 +308,8 @@
     * @param outInteger Emits +100 or -100 on a hit, 0 otherwise. Value is
     *        -candlecolor(candle1)*100: -100 when candle 1 is white (gap up), +100 when
     *        candle 1 is black (gap down) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdldojistarLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -476,7 +478,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLDOJISTAR update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLDOJISTAR update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLDOJISTAR update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdldojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -494,7 +496,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLDOJISTAR peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLDOJISTAR peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdldojistarStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -738,12 +740,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLDOJISTAR openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLDOJISTAR openAndFill", inOpen.length, startIdx, cdldojistarLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLDOJISTAR openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLDOJISTAR openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLDOJISTAR openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdldojistarOpen (composition seam). */
    CdldojistarStream cdldojistarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -759,12 +758,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLDOJISTAR open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLDOJISTAR open", inOpen.length, startIdx, cdldojistarLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLDOJISTAR open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLDOJISTAR open: " + retCode, retCode);
+      throw streamFailure("CDLDOJISTAR open", retCode);
    }
    /**
     * Open a live CDLDOJISTAR stream over the warm-up history; the handle's
@@ -813,7 +809,7 @@
       requireHistoryLength("CDLDOJISTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLDOJISTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLDOJISTAR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLDOJISTAR openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

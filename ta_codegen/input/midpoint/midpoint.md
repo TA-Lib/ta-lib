@@ -20,18 +20,6 @@ MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
 
 - `optInTimePeriod` — Lookback window length
 
-## Implementation
-
-TA-Lib Definition: [`midpoint.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midpoint/midpoint.c) · [`midpoint.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/midpoint/midpoint.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MIDPOINT.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MIDPOINT.c) |
-| Rust | [`midpoint.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/midpoint.rs) |
-| Java | [`Core_MIDPOINT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MIDPOINT.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## See Also
 
 MIDPRICE · MAX · MIN

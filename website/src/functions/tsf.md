@@ -50,6 +50,7 @@ TA-Lib Definition: [`tsf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_TSF.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TSF.c) |
 | Rust | [`tsf.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/tsf.rs) |
 | Java | [`Core_TSF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TSF.java) |
+| C# | [`Core_TSF.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TSF.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

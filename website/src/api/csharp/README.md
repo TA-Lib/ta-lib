@@ -115,9 +115,9 @@ for (int i = 0; i &lt; r.Count; i++)
 
 After the call, read `r` to learn what was produced. Even though we requested the whole range (`0` to `close.Length - 1`), a 30-day average is not defined until the 30th day. Consequently `r.BegIdx` will be 29 (zero-based) and `r.Count` will be `close.Length - 29`. In other words, only that many elements of `outReal` are written, corresponding to input elements 29 through the end.
 
-Arrays convert to spans implicitly, so the call above and a call passed a slice of a larger buffer (`close.AsSpan(start, count)`) are both ordinary code — no copy either way. A span is never null, so passing `null` arrives as an empty span and is rejected by the length check as one (`ArgumentException` naming the parameter). Every input an indicator declares is checked, including the OHLC series a few candlestick patterns never read.
+Arrays convert to spans implicitly, so the call above and a call passed a slice of a larger buffer (`close.AsSpan(start, count)`) are both ordinary code — no copy either way. `startIdx` and `endIdx` index the span you pass, not the array it came from: a slice holds no bars before its first element, so `Sma(0, n - 1, close.AsSpan(100, n), ...)` takes its lookback from inside the slice and produces fewer, possibly different, values than `Sma(100, 100 + n - 1, close, ...)`. Both calls succeed. A span is never null, so passing `null` arrives as an empty span and is rejected by the length check as one (`ArgumentException` naming the parameter). Every input an indicator declares is checked, including the OHLC series a few candlestick patterns never read.
 
-If you do not provide enough data to calculate even one value, the call still succeeds and `r.Count` is 0 (`r.IsEmpty`).
+If the range ends before the lookback, so no value can be calculated, the call still succeeds and `r.Count` is 0 (`r.IsEmpty`).
 
 `OutRange` is a `readonly record struct` with two components — `BegIdx` and `Count` — plus the conveniences `IsEmpty` and `Empty`. They are C's `outBegIdx` / `outNBElement`, Java's `begIdx` / `count` and Rust's `beg_idx` / `count`.
 
@@ -131,7 +131,7 @@ An indicator consumes a number of leading bars — its **lookback** — before i
 int lookback = core.SmaLookback(30);   // 29
 ```
 
-Output is written only where the indicator is defined: `outReal[0]` corresponds to input bar `r.BegIdx`, and nothing outside `0 .. r.Count - 1` is touched. The library never pads with `NaN`. A range shorter than the lookback is a **success with no values** (`r.Count == 0`), not an error.
+Output is written only where the indicator is defined: `outReal[0]` corresponds to input bar `r.BegIdx`, and nothing outside `0 .. r.Count - 1` is touched. The library never pads with `NaN`. A range that ends before the lookback is a **success with no values** (`r.Count == 0`), not an error.
 
 ### 3.3 Errors {#retcode}
 
@@ -141,13 +141,19 @@ The public methods throw rather than return a status code:
 |---|---|
 | `startIdx`/`endIdx` negative, above `Core.IndexMax`, or `endIdx < startIdx` | `TALibArgumentOutOfRangeException` |
 | An optional parameter outside its documented range | `TALibArgumentException` |
+| An input span that does not reach `endIdx`, or an output span shorter than the values produced | `TALibArgumentException` naming the span |
 | Two outputs overlapping, or an output *partially* overlapping an input | `TALibArgumentException` |
+| An inconsistency in the library's own state: a bug, please report it | `TALibInvalidOperationException` carrying `RetCode.InternalError` |
 
 Each extends the framework type you would reach for and implements
 `ITALibFailure`, so `catch (ArgumentException)` still works and the `RetCode` is
 there when you want it.
 
 Computing wholly in place is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. What is rejected is *partial* overlap, which only spans can express: two views of the same memory at different offsets make a body write through what it is still reading, and the result would be silently wrong rather than merely surprising.
+
+A `NaN` or `±Inf` inside an input series is not detected, and nothing is promised about the output: a running sum or a recursion carries it into every later value, not only the bars whose window holds it. Clean or split the series before calling.
+
+A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, for some functions built from other functions such as STOCHRSI, by the range. An allocation of 85,000 bytes or more (about 10,600 doubles) lands on the large object heap. A stream's `Update` allocates nothing (see the [Streaming API](/api/csharp/stream/)).
 
 ## 4.0 Advanced Features {#advanced}
 

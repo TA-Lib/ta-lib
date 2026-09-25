@@ -175,7 +175,7 @@ impl Core {
         let mut tempATR: Vec<f64> = Vec::new();
         emaLookback = self.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
         lookbackTotal = self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
-        // Nothing to produce: the range is shorter than the lookback. Return before
+        // Nothing to produce: the range ends before the lookback. Return before
         // touching anything, so that a caller-supplied input which stops short of
         // endIdx is never read past its end.
         if lookbackTotal > endIdx {
@@ -261,15 +261,15 @@ impl Core {
     /// # Returns
     ///
     /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
-    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
-    /// succeeds with `count == 0`.
+    /// series' coordinates, and `count` is how many were written. A range that ends before the
+    /// lookback succeeds with `count == 0`.
     ///
     /// # Errors
     ///
     /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
     /// [`Core::INDEX_MAX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
     /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
-    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// range. A range that ends before the lookback is not an error: it is [`Ok`] with a zero
     /// [`OutRange::count`].
     ///
     /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover
@@ -502,7 +502,7 @@ impl Core {
         let mut tempATR: Vec<f64> = Vec::new();
         emaLookback = self.ema_lookback(optInTimePeriod)?;
         lookbackTotal = self.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
-        // Nothing to produce: the range is shorter than the lookback. Return before
+        // Nothing to produce: the range ends before the lookback. Return before
         // touching anything, so that a caller-supplied input which stops short of
         // endIdx is never read past its end.
         if lookbackTotal > endIdx {

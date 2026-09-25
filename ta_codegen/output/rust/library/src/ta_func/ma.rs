@@ -182,7 +182,7 @@ impl Core {
         let mut nbElement: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut todayIdx: usize = 0_usize;
-        // Nothing to produce: the range is shorter than the lookback. Answer here
+        // Nothing to produce: the range ends before the lookback. Answer here
         // rather than forwarding.
         //
         // The VALUE is the same either way: ma_lookback returns exactly the lookback
@@ -334,15 +334,15 @@ impl Core {
     /// # Returns
     ///
     /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
-    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
-    /// succeeds with `count == 0`.
+    /// series' coordinates, and `count` is how many were written. A range that ends before the
+    /// lookback succeeds with `count == 0`.
     ///
     /// # Errors
     ///
     /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
     /// [`Core::INDEX_MAX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
     /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
-    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// range. A range that ends before the lookback is not an error: it is [`Ok`] with a zero
     /// [`OutRange::count`].
     ///
     /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover

@@ -55,6 +55,7 @@ TA-Lib Definition: [`cdlinvertedhammer.c`](https://github.com/TA-Lib/ta-lib/blob
 | C | [`ta_CDLINVERTEDHAMMER.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLINVERTEDHAMMER.c) |
 | Rust | [`cdlinvertedhammer.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlinvertedhammer.rs) |
 | Java | [`Core_CDLINVERTEDHAMMER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLINVERTEDHAMMER.java) |
+| C# | [`Core_CDLINVERTEDHAMMER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLINVERTEDHAMMER.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

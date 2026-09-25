@@ -57,6 +57,7 @@ TA-Lib Definition: [`fosc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C | [`ta_FOSC.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_FOSC.c) |
 | Rust | [`fosc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/fosc.rs) |
 | Java | [`Core_FOSC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_FOSC.java) |
+| C# | [`Core_FOSC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FOSC.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

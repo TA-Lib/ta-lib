@@ -20,18 +20,6 @@ outReal[i] = asin(inReal[i])
 
 - `outReal` — Arcsine of each input, in radians
 
-## Implementation
-
-TA-Lib Definition: [`asin.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/asin/asin.c) · [`asin.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/asin/asin.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ASIN.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ASIN.c) |
-| Rust | [`asin.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/asin.rs) |
-| Java | [`Core_ASIN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ASIN.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 arcsine, inverse sine

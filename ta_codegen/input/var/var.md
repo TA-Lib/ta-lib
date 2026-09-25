@@ -26,18 +26,6 @@ $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, ove
 - `optInTimePeriod` — Window length for the variance
 - `optInNbDev` — Deviation count accepted by the API but never used in the computation
 
-## Implementation
-
-TA-Lib Definition: [`var.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/var/var.c) · [`var.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/var/var.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_VAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_VAR.c) |
-| Rust | [`var.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/var.rs) |
-| Java | [`Core_VAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Variance

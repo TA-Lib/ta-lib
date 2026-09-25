@@ -200,8 +200,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlshortlineLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlshortlineLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -212,7 +212,8 @@
     * @param outInteger +100 for a matching white candle (close&gt;=open), -100
     *        for a matching black candle (close&lt;open), 0 when no pattern. Sign is
     *        candle color, NOT bullish/bearish. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -268,8 +269,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlshortlineLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlshortlineLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -280,7 +281,8 @@
     * @param outInteger +100 for a matching white candle (close&gt;=open), -100
     *        for a matching black candle (close&lt;open), 0 when no pattern. Sign is
     *        candle color, NOT bullish/bearish. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlshortlineLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -439,7 +441,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLSHORTLINE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLSHORTLINE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLSHORTLINE update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlshortlineStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -457,7 +459,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLSHORTLINE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLSHORTLINE peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdlshortlineStream sp = this;
          int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -672,12 +674,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLSHORTLINE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLSHORTLINE openAndFill", inOpen.length, startIdx, cdlshortlineLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLSHORTLINE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLSHORTLINE openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLSHORTLINE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlshortlineOpen (composition seam). */
    CdlshortlineStream cdlshortlineOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -693,12 +692,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLSHORTLINE open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLSHORTLINE open", inOpen.length, startIdx, cdlshortlineLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLSHORTLINE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLSHORTLINE open: " + retCode, retCode);
+      throw streamFailure("CDLSHORTLINE open", retCode);
    }
    /**
     * Open a live CDLSHORTLINE stream over the warm-up history; the handle's
@@ -747,7 +743,7 @@
       requireHistoryLength("CDLSHORTLINE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLSHORTLINE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLSHORTLINE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLSHORTLINE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

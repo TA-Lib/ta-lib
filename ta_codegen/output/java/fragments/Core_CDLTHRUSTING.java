@@ -219,8 +219,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlthrustingLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlthrustingLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -230,7 +230,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
     *        bearish; never emits +100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -294,8 +295,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlthrustingLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlthrustingLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -305,7 +306,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
     *        bearish; never emits +100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlthrustingLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -476,7 +478,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLTHRUSTING update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLTHRUSTING update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLTHRUSTING update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlthrustingStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -494,7 +496,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLTHRUSTING peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLTHRUSTING peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdlthrustingStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -737,12 +739,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLTHRUSTING openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLTHRUSTING openAndFill", inOpen.length, startIdx, cdlthrustingLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLTHRUSTING openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLTHRUSTING openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLTHRUSTING openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlthrustingOpen (composition seam). */
    CdlthrustingStream cdlthrustingOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -758,12 +757,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLTHRUSTING open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLTHRUSTING open", inOpen.length, startIdx, cdlthrustingLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLTHRUSTING open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLTHRUSTING open: " + retCode, retCode);
+      throw streamFailure("CDLTHRUSTING open", retCode);
    }
    /**
     * Open a live CDLTHRUSTING stream over the warm-up history; the handle's
@@ -812,7 +808,7 @@
       requireHistoryLength("CDLTHRUSTING openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLTHRUSTING openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLTHRUSTING openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLTHRUSTING openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

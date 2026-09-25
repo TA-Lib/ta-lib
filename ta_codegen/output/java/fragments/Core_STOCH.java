@@ -486,8 +486,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#stochLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#stochLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -512,9 +512,11 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, stochLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -582,8 +584,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#stochLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#stochLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -608,9 +610,11 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, stochLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, stochLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -787,7 +791,7 @@
             throw failure("STOCH update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("STOCH update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("STOCH update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("STOCH update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.stochStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.slowK = this.cur_outSlowK;
@@ -807,7 +811,7 @@
       public void peek( double inHigh, double inLow, double inClose, StochOut out ) {
          requireArgument("STOCH peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("STOCH peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("STOCH peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          StochStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outSlowD = 0.0;
@@ -1297,12 +1301,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("STOCH openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("STOCH openAndFill", inHigh.length, startIdx, stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("STOCH openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("STOCH openAndFill: " + retCode, retCode);
+      throw streamFailure("STOCH openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind stochOpen (composition seam). */
    StochStream stochOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -1319,12 +1320,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("STOCH open: history shorter than lookback + 1");
+         throw insufficientHistory("STOCH open", inHigh.length, startIdx, stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("STOCH open: internal error", retCode);
-      }
-      throw new TALibArgumentException("STOCH open: " + retCode, retCode);
+      throw streamFailure("STOCH open", retCode);
    }
    /**
     * Open a live STOCH stream over the warm-up history; the handle's
@@ -1376,7 +1374,7 @@
       requireLength("STOCH openAndFill", "outSlowK", outSlowK, guardOutLen);
       requireLength("STOCH openAndFill", "outSlowD", outSlowD, guardOutLen);
       if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
-         throw new TALibArgumentException("STOCH openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("STOCH openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

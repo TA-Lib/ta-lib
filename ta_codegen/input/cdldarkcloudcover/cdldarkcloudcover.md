@@ -30,18 +30,6 @@ A two-candle bearish reversal pattern: a long white candle followed by a black c
 
 - `optInPenetration` — Fraction of candle 1's real body that candle 2's close must penetrate below close[i-1]; larger values require deeper penetration
 
-## Implementation
-
-TA-Lib Definition: [`cdldarkcloudcover.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldarkcloudcover/cdldarkcloudcover.c) · [`cdldarkcloudcover.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdldarkcloudcover/cdldarkcloudcover.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLDARKCLOUDCOVER.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLDARKCLOUDCOVER.c) |
-| Rust | [`cdldarkcloudcover.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdldarkcloudcover.rs) |
-| Java | [`Core_CDLDARKCLOUDCOVER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLDARKCLOUDCOVER.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Dark Cloud Cover

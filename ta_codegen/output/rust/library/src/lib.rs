@@ -39,7 +39,7 @@
 //! * Every call returns [`Result`]`<`[`OutRange`]`, `[`RetCode`]`>`, so it composes with
 //!   `?`. [`OutRange`] says where the values start ([`beg_idx`](OutRange::beg_idx), in the
 //!   input series' coordinates) and how many there are ([`count`](OutRange::count)).
-//!   A range shorter than the lookback is a **success with no values**, not an error.
+//!   A range that ends before the lookback is a **success with no values**, not an error.
 //!
 //! [`Core`] is immutable after construction: its per-instance settings — unstable
 //! period and candlestick thresholds — are chosen up front with

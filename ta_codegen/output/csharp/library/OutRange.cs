@@ -43,7 +43,7 @@ namespace TALib;
 /// before producing output, so the first value lands at input index
 /// <see cref="BegIdx"/> and output index 0. Nothing outside the range is
 /// touched — the library never pads with NaN. <see cref="Count"/> of 0 is a
-/// legitimate result (valid range shorter than the lookback), not an
+/// legitimate result (a valid range that ends before the lookback), not an
 /// error.</remarks>
 /// <param name="BegIdx">Input index of the first output value.</param>
 /// <param name="Count">Number of values written, starting at output index
@@ -54,8 +54,8 @@ public readonly record struct OutRange(int BegIdx, int Count)
     public bool IsEmpty => Count == 0;
 
     /// <summary>The range that wrote nothing.</summary>
-    /// <remarks>A valid range shorter than the indicator's lookback produces
-    /// no values, and that is this. Equal to <c>default(OutRange)</c> — named so
+    /// <remarks>A valid range that ends before the indicator's lookback
+    /// produces no values, and that is this. Equal to <c>default(OutRange)</c> — named so
     /// that reads say what they mean. A live stream never reports it: a
     /// successful open has already produced at least one value.</remarks>
     public static OutRange Empty => default;

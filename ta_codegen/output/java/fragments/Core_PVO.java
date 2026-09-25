@@ -85,14 +85,14 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the fast MA below runs first, and its lookback is SMALLER
        * than pvo's own — so it reads the whole range and computes a result the
        * empty slow MA then discards. Observably identical (the slow MA's own early
        * return already yields 0,0 here), but it is the difference between "a range
-       * shorter than the lookback reads nothing" being true of this function and
+       * that ends before the lookback reads nothing" being true of this function and
        * being false: with a caller-supplied inVolume that stops short of endIdx, that
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
@@ -223,8 +223,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#pvoLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#pvoLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -238,7 +238,8 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal PVO value in percent. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -300,8 +301,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#pvoLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#pvoLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -315,7 +316,8 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal PVO value in percent. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, pvoLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -454,7 +456,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("PVO update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVO update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PVO update", "inVolume");
          core.pvoStepImpl(this, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -472,7 +474,7 @@
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("PVO peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PVO peek", "inVolume");
          PvoStream sp = this;
          double tempReal = 0.0;
          double cur_tempBuffer = 0.0;
@@ -573,14 +575,14 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the fast MA below runs first, and its lookback is SMALLER
        * than pvo's own — so it reads the whole range and computes a result the
        * empty slow MA then discards. Observably identical (the slow MA's own early
        * return already yields 0,0 here), but it is the difference between "a range
-       * shorter than the lookback reads nothing" being true of this function and
+       * that ends before the lookback reads nothing" being true of this function and
        * being false: with a caller-supplied inVolume that stops short of endIdx, that
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
@@ -648,12 +650,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PVO openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("PVO openAndFill", inVolume.length, startIdx, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PVO openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("PVO openAndFill: " + retCode, retCode);
+      throw streamFailure("PVO openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind pvoOpen (composition seam). */
    PvoStream pvoOpenInternal( double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -669,12 +668,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PVO open: history shorter than lookback + 1");
+         throw insufficientHistory("PVO open", inVolume.length, startIdx, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PVO open: internal error", retCode);
-      }
-      throw new TALibArgumentException("PVO open: " + retCode, retCode);
+      throw streamFailure("PVO open", retCode);
    }
    /**
     * Open a live PVO stream over the warm-up history; the handle's
@@ -715,7 +711,7 @@
       int guardOutLen = openFillCount("PVO openAndFill", inVolume.length, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PVO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("PVO openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("PVO openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -110,7 +110,7 @@
       }
       emaLookback = emaLookback(optInTimePeriod);
       lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
        * endIdx is never read past its end.
        */
@@ -267,8 +267,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#kcLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#kcLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -283,11 +283,14 @@
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @param outRealMiddleBand Exponential moving average of the typical price.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @param outRealLowerBand Centre line minus the scaled Average True Range.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -359,8 +362,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#kcLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#kcLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -375,11 +378,14 @@
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
     *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @param outRealMiddleBand Exponential moving average of the typical price.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @param outRealLowerBand Centre line minus the scaled Average True Range.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, kcLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -534,7 +540,7 @@
             throw failure("KC update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("KC update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KC update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("KC update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.kcStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -555,7 +561,7 @@
       public void peek( double inHigh, double inLow, double inClose, KcOut out ) {
          requireArgument("KC peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KC peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("KC peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          KcStream sp = this;
          double middle = 0.0;
          double tempReal = 0.0;
@@ -705,7 +711,7 @@
       double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
       emaLookback = emaLookback(optInTimePeriod);
       lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev);
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
        * endIdx is never read past its end.
        */
@@ -781,12 +787,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("KC openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("KC openAndFill", inHigh.length, startIdx, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("KC openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("KC openAndFill: " + retCode, retCode);
+      throw streamFailure("KC openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind kcOpen (composition seam). */
    KcStream kcOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev )
@@ -804,12 +807,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("KC open: history shorter than lookback + 1");
+         throw insufficientHistory("KC open", inHigh.length, startIdx, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("KC open: internal error", retCode);
-      }
-      throw new TALibArgumentException("KC open: " + retCode, retCode);
+      throw streamFailure("KC open", retCode);
    }
    /**
     * Open a live KC stream over the warm-up history; the handle's
@@ -858,7 +858,7 @@
       requireLength("KC openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("KC openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TALibArgumentException("KC openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("KC openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

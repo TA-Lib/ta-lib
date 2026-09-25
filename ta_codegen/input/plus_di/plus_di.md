@@ -30,18 +30,6 @@ When period <= 1: +DI = +DM1 / TR1 (no *100).
 
 - `optInTimePeriod` — Wilder smoothing period
 
-## Implementation
-
-TA-Lib Definition: [`plus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/plus_di/plus_di.c) · [`plus_di.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/plus_di/plus_di.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_PLUS_DI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_PLUS_DI.c) |
-| Rust | [`plus_di.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/plus_di.rs) |
-| Java | [`Core_PLUS_DI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_PLUS_DI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 +DI, Plus Directional Indicator, PDI

@@ -27,19 +27,6 @@ TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Vol
 
 - `outReal` — Volume weighted average price, cumulative from the first bar of the range
 
-## Implementation
-
-TA-Lib Definition: [`vwap.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vwap/vwap.c) · [`vwap.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vwap/vwap.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_VWAP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_VWAP.c) |
-| Rust | [`vwap.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vwap.rs) |
-| Java | [`Core_VWAP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VWAP.java) |
-| C# | [`Core_VWAP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VWAP.cs) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Volume Weighted Average Price

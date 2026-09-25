@@ -31,18 +31,6 @@ If matched: output = candle color * 100 (+100 white, -100 black); else 0.
 | 0 | No pattern |
 | 100 | Matching white short-line candle (color only — not a bullish call) |
 
-## Implementation
-
-TA-Lib Definition: [`cdlshortline.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlshortline/cdlshortline.c) · [`cdlshortline.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlshortline/cdlshortline.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLSHORTLINE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLSHORTLINE.c) |
-| Rust | [`cdlshortline.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlshortline.rs) |
-| Java | [`Core_CDLSHORTLINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLSHORTLINE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Short Line Candle, Short Line

@@ -28,18 +28,6 @@ A five-candle reversal pattern: a long first candle, a same-colored second candl
 | 0 | No pattern |
 | 100 | Bullish Breakaway — a gap-down decline gets erased by a sharp reversal candle, signaling a bottom |
 
-## Implementation
-
-TA-Lib Definition: [`cdlbreakaway.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbreakaway/cdlbreakaway.c) · [`cdlbreakaway.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbreakaway/cdlbreakaway.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLBREAKAWAY.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLBREAKAWAY.c) |
-| Rust | [`cdlbreakaway.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlbreakaway.rs) |
-| Java | [`Core_CDLBREAKAWAY.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLBREAKAWAY.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Breakaway

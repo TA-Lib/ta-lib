@@ -24,19 +24,6 @@ A bar with zero volume reports 0 rather than dividing: it facilitated no movemen
 
 - `outReal` — Range travelled per unit of volume, per bar
 
-## Implementation
-
-TA-Lib Definition: [`marketfi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/marketfi/marketfi.c) · [`marketfi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/marketfi/marketfi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MARKETFI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MARKETFI.c) |
-| Rust | [`marketfi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/marketfi.rs) |
-| Java | [`Core_MARKETFI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MARKETFI.java) |
-| C# | [`Core_MARKETFI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MARKETFI.cs) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## See Also
 
 AD · ADOSC · NVI · OBV · PVI

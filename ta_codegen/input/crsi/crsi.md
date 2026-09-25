@@ -44,18 +44,6 @@ where $\mathrm{Close}$ is the input series, $m_1$ is `optInTimePeriod`, $m_2$ is
 - `optInStreakPeriod` — Period of the RSI of the up/down streak
 - `optInRankPeriod` — Number of earlier one-bar returns each return is ranked against
 
-## Implementation
-
-TA-Lib Definition: [`crsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/crsi/crsi.c) · [`crsi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/crsi/crsi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CRSI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CRSI.c) |
-| Rust | [`crsi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/crsi.rs) |
-| Java | [`Core_CRSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CRSI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 ConnorsRSI, Connors RSI, Connors Relative Strength Index

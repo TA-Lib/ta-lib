@@ -27,18 +27,6 @@ $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cd
 - `optInTimePeriod` — Number of bars in the trailing window
 - `optInPercentile` — Percentage position within the sorted window
 
-## Implementation
-
-TA-Lib Definition: [`percentile.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentile/percentile.c) · [`percentile.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentile/percentile.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_PERCENTILE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_PERCENTILE.c) |
-| Rust | [`percentile.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/percentile.rs) |
-| Java | [`Core_PERCENTILE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_PERCENTILE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Percentile Nearest Rank, Rolling Percentile, Rolling Quantile

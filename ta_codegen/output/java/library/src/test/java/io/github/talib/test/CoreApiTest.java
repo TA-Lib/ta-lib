@@ -476,7 +476,7 @@ public class CoreApiTest {
         check(b.build().unstablePeriod(FuncUnstId.EMA) == 7,
             "a rejected unstablePeriod leaves the previous value in place");
 
-        // The wildcard path writes 24 slots, so a rejection there must not have
+        // The wildcard path writes every slot, so a rejection there must not have
         // filled any of them before noticing.
         final CoreBuilder w = Core.builder().unstablePeriod(FuncUnstId.ALL, 3);
         checkThrows(IllegalArgumentException.class,
@@ -489,7 +489,7 @@ public class CoreApiTest {
                 allIntact = false;
             }
         }
-        check(allIntact, "a rejected wildcard leaves all 24 slots at their previous value");
+        check(allIntact, "a rejected wildcard leaves every slot at its previous value");
     }
 
     public static void main(String[] args) throws Exception {

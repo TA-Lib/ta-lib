@@ -58,6 +58,7 @@ TA-Lib Definition: [`cdlengulfing.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | C | [`ta_CDLENGULFING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLENGULFING.c) |
 | Rust | [`cdlengulfing.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlengulfing.rs) |
 | Java | [`Core_CDLENGULFING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLENGULFING.java) |
+| C# | [`Core_CDLENGULFING.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLENGULFING.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

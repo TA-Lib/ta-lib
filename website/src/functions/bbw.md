@@ -67,6 +67,7 @@ TA-Lib Definition: [`bbw.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_BBW.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_BBW.c) |
 | Rust | [`bbw.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/bbw.rs) |
 | Java | [`Core_BBW.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_BBW.java) |
+| C# | [`Core_BBW.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_BBW.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

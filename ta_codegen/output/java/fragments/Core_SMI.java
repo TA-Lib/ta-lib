@@ -629,8 +629,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#smiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#smiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -648,9 +648,11 @@
     * @param optInSignalPeriod Smoothing period of the signal line (default 9;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outSMI Stochastic Momentum Index, -100 to +100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outSMISignal Exponential average of the SMI line. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -724,8 +726,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#smiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#smiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -743,9 +745,11 @@
     * @param optInSignalPeriod Smoothing period of the signal line (default 9;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outSMI Stochastic Momentum Index, -100 to +100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outSMISignal Exponential average of the SMI line. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, smiLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -930,7 +934,7 @@
             throw failure("SMI update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("SMI update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("SMI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SMI update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.smiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.smi = this.cur_outSMI;
@@ -950,7 +954,7 @@
       public void peek( double inHigh, double inLow, double inClose, SmiOut out ) {
          requireArgument("SMI peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("SMI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SMI peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          SmiStream sp = this;
          double tmp = 0.0;
          double num = 0.0;
@@ -1511,12 +1515,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SMI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("SMI openAndFill", inHigh.length, startIdx, smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SMI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("SMI openAndFill: " + retCode, retCode);
+      throw streamFailure("SMI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind smiOpen (composition seam). */
    SmiStream smiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
@@ -1533,12 +1534,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SMI open: history shorter than lookback + 1");
+         throw insufficientHistory("SMI open", inHigh.length, startIdx, smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SMI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("SMI open: " + retCode, retCode);
+      throw streamFailure("SMI open", retCode);
    }
    /**
     * Open a live SMI stream over the warm-up history; the handle's
@@ -1586,7 +1584,7 @@
       requireLength("SMI openAndFill", "outSMI", outSMI, guardOutLen);
       requireLength("SMI openAndFill", "outSMISignal", outSMISignal, guardOutLen);
       if( (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal ) {
-         throw new TALibArgumentException("SMI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("SMI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

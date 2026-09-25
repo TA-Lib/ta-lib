@@ -26,18 +26,6 @@ ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
 
 - `optInTimePeriod` — Smoothing period, also the bar gap between the two averaged ADX values
 
-## Implementation
-
-TA-Lib Definition: [`adxr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adxr/adxr.c) · [`adxr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/adxr/adxr.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ADXR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADXR.c) |
-| Rust | [`adxr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adxr.rs) |
-| Java | [`Core_ADXR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADXR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Average Directional Movement Index Rating

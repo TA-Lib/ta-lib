@@ -27,18 +27,6 @@ RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
 
 - `optInTimePeriod` — Number of preceding bars averaged to form the baseline
 
-## Implementation
-
-TA-Lib Definition: [`rvol.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvol/rvol.c) · [`rvol.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvol/rvol.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_RVOL.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_RVOL.c) |
-| Rust | [`rvol.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rvol.rs) |
-| Java | [`Core_RVOL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_RVOL.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Relative Volume, RVol

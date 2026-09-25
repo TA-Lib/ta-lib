@@ -30,18 +30,6 @@ A two-candle reversal pattern where the second candle's real body engulfs the fi
 | 80 | Bullish engulfing, weaker variant: one edge of the two bodies lines up exactly rather than fully overhanging it |
 | 100 | Bullish engulfing: the white body fully swallows the prior black body — a strong reversal signal |
 
-## Implementation
-
-TA-Lib Definition: [`cdlengulfing.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlengulfing/cdlengulfing.c) · [`cdlengulfing.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlengulfing/cdlengulfing.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLENGULFING.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLENGULFING.c) |
-| Rust | [`cdlengulfing.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlengulfing.rs) |
-| Java | [`Core_CDLENGULFING.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLENGULFING.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Engulfing Pattern, Engulfing, Bullish/Bearish Engulfing

@@ -35,18 +35,6 @@ The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seed
 
 - `optInTimePeriod` — Number of bars in the exponential average; the de-lag distance derives from it
 
-## Implementation
-
-TA-Lib Definition: [`zlema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/zlema/zlema.c) · [`zlema.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/zlema/zlema.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ZLEMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ZLEMA.c) |
-| Rust | [`zlema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/zlema.rs) |
-| Java | [`Core_ZLEMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ZLEMA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Zero Lag Exponential Moving Average, Zero-Lag EMA, ZLMA

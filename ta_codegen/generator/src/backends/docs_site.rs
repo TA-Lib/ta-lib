@@ -47,7 +47,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path
             eprintln!("  docs: no source {dir}/{dir}.md — skipping page");
             continue;
         };
-        let page = transform_page(&body, f, enums, &known, &stability);
+        let page = transform_page(&body, f, enums, &known, &stability, root);
         super::write_if_changed_silent(&out_dir.join(format!("{dir}.md")), &page);
         paged.push(f);
     }
@@ -82,20 +82,23 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, root: &Path
     }
 }
 
-/// Prepend SEO front matter (title + description), linkify `## See Also`, and replace the
-/// `## Parameters` bullet list with a table carrying the YAML numbers.
+/// Prepend SEO front matter (title + description), linkify `## See Also`, replace the
+/// `## Parameters` bullet list with a table carrying the YAML numbers, and add the
+/// generated `## Implementation` section.
 fn transform_page(
     body: &str,
     func: &FuncDef,
     enums: &HashMap<String, EnumDef>,
     known: &HashSet<&str>,
     stability: &HashMap<String, Stability>,
+    root: &Path,
 ) -> String {
     let name = &func.name;
     // Summary is extracted from the untransformed body: it precedes every rewrite.
     let desc = extract_summary(body);
     let injected = inject_parameters(body, func, enums);
-    let with_flags = inject_flags(&injected, func, enums, stability);
+    let with_impl = inject_implementation(&injected, func, root);
+    let with_flags = inject_flags(&with_impl, func, enums, stability);
     let linked = linkify_see_also(&with_flags, known);
     let normalized = normalize_function_links(&linked);
     let pruned = strip_empty_sections(&normalized);
@@ -115,6 +118,57 @@ fn transform_page(
     out.push_str("---\n\n");
     out.push_str(&deheaded);
     out
+}
+
+/// The sections that follow `## Implementation` in the canonical order.
+const AFTER_IMPLEMENTATION: [&str; 3] = ["## Aliases", "## See Also", "## References"];
+
+/// Insert the generated `## Implementation` section ahead of the first section that
+/// follows it in the canonical order, or at the end.
+fn inject_implementation(body: &str, func: &FuncDef, root: &Path) -> String {
+    insert_before_later_sections(body, &implementation_section(func, root))
+}
+
+fn insert_before_later_sections(body: &str, block: &str) -> String {
+    let lines: Vec<&str> = body.lines().collect();
+    match lines.iter().position(|l| AFTER_IMPLEMENTATION.contains(&l.trim_end())) {
+        Some(at) => format!("{}\n{block}\n{}\n", lines[..at].join("\n"), lines[at..].join("\n")),
+        None => format!("{}\n\n{block}", body.trim_end()),
+    }
+}
+
+/// An authored `## Implementation` would render beside the generated one.
+fn has_authored_implementation(body: &str) -> bool {
+    body.lines().any(|l| l.trim_end() == "## Implementation")
+}
+
+/// The `## Implementation` section: the input definition, then one row per backend in
+/// [`super::all`], each linking the file that backend writes for this function.
+fn implementation_section(func: &FuncDef, root: &Path) -> String {
+    const REPO: &str = "https://github.com/TA-Lib/ta-lib/blob/main";
+    let dir = func.name.to_lowercase();
+    let link = |path: &str| {
+        let file = path.rsplit('/').next().unwrap_or(path);
+        format!("[`{file}`]({REPO}/{path})")
+    };
+    let mut s = String::from("## Implementation\n\n");
+    s.push_str(&format!(
+        "TA-Lib Definition: {} · {}\n\n",
+        link(&format!("ta_codegen/input/{dir}/{dir}.c")),
+        link(&format!("ta_codegen/input/{dir}/{dir}.yaml"))
+    ));
+    s.push_str("| Native | File |\n|--------|------|\n");
+    let out_base = root.join("ta_codegen/output");
+    for backend in super::all() {
+        let abs = backend.lib_output_dir(&out_base).join(backend.file_name(func));
+        let rel = abs.strip_prefix(root).expect("backend output lies under the repo root");
+        let rel = rel.to_string_lossy().replace('\\', "/");
+        s.push_str(&format!("| {} | {} |\n", backend.label(), link(&rel)));
+    }
+    s.push_str(
+        "\nTA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).\n",
+    );
+    s
 }
 
 /// Cap for the generated `<meta name="description">`. Search engines display roughly
@@ -540,6 +594,12 @@ pub fn validate_docs(funcs: &[FuncDef], root: &Path) -> Result<(), Vec<String>> 
         }
         if let Err(e) = validate_no_bare_urls(&body, f) {
             errors.push(e);
+        }
+        if has_authored_implementation(&body) {
+            errors.push(format!(
+                "{dir}/{dir}.md: `## Implementation` is generated for the website page; \
+                 delete it from the input"
+            ));
         }
     }
     if errors.is_empty() {
@@ -1250,6 +1310,38 @@ mod tests {
     }
 
     const PAGE: &str = "# X\n\n## Parameters\n\n- `optInTimePeriod` — Window length\n\n## Implementation\n\nkeep me\n";
+
+    #[test]
+    fn implementation_lands_before_the_sections_that_follow_it() {
+        let body = "# X\n\n## Parameters\n\n- p\n\n## See Also \n\nSMA\n";
+        assert_eq!(
+            insert_before_later_sections(body, "## Implementation\n\nI\n"),
+            "# X\n\n## Parameters\n\n- p\n\n## Implementation\n\nI\n\n## See Also \n\nSMA\n"
+        );
+        assert_eq!(
+            insert_before_later_sections("# X\n\n## Outputs\n\n- o\n", "## Implementation\n\nI\n"),
+            "# X\n\n## Outputs\n\n- o\n\n## Implementation\n\nI\n"
+        );
+    }
+
+    #[test]
+    fn an_authored_implementation_is_refused() {
+        assert!(has_authored_implementation(PAGE));
+        assert!(has_authored_implementation("## Implementation \n"));
+        assert!(!has_authored_implementation("# X\n\n## Parameters\n"));
+    }
+
+    /// Every backend gets a row, at the path it writes.
+    #[test]
+    fn implementation_rows_come_from_the_backend_registry() {
+        let root = Path::new("/r");
+        let section = implementation_section(&func("SMA", vec![]), root);
+        for backend in super::super::all() {
+            let row = format!("| {} | [`{}`]", backend.label(), backend.file_name(&func("SMA", vec![])));
+            assert!(section.contains(&row), "missing {row}:\n{section}");
+        }
+        assert!(section.contains("(https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SMA.c)"));
+    }
 
     #[test]
     fn parameters_become_a_table_with_the_yaml_numbers() {

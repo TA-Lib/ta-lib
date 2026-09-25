@@ -21,18 +21,6 @@ upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for ba
 
 - `optInTimePeriod` — Rolling window length for the up/down body sums
 
-## Implementation
-
-TA-Lib Definition: [`imi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/imi/imi.c) · [`imi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/imi/imi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_IMI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_IMI.c) |
-| Rust | [`imi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/imi.rs) |
-| Java | [`Core_IMI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_IMI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Intraday Momentum Index

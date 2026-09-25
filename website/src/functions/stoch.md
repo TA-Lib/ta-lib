@@ -65,6 +65,7 @@ TA-Lib Definition: [`stoch.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C | [`ta_STOCH.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_STOCH.c) |
 | Rust | [`stoch.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/stoch.rs) |
 | Java | [`Core_STOCH.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_STOCH.java) |
+| C# | [`Core_STOCH.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_STOCH.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -38,18 +38,6 @@ for i >= N:       RMA[i] = alpha * x[i] + beta * RMA[i-1]
 
 - `optInTimePeriod` — Number of bars in the seed window, and the reciprocal of the smoothing factor
 
-## Implementation
-
-TA-Lib Definition: [`rma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rma/rma.c) · [`rma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rma/rma.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_RMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_RMA.c) |
-| Rust | [`rma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rma.rs) |
-| Java | [`Core_RMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_RMA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Wilder's Smoothed Moving Average, Smoothed Moving Average, SMMA, Wilder's Smoothing, WilderMA

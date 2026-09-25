@@ -381,8 +381,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#macdextLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#macdextLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -406,11 +406,14 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDHist Histogram: MACD minus signal. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -483,8 +486,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#macdextLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#macdextLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -508,11 +511,14 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outMACDHist Histogram: MACD minus signal. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, macdextLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -676,7 +682,7 @@
             throw failure("MACDEXT update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("MACDEXT update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MACDEXT update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MACDEXT update", "inReal");
          core.macdextStepImpl(this, inReal);
          this.outRangeCount++;
          out.macd = this.cur_outMACD;
@@ -697,7 +703,7 @@
       public void peek( double inReal, MacdextOut out ) {
          requireArgument("MACDEXT peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MACDEXT peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MACDEXT peek", "inReal");
          MacdextStream sp = this;
          double cur_slowMABuffer = 0.0;
          double cur_fastMABuffer = 0.0;
@@ -958,12 +964,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MACDEXT openAndFill", inReal.length, startIdx, macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MACDEXT openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
+      throw streamFailure("MACDEXT openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind macdextOpen (composition seam). */
    MacdextStream macdextOpenInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -981,12 +984,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MACDEXT open: history shorter than lookback + 1");
+         throw insufficientHistory("MACDEXT open", inReal.length, startIdx, macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MACDEXT open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MACDEXT open: " + retCode, retCode);
+      throw streamFailure("MACDEXT open", retCode);
    }
    /**
     * Open a live MACDEXT stream over the warm-up history; the handle's
@@ -1033,7 +1033,7 @@
       requireLength("MACDEXT openAndFill", "outMACDSignal", outMACDSignal, guardOutLen);
       requireLength("MACDEXT openAndFill", "outMACDHist", outMACDHist, guardOutLen);
       if( (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist ) {
-         throw new TALibArgumentException("MACDEXT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MACDEXT openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

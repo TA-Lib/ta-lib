@@ -117,14 +117,14 @@ TA_LIB_API TA_RetCode TA_PVO( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* Nothing to produce: the range is shorter than the lookback. Return before
+   /* Nothing to produce: the range ends before the lookback. Return before
     * touching anything.
     *
     * Without this the fast MA below runs first, and its lookback is SMALLER
     * than pvo's own — so it reads the whole range and computes a result the
     * empty slow MA then discards. Observably identical (the slow MA's own early
     * return already yields 0,0 here), but it is the difference between "a range
-    * shorter than the lookback reads nothing" being true of this function and
+    * that ends before the lookback reads nothing" being true of this function and
     * being false: with a caller-supplied inVolume that stops short of endIdx, that
     * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
     * probe over every guarded core.
@@ -380,14 +380,14 @@ static TA_RetCode TA_PVO_OpenImpl( struct TA_PVO_Stream **stream, const double i
       int fastNb;
       int offset;
       int i;
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the fast MA below runs first, and its lookback is SMALLER
        * than pvo's own — so it reads the whole range and computes a result the
        * empty slow MA then discards. Observably identical (the slow MA's own early
        * return already yields 0,0 here), but it is the difference between "a range
-       * shorter than the lookback reads nothing" being true of this function and
+       * that ends before the lookback reads nothing" being true of this function and
        * being false: with a caller-supplied inVolume that stops short of endIdx, that
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.

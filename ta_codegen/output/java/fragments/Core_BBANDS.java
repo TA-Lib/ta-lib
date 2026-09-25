@@ -328,7 +328,7 @@
        * at the same bar. Two intermediate buffers are allocated so the input may
        * safely alias an output (it is only read here).
        */
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the moving average below runs first, and for the MA types whose
@@ -336,7 +336,7 @@
        * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
        * computes a middle band the empty standard deviation then discards.
        * Observably identical (the empty deviation already yields 0,0 here), but it
-       * is the difference between "a range shorter than the lookback reads nothing"
+       * is the difference between "a range that ends before the lookback reads nothing"
        * being true of this function and being false: with a caller-supplied inReal
        * that stops short of endIdx, that discarded work is an out-of-bounds read.
        * The SMA fast path above needs no such guard - its own lookback IS the
@@ -639,8 +639,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#bbandsLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#bbandsLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -656,11 +656,14 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
-    *        hold at least {@code endIdx - startIdx + 1} values.
+    *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @param outRealMiddleBand The moving average. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, bbandsLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outRealLowerBand Middle band minus nbDevDn standard deviations.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -719,8 +722,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#bbandsLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#bbandsLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -736,11 +739,14 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
-    *        hold at least {@code endIdx - startIdx + 1} values.
+    *        hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @param outRealMiddleBand The moving average. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, bbandsLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outRealLowerBand Middle band minus nbDevDn standard deviations.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, bbandsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -891,7 +897,7 @@
             throw failure("BBANDS update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("BBANDS update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("BBANDS update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("BBANDS update", "inReal");
          core.bbandsStepImpl(this, inReal);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -912,7 +918,7 @@
       public void peek( double inReal, BbandsOut out ) {
          requireArgument("BBANDS peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("BBANDS peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("BBANDS peek", "inReal");
          BbandsStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -1072,7 +1078,7 @@
        * at the same bar. Two intermediate buffers are allocated so the input may
        * safely alias an output (it is only read here).
        */
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the moving average below runs first, and for the MA types whose
@@ -1080,7 +1086,7 @@
        * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
        * computes a middle band the empty standard deviation then discards.
        * Observably identical (the empty deviation already yields 0,0 here), but it
-       * is the difference between "a range shorter than the lookback reads nothing"
+       * is the difference between "a range that ends before the lookback reads nothing"
        * being true of this function and being false: with a caller-supplied inReal
        * that stops short of endIdx, that discarded work is an out-of-bounds read.
        * The SMA fast path above needs no such guard - its own lookback IS the
@@ -1166,12 +1172,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("BBANDS openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("BBANDS openAndFill", inReal.length, startIdx, bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("BBANDS openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("BBANDS openAndFill: " + retCode, retCode);
+      throw streamFailure("BBANDS openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind bbandsOpen (composition seam). */
    BbandsStream bbandsOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -1189,12 +1192,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("BBANDS open: history shorter than lookback + 1");
+         throw insufficientHistory("BBANDS open", inReal.length, startIdx, bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("BBANDS open: internal error", retCode);
-      }
-      throw new TALibArgumentException("BBANDS open: " + retCode, retCode);
+      throw streamFailure("BBANDS open", retCode);
    }
    /**
     * Open a live BBANDS stream over the warm-up history; the handle's
@@ -1238,7 +1238,7 @@
       requireLength("BBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("BBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TALibArgumentException("BBANDS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("BBANDS openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

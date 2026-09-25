@@ -20,18 +20,6 @@ Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSq
 
 - `optInTimePeriod` — Number of bars in the regression window
 
-## Implementation
-
-TA-Lib Definition: [`tsf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsf/tsf.c) · [`tsf.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsf/tsf.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_TSF.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TSF.c) |
-| Rust | [`tsf.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/tsf.rs) |
-| Java | [`Core_TSF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TSF.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Time Series Forecast

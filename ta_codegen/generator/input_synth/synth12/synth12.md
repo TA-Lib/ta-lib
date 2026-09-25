@@ -26,7 +26,3 @@ outHalf[i] = real_i / 2; outSign[i] = 1 if real_i > 0, -1 if real_i < 0, else 0;
 - `outHalf` — The bar halved
 - `outSign` — 1 when the bar is above zero, -1 when below, 0 when exactly zero
 - `outQuarter` — The bar quartered
-
-## Implementation
-
-TA-Lib Definition: [`synth12.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth12/synth12.c) · [`synth12.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth12/synth12.yaml)

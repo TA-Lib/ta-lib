@@ -258,8 +258,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#eriLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#eriLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -269,9 +269,11 @@
     * @param optInTimePeriod Number of bars in the EMA of close (default 13;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outBullPower High minus the EMA of close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outBearPower Low minus the EMA of close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -335,8 +337,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#eriLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#eriLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -346,9 +348,11 @@
     * @param optInTimePeriod Number of bars in the EMA of close (default 13;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outBullPower High minus the EMA of close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outBearPower Low minus the EMA of close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, eriLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -489,7 +493,7 @@
             throw failure("ERI update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("ERI update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ERI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ERI update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.eriStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.bullPower = this.cur_outBullPower;
@@ -509,7 +513,7 @@
       public void peek( double inHigh, double inLow, double inClose, EriOut out ) {
          requireArgument("ERI peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ERI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ERI peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          EriStream sp = this;
          double cur_outBullPower = 0.0;
          double cur_outBearPower = 0.0;
@@ -785,12 +789,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ERI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("ERI openAndFill", inHigh.length, startIdx, eriLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ERI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("ERI openAndFill: " + retCode, retCode);
+      throw streamFailure("ERI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind eriOpen (composition seam). */
    EriStream eriOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -807,12 +808,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ERI open: history shorter than lookback + 1");
+         throw insufficientHistory("ERI open", inHigh.length, startIdx, eriLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ERI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("ERI open: " + retCode, retCode);
+      throw streamFailure("ERI open", retCode);
    }
    /**
     * Open a live ERI stream over the warm-up history; the handle's
@@ -860,7 +858,7 @@
       requireLength("ERI openAndFill", "outBullPower", outBullPower, guardOutLen);
       requireLength("ERI openAndFill", "outBearPower", outBearPower, guardOutLen);
       if( (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower ) {
-         throw new TALibArgumentException("ERI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("ERI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -31,18 +31,6 @@ One candle. Detected when all hold: (1) doji body: realbody |close-open| <= Body
 | 0 | No pattern |
 | 100 | Gravestone Doji detected — a potential reversal; direction (bullish/bearish) must be read from the prevailing trend, which this function does not check |
 
-## Implementation
-
-TA-Lib Definition: [`cdlgravestonedoji.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgravestonedoji/cdlgravestonedoji.c) · [`cdlgravestonedoji.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgravestonedoji/cdlgravestonedoji.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLGRAVESTONEDOJI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLGRAVESTONEDOJI.c) |
-| Rust | [`cdlgravestonedoji.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlgravestonedoji.rs) |
-| Java | [`Core_CDLGRAVESTONEDOJI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLGRAVESTONEDOJI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Gravestone Doji

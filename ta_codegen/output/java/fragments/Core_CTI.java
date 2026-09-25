@@ -395,8 +395,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ctiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#ctiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -405,7 +405,8 @@
     *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Correlation against the ramp, in -1..+1. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, ctiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -469,8 +470,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ctiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#ctiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -479,7 +480,8 @@
     *        ramp (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Correlation against the ramp, in -1..+1. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, ctiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -639,7 +641,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CTI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CTI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CTI update", "inReal");
          core.ctiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -657,7 +659,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CTI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CTI peek", "inReal");
          CtiStream sp = this;
          double x = 0.0;
          double ssX = 0.0;
@@ -1164,12 +1166,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CTI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CTI openAndFill", inReal.length, startIdx, ctiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CTI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CTI openAndFill: " + retCode, retCode);
+      throw streamFailure("CTI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind ctiOpen (composition seam). */
    CtiStream ctiOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -1185,12 +1184,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CTI open: history shorter than lookback + 1");
+         throw insufficientHistory("CTI open", inReal.length, startIdx, ctiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CTI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CTI open: " + retCode, retCode);
+      throw streamFailure("CTI open", retCode);
    }
    /**
     * Open a live CTI stream over the warm-up history; the handle's
@@ -1229,7 +1225,7 @@
       int guardOutLen = openFillCount("CTI openAndFill", inReal.length, ctiLookback(optInTimePeriod));
       requireLength("CTI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("CTI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CTI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -4,18 +4,16 @@ title: "ta_codegen Input: Documentation (<name>.md) Reference"
 
 # ta_codegen Input: Documentation (`<name>.md`) Reference
 
-> **Status (2026-07-21).** All 166 `<name>.md` source files exist, and `ta_codegen`
-> generates two render targets from them: the **ta-lib.org website**
-> (`backends/docs_site.rs` → `website/src/functions/`, served at `/functions/<name>`) and the
-> **embedded rustdoc** in the generated Rust crate (`backends/rust_doc.rs`, including a
-> runnable doctest per function, verified by `cargo test --doc`). Both inject the YAML
-> numbers for **optional inputs** from the shared `backends/doc_meta.rs` (issue #132), the
-> website as a `## Parameters` table. `## Inputs` is now **gated** instead: it must name the
-> arrays the function is actually called with, in signature order (issue #135) — the price
-> bundle (`inPriceHLC`) is an `ta_abstract` descriptor, not an argument, so it never appears
-> in prose. Still **planned**: injecting YAML facts into `## Inputs` / `## Outputs`, the
-> npm/TSDoc render, Javadoc/.NET XML-doc, and the `docs-lint` gate (the "Rendering targets" /
-> "Verification" sections below describe those intended targets). See the sibling references for the two other
+> **Status.** Every function has a `<name>.md`, and `ta_codegen` renders it to four
+> targets: the **ta-lib.org** page (`backends/docs_site.rs` → `website/src/functions/`),
+> the **rustdoc** in the Rust crate (`backends/rust_doc.rs`, with a runnable doctest per
+> function), the **Javadoc** (`backends/java_doc.rs`) and the **C# XML doc**
+> (`backends/csharp_doc.rs`). The YAML numbers for optional inputs come from the shared
+> `backends/doc_meta.rs`. `generate` rejects a `.md` whose `## Parameters` or `## Inputs`
+> are missing, malformed, or disagree with the YAML in name or order, one carrying a bare
+> URL, and one carrying an authored `## Implementation`. Not built: YAML facts injected into `## Inputs` /
+> `## Outputs`, a check of prose numbers against the YAML, a section-order check, a `.md`
+> canonicaliser, and the npm/TSDoc render. See the sibling references for the two other
 > input file kinds: [metadata](ta_codegen_input_yaml.md) and [code](ta_codegen_input_code.md).
 
 `<name>.md` is the **third sibling** in each `ta_codegen/input/<name>/` directory,
@@ -25,7 +23,8 @@ like every other backend — into each ecosystem's native format:
 
 - the **ta-lib.org** per-function page (VuePress, `website/src/functions/`),
 - **embedded rustdoc** in the generated Rust crate (docs.rs / IDE hover / offline `cargo doc`),
-- later, **Javadoc / .NET XML-doc / TSDoc** and the `ta_func_api.xml` description.
+- **Javadoc** and the **C# XML doc** on the generated `Core` methods,
+- later, **TSDoc** and the `ta_func_api.xml` description.
 
 Documentation is **authored once**, then **embedded** into each package — never merely
 linked. (A crate whose docs just link to ta-lib.org shows nothing on hover, nothing
@@ -42,16 +41,13 @@ The single most important constraint, and the thing that keeps docs from driftin
 - **Prose** — summary (with interpretation), brief formula, notes, per-argument meaning,
   references — lives **only** in `<name>.md`.
 
-A `docs-lint` gate fails the build if any `.md` prose hard-codes a number that contradicts
-the YAML, names a parameter/output that does not exist in the YAML, or points a cross-reference
-at a function that does not exist. A consequence of the split: **most metadata changes
-(a widened range, a new default) need no doc edit at all** — the render just picks up the
-new number.
+A consequence of the split: **most metadata changes (a widened range, a new default) need
+no doc edit at all** — the render just picks up the new number.
 
-Half of that gate exists today: `docs_site.rs` hard-errors when a function's `## Parameters`
-bullets do not match its YAML `optional_inputs` in name and order, so a parameter renamed on
-one side only cannot ship. The number-contradiction half is still unwritten, and it cannot be
-a blanket "no digits in a structured section" rule — roughly 80 bullets carry legitimate
+`generate` rejects a `## Parameters` list that does not match the YAML `optional_inputs` in
+name and order, so a parameter renamed on one side only cannot ship. Nothing checks a prose
+number against the YAML, and that check cannot be a blanket "no digits in a structured
+section" rule — roughly 80 bullets carry legitimate
 non-YAML numbers (the `CDL*` ±100 sign convention, output domains like WILLR's −100…0,
 MACDFIX's hard-coded 12/26 constants that live in `macdfix.c`). It has to compare a number
 against the specific YAML field it names.
@@ -59,7 +55,7 @@ against the specific YAML field it names.
 ## File format
 
 A `<name>.md` file has **no frontmatter**. It opens with an `#` H1 = the TA-Lib function
-name, then a fixed set of `##` sections (order enforced by `docs-lint`).
+name, then a fixed set of `##` sections, in the order below.
 
 ### Sections (in this order)
 
@@ -74,7 +70,7 @@ Numbers/ranges/defaults are **injected from YAML** at render — never restate t
 | `## Inputs` | yes | One short line per **input name**, matching the call signature in name and order (arity/type come from YAML). A `type: price` bundle is documented as its **components** (`inHigh`, `inLow`, `inClose`) — the bundle name is an `ta_abstract` descriptor, never a parameter. Enforced by `docs_site::validate_inputs`. |
 | `## Outputs` | yes | One short line per **output name**; for `CDL*` state the actual sign(s) emitted (+100 / −100 / 0). |
 | `## Parameters` | if `optional_inputs` | Meaning per optional-input **name** (range / default / `suggested` come from YAML). |
-| `## Implementation` | yes | A **TA-Lib Definition:** line (input `<name>.c` · `.yaml`), then a **Native** table of the generated **C / Rust / Java** files, then a pointer to language wrappers. |
+| `## Implementation` | never | Generated on the website page; see below. `generate` rejects an authored one. |
 | `## Aliases` | optional | Abbreviation expansions / alternative names for SEO, comma-separated. Drop any alias that merely repeats the function name — omit the whole section when nothing else qualifies (e.g. AROON, FLOOR). Feeds rustdoc `#[doc(alias)]` / site search. |
 | `## See Also` | optional | Related TA-Lib function names (` · ` separated) → rustdoc intra-doc links / site links. |
 | `## References` | optional | Books / sites, at the **bottom** of the file. A URL must be written as `[label](url)`, never bare: the prose is rendered verbatim into the rustdoc, where a bare URL trips `rustdoc::bare_urls` and fails the crate's warning-free `cargo doc` gate. `generate` rejects one. |
@@ -85,32 +81,16 @@ formula, a name→meaning list, or a link/name table. There is **no frontmatter*
 
 ## The Implementation section
 
-`## Implementation` is **authored in the file** following a fixed pattern (copy it from a
-shipped `<name>.md` and substitute your paths); the renderer validates the paths and
-rewrites them per target. The pattern: a **TA-Lib Definition:** line naming the source of
-truth, then a **Native** table of the generated backends, then a pointer to the language
-wrappers.
-
-```
-TA-Lib Definition: <name>.c · <name>.yaml
-
-| Native | File |
-|--------|------|
-| C      | src/ta_func/ta_<NAME>.c                      |
-| Rust   | ta_codegen/output/rust/src/ta_func/<name>.rs |
-| Java   | java/src/io/github/talib/Core.java      |
-
-TA-Lib is also available for Python, R and more using a wrapper → ta-lib.org/wrappers/
-```
-
-Links resolve against the canonical repo (`github.com/TA-Lib/ta-lib`); the renderer rewrites
-them per target as needed.
+`## Implementation` is **generated**, never authored: `docs_site.rs` writes it into the
+website page as the input `<name>.c` and `<name>.yaml`, then one row per backend in the
+backend registry naming the file that backend writes for the function, then a pointer to
+the language wrappers. A new backend gets its row on every page without an edit here.
 
 ## Rendering targets
 
 | Target | Mechanism | What is emitted |
 |--------|-----------|-----------------|
-| **ta-lib.org** (VuePress) | `backends/docs_site.rs` → `website/src/functions/<name>.md` (scoped prune) | SEO front matter; the authored prose passed through; a `## Parameters` **table joining** `.md` prose with live YAML numbers (type, default, accepted values) plus one italic legend per enum type; `## See Also` linkified to sibling pages. A cross-function emitter regenerates the grouped `functions/index.md`. Inputs/Outputs remain authored bullets — see the status note. |
+| **ta-lib.org** (VuePress) | `backends/docs_site.rs` → `website/src/functions/<name>.md` (scoped prune) | SEO front matter; the authored prose passed through; a `## Parameters` **table joining** `.md` prose with live YAML numbers (type, default, accepted values) plus one italic legend per enum type; the `## Properties` and `## Implementation` sections; `## See Also` linkified to sibling pages. A cross-function emitter regenerates the grouped `functions/index.md`. Inputs/Outputs remain authored bullets — see the status note. |
 | **crates.io / docs.rs** | inline `///` in the generated Rust (`backends/rust_doc.rs`) | Crate `//!` overview + quick-start doctest; per-function summary then the ta-lib.org deep link; `# Arguments` joining `.md` prose with YAML defaults/ranges; `# Errors`; a **generated runnable doctest** per function (synthetic data, defaults, asserts `Success` — run by `cargo test --doc`); `# See also` intra-doc links; `#[doc(alias)]` from Aliases. Plus Cargo.toml `description`/`license`/`homepage`/`keywords`/`categories` and a generated crate README.md. Prose is escaped for rustdoc (`[`, `<` outside code spans; list/quote markers at wrapped-line starts). |
 | **Java / .NET** | Javadoc / XML doc in the generated `Core` (`backends/java_doc.rs`, `backends/csharp_doc.rs`) | Summary, the ta-lib.org deep link, notes, the range contract; `@param` / `<param>` joining `.md` prose with YAML defaults/ranges; `@throws` / `<exception>`; `@see` / `<seealso>`. Prose is converted to the target's markup — javadoc renders HTML and the XML doc renders XML, so nothing authored may reach either as literal Markdown. |
 | **npm** (phase 4, when a JS/TS backend exists) | TSDoc `/** */` + README | Summary tier for IntelliSense; `package.json` `homepage`/`documentation` deep link. |
@@ -121,14 +101,10 @@ Everything a `<name>.md` produces is generated deterministically and is subject 
 existing **regeneration oracle** (`build.py generate` then `git status --porcelain` must be
 empty). On top of that:
 
-1. **`docs-lint`** — required sections present and ordered; every param/output named in prose
-   exists in the YAML; no prose number contradicts the YAML; `see_also` and intra-doc links
-   resolve; the Implementation paths exist.
+1. **`generate`** rejects the `.md` faults listed in the status note.
 2. **`pnpm docs:build`** (VuePress, from `website/`) — broken nav / cross-references fail the docs PR.
-
-`ta_codegen format` gains a deterministic `.md` canonicaliser (fixed section order,
-trailing-whitespace strip, blank-line collapse) with the same whitespace-only safety guard
-as the C reindenter, so the file is stable under the format gate.
+3. The Rust crate's warning-free **`cargo doc`** and the C# library build fail on a broken
+   intra-doc link or `cref`, so a `## See Also` entry that renders reaches a real method.
 
 > Note: the **formula, notes, and summary prose are not machine-checked against `<name>.c`** —
 > nothing automated proves them correct. Human review of formulas, quirks, and citations is

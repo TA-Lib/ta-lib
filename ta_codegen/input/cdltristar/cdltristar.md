@@ -28,18 +28,6 @@ A three-candle pattern of three consecutive doji where the middle doji is a star
 | 0 | No pattern (or a doji trio without a qualifying star gap) |
 | 100 | Bullish Tristar: the middle doji ("star") sits isolated below its neighbors — an exhaustion signal warning a downtrend may be bottoming out |
 
-## Implementation
-
-TA-Lib Definition: [`cdltristar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdltristar/cdltristar.c) · [`cdltristar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdltristar/cdltristar.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLTRISTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLTRISTAR.c) |
-| Rust | [`cdltristar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdltristar.rs) |
-| Java | [`Core_CDLTRISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLTRISTAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Tristar Pattern, Tri-Star

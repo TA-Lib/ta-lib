@@ -512,8 +512,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#correlLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#correlLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -522,7 +522,8 @@
     * @param optInTimePeriod Rolling window length (default 30; range 1..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Correlation coefficient r in [-1, 1]. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, correlLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -580,8 +581,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#correlLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#correlLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -590,7 +591,8 @@
     * @param optInTimePeriod Rolling window length (default 30; range 1..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Correlation coefficient r in [-1, 1]. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, correlLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -756,7 +758,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CORREL update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("CORREL update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CORREL update", !Double.isFinite(inReal0) ? "inReal0" : "inReal1");
          core.correlStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -774,7 +776,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("CORREL peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CORREL peek", !Double.isFinite(inReal0) ? "inReal0" : "inReal1");
          CorrelStream sp = this;
          double x = 0.0;
          double y = 0.0;
@@ -1502,12 +1504,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CORREL openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CORREL openAndFill", inReal0.length, startIdx, correlLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CORREL openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CORREL openAndFill: " + retCode, retCode);
+      throw streamFailure("CORREL openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind correlOpen (composition seam). */
    CorrelStream correlOpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
@@ -1523,12 +1522,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CORREL open: history shorter than lookback + 1");
+         throw insufficientHistory("CORREL open", inReal0.length, startIdx, correlLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CORREL open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CORREL open: " + retCode, retCode);
+      throw streamFailure("CORREL open", retCode);
    }
    /**
     * Open a live CORREL stream over the warm-up history; the handle's
@@ -1571,7 +1567,7 @@
       requireHistoryLength("CORREL openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("CORREL openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TALibArgumentException("CORREL openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CORREL openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

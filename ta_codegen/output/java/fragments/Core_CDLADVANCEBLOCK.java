@@ -364,7 +364,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdladvanceblockLookback} is a
+    * valid range that ends before {@link Core#cdladvanceblockLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -375,7 +375,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger -100 on a detected pattern (always bearish), 0
     *        otherwise; never emits +100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdladvanceblockLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -437,7 +438,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdladvanceblockLookback} is a
+    * valid range that ends before {@link Core#cdladvanceblockLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -448,7 +449,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger -100 on a detected pattern (always bearish), 0
     *        otherwise; never emits +100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdladvanceblockLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -674,7 +676,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLADVANCEBLOCK update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLADVANCEBLOCK update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLADVANCEBLOCK update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdladvanceblockStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -692,7 +694,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLADVANCEBLOCK peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLADVANCEBLOCK peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdladvanceblockStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -1144,12 +1146,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLADVANCEBLOCK openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLADVANCEBLOCK openAndFill", inOpen.length, startIdx, cdladvanceblockLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLADVANCEBLOCK openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLADVANCEBLOCK openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLADVANCEBLOCK openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdladvanceblockOpen (composition seam). */
    CdladvanceblockStream cdladvanceblockOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -1165,12 +1164,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLADVANCEBLOCK open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLADVANCEBLOCK open", inOpen.length, startIdx, cdladvanceblockLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLADVANCEBLOCK open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLADVANCEBLOCK open: " + retCode, retCode);
+      throw streamFailure("CDLADVANCEBLOCK open", retCode);
    }
    /**
     * Open a live CDLADVANCEBLOCK stream over the warm-up history; the handle's
@@ -1219,7 +1215,7 @@
       requireHistoryLength("CDLADVANCEBLOCK openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLADVANCEBLOCK openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLADVANCEBLOCK openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLADVANCEBLOCK openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

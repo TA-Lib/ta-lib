@@ -250,7 +250,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlrisefall3methodsLookback} is a
+    * valid range that ends before {@link Core#cdlrisefall3methodsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -262,7 +262,8 @@
     * @param outInteger +100 when candle 1 is white (rising/bullish
     *        continuation), -100 when candle 1 is black (falling/bearish continuation),
     *        0 otherwise. Sign = 100 * color of candle 1. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlrisefall3methodsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -326,7 +327,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlrisefall3methodsLookback} is a
+    * valid range that ends before {@link Core#cdlrisefall3methodsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -338,7 +339,8 @@
     * @param outInteger +100 when candle 1 is white (rising/bullish
     *        continuation), -100 when candle 1 is black (falling/bearish continuation),
     *        0 otherwise. Sign = 100 * color of candle 1. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlrisefall3methodsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -531,7 +533,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLRISEFALL3METHODS update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLRISEFALL3METHODS update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLRISEFALL3METHODS update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlrisefall3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -549,7 +551,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLRISEFALL3METHODS peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLRISEFALL3METHODS peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          Cdlrisefall3methodsStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -867,12 +869,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLRISEFALL3METHODS openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLRISEFALL3METHODS openAndFill", inOpen.length, startIdx, cdlrisefall3methodsLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLRISEFALL3METHODS openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLRISEFALL3METHODS openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLRISEFALL3METHODS openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlrisefall3methodsOpen (composition seam). */
    Cdlrisefall3methodsStream cdlrisefall3methodsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -888,12 +887,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLRISEFALL3METHODS open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLRISEFALL3METHODS open", inOpen.length, startIdx, cdlrisefall3methodsLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLRISEFALL3METHODS open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLRISEFALL3METHODS open: " + retCode, retCode);
+      throw streamFailure("CDLRISEFALL3METHODS open", retCode);
    }
    /**
     * Open a live CDLRISEFALL3METHODS stream over the warm-up history; the handle's
@@ -942,7 +938,7 @@
       requireHistoryLength("CDLRISEFALL3METHODS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLRISEFALL3METHODS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLRISEFALL3METHODS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLRISEFALL3METHODS openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

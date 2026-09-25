@@ -336,7 +336,7 @@ public static class BatchApiTest
         CheckThrows<ArgumentException>(
             () => core.Sma(0, 199, input, 10, new double[3]),
             "undersized output -> ArgumentException",
-            "SMA", "outReal", "3", "191");
+            "SMA: outReal has length 3, needs 191");
     }
 
     /// <summary>Requesting more than the input holds names the input.</summary>
@@ -348,7 +348,7 @@ public static class BatchApiTest
         CheckThrows<ArgumentException>(
             () => core.Sma(0, 500, input, 10, new double[501]),
             "endIdx past the input end -> ArgumentException",
-            "SMA", "inReal", "200", "501");
+            "SMA: inReal has length 200, needs 501");
     }
 
     /// <summary>Two inputs of different lengths: the short one is named.</summary>

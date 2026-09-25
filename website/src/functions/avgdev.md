@@ -50,6 +50,7 @@ TA-Lib Definition: [`avgdev.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C | [`ta_AVGDEV.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_AVGDEV.c) |
 | Rust | [`avgdev.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/avgdev.rs) |
 | Java | [`Core_AVGDEV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_AVGDEV.java) |
+| C# | [`Core_AVGDEV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AVGDEV.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -36,18 +36,6 @@ Hist = MACD - Signal
 - `optInSignalPeriod` — Period of the signal-line MA
 - `optInSignalMAType` — MA type for the signal line
 
-## Implementation
-
-TA-Lib Definition: [`macdext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdext/macdext.c) · [`macdext.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdext/macdext.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MACDEXT.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MACDEXT.c) |
-| Rust | [`macdext.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/macdext.rs) |
-| Java | [`Core_MACDEXT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACDEXT.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 MACD Extended, MACD with controllable MA type

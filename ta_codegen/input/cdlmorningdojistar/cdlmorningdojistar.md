@@ -31,18 +31,6 @@ A three-candle bullish reversal pattern: a long black candle, then a doji that g
 
 - `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must exceed above close[i-2]; larger values demand deeper penetration into the black body
 
-## Implementation
-
-TA-Lib Definition: [`cdlmorningdojistar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmorningdojistar/cdlmorningdojistar.c) · [`cdlmorningdojistar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmorningdojistar/cdlmorningdojistar.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLMORNINGDOJISTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLMORNINGDOJISTAR.c) |
-| Rust | [`cdlmorningdojistar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlmorningdojistar.rs) |
-| Java | [`Core_CDLMORNINGDOJISTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLMORNINGDOJISTAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Morning Doji Star

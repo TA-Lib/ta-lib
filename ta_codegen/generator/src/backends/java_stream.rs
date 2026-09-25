@@ -915,7 +915,9 @@ fn advance_out_range() -> &'static str {
 /// Counting a bar the caller declined to commit is `advance()`'s job.
 ///
 /// `IllegalArgumentException` carrying the same `"<NAME> <what>: "` prefix the
-/// open rejections use, so one catch clause covers the whole tier.
+/// open rejections use, so one catch clause covers the whole tier. The
+/// condition stays one test; which input failed is worked out only on the throw
+/// path, so the accepting path is unchanged.
 fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
@@ -924,8 +926,12 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
     let n = base_name(func);
     let conds: Vec<String> = bars.iter().map(|b| format!("!Double.isFinite({b})")).collect();
     let cond = conds.join(" || ");
-    let throw =
-        format!("throw new TALibArgumentException(\"{n} {what}: BAD_PARAM\", RetCode.BAD_PARAM);");
+    let (last, rest) = bars.split_last().expect("non-empty");
+    let mut name = format!("\"{last}\"");
+    for b in rest.iter().rev() {
+        name = format!("!Double.isFinite({b}) ? \"{b}\" : {name}");
+    }
+    let throw = format!("throw nonFiniteBar(\"{n} {what}\", {name});");
     format!("{indent}if( {cond} )\n{indent}   {throw}\n")
 }
 
@@ -2300,27 +2306,29 @@ fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: 
 // Public wrappers
 // ---------------------------------------------------------------------------
 
-/// The reject-conversion tail shared by openInternal / openAndFill: stable
-/// message prefix, typed insufficient-history, IllegalState for capture
-/// invariants, IllegalArgument for everything else.
-fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
+/// The reject-conversion tail shared by openInternal / openAndFill: rule S7
+/// with its counts, then `Core.streamFailure` for every other code, which
+/// single-sources the stable message prefix. `anchor` is the seam's
+/// `startIdx`, or `None` at a public frame (anchor 0).
+fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str, anchor: Option<&str>) {
     let n = func.name.to_uppercase();
+    let history = &streaming::input_array_names(func)[0];
+    let lookback = format!(
+        "{}Lookback({})",
+        method_base(func),
+        func.optional_inputs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ")
+    );
+    let anchor = anchor.unwrap_or("0");
     let _ = writeln!(o, "      if( retCode == RetCode.SUCCESS ) {{");
     let _ = writeln!(o, "         return sp;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {{");
     let _ = writeln!(
         o,
-        "         throw new InsufficientHistoryException(\"{n} {what}: history shorter than lookback + 1\");"
+        "         throw insufficientHistory(\"{n} {what}\", {history}.length, {anchor}, {lookback});"
     );
     let _ = writeln!(o, "      }}");
-    let _ = writeln!(o, "      if( retCode == RetCode.INTERNAL_ERROR ) {{");
-    let _ = writeln!(o, "         throw new TALibStateException(\"{n} {what}: internal error\", retCode);");
-    let _ = writeln!(o, "      }}");
-    // Carrying, like every other failure the library raises: the code has to be
-    // recoverable from the thrown object on THIS ladder too, or "total" is a
-    // claim about the batch tier wearing the name of the whole library (#236).
-    let _ = writeln!(o, "      throw new TALibArgumentException(\"{n} {what}: \" + retCode, retCode);");
+    let _ = writeln!(o, "      throw streamFailure(\"{n} {what}\", retCode);");
 }
 
 /// `<base>OpenInternal`: the `startIdx`-anchored plain open, package-private.
@@ -2380,7 +2388,7 @@ fn emit_open_internal_seam(
             in_fwd.join(", ")
         );
     }
-    emit_reject_conversion(o, func, "open");
+    emit_reject_conversion(o, func, "open", Some("startIdx"));
     let _ = writeln!(o, "   }}");
 
 }
@@ -2672,14 +2680,13 @@ fn emit_open_wrappers(
         // The guard the anchored seam deliberately omits: every composed
         // sub-call passes a destination that aliases neither its sources nor
         // each other, so it belongs on the public frame, not the hot one. It
-        // throws here rather than answering a code, producing the identical
-        // text the shared ladder produced when the deleted fill body returned
-        // BadParam into it.
+        // throws through the same mapping as the open tail, so the message is
+        // the one every other opener BAD_PARAM carries.
         if let Some(cond) = alias_condition(func) {
             let _ = writeln!(o, "      if( {cond} ) {{");
             let _ = writeln!(
                 o,
-                "         throw new TALibArgumentException(\"{n} openAndFill: \" + RetCode.BAD_PARAM, RetCode.BAD_PARAM);"
+                "         throw streamFailure(\"{n} openAndFill\", RetCode.BAD_PARAM);"
             );
             let _ = writeln!(o, "      }}");
         }
@@ -2709,7 +2716,7 @@ fn emit_open_wrappers(
         );
         let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
         let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
-        emit_reject_conversion(o, func, "openAndFill");
+        emit_reject_conversion(o, func, "openAndFill", None);
     }
     let _ = writeln!(o, "   }}");
 }
@@ -4280,6 +4287,6 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     // composed sub-handle is opened through (issue #241).
     let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
     let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
-    emit_reject_conversion(o, func, "openAndFill");
+    emit_reject_conversion(o, func, "openAndFill", Some("startIdx"));
     let _ = writeln!(o, "   }}");
 }

@@ -23,18 +23,6 @@ A two-candle pattern of two opposite-color marubozu (long body, very short shado
 | 0 | No pattern |
 | 100 | Bullish Kicking by Length: the longer of the two marubozu closed white |
 
-## Implementation
-
-TA-Lib Definition: [`cdlkickingbylength.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkickingbylength/cdlkickingbylength.c) · [`cdlkickingbylength.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlkickingbylength/cdlkickingbylength.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLKICKINGBYLENGTH.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLKICKINGBYLENGTH.c) |
-| Rust | [`cdlkickingbylength.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlkickingbylength.rs) |
-| Java | [`Core_CDLKICKINGBYLENGTH.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLKICKINGBYLENGTH.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Kicking by Length, Kicking - bull/bear decided by the longer marubozu

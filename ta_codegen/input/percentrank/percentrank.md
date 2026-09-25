@@ -36,18 +36,6 @@ The comparison is strictly less-than, so a value tied with a predecessor does no
 
 - `optInTimePeriod` — Number of preceding values the current value is ranked against
 
-## Implementation
-
-TA-Lib Definition: [`percentrank.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentrank/percentrank.c) · [`percentrank.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/percentrank/percentrank.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_PERCENTRANK.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_PERCENTRANK.c) |
-| Rust | [`percentrank.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/percentrank.rs) |
-| Java | [`Core_PERCENTRANK.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_PERCENTRANK.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## See Also
 
 RSI · WILLR · STDDEV

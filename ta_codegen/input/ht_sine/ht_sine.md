@@ -13,18 +13,6 @@ Hilbert Transform SineWave: derives the dominant-cycle phase from price and emit
 - `outSine` — Sine of the dominant-cycle phase
 - `outLeadSine` — Sine of the phase advanced 45 degrees (lead)
 
-## Implementation
-
-TA-Lib Definition: [`ht_sine.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_sine/ht_sine.c) · [`ht_sine.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ht_sine/ht_sine.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_HT_SINE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HT_SINE.c) |
-| Rust | [`ht_sine.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ht_sine.rs) |
-| Java | [`Core_HT_SINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HT_SINE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Hilbert Transform SineWave, Ehlers SineWave, SineWave Indicator

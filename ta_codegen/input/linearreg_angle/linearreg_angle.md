@@ -20,18 +20,6 @@ m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, S
 
 - `optInTimePeriod` — Number of points in the regression window
 
-## Implementation
-
-TA-Lib Definition: [`linearreg_angle.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_angle/linearreg_angle.c) · [`linearreg_angle.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/linearreg_angle/linearreg_angle.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_LINEARREG_ANGLE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_LINEARREG_ANGLE.c) |
-| Rust | [`linearreg_angle.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/linearreg_angle.rs) |
-| Java | [`Core_LINEARREG_ANGLE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_LINEARREG_ANGLE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Linear Regression Angle, Least Squares Angle

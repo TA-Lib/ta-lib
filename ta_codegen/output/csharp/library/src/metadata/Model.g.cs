@@ -236,7 +236,7 @@ public abstract record OptInputDomain
 
         /// <summary>The list in C's <c>"0=SMA;1=EMA;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
-        public string ToValueListString() => string.Join(";", Values.Select(v => $"{v.Value}={v.Name}"));
+        public string ToValueListString() => string.Join(";", Values.Select(v => FormattableString.Invariant($"{v.Value}={v.Name}")));
     }
 
     /// <summary>A fixed set of named real choices.</summary>
@@ -259,7 +259,7 @@ public abstract record OptInputDomain
 
         /// <summary>The list in C's <c>"value=name;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
-        public string ToValueListString() => string.Join(";", Values.Select(v => $"{v.Value}={v.Name}"));
+        public string ToValueListString() => string.Join(";", Values.Select(v => FormattableString.Invariant($"{v.Value}={v.Name}")));
     }
 }
 

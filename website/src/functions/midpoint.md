@@ -50,6 +50,7 @@ TA-Lib Definition: [`midpoint.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | C | [`ta_MIDPOINT.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MIDPOINT.c) |
 | Rust | [`midpoint.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/midpoint.rs) |
 | Java | [`Core_MIDPOINT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MIDPOINT.java) |
+| C# | [`Core_MIDPOINT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MIDPOINT.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

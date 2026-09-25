@@ -674,8 +674,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rviLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rviLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -687,7 +687,8 @@
     *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Relative Volatility Index value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, rviLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -752,8 +753,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rviLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rviLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -765,7 +766,8 @@
     *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Relative Volatility Index value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, rviLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -933,7 +935,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("RVI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RVI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("RVI update", "inReal");
          core.rviStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -951,7 +953,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("RVI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("RVI peek", "inReal");
          RviStream sp = this;
          double tempReal = 0.0;
          double meanValue1 = 0.0;
@@ -1510,12 +1512,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("RVI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("RVI openAndFill", inReal.length, startIdx, rviLookback(optInTimePeriod, optInStdDevPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("RVI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("RVI openAndFill: " + retCode, retCode);
+      throw streamFailure("RVI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind rviOpen (composition seam). */
    RviStream rviOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInStdDevPeriod )
@@ -1531,12 +1530,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("RVI open: history shorter than lookback + 1");
+         throw insufficientHistory("RVI open", inReal.length, startIdx, rviLookback(optInTimePeriod, optInStdDevPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("RVI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("RVI open: " + retCode, retCode);
+      throw streamFailure("RVI open", retCode);
    }
    /**
     * Open a live RVI stream over the warm-up history; the handle's
@@ -1575,7 +1571,7 @@
       int guardOutLen = openFillCount("RVI openAndFill", inReal.length, rviLookback(optInTimePeriod, optInStdDevPeriod));
       requireLength("RVI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("RVI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("RVI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

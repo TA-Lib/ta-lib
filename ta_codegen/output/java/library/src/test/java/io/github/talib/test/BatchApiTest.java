@@ -287,7 +287,7 @@ public class BatchApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.sma(0, 500, in, 10, out),
             "endIdx past the input end -> IllegalArgument",
-            "SMA", "inReal", "200", "501");
+            "SMA: inReal has length 200, needs 501");
     }
 
     /** Two input series of different lengths: the short one is named. */
@@ -314,7 +314,7 @@ public class BatchApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.sma(0, 199, in, 10, out),
             "undersized output -> IllegalArgument",
-            "SMA", "outReal", "3", "191");
+            "SMA: outReal has length 3, needs 191");
     }
 
     /**
@@ -717,10 +717,16 @@ public class BatchApiTest {
             "aliased OpenAndFill outputs carry BadParam");
 
         // ...and it is still an InsufficientHistoryException, so an existing
-        // catch keeps working.
+        // catch keeps working. Its message carries the counts, like a short array's.
         checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpen(Arrays.copyOf(in, Core.DEFAULT.smaLookback(30)), 30),
-            "a short history is still typed");
+            "a short history is still typed", "SMA open: history has length 29, needs 30");
+        // The dispatch tier converts the code on its own frame.
+        final int maLb = Core.DEFAULT.maLookback(10, MAType.EMA);
+        checkThrows(InsufficientHistoryException.class,
+            () -> Core.DEFAULT.maOpenAndFill(Arrays.copyOf(in, maLb), 10, MAType.EMA, new double[200]),
+            "a short MA fill history names its counts",
+            "MA openAndFill: history has length " + maLb + ", needs " + (maLb + 1));
 
         // The numbers the cross-language harness compares. Hardcoded, because
         // asking the enum for its own value would prove nothing.

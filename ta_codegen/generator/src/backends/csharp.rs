@@ -326,8 +326,8 @@ pub fn generate(
     out.push_str(&gen_func(func, false, enums, registry, helpers)); // double guarded
     out.push_str(&gen_func(func, true, enums, registry, helpers)); // float guarded
     // Public surface: OutRange-returning wrappers over the cores above.
-    out.push_str(&gen_public_wrapper(func, false, enums));
-    out.push_str(&gen_public_wrapper(func, true, enums));
+    out.push_str(&gen_public_wrapper(func, false, enums, registry));
+    out.push_str(&gen_public_wrapper(func, true, enums, registry));
     // Streaming API section (only for YAML-declared streamable functions).
     // Unlike Java there is no fragment splice: the section simply lands inside
     // this file's `partial class Core`, before its closing brace.
@@ -552,13 +552,14 @@ fn body_name(base: &str) -> String {
 /// cross-call's rejection propagates as a throw rather than being converted to a
 /// code and re-thrown under this function's name.
 ///
-/// **A short range is not an error.** A valid range shorter than the lookback
-/// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
-/// `Count` is 0 — exactly C's contract, never an exception.
+/// **A short range is not an error.** A valid range that ends before the
+/// lookback returns `Success` with `outNBElement == 0`, which becomes an
+/// `OutRange` whose `Count` is 0 — exactly C's contract, never an exception.
 fn gen_public_wrapper(
     func: &FuncDef,
     single_precision: bool,
     enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
 ) -> String {
     let base_name = super::common::pascal_words(&func.name);
     let core = body_name(&base_name);
@@ -593,7 +594,13 @@ fn gen_public_wrapper(
     }
 
     let mut out = String::new();
-    out.push_str(&super::csharp_doc::guarded_docs(func, &base_name, single_precision, enums));
+    out.push_str(&super::csharp_doc::guarded_docs(
+        func,
+        &base_name,
+        single_precision,
+        enums,
+        registry,
+    ));
     let sig_prefix = format!("   public OutRange {public_name}( ");
     let indent = " ".repeat(sig_prefix.len());
     out.push_str(&sig_prefix);
@@ -915,7 +922,7 @@ fn gen_func_inner(
         // Zero-length operands are NOT rejected, and must not be. `Overlaps`
         // short-circuits to false when either side is empty, which is the right
         // answer: two empty spans cannot clobber each other. Rejecting them makes
-        // a range shorter than the lookback — a documented success with no values,
+        // a range that ends before the lookback — a documented success with no values,
         // needing no output space (rule N1) — answer BadParam here while C and
         // Java accept it (Appendix D item 11, #262), and it makes "declined"
         // unspellable, since an empty span is how a C# caller declines a nullable
@@ -2499,17 +2506,19 @@ fn render_func_call(
                 }
             }
             StdlibFn::Memset => {
-                // memset(buf, 0, count) → Array.Fill(buf, fillVal, off, count).
-                // NOTE the third Java argument is an END INDEX (Arrays.fill's
-                // `to`); Array.Fill takes a COUNT — the classic silent trap.
+                // The cast makes one spelling compile for a pointer local (a
+                // Span) and a fixed-size local (an array, which has no Slice).
+                // Never `arr[a..b].Fill(v)`: a range over an array is a copy.
                 if args.len() >= 3 {
                     let (arr, off) = decompose_array_ref(&args[0], ctx, registry, helpers);
                     let count = render_expr(&args[2], ctx, registry, helpers);
-                    let fill_val = match find_sizeof_type(&args[2]).as_deref() {
-                        Some("int") => "0",
-                        _ => "0.0",
+                    let (elem, fill_val) = match find_sizeof_type(&args[2]).as_deref() {
+                        Some("int") => ("int", "0"),
+                        _ => ("double", "0.0"),
                     };
-                    format!("Array.Fill({arr}, {fill_val}, (int)({off}), (int)({count}))")
+                    format!(
+                        "((Span<{elem}>){arr}).Slice((int)({off}), (int)({count})).Fill({fill_val})"
+                    )
                 } else {
                     "/* memset: bad args */".to_string()
                 }

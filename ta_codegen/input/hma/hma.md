@@ -30,18 +30,6 @@ All three averages are the standard linearly-weighted moving average (TA-Lib's W
 
 - `optInTimePeriod` — Number of bars in the full-period WMA; the half and square-root periods derive from it
 
-## Implementation
-
-TA-Lib Definition: [`hma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/hma/hma.c) · [`hma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/hma/hma.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_HMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HMA.c) |
-| Rust | [`hma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/hma.rs) |
-| Java | [`Core_HMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HMA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Hull Moving Average

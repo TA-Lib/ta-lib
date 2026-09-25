@@ -56,7 +56,7 @@ TA_RetCode kc(int startIdx, int endIdx,
    emaLookback = ema_lookback( optInTimePeriod );
    lookbackTotal = kc_lookback( optInTimePeriod, optInATRPeriod, optInNbDev );
 
-   /* Nothing to produce: the range is shorter than the lookback. Return before
+   /* Nothing to produce: the range ends before the lookback. Return before
     * touching anything, so that a caller-supplied input which stops short of
     * endIdx is never read past its end.
     */

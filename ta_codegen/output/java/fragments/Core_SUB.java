@@ -79,15 +79,16 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#subLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#subLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal0 Minuend series.
     * @param inReal1 Subtrahend series.
     * @param outReal Per-element difference inReal0 - inReal1. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, subLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -137,15 +138,16 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#subLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#subLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal0 Minuend series.
     * @param inReal1 Subtrahend series.
     * @param outReal Per-element difference inReal0 - inReal1. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, subLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -272,7 +274,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("SUB update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("SUB update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SUB update", !Double.isFinite(inReal0) ? "inReal0" : "inReal1");
          core.subStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -290,7 +292,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("SUB peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SUB peek", !Double.isFinite(inReal0) ? "inReal0" : "inReal1");
          SubStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 - inReal1;
@@ -368,12 +370,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SUB openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("SUB openAndFill", inReal0.length, startIdx, subLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SUB openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("SUB openAndFill: " + retCode, retCode);
+      throw streamFailure("SUB openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind subOpen (composition seam). */
    SubStream subOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -389,12 +388,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SUB open: history shorter than lookback + 1");
+         throw insufficientHistory("SUB open", inReal0.length, startIdx, subLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SUB open: internal error", retCode);
-      }
-      throw new TALibArgumentException("SUB open: " + retCode, retCode);
+      throw streamFailure("SUB open", retCode);
    }
    /**
     * Open a live SUB stream over the warm-up history; the handle's
@@ -435,7 +431,7 @@
       requireHistoryLength("SUB openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("SUB openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TALibArgumentException("SUB openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("SUB openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

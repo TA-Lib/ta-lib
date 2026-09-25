@@ -27,7 +27,3 @@ S(i) = (x(i) - S(i-1)) * k + S(i-1), with k = 2 / (period + 1) supplied by the g
 ## Parameters
 
 - `optInTimePeriod` — Warm-up window, and the source of the smoothing factor the guarded variant derives
-
-## Implementation
-
-TA-Lib Definition: [`synth4.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth4/synth4.c) · [`synth4.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth4/synth4.yaml)

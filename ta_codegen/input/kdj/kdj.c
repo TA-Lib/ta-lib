@@ -39,7 +39,7 @@ TA_RetCode kdj(int startIdx, int endIdx,
    lookbackTotal = kdj_lookback( optInFastK_Period, optInSlowK_Period, optInSlowK_MAType,
       optInSlowD_Period, optInSlowD_MAType );
 
-   /* Nothing to produce: the range is shorter than the lookback. Answering here
+   /* Nothing to produce: the range ends before the lookback. Answering here
     * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
     * its own argument check would reject before any array is touched.
     */

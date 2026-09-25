@@ -34,15 +34,3 @@ Middle = (Upper + Lower) / 2
 ## Parameters
 
 - `optInTimePeriod` — Number of bars in the extrema window
-
-## Implementation
-
-TA-Lib Definition: [`donchian.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/donchian/donchian.c) · [`donchian.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/donchian/donchian.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_DONCHIAN.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_DONCHIAN.c) |
-| Rust | [`donchian.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/donchian.rs) |
-| Java | [`Core_DONCHIAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_DONCHIAN.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).

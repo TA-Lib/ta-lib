@@ -55,6 +55,7 @@ TA-Lib Definition: [`correl.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C | [`ta_CORREL.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CORREL.c) |
 | Rust | [`correl.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/correl.rs) |
 | Java | [`Core_CORREL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CORREL.java) |
+| C# | [`Core_CORREL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CORREL.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

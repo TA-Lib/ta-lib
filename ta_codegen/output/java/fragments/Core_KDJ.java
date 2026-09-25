@@ -113,7 +113,7 @@
          return RetCode.BAD_PARAM ;
       }
       lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
-      /* Nothing to produce: the range is shorter than the lookback. Answering here
+      /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.
        */
@@ -230,8 +230,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#kdjLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#kdjLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -255,11 +255,14 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outD Signal line: K smoothed by SlowD_Period MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outJ Divergence line, three parts K less two parts D. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -338,8 +341,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#kdjLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#kdjLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -363,11 +366,14 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outD Signal line: K smoothed by SlowD_Period MA. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @param outJ Divergence line, three parts K less two parts D. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, kdjLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -525,7 +531,7 @@
             throw failure("KDJ update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("KDJ update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KDJ update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("KDJ update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.kdjStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.k = this.cur_outK;
@@ -546,7 +552,7 @@
       public void peek( double inHigh, double inLow, double inClose, KdjOut out ) {
          requireArgument("KDJ peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("KDJ peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("KDJ peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          KdjStream sp = this;
          double cur_outK = 0.0;
          double cur_outD = 0.0;
@@ -685,7 +691,7 @@
       double[] sc_outD = outStride == 1 ? outD : new double[historyLen];
       double[] sc_outJ = outStride == 1 ? outJ : new double[historyLen];
       lookbackTotal = kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
-      /* Nothing to produce: the range is shorter than the lookback. Answering here
+      /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.
        */
@@ -735,12 +741,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("KDJ openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("KDJ openAndFill", inHigh.length, startIdx, kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("KDJ openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("KDJ openAndFill: " + retCode, retCode);
+      throw streamFailure("KDJ openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind kdjOpen (composition seam). */
    KdjStream kdjOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -758,12 +761,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("KDJ open: history shorter than lookback + 1");
+         throw insufficientHistory("KDJ open", inHigh.length, startIdx, kdjLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("KDJ open: internal error", retCode);
-      }
-      throw new TALibArgumentException("KDJ open: " + retCode, retCode);
+      throw streamFailure("KDJ open", retCode);
    }
    /**
     * Open a live KDJ stream over the warm-up history; the handle's
@@ -816,7 +816,7 @@
       requireLength("KDJ openAndFill", "outD", outD, guardOutLen);
       requireLength("KDJ openAndFill", "outJ", outJ, guardOutLen);
       if( (Object)outK == (Object)inHigh || (Object)outK == (Object)inLow || (Object)outK == (Object)inClose || (Object)outD == (Object)inHigh || (Object)outD == (Object)inLow || (Object)outD == (Object)inClose || (Object)outJ == (Object)inHigh || (Object)outJ == (Object)inLow || (Object)outJ == (Object)inClose || (Object)outK == (Object)outD || (Object)outK == (Object)outJ || (Object)outD == (Object)outJ ) {
-         throw new TALibArgumentException("KDJ openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("KDJ openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

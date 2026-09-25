@@ -858,8 +858,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MamaLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>MamaLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -870,29 +875,38 @@ public partial class Core
    /// <param name="optInSlowLimit">Lower bound on the adaptive smoothing factor (default 0.05; range
    /// 0.01..0.99; <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
-   /// startIdx + 1</c> values.</param>
+   /// max(startIdx, MamaLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
    /// an empty span to decline it: it is still computed where the algorithm
    /// needs it, but nothing is written out. Supplied, it must hold at least
-   /// <c>endIdx - startIdx + 1</c> values.</param>
+   /// <c>endIdx - max(startIdx, MamaLookback(...)) + 1</c> values, the count the
+   /// call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output partially overlaps an input.
+   /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Ma(int, int, ReadOnlySpan{double}, int, MAType, Span{double})"/>
+   /// <seealso cref="Core.Wma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.HtDcperiod(int, int, ReadOnlySpan{double}, Span{double})"/>
    public OutRange Mama( int startIdx,
                          int endIdx,
                          ReadOnlySpan<double> inReal,
@@ -934,8 +948,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MamaLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>MamaLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -946,31 +965,40 @@ public partial class Core
    /// <param name="optInSlowLimit">Lower bound on the adaptive smoothing factor (default 0.05; range
    /// 0.01..0.99; <see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>endIdx -
-   /// startIdx + 1</c> values.</param>
+   /// max(startIdx, MamaLookback(...)) + 1</c> values, the count the call
+   /// produces (none when that is not positive).</param>
    /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass
    /// an empty span to decline it: it is still computed where the algorithm
    /// needs it, but nothing is written out. Supplied, it must hold at least
-   /// <c>endIdx - startIdx + 1</c> values.</param>
+   /// <c>endIdx - max(startIdx, MamaLookback(...)) + 1</c> values, the count the
+   /// call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. An output and
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output overlaps an input. An output and
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
-   /// overlap of their byte ranges is rejected.</exception>
+   /// overlap of their byte ranges is rejected.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Ma(int, int, ReadOnlySpan{double}, int, MAType, Span{double})"/>
+   /// <seealso cref="Core.Wma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.HtDcperiod(int, int, ReadOnlySpan{double}, Span{double})"/>
    public OutRange Mama( int startIdx,
                          int endIdx,
                          ReadOnlySpan<float> inReal,
@@ -1204,7 +1232,7 @@ public partial class Core
       {
          if( outRangeBegIdx + outRangeCount > Core.IndexMax )
             throw Core.StreamFailure("MAMA", "update", RetCode.OutOfRangeEndIndex);
-         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "update", RetCode.BadParam);
+         if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("MAMA", "update", nameof(inReal));
          core.MamaStepImpl(this, inReal);
          outRangeCount++;
          return new MamaValue(cur_outMAMA, cur_outFAMA);
@@ -1225,7 +1253,7 @@ public partial class Core
       /// it.</returns>
       public MamaValue Peek( double inReal )
       {
-         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "peek", RetCode.BadParam);
+         if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("MAMA", "peek", nameof(inReal));
          MamaStream sp = this;
          double tempReal = 0.0;
          double tempReal2 = 0.0;
@@ -2049,6 +2077,9 @@ public partial class Core
       if( retCode == RetCode.Success ) {
          return sp;
       }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("MAMA", "openAndFill", nameof(inReal), inReal.Length, startIdx, MamaLookback(optInFastLimit, optInSlowLimit));
+      }
       throw StreamFailure("MAMA", "openAndFill", retCode);
    }
 
@@ -2063,6 +2094,9 @@ public partial class Core
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("MAMA", "open", nameof(inReal), inReal.Length, startIdx, MamaLookback(optInFastLimit, optInSlowLimit));
       }
       throw StreamFailure("MAMA", "open", retCode);
    }

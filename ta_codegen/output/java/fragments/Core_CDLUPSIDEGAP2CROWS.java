@@ -222,7 +222,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlupsidegap2crowsLookback} is a
+    * valid range that ends before {@link Core#cdlupsidegap2crowsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -232,8 +232,9 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger -100 on a pattern bar, 0 otherwise. Bearish-only: this
-    *        pattern never emits +100. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        pattern never emits +100. Must hold at least
+    *        {@code endIdx - max(startIdx, cdlupsidegap2crowsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -295,7 +296,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlupsidegap2crowsLookback} is a
+    * valid range that ends before {@link Core#cdlupsidegap2crowsLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -305,8 +306,9 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger -100 on a pattern bar, 0 otherwise. Bearish-only: this
-    *        pattern never emits +100. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        pattern never emits +100. Must hold at least
+    *        {@code endIdx - max(startIdx, cdlupsidegap2crowsLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -480,7 +482,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLUPSIDEGAP2CROWS update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLUPSIDEGAP2CROWS update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLUPSIDEGAP2CROWS update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlupsidegap2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -498,7 +500,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLUPSIDEGAP2CROWS peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLUPSIDEGAP2CROWS peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          Cdlupsidegap2crowsStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -761,12 +763,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLUPSIDEGAP2CROWS openAndFill", inOpen.length, startIdx, cdlupsidegap2crowsLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLUPSIDEGAP2CROWS openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLUPSIDEGAP2CROWS openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlupsidegap2crowsOpen (composition seam). */
    Cdlupsidegap2crowsStream cdlupsidegap2crowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -782,12 +781,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLUPSIDEGAP2CROWS open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLUPSIDEGAP2CROWS open", inOpen.length, startIdx, cdlupsidegap2crowsLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLUPSIDEGAP2CROWS open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLUPSIDEGAP2CROWS open: " + retCode, retCode);
+      throw streamFailure("CDLUPSIDEGAP2CROWS open", retCode);
    }
    /**
     * Open a live CDLUPSIDEGAP2CROWS stream over the warm-up history; the handle's
@@ -836,7 +832,7 @@
       requireHistoryLength("CDLUPSIDEGAP2CROWS openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLUPSIDEGAP2CROWS openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLUPSIDEGAP2CROWS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLUPSIDEGAP2CROWS openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -28,18 +28,6 @@ A two-candle pattern of two long, opposite-colored real bodies whose closing pri
 | 0 | No pattern |
 | 100 | Bullish Counterattack — a strong decline is matched and stopped cold by an equally strong opposite close, a reversal warning at a bottom |
 
-## Implementation
-
-TA-Lib Definition: [`cdlcounterattack.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlcounterattack/cdlcounterattack.c) · [`cdlcounterattack.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlcounterattack/cdlcounterattack.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLCOUNTERATTACK.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLCOUNTERATTACK.c) |
-| Rust | [`cdlcounterattack.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlcounterattack.rs) |
-| Java | [`Core_CDLCOUNTERATTACK.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLCOUNTERATTACK.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Counterattack, Counterattack Lines, Meeting Lines

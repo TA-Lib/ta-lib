@@ -20,18 +20,6 @@ ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
 
 - `optInTimePeriod` — Lookback distance to the previous price
 
-## Implementation
-
-TA-Lib Definition: [`rocp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocp/rocp.c) · [`rocp.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rocp/rocp.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ROCP.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ROCP.c) |
-| Rust | [`rocp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rocp.rs) |
-| Java | [`Core_ROCP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ROCP.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Rate of Change Percentage, Percent Change

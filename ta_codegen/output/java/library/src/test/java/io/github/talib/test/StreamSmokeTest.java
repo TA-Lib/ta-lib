@@ -47,6 +47,7 @@ import io.github.talib.MAType;
 import io.github.talib.OutRange;
 import io.github.talib.RangeType;
 import io.github.talib.RetCode;
+import io.github.talib.TALibFailure;
 
 /**
  * Streaming-API smoke test, deliberately junit-free (runnable as a plain
@@ -222,7 +223,7 @@ public class StreamSmokeTest {
     /**
      * Run {@code r}; true when it threw for the reason under test.
      *
-     * <p>The message is checked, not just the type. {@link
+     * <p>The code is checked, not just the type. {@link
      * InsufficientHistoryException} extends {@link IllegalArgumentException}, so
      * catching the base class alone would let "rejected because the history was
      * too short" pass as "rejected the non-finite value" — and every probe here
@@ -234,7 +235,17 @@ public class StreamSmokeTest {
             r.run();
             return false;
         } catch (IllegalArgumentException e) {
-            return String.valueOf(e.getMessage()).endsWith(": BAD_PARAM");
+            return e instanceof TALibFailure f && f.retCode() == RetCode.BAD_PARAM;
+        }
+    }
+
+    /** The message {@code r} threw as an {@link IllegalArgumentException}, or null. */
+    private static String rejection(Call r) {
+        try {
+            r.run();
+            return null;
+        } catch (IllegalArgumentException e) {
+            return String.valueOf(e.getMessage());
         }
     }
 
@@ -243,8 +254,11 @@ public class StreamSmokeTest {
         nfOpenRejects++;
     }
 
-    private static void barMustReject(String what, Call r) {
-        check(rejects(r), what + ": update/peek must reject a non-finite bar");
+    /** Rule U3, and the rejection names the input that was not finite. */
+    private static void barMustReject(String what, String arg, Call r) {
+        final String m = rejection(r);
+        check(m != null && m.endsWith(": " + arg + " is not finite"),
+              what + ": update/peek must reject a non-finite bar naming " + arg + " (got " + m + ")");
         nfBarRejects++;
     }
 
@@ -288,32 +302,32 @@ public class StreamSmokeTest {
 
             final Core.SmaStream sa = core.smaOpen(cw, 14);
             final Core.SmaStream sb = core.smaOpen(cw, 14);
-            barMustReject("SMA.update", () -> sa.update(v));
-            barMustReject("SMA.peek", () -> sa.peek(v));
+            barMustReject("SMA.update", "inReal", () -> sa.update(v));
+            barMustReject("SMA.peek", "inReal", () -> sa.peek(v));
             stateMustHold("SMA", sa.update(close[warm]), sb.update(close[warm]));
 
             final Core.MinusDiStream da = core.minusDiOpen(hw, lw, cw, 14);
             final Core.MinusDiStream db = core.minusDiOpen(hw, lw, cw, 14);
-            barMustReject("MINUS_DI.update(high)", () -> da.update(v, low[warm], close[warm]));
-            barMustReject("MINUS_DI.update(low)", () -> da.update(high[warm], v, close[warm]));
-            barMustReject("MINUS_DI.update(close)", () -> da.update(high[warm], low[warm], v));
-            barMustReject("MINUS_DI.peek", () -> da.peek(v, low[warm], close[warm]));
+            barMustReject("MINUS_DI.update(high)", "inHigh", () -> da.update(v, low[warm], close[warm]));
+            barMustReject("MINUS_DI.update(low)", "inLow", () -> da.update(high[warm], v, close[warm]));
+            barMustReject("MINUS_DI.update(close)", "inClose", () -> da.update(high[warm], low[warm], v));
+            barMustReject("MINUS_DI.peek", "inHigh", () -> da.peek(v, low[warm], close[warm]));
             stateMustHold("MINUS_DI",
                 da.update(high[warm], low[warm], close[warm]),
                 db.update(high[warm], low[warm], close[warm]));
 
             final Core.MaStream ma = core.maOpen(cw, 14, MAType.EMA);
             final Core.MaStream mb = core.maOpen(cw, 14, MAType.EMA);
-            barMustReject("MA.update", () -> ma.update(v));
-            barMustReject("MA.peek", () -> ma.peek(v));
+            barMustReject("MA.update", "inReal", () -> ma.update(v));
+            barMustReject("MA.peek", "inReal", () -> ma.peek(v));
             stateMustHold("MA", ma.update(close[warm]), mb.update(close[warm]));
 
             /* Period 1 is the dispatch identity arm: it copies the bar to the
              * output and never reaches a sub-stream, so a check delegated to the
              * sub would miss it. */
             final Core.MaStream mi = core.maOpen(cw, 1, MAType.SMA);
-            barMustReject("MA(identity).update", () -> mi.update(v));
-            barMustReject("MA(identity).peek", () -> mi.peek(v));
+            barMustReject("MA(identity).update", "inReal", () -> mi.update(v));
+            barMustReject("MA(identity).peek", "inReal", () -> mi.peek(v));
 
             final double[] pw = new double[warm];
             for (int i = 0; i < warm; i++) {
@@ -321,17 +335,17 @@ public class StreamSmokeTest {
             }
             final Core.MavpStream va = core.mavpOpen(cw, pw, 2, 30, MAType.SMA);
             final Core.MavpStream vb = core.mavpOpen(cw, pw, 2, 30, MAType.SMA);
-            barMustReject("MAVP.update(real)", () -> va.update(v, pw[0]));
-            barMustReject("MAVP.update(period)", () -> va.update(close[warm], v));
-            barMustReject("MAVP.peek(period)", () -> va.peek(close[warm], v));
+            barMustReject("MAVP.update(real)", "inReal", () -> va.update(v, pw[0]));
+            barMustReject("MAVP.update(period)", "inPeriods", () -> va.update(close[warm], v));
+            barMustReject("MAVP.peek(period)", "inPeriods", () -> va.peek(close[warm], v));
             stateMustHold("MAVP",
                 va.update(close[warm], pw[0]), vb.update(close[warm], pw[0]));
 
             final Core.BbandsStream ba = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
             final Core.BbandsStream bb = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
             final Core.BbandsOut bscratch = new Core.BbandsOut();
-            barMustReject("BBANDS.update", () -> ba.update(v, bscratch));
-            barMustReject("BBANDS.peek", () -> ba.peek(v, bscratch));
+            barMustReject("BBANDS.update", "inReal", () -> ba.update(v, bscratch));
+            barMustReject("BBANDS.peek", "inReal", () -> ba.peek(v, bscratch));
             final Core.BbandsOut bav = new Core.BbandsOut();
             final Core.BbandsOut bbv = new Core.BbandsOut();
             ba.update(close[warm], bav);
@@ -342,8 +356,8 @@ public class StreamSmokeTest {
             final Core.StochStream ka = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
             final Core.StochStream kb = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
             final Core.StochOut kscratch = new Core.StochOut();
-            barMustReject("STOCH.update", () -> ka.update(v, low[warm], close[warm], kscratch));
-            barMustReject("STOCH.peek", () -> ka.peek(high[warm], v, close[warm], kscratch));
+            barMustReject("STOCH.update", "inHigh", () -> ka.update(v, low[warm], close[warm], kscratch));
+            barMustReject("STOCH.peek", "inLow", () -> ka.peek(high[warm], v, close[warm], kscratch));
             final Core.StochOut kav = new Core.StochOut();
             final Core.StochOut kbv = new Core.StochOut();
             ka.update(high[warm], low[warm], close[warm], kav);
@@ -353,9 +367,9 @@ public class StreamSmokeTest {
 
             final Core.CdldojiStream ja = core.cdldojiOpen(ow, hw, lw, cw);
             final Core.CdldojiStream jb = core.cdldojiOpen(ow, hw, lw, cw);
-            barMustReject("CDLDOJI.update(open)",
+            barMustReject("CDLDOJI.update(open)", "inOpen",
                 () -> ja.update(v, high[warm], low[warm], close[warm]));
-            barMustReject("CDLDOJI.peek(close)",
+            barMustReject("CDLDOJI.peek(close)", "inClose",
                 () -> ja.peek(open[warm], high[warm], low[warm], v));
             check(ja.update(open[warm], high[warm], low[warm], close[warm])
                     == jb.update(open[warm], high[warm], low[warm], close[warm]),

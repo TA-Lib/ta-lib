@@ -68,6 +68,7 @@ TA-Lib Definition: [`smi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_SMI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SMI.c) |
 | Rust | [`smi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/smi.rs) |
 | Java | [`Core_SMI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SMI.java) |
+| C# | [`Core_SMI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SMI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

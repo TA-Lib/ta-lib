@@ -169,8 +169,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdldojiLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdldojiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -179,7 +179,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger 100 when a doji is detected, else 0. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdldojiLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -236,8 +237,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdldojiLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdldojiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -246,7 +247,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outInteger 100 when a doji is detected, else 0. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdldojiLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -392,7 +394,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLDOJI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLDOJI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLDOJI update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdldojiStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -410,7 +412,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLDOJI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLDOJI peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdldojiStream sp = this;
          int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
@@ -580,12 +582,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLDOJI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLDOJI openAndFill", inOpen.length, startIdx, cdldojiLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLDOJI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLDOJI openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLDOJI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdldojiOpen (composition seam). */
    CdldojiStream cdldojiOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -601,12 +600,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLDOJI open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLDOJI open", inOpen.length, startIdx, cdldojiLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLDOJI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLDOJI open: " + retCode, retCode);
+      throw streamFailure("CDLDOJI open", retCode);
    }
    /**
     * Open a live CDLDOJI stream over the warm-up history; the handle's
@@ -655,7 +651,7 @@
       requireHistoryLength("CDLDOJI openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLDOJI openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLDOJI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLDOJI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

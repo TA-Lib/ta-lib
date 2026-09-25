@@ -384,7 +384,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#midpriceLookback} is a <b>success
+    * valid range that ends before {@link Core#midpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -395,7 +395,8 @@
     *        taken (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Midpoint of the period's high/low extremes. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, midpriceLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -447,7 +448,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#midpriceLookback} is a <b>success
+    * valid range that ends before {@link Core#midpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -458,7 +459,8 @@
     *        taken (default 14; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal Midpoint of the period's high/low extremes. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, midpriceLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -609,7 +611,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MIDPRICE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MIDPRICE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MIDPRICE update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          core.midpriceStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -627,7 +629,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MIDPRICE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MIDPRICE peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          MidpriceStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
@@ -915,12 +917,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MIDPRICE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MIDPRICE openAndFill", inHigh.length, startIdx, midpriceLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MIDPRICE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
+      throw streamFailure("MIDPRICE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind midpriceOpen (composition seam). */
    MidpriceStream midpriceOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -936,12 +935,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MIDPRICE open: history shorter than lookback + 1");
+         throw insufficientHistory("MIDPRICE open", inHigh.length, startIdx, midpriceLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MIDPRICE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MIDPRICE open: " + retCode, retCode);
+      throw streamFailure("MIDPRICE open", retCode);
    }
    /**
     * Open a live MIDPRICE stream over the warm-up history; the handle's
@@ -984,7 +980,7 @@
       requireHistoryLength("MIDPRICE openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MIDPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("MIDPRICE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MIDPRICE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

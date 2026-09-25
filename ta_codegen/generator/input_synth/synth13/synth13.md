@@ -81,10 +81,6 @@ outReal[i] = 4 × SMA(real, optInTimePeriod)[i]
 
 - `optInTimePeriod` — Time period, passed unchanged to every leg's `sma()` call
 
-## Implementation
-
-TA-Lib Definition: [`synth13.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth13/synth13.c) · [`synth13.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth13/synth13.yaml)
-
 ## Two things this fixture deliberately does not do
 
 **It never writes `outReal` until every leg has read `inReal`.** Whole-buffer in

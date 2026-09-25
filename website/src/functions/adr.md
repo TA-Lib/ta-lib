@@ -64,6 +64,7 @@ TA-Lib Definition: [`adr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_ADR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ADR.c) |
 | Rust | [`adr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adr.rs) |
 | Java | [`Core_ADR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADR.java) |
+| C# | [`Core_ADR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ADR.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

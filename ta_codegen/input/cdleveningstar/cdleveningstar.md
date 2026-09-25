@@ -31,18 +31,6 @@ A three-candle bearish reversal pattern: a long white candle, a short-bodied sta
 
 - `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must penetrate below the 1st close; larger requires deeper penetration
 
-## Implementation
-
-TA-Lib Definition: [`cdleveningstar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdleveningstar/cdleveningstar.c) · [`cdleveningstar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdleveningstar/cdleveningstar.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLEVENINGSTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLEVENINGSTAR.c) |
-| Rust | [`cdleveningstar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdleveningstar.rs) |
-| Java | [`Core_CDLEVENINGSTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLEVENINGSTAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Evening Star

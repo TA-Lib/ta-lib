@@ -24,18 +24,6 @@ On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped e
 - `optInAcceleration` — Step added to the acceleration factor on each new extreme point
 - `optInMaximum` — Ceiling on the acceleration factor
 
-## Implementation
-
-TA-Lib Definition: [`sar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sar/sar.c) · [`sar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sar/sar.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_SAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SAR.c) |
-| Rust | [`sar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sar.rs) |
-| Java | [`Core_SAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Parabolic SAR, PSAR, Stop and Reverse

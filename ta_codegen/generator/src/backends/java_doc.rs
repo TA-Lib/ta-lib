@@ -65,8 +65,8 @@ pub fn guarded_docs(
     b.para(&format!(
         "Values are written only where the indicator is defined. The returned \
          {{@link OutRange}} says where they start and how many there are; nothing outside \
-         that range is touched, and the library never pads with NaN. A valid range shorter \
-         than {{@link Core#{java_name}Lookback}} is a <b>success with no values</b> \
+         that range is touched, and the library never pads with NaN. A valid range that ends \
+         before {{@link Core#{java_name}Lookback}} is a <b>success with no values</b> \
          ({{@code count() == 0}}), not an error."
     ));
 
@@ -81,15 +81,21 @@ pub fn guarded_docs(
     for opt in &func.optional_inputs {
         b.tag(&format!("param {}", opt.name), &param_doc(opt, doc, enums));
     }
+    let produced = format!(
+        "{{@code endIdx - max(startIdx, {java_name}Lookback(...)) + 1}} values, the count \
+         the call produces (none when that is not positive)"
+    );
     for out in &func.outputs {
         // A nullable output may be declined; the signature alone does not say
         // what `null` means there, so the parameter line does.
         let sizing = if out.is_nullable() {
-            "Pass {@code null} to decline it: it is still computed where the \
-             algorithm needs it, but nothing is written out. Supplied, it must \
-             hold at least {@code endIdx - startIdx + 1} values."
+            format!(
+                "Pass {{@code null}} to decline it: it is still computed where the \
+                 algorithm needs it, but nothing is written out. Supplied, it must \
+                 hold at least {produced}."
+            )
         } else {
-            "Must hold at least {@code endIdx - startIdx + 1} values."
+            format!("Must hold at least {produced}.")
         };
         b.tag(
             &format!("param {}", out.name),

@@ -182,7 +182,7 @@ public static class CoreBuilderTest
         Check(b.Build().UnstablePeriod(FuncUnstId.EMA) == 7,
             "a rejected period leaves the previous value in place");
 
-        // The wildcard path writes 24 slots, so a rejection there must not have
+        // The wildcard path writes every slot, so a rejection there must not have
         // filled any of them before noticing.
         CoreBuilder w = Core.Builder().UnstablePeriod(FuncUnstId.ALL, 3);
         CheckThrows<ArgumentOutOfRangeException>(
@@ -197,7 +197,7 @@ public static class CoreBuilderTest
                 intact = false;
             }
         }
-        Check(intact, "a rejected wildcard leaves all 24 slots at their previous value");
+        Check(intact, "a rejected wildcard leaves every slot at its previous value");
     }
 
     private static void BuiltCoreIsIsolatedFromTheBuilder()

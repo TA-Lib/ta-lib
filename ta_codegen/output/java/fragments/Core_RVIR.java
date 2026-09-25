@@ -208,8 +208,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rvirLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rvirLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -222,7 +222,8 @@
     *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal The averaged index, in 0..100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, rvirLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -285,8 +286,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rvirLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rvirLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -299,7 +300,8 @@
     *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outReal The averaged index, in 0..100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, rvirLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -436,7 +438,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("RVIR update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("RVIR update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("RVIR update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          core.rvirStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -454,7 +456,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("RVIR peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("RVIR peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          RvirStream sp = this;
          double cur_tempHigh = 0.0;
          double cur_outReal = 0.0;
@@ -615,12 +617,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("RVIR openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("RVIR openAndFill", inHigh.length, startIdx, rvirLookback(optInTimePeriod, optInStdDevPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("RVIR openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("RVIR openAndFill: " + retCode, retCode);
+      throw streamFailure("RVIR openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind rvirOpen (composition seam). */
    RvirStream rvirOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, int optInStdDevPeriod )
@@ -636,12 +635,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("RVIR open: history shorter than lookback + 1");
+         throw insufficientHistory("RVIR open", inHigh.length, startIdx, rvirLookback(optInTimePeriod, optInStdDevPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("RVIR open: internal error", retCode);
-      }
-      throw new TALibArgumentException("RVIR open: " + retCode, retCode);
+      throw streamFailure("RVIR open", retCode);
    }
    /**
     * Open a live RVIR stream over the warm-up history; the handle's
@@ -684,7 +680,7 @@
       requireHistoryLength("RVIR openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("RVIR openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("RVIR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("RVIR openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

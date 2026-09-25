@@ -30,18 +30,6 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 - `optInFastD_Period` — Smoothing period for the Fast-D line
 - `optInFastD_MAType` — Moving-average type used to smooth Fast-D
 
-## Implementation
-
-TA-Lib Definition: [`stochf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stochf/stochf.c) · [`stochf.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stochf/stochf.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_STOCHF.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_STOCHF.c) |
-| Rust | [`stochf.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/stochf.rs) |
-| Java | [`Core_STOCHF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_STOCHF.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Stochastic Fast, Fast Stochastic Oscillator

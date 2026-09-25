@@ -155,7 +155,7 @@ let allocation_size = if temp > endIdx { 0 } else { endIdx - temp + 1 };
 let mut out = vec![0.0; allocation_size];
 ```
 
-Too little data is a success, not an error: a range shorter than the lookback simply produces no values, and the returned range is empty (`count == 0`).
+Too little data is a success, not an error: a range that ends before the lookback simply produces no values, and the returned range is empty (`count == 0`).
 
 ### 3.3 Results and Return Codes {#retcode}
 
@@ -172,6 +172,8 @@ On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the inp
 `RetCode` also carries `Success` — the code C returns and the one the other ports expose — plus `AllocErr` and `InternalError`, which the safe Rust code paths do not produce.
 
 Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so nothing here can read or write out of bounds. Slice sizes are checked before the call runs and reported as `BadParam`; a violated precondition anywhere below that is a panic, never memory corruption.
+
+A `NaN` or `±Inf` inside an input series is not detected, and nothing is promised about the output: a running sum or a recursion carries it into every later value, not only the bars whose window holds it. Clean or split the series before calling.
 
 ## 4.0 Advanced Features {#advanced}
 

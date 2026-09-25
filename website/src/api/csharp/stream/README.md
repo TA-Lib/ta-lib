@@ -1,6 +1,6 @@
 ---
 title: C# Streaming API
-description: "C# streaming API for live feeds: a stream carries indicator state from bar to bar at O(1) per update, bit-identical to the batch calls, and Update allocates nothing."
+description: "C# streaming API for live feeds: a stream carries indicator state from bar to bar, so an update never recomputes the history, bit-identical to the batch calls, and Update allocates nothing."
 toc: false
 ---
 
@@ -8,7 +8,7 @@ toc: false
 The C# API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/csharp/) (`core.Sma`, `core.Rsi`, …) would return by recomputing over the whole array.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so a new bar never costs a pass over the history: most indicators do constant work per bar, and the ones that work over their window, such as AVGDEV, CCI, MEDIAN and the rolling extremes, cost at most time proportional to its length. Every value is **bit-identical** to what the [batch method](/api/csharp/) (`core.Sma`, `core.Rsi`, …) would return by recomputing over the whole array.
 
 Each streamable function adds two factory methods on `Core` and a handful of members on its stream (a class nested in `Core`, e.g. `Core.SmaStream`):
 
@@ -54,12 +54,12 @@ double provisional = s.Peek(formingClose);       // state left unchanged
 
 ## Multi-input / multi-output
 
-`Update` and `Peek` take one argument per input series, in the batch call's order, and return one value per output. Multi-output indicators return a generated `readonly record struct` named after the function, whose members are the output names with the leading `out` stripped:
+`Update` and `Peek` take one argument per input series, in the batch call's order, and return one value per output. Multi-output indicators return a generated `readonly record struct` nested in `Core` and named after the function, whose members are the output names with the leading `out` stripped:
 
 ```csharp
 Core.BbandsStream b = core.BbandsOpen(history, 20, 2.0, 2.0, MAType.SMA);
 
-BbandsValue v = b.Update(newClose);
+Core.BbandsValue v = b.Update(newClose);
 Console.WriteLine($"{v.RealUpperBand} {v.RealMiddleBand} {v.RealLowerBand}");
 
 // It deconstructs, too:
@@ -120,12 +120,16 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Condition | Exception |
 |---|---|
+| An empty history (zero bars, or a null array) | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeStartIndex` |
+| A history longer than `Core.IndexMax + 1` bars | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeEndIndex` |
+| An optional parameter outside its documented range, a non-finite real parameter included | `ArgumentException` |
+| An input series whose length differs from the history's | `ArgumentException` naming it |
+| (`OpenAndFill`) an output shorter than the values the fill writes, or overlapping an input or another output | `ArgumentException` |
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
-| An optional parameter outside its documented range | `ArgumentException` |
-| A non-finite bar (NaN or ±Inf), or a non-finite real parameter | `ArgumentException` |
+| A non-finite bar (NaN or ±Inf) | `ArgumentException` naming the input |
 | A bar past `Core.IndexMax`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 
-`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> open: "` prefix, and it is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
+`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. An empty history is not that case: zero bars is an index fault, so a loop that retries on `InsufficientHistoryException` until enough bars arrive must not start before the first bar. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 
 Insufficient history is knowable in advance, so it need not be exceptional in your code: compare against `<Name>Lookback(params) + 1` before opening.
 

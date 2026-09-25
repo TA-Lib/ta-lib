@@ -27,7 +27,3 @@ outInteger[i] = S(i), where S is a path-dependent 10-bit state: rotate by 3, XOR
 ## Parameters
 
 - `optInTimePeriod` — Warm-up window folded into the initial state
-
-## Implementation
-
-TA-Lib Definition: [`synth1.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth1/synth1.c) · [`synth1.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth1/synth1.yaml)

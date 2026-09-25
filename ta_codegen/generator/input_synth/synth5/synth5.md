@@ -26,7 +26,3 @@ outInteger[i] = ((int)(x(i - period + 1) + x(i))) mod 1024
 ## Parameters
 
 - `optInTimePeriod` — Window width; the two summed bars are its endpoints
-
-## Implementation
-
-TA-Lib Definition: [`synth5.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth5/synth5.c) · [`synth5.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth5/synth5.yaml)

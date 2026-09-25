@@ -368,8 +368,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#massiLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#massiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -381,7 +381,8 @@
     * @param optInSlowPeriod Number of bars the ratio is summed over (default
     *        25; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Summed ratio of the two smoothed high-low ranges. Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, massiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -453,8 +454,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#massiLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#massiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -466,7 +467,8 @@
     * @param optInSlowPeriod Number of bars the ratio is summed over (default
     *        25; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Summed ratio of the two smoothed high-low ranges. Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, massiLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -618,7 +620,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MASSI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MASSI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MASSI update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          core.massiStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -636,7 +638,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("MASSI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MASSI peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          MassiStream sp = this;
          double hl = 0.0;
          double ratio = 0.0;
@@ -913,12 +915,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MASSI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MASSI openAndFill", inHigh.length, startIdx, massiLookback(optInFastPeriod, optInSlowPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MASSI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MASSI openAndFill: " + retCode, retCode);
+      throw streamFailure("MASSI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind massiOpen (composition seam). */
    MassiStream massiOpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -934,12 +933,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MASSI open: history shorter than lookback + 1");
+         throw insufficientHistory("MASSI open", inHigh.length, startIdx, massiLookback(optInFastPeriod, optInSlowPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MASSI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MASSI open: " + retCode, retCode);
+      throw streamFailure("MASSI open", retCode);
    }
    /**
     * Open a live MASSI stream over the warm-up history; the handle's
@@ -982,7 +978,7 @@
       requireHistoryLength("MASSI openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("MASSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("MASSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MASSI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -27,18 +27,6 @@ outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
 - `optInTimePeriod` — Averaging window length
 - `optInMAType` — Which moving-average algorithm to dispatch to
 
-## Implementation
-
-TA-Lib Definition: [`ma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ma/ma.c) · [`ma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ma/ma.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MA.c) |
-| Rust | [`ma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ma.rs) |
-| Java | [`Core_MA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Moving Average, MovingAverage

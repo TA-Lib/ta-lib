@@ -29,7 +29,3 @@ outAvg[i] = SMA(inReal, n)[i] / 2; outSide[i] = 1 if that average is above zero,
 ## Parameters
 
 - `optInTimePeriod` — Period handed to the sub-call
-
-## Implementation
-
-TA-Lib Definition: [`synth14.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth14/synth14.c) · [`synth14.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth14/synth14.yaml)

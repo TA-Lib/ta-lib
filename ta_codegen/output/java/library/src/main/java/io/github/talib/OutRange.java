@@ -58,7 +58,7 @@ package io.github.talib;
  * the library never pads with NaN.
  *
  * <p><b>{@code count == 0} is a success, not a failure.</b> A valid range
- * shorter than the indicator's lookback simply produces no values — exactly
+ * that ends before the indicator's lookback simply produces no values — exactly
  * matching the C library's {@code TA_SUCCESS} with {@code outNBElement == 0}.
  * It is never signalled by an exception.
  *

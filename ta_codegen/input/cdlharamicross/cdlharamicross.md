@@ -30,18 +30,6 @@ A two-candle reversal pattern: a long real body followed by a doji whose real bo
 | 80 | Bullish Harami Cross, weaker variant: the doji's edge lines up exactly with one end of the long black candle |
 | 100 | Bullish Harami Cross: a doji forms inside the prior long black candle — indecision after a decline, a sharper warning than a plain Harami |
 
-## Implementation
-
-TA-Lib Definition: [`cdlharamicross.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharamicross/cdlharamicross.c) · [`cdlharamicross.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharamicross/cdlharamicross.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLHARAMICROSS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHARAMICROSS.c) |
-| Rust | [`cdlharamicross.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlharamicross.rs) |
-| Java | [`Core_CDLHARAMICROSS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLHARAMICROSS.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Harami Cross

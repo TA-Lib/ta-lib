@@ -38,18 +38,6 @@ Signal = EMA(SMI, signalPeriod)
 - `optInSlowPeriod` — Period of the first smoothing, applied to the raw momentum
 - `optInSignalPeriod` — Smoothing period of the signal line
 
-## Implementation
-
-TA-Lib Definition: [`smi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/smi/smi.c) · [`smi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/smi/smi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_SMI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SMI.c) |
-| Rust | [`smi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/smi.rs) |
-| Java | [`Core_SMI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SMI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 stochastic momentum index, Blau stochastic momentum

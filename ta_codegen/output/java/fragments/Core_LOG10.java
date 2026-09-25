@@ -80,14 +80,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#log10Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#log10Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values.
     * @param outReal Base-10 logarithm of each input. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, log10Lookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -138,14 +139,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#log10Lookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#log10Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values.
     * @param outReal Base-10 logarithm of each input. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, log10Lookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -269,7 +271,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("LOG10 update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LOG10 update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("LOG10 update", "inReal");
          core.log10StepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -287,7 +289,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("LOG10 peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("LOG10 peek", "inReal");
          Log10Stream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.log10(inReal);
@@ -361,12 +363,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("LOG10 openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("LOG10 openAndFill", inReal.length, startIdx, log10Lookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("LOG10 openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("LOG10 openAndFill: " + retCode, retCode);
+      throw streamFailure("LOG10 openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind log10Open (composition seam). */
    Log10Stream log10OpenInternal( double inReal[], int startIdx )
@@ -382,12 +381,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("LOG10 open: history shorter than lookback + 1");
+         throw insufficientHistory("LOG10 open", inReal.length, startIdx, log10Lookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("LOG10 open: internal error", retCode);
-      }
-      throw new TALibArgumentException("LOG10 open: " + retCode, retCode);
+      throw streamFailure("LOG10 open", retCode);
    }
    /**
     * Open a live LOG10 stream over the warm-up history; the handle's
@@ -424,7 +420,7 @@
       int guardOutLen = openFillCount("LOG10 openAndFill", inReal.length, log10Lookback());
       requireLength("LOG10 openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("LOG10 openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("LOG10 openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

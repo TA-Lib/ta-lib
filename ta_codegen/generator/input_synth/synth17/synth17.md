@@ -25,7 +25,3 @@ odd n: outReal[i] = inReal[i] - trunc(inReal[i-(n-1)]), trunc clamping to 0 outs
 ## Parameters
 
 - `optInTimePeriod` — Window length n; its parity selects the arm, and 1 takes the identity path
-
-## Implementation
-
-TA-Lib Definition: [`synth17.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth17/synth17.c) · [`synth17.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth17/synth17.yaml)

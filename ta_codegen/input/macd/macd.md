@@ -29,18 +29,6 @@ MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Si
 - `optInSlowPeriod` — Period of the slow EMA
 - `optInSignalPeriod` — Smoothing period of the signal line
 
-## Implementation
-
-TA-Lib Definition: [`macd.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macd/macd.c) · [`macd.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macd/macd.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MACD.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MACD.c) |
-| Rust | [`macd.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/macd.rs) |
-| Java | [`Core_MACD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACD.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 moving average convergence divergence, moving average convergence/divergence

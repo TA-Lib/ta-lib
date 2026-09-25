@@ -88,7 +88,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#typpriceLookback} is a <b>success
+    * valid range that ends before {@link Core#typpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -97,7 +97,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outReal typical price per bar. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, typpriceLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -150,7 +151,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#typpriceLookback} is a <b>success
+    * valid range that ends before {@link Core#typpriceLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -159,7 +160,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outReal typical price per bar. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, typpriceLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -288,7 +290,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("TYPPRICE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("TYPPRICE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("TYPPRICE update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.typpriceStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -306,7 +308,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("TYPPRICE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("TYPPRICE peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          TyppriceStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose) / 3.0;
@@ -385,12 +387,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("TYPPRICE openAndFill", inHigh.length, startIdx, typpriceLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("TYPPRICE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
+      throw streamFailure("TYPPRICE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind typpriceOpen (composition seam). */
    TyppriceStream typpriceOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -406,12 +405,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("TYPPRICE open: history shorter than lookback + 1");
+         throw insufficientHistory("TYPPRICE open", inHigh.length, startIdx, typpriceLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("TYPPRICE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("TYPPRICE open: " + retCode, retCode);
+      throw streamFailure("TYPPRICE open", retCode);
    }
    /**
     * Open a live TYPPRICE stream over the warm-up history; the handle's
@@ -456,7 +452,7 @@
       requireHistoryLength("TYPPRICE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TYPPRICE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("TYPPRICE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("TYPPRICE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

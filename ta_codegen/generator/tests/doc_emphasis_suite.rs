@@ -76,7 +76,7 @@ fn rendered_docs(name: &str, registry: &Registry) -> Vec<(String, String)> {
         ));
         out.push((
             format!("csharp {upper} guarded/{tag}"),
-            backends::csharp_doc::guarded_docs(&func, &upper, single, &enums),
+            backends::csharp_doc::guarded_docs(&func, &upper, single, &enums, registry),
         ));
     }
     out.push((

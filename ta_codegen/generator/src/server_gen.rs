@@ -1493,7 +1493,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("                      + \"outputs sharing one array)\", retCode);\n");
     s.push_str("            case ALLOC_ERR: return new TALibStateException(where + \"allocation failed\", retCode);\n");
     s.push_str("            case INTERNAL_ERROR: return new TALibStateException(where + \"internal error\", retCode);\n");
-    s.push_str("            case INSUFFICIENT_HISTORY: return new InsufficientHistoryException(where + \"history shorter than the lookback\");\n");
+    s.push_str("            case INSUFFICIENT_HISTORY: return new InsufficientHistoryException(where + \"history shorter than lookback + 1\");\n");
     s.push_str("            default: return new TALibStateException(where + retCode, retCode);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
@@ -1550,6 +1550,23 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        if (historyLen > INDEX_MAX + 1) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);\n");
     s.push_str("        }\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static InsufficientHistoryException insufficientHistory(String funcName, int historyLen, int startIdx, int lookback) {\n");
+    s.push_str("        return new InsufficientHistoryException(funcName + \": history has length \" + historyLen\n");
+    s.push_str("              + \", needs \" + (Math.max(startIdx, lookback) + 1));\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static RuntimeException streamFailure(String funcName, RetCode retCode) {\n");
+    s.push_str("        String where = funcName + \": \";\n");
+    s.push_str("        switch (retCode) {\n");
+    s.push_str("            case BAD_PARAM: return new TALibArgumentException(where + \"bad parameter\", retCode);\n");
+    s.push_str("            case INSUFFICIENT_HISTORY: return new InsufficientHistoryException(where + \"history shorter than lookback + 1\");\n");
+    s.push_str("            case INTERNAL_ERROR: return new TALibStateException(where + \"internal error\", retCode);\n");
+    s.push_str("            default: return new TALibArgumentException(where + retCode, retCode);\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static TALibArgumentException nonFiniteBar(String funcName, String argName) {\n");
+    s.push_str("        return new TALibArgumentException(funcName + \": \" + argName + \" is not finite\",\n");
+    s.push_str("              RetCode.BAD_PARAM);\n");
     s.push_str("    }\n\n");
     s.push_str("    static void requireArgument(String funcName, String argName, Object argument) {\n");
     s.push_str("        if (argument == null) {\n");
@@ -2794,9 +2811,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("            else if (method == \"abstract_for_each_func\") return AbsForEachFunc();\n");
     s.push_str("            else if (method == \"TA_FunctionDescriptionXML\") return AbsDescriptionXml();\n");
     s.push_str("            else if (method == \"abstract_call\") return AbsCall(p);\n");
-    // stream_verify: C# stream vs C# batch, bitwise, in-process. Drives the
-    // ta_regtest stream pass the moment the capability probe answers
-    // "not_streamable" — see the TODO(S9) in generate_csharp_stream_verify.
+    // stream_verify: C# stream vs C# batch, bitwise, in-process.
     s.push_str("            else if (method == \"stream_verify\") return HandleStreamVerify(p);\n");
     s.push_str("            else if (method == \"fuzz_in_hash\") return HandleFuzzInHash(p);\n");
     // Unknown method: an error RESPONSE (not a crash) — this is the driver's

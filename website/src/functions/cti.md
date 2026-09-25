@@ -62,6 +62,7 @@ TA-Lib Definition: [`cti.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_CTI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CTI.c) |
 | Rust | [`cti.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cti.rs) |
 | Java | [`Core_CTI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CTI.java) |
+| C# | [`Core_CTI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CTI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

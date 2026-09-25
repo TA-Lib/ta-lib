@@ -74,6 +74,7 @@ TA-Lib Definition: [`crsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C | [`ta_CRSI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CRSI.c) |
 | Rust | [`crsi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/crsi.rs) |
 | Java | [`Core_CRSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CRSI.java) |
+| C# | [`Core_CRSI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CRSI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

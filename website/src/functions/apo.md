@@ -60,6 +60,7 @@ TA-Lib Definition: [`apo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_APO.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_APO.c) |
 | Rust | [`apo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/apo.rs) |
 | Java | [`Core_APO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_APO.java) |
+| C# | [`Core_APO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_APO.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

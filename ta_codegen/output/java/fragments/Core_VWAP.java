@@ -230,8 +230,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#vwapLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#vwapLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -240,7 +240,9 @@
     * @param inClose Close price of each bar.
     * @param inVolume Volume of each bar.
     * @param outReal Volume weighted average price, cumulative from the first
-    *        bar of the range. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        bar of the range. Must hold at least
+    *        {@code endIdx - max(startIdx, vwapLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -312,8 +314,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#vwapLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#vwapLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -322,7 +324,9 @@
     * @param inClose Close price of each bar.
     * @param inVolume Volume of each bar.
     * @param outReal Volume weighted average price, cumulative from the first
-    *        bar of the range. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        bar of the range. Must hold at least
+    *        {@code endIdx - max(startIdx, vwapLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -460,7 +464,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("VWAP update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("VWAP update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("VWAP update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : !Double.isFinite(inClose) ? "inClose" : "inVolume");
          core.vwapStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -478,7 +482,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("VWAP peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("VWAP peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : !Double.isFinite(inClose) ? "inClose" : "inVolume");
          VwapStream sp = this;
          double typPrice = 0.0;
          double volume = 0.0;
@@ -841,12 +845,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("VWAP openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("VWAP openAndFill", inHigh.length, startIdx, vwapLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("VWAP openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("VWAP openAndFill: " + retCode, retCode);
+      throw streamFailure("VWAP openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind vwapOpen (composition seam). */
    VwapStream vwapOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
@@ -862,12 +863,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("VWAP open: history shorter than lookback + 1");
+         throw insufficientHistory("VWAP open", inHigh.length, startIdx, vwapLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("VWAP open: internal error", retCode);
-      }
-      throw new TALibArgumentException("VWAP open: " + retCode, retCode);
+      throw streamFailure("VWAP open", retCode);
    }
    /**
     * Open a live VWAP stream over the warm-up history; the handle's
@@ -916,7 +914,7 @@
       requireHistoryLength("VWAP openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("VWAP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("VWAP openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("VWAP openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

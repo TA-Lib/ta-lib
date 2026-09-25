@@ -29,7 +29,3 @@ outRealBodyRange[i] = candleRange(BodyLong, bar i); outHighLowRange[i] = candleR
 - `outRealBodyRange` — Candle range under a `RealBody` setting
 - `outHighLowRange` — Candle range under a `HighLow` setting
 - `outShadowsRange` — Candle range under a `Shadows` setting
-
-## Implementation
-
-TA-Lib Definition: [`synth7.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth7/synth7.c) · [`synth7.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth7/synth7.yaml)

@@ -17,18 +17,6 @@ OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? 
 
 - `outReal` — Cumulative on-balance volume
 
-## Implementation
-
-TA-Lib Definition: [`obv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/obv/obv.c) · [`obv.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/obv/obv.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_OBV.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_OBV.c) |
-| Rust | [`obv.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/obv.rs) |
-| Java | [`Core_OBV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_OBV.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 On Balance Volume

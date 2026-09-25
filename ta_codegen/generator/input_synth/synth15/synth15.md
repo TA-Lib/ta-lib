@@ -26,7 +26,3 @@ outReal[i] = inReal[i] - trunc(inReal[i-(n-1)]), where trunc clamps to 0 outside
 ## Parameters
 
 - `optInTimePeriod` — Window length n; 1 takes the identity path
-
-## Implementation
-
-TA-Lib Definition: [`synth15.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth15/synth15.c) · [`synth15.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth15/synth15.yaml)

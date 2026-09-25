@@ -37,18 +37,6 @@ Lower = Middle - Deviations * Band
 - `optInATRPeriod` — Smoothing period of the Average True Range
 - `optInNbDev` — Multiplier applied to the Average True Range
 
-## Implementation
-
-TA-Lib Definition: [`kc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kc/kc.c) · [`kc.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/kc/kc.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_KC.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_KC.c) |
-| Rust | [`kc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kc.rs) |
-| Java | [`Core_KC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KC.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Keltner Channel

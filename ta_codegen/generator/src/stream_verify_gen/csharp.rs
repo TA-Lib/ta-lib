@@ -1043,9 +1043,6 @@ fn emit_csharp_sv_func(
 /// The whole C# `stream_verify` section: the two comparators, the candle-round
 /// and live-mutation helpers, the allocation sink, one `Sv_<NAME>` per function
 /// with an emitted C# stream, the `fuzz_in_hash` self-check, and the dispatcher.
-///
-/// The dispatcher's unknown-method answer is DELIBERATELY NOT Java's
-/// `not_streamable` -- see the block comment at the emit site.
 #[allow(clippy::too_many_lines)]
 pub(crate) fn generate_csharp_stream_verify(
     funcs: &[FuncDef],
@@ -1194,31 +1191,10 @@ pub(crate) fn generate_csharp_stream_verify(
             f.name
         );
     }
-    // ============ THE DARK RESPONSE -- READ BEFORE CHANGING THIS LINE ========
-    //
-    // The driver's capability probe is a SUBSTRING test:
-    //     test_codegen.c:3686   strstr(responseBuf, "not_streamable")
-    // and it is all-or-nothing: the moment the C# server answers with that
-    // token, ta_regtest starts requiring a stream handler for every function
-    // carrying TA_FUNC_FLG_STREAM and prints STREAM SET MISMATCH for each one
-    // that is missing. The C# metadata catalogue already publishes that flag on
-    // all 172 functions, so copying Java's literal now would redden every
-    // regtest.py run for the remaining stages, for a reason unrelated to the
-    // work in flight.
-    //
-    // So the unknown-method answer -- including the TA_STREAM_PROBE the driver
-    // sends -- is pinned to the string below, which must NOT contain the token
-    // `not_streamable` anywhere in the emitted file. S2 gates on
-    // `grep -c not_streamable TaCodegenServe.cs == 0` until S9.
-    //
-    // The flip happened once all 172 functions had a handler, which is the
-    // precondition the all-or-nothing check needs. It is a capability
-    // ANNOUNCEMENT, not a description of this method: the driver reads the
-    // token off the unknown-name path (it probes with TA_STREAM_PROBE, which is
-    // not a function), so answering it is how the server says "ask me about
-    // streams". A real function name that fell through to here would be a
-    // missing handler, and the driver reports that as STREAM SET MISMATCH.
-    // ========================================================================
+    // The unknown-function answer must carry `not_streamable`: the driver
+    // probes with TA_STREAM_PROBE and runs the stream pass only when the reply
+    // contains that substring, so without it every C# stream check is skipped
+    // silently.
     s.push_str("        default: return \"{\\\"error\\\":\\\"not_streamable\\\"}\";\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");

@@ -37,18 +37,6 @@ With `S` the standard deviation of the last `optInStdDevPeriod` values of `inRea
 - `optInTimePeriod` — Wilder smoothing period applied to both legs
 - `optInStdDevPeriod` — Number of trailing values the standard deviation spans
 
-## Implementation
-
-TA-Lib Definition: [`rvi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvi/rvi.c) · [`rvi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvi/rvi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_RVI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_RVI.c) |
-| Rust | [`rvi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rvi.rs) |
-| Java | [`Core_RVI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_RVI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Relative Volatility Index, RVIorig

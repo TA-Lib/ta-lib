@@ -602,8 +602,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minusDiLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#minusDiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -613,7 +613,8 @@
     * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
     *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal The Minus Directional Indicator (-DI) line. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, minusDiLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -676,8 +677,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minusDiLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#minusDiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -687,7 +688,8 @@
     * @param optInTimePeriod Smoothing/lookback period for -DM and TR (default
     *        14; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal The Minus Directional Indicator (-DI) line. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, minusDiLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -834,7 +836,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MINUS_DI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("MINUS_DI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MINUS_DI update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.minusDiStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -852,7 +854,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("MINUS_DI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MINUS_DI peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          MinusDiStream sp = this;
          double cur_outReal = 0.0;
          if( sp.optInTimePeriod <= 1 ) {
@@ -1538,12 +1540,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MINUS_DI openAndFill", inHigh.length, startIdx, minusDiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MINUS_DI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
+      throw streamFailure("MINUS_DI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind minusDiOpen (composition seam). */
    MinusDiStream minusDiOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1559,12 +1558,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MINUS_DI open: history shorter than lookback + 1");
+         throw insufficientHistory("MINUS_DI open", inHigh.length, startIdx, minusDiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MINUS_DI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MINUS_DI open: " + retCode, retCode);
+      throw streamFailure("MINUS_DI open", retCode);
    }
    /**
     * Open a live MINUS_DI stream over the warm-up history; the handle's
@@ -1611,7 +1607,7 @@
       requireHistoryLength("MINUS_DI openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("MINUS_DI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("MINUS_DI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MINUS_DI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

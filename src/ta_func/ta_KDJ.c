@@ -144,7 +144,7 @@ TA_LIB_API TA_RetCode TA_KDJ( int    startIdx,
       return TA_BAD_PARAM;
 
    lookbackTotal = TA_KDJ_Lookback(optInFastK_Period,optInSlowK_Period,optInSlowK_MAType,optInSlowD_Period,optInSlowD_MAType);
-   /* Nothing to produce: the range is shorter than the lookback. Answering here
+   /* Nothing to produce: the range ends before the lookback. Answering here
     * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
     * its own argument check would reject before any array is touched.
     */
@@ -366,7 +366,7 @@ static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double i
       int i;
       int lookbackTotal;
       lookbackTotal = TA_KDJ_Lookback(optInFastK_Period,optInSlowK_Period,optInSlowK_MAType,optInSlowD_Period,optInSlowD_MAType);
-      /* Nothing to produce: the range is shorter than the lookback. Answering here
+      /* Nothing to produce: the range ends before the lookback. Answering here
        * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
        * its own argument check would reject before any array is touched.
        */

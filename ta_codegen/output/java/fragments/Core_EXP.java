@@ -76,14 +76,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#expLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#expLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values.
     * @param outReal e raised to each input value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, expLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -130,14 +131,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#expLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#expLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values.
     * @param outReal e raised to each input value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, expLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -261,7 +263,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("EXP update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("EXP update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("EXP update", "inReal");
          core.expStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -279,7 +281,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("EXP peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("EXP peek", "inReal");
          ExpStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.exp(inReal);
@@ -353,12 +355,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("EXP openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("EXP openAndFill", inReal.length, startIdx, expLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("EXP openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("EXP openAndFill: " + retCode, retCode);
+      throw streamFailure("EXP openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind expOpen (composition seam). */
    ExpStream expOpenInternal( double inReal[], int startIdx )
@@ -374,12 +373,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("EXP open: history shorter than lookback + 1");
+         throw insufficientHistory("EXP open", inReal.length, startIdx, expLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("EXP open: internal error", retCode);
-      }
-      throw new TALibArgumentException("EXP open: " + retCode, retCode);
+      throw streamFailure("EXP open", retCode);
    }
    /**
     * Open a live EXP stream over the warm-up history; the handle's
@@ -416,7 +412,7 @@
       int guardOutLen = openFillCount("EXP openAndFill", inReal.length, expLookback());
       requireLength("EXP openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("EXP openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("EXP openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

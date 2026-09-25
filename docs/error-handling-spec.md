@@ -117,7 +117,7 @@ undefined are collected in Part 3.
 
 | Rule | Condition | Result |
 |---|---|---|
-| N1 | A **valid range shorter than the lookback** | Success, zero values produced, an empty `OutRange`. Never an error. |
+| N1 | A **valid range that ends before the lookback** (`endIdx < lookback`) | Success, zero values produced, an empty `OutRange`. Never an error. |
 | N2 | Anywhere outside the reported `OutRange` | Untouched. The library never pads, and never emits a fill value. The converse — everything *inside* the range was written — holds everywhere but a bar counted by `Advance`, which the caller declined to feed: the held value **is** that bar's output, so `Value` still answers for it (§2.4). |
 | N3 | An optional parameter set to its **default sentinel** | The documented default is substituted, then validated like any other value. |
 | N4 | An output buffer that **is** an input buffer (whole-buffer, in place) | Allowed, in the batch tier. Several bodies are written for it. |
@@ -155,7 +155,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B2 | `endIdx` outside `[0, INDEX_MAX]`, **or** `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B3 | An optional parameter is outside its documented range (metadata from .yaml). A non-finite value (NaN, ±Inf) always returns an error. Note that non-finites as elements of input arrays are not detected or supported (See Part 3, "Non-finite input") | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B4 | A required argument was not supplied — any declared input or output buffer, or missing `OutRange` pointer(s) | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>[1] | ✅<br>&nbsp; | —<br>[2] |
-| B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[3] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range that ends before the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[3] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6a | An output is unexpectedly **omitted** — null, or zero-length. Omission accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B7 | A memory allocation failed. **Fatal — nothing past it is defined**, and nothing covers it, by decision rather than by omission (Part 3). Only C reports it; Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
@@ -200,7 +200,7 @@ cannot name the same buffer while the call is live. The batch tier emits B6's
 pointer comparison anyway; the streaming tier emits nothing.
 
 **The warm-up check comes last**, because it is the one thing the batch tier has
-no analogue for: a *history* shorter than the lookback cannot open a
+no analogue for: a *history* of `lookback` bars or fewer cannot open a
 stream at all (`TA_INSUFFICIENT_HISTORY`).
 
 S7 is also what a **composed** opener answers when a sub-call succeeds with zero
@@ -759,7 +759,7 @@ one it needs is not. Worth re-checking whenever the abstract tier is specified.
 
 ### Message prefixes
 
-Batch tier: `TA_<NAME>: ` in C#, `<NAME>: ` in Java. Streaming tier:
+Batch tier: `<NAME>: ` in Java and C#. Streaming tier:
 `<NAME> <verb>: ` in both, which `docs/streaming-api-design.md` fixes as a
 cross-language contract.
 
@@ -875,7 +875,7 @@ time: C is handed bare pointers and has no sizes to check against.
 | ~~8~~ | all | S7 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `INDEX_MAX + 1` history (S2) down with it — see footnote [8]. |
 | ~~9~~ | Rust, Java, C# | S5 | *Fixed.* `OpenAndFill` validated no output capacity, unlike the batch tier which does, so an undersized output faulted inside the fill with the buffer already partly written — a raw index exception in Java and C#, a panic in Rust. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`, the count the fill writes. (C still cannot — no sizes.) Rust used to be a partial exception by accident: its `OpenAndFill` distinctness guard rejected two *empty* outputs before the fill could fault, so that one undersized shape answered `BadParam` where every other answered a panic — and where C# faulted, its `Overlaps` being false for an empty span. #262 excluded empty operands from both guards, and now the capacity check answers that shape and every other one alike. |
 | ~~10~~ | C | — | *Obsolete.* `TA_SetCompatibility` accepted any value and echoed it back from the getter; a domain check was added, and #388 then removed the behaviour it selected. The pair is kept declared for source compatibility and is now inert, so it carries no domain to be in. Numbering left as-is, as for item 5. |
-| ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |
+| ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5, whose produced count on a range that ends before the lookback is 0, so no output space is needed; this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |
 | ~~13~~ | all | S1 | *Fixed.* An empty history answered `TA_BAD_PARAM` where S1 specifies `TA_OUT_OF_RANGE_START_INDEX`, and the index pair was not evaluated first: C checked argument presence (S4) ahead of it, so a call that was both an absent output and an empty history reported S4's code — and a caller who fixed that argument got the same rejection back for a reason nothing had mentioned. All four openers now answer the pair ahead of every presence check, except for the one check each language makes a precondition of reading the length at all (footnote [4]). What was measured on a zero-length history before: `TA_BAD_PARAM` in C, `Err(BadParam)` in Rust, `TALibArgumentException` carrying `BadParam` in Java, `ArgumentException` in C#. |
 
 **Nothing is left.** Items 6, 7 and 13 went with #268, which took all three at

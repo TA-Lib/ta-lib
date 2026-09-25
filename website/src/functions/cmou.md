@@ -56,6 +56,7 @@ TA-Lib Definition: [`cmou.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | C | [`ta_CMOU.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CMOU.c) |
 | Rust | [`cmou.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cmou.rs) |
 | Java | [`Core_CMOU.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CMOU.java) |
+| C# | [`Core_CMOU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CMOU.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -705,7 +705,7 @@ fn body_name(base: &str) -> String {
 /// B3 decision on the same parameters.
 ///
 /// The `_assertStart > endIdx ||` escape is applied to the OUTPUT bound only. A
-/// range shorter than the lookback produces no values, so any output length will
+/// range that ends before the lookback produces no values, so any output length will
 /// do — including none. The input bound does NOT take the escape: `endIdx` past
 /// the end of the series the caller supplied is a caller bug in every range, and
 /// the only reason C answers it with `TA_SUCCESS` is that it has no size to check
@@ -791,9 +791,9 @@ fn gen_argument_checks(func: &FuncDef, canonical: &str, method: &str) -> String 
 /// The wrapper translates the core's `RetCode` into the documented exception
 /// mapping. It is thin: the numerics live entirely in the core.
 ///
-/// **A short range is not an error.** A valid range shorter than the lookback
-/// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
-/// `count` is 0 — exactly C's contract, never an exception.
+/// **A short range is not an error.** A valid range that ends before the
+/// lookback returns `Success` with `outNBElement == 0`, which becomes an
+/// `OutRange` whose `count` is 0 — exactly C's contract, never an exception.
 fn gen_public_wrapper(
     func: &FuncDef,
     single_precision: bool,

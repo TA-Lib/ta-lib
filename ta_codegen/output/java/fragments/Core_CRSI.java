@@ -284,8 +284,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#crsiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#crsiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -298,7 +298,8 @@
     *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param outReal The averaged reading, 0 to 100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, crsiLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -363,8 +364,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#crsiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#crsiLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -377,7 +378,8 @@
     *        ranked against (default 100; range 2..10000; {@code Integer.MIN_VALUE}
     *        selects the default).
     * @param outReal The averaged reading, 0 to 100. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, crsiLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -523,7 +525,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CRSI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CRSI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CRSI update", "inReal");
          core.crsiStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -541,7 +543,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("CRSI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CRSI peek", "inReal");
          CrsiStream sp = this;
          double cur_tempStreak = 0.0;
          double cur_tempStreakRSI = 0.0;
@@ -757,12 +759,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CRSI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CRSI openAndFill", inReal.length, startIdx, crsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CRSI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CRSI openAndFill: " + retCode, retCode);
+      throw streamFailure("CRSI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind crsiOpen (composition seam). */
    CrsiStream crsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod )
@@ -778,12 +777,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CRSI open: history shorter than lookback + 1");
+         throw insufficientHistory("CRSI open", inReal.length, startIdx, crsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CRSI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CRSI open: " + retCode, retCode);
+      throw streamFailure("CRSI open", retCode);
    }
    /**
     * Open a live CRSI stream over the warm-up history; the handle's
@@ -822,7 +818,7 @@
       int guardOutLen = openFillCount("CRSI openAndFill", inReal.length, crsiLookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod));
       requireLength("CRSI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("CRSI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CRSI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

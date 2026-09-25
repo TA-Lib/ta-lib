@@ -678,8 +678,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#sarextLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#sarextLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -704,7 +704,8 @@
     * @param optInAccelerationMaxShort Cap on the short acceleration factor
     *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal SAR stop level; positive while long, negative while short.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, sarextLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -765,8 +766,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#sarextLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#sarextLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -791,7 +792,8 @@
     * @param optInAccelerationMaxShort Cap on the short acceleration factor
     *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal SAR stop level; positive while long, negative while short.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least {@code endIdx - max(startIdx, sarextLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -955,7 +957,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("SAREXT update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("SAREXT update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SAREXT update", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          core.sarextStepImpl(this, inHigh, inLow);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -973,7 +975,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new TALibArgumentException("SAREXT peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SAREXT peek", !Double.isFinite(inHigh) ? "inHigh" : "inLow");
          SarextStream sp = this;
          double prevHigh = 0.0;
          double prevLow = 0.0;
@@ -1628,12 +1630,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("SAREXT openAndFill", inHigh.length, startIdx, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SAREXT openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("SAREXT openAndFill: " + retCode, retCode);
+      throw streamFailure("SAREXT openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind sarextOpen (composition seam). */
    SarextStream sarextOpenInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
@@ -1649,12 +1648,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SAREXT open: history shorter than lookback + 1");
+         throw insufficientHistory("SAREXT open", inHigh.length, startIdx, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SAREXT open: internal error", retCode);
-      }
-      throw new TALibArgumentException("SAREXT open: " + retCode, retCode);
+      throw streamFailure("SAREXT open", retCode);
    }
    /**
     * Open a live SAREXT stream over the warm-up history; the handle's
@@ -1697,7 +1693,7 @@
       requireHistoryLength("SAREXT openAndFill", "inLow", inLow.length, inHigh.length);
       requireLength("SAREXT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
-         throw new TALibArgumentException("SAREXT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("SAREXT openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

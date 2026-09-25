@@ -29,7 +29,3 @@ outNegExp[i] = close_i × 1e-13 + 2.5E-3; outPosExp[i] = ( high_i − low_i ) / 
 - `outNegExp` — Bar close scaled by a negative-exponent literal, offset by another
 - `outPosExp` — Bar spread scaled by a positive-exponent literal, offset by two more
 - `outBigExp` — Bar close divided by a literal too large for the plain `.0` rendering
-
-## Implementation
-
-TA-Lib Definition: [`synth9.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth9/synth9.c) · [`synth9.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth9/synth9.yaml)

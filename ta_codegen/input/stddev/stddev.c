@@ -32,7 +32,7 @@ TA_RetCode stddev(int startIdx, int endIdx,
    int i;
    TA_RetCode retCode;
 
-   /* Nothing to produce: the range is shorter than the lookback. Return before
+   /* Nothing to produce: the range ends before the lookback. Return before
     * touching anything.
     *
     * Same shape as the guard in apo and bbands: the variance below runs on the

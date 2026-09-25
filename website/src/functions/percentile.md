@@ -57,6 +57,7 @@ TA-Lib Definition: [`percentile.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | C | [`ta_PERCENTILE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_PERCENTILE.c) |
 | Rust | [`percentile.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/percentile.rs) |
 | Java | [`Core_PERCENTILE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_PERCENTILE.java) |
+| C# | [`Core_PERCENTILE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PERCENTILE.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

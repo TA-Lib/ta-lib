@@ -166,8 +166,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trangeLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#trangeLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -175,7 +175,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outReal True Range value per bar. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, trangeLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -233,8 +234,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trangeLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#trangeLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -242,7 +243,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param outReal True Range value per bar. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, trangeLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -372,7 +374,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("TRANGE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("TRANGE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("TRANGE update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.trangeStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -390,7 +392,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("TRANGE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("TRANGE peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          TrangeStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -557,12 +559,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("TRANGE openAndFill", inHigh.length, startIdx, trangeLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("TRANGE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("TRANGE openAndFill: " + retCode, retCode);
+      throw streamFailure("TRANGE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind trangeOpen (composition seam). */
    TrangeStream trangeOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -578,12 +577,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("TRANGE open: history shorter than lookback + 1");
+         throw insufficientHistory("TRANGE open", inHigh.length, startIdx, trangeLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("TRANGE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("TRANGE open: " + retCode, retCode);
+      throw streamFailure("TRANGE open", retCode);
    }
    /**
     * Open a live TRANGE stream over the warm-up history; the handle's
@@ -628,7 +624,7 @@
       requireHistoryLength("TRANGE openAndFill", "inClose", inClose.length, inHigh.length);
       requireLength("TRANGE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
-         throw new TALibArgumentException("TRANGE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("TRANGE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

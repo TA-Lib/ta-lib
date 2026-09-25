@@ -28,18 +28,6 @@ A three-candle pattern: a first candle followed by two white candles of similar 
 | 0 | No pattern |
 | 100 | Bullish continuation: two similar white candles gapped up together and held the gap, suggesting the advance will resume |
 
-## Implementation
-
-TA-Lib Definition: [`cdlgapsidesidewhite.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgapsidesidewhite/cdlgapsidesidewhite.c) · [`cdlgapsidesidewhite.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlgapsidesidewhite/cdlgapsidesidewhite.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLGAPSIDESIDEWHITE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLGAPSIDESIDEWHITE.c) |
-| Rust | [`cdlgapsidesidewhite.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlgapsidesidewhite.rs) |
-| Java | [`Core_CDLGAPSIDESIDEWHITE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLGAPSIDESIDEWHITE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Up/Down-gap side-by-side white lines, Gapping side-by-side white lines

@@ -91,14 +91,14 @@
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the fast MA below runs first, and its lookback is SMALLER
        * than ppo's own — so it reads the whole range and computes a result the
        * empty slow MA then discards. Observably identical (the slow MA's own early
        * return already yields 0,0 here), but it is the difference between "a range
-       * shorter than the lookback reads nothing" being true of this function and
+       * that ends before the lookback reads nothing" being true of this function and
        * being false: with a caller-supplied inReal that stops short of endIdx, that
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
@@ -227,8 +227,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ppoLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#ppoLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -242,7 +242,8 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal PPO value in percent. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -302,8 +303,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ppoLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#ppoLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -317,7 +318,8 @@
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal PPO value in percent. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, ppoLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -456,7 +458,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("PPO update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("PPO update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PPO update", "inReal");
          core.ppoStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -474,7 +476,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("PPO peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PPO peek", "inReal");
          PpoStream sp = this;
          double tempReal = 0.0;
          double cur_tempBuffer = 0.0;
@@ -575,14 +577,14 @@
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the fast MA below runs first, and its lookback is SMALLER
        * than ppo's own — so it reads the whole range and computes a result the
        * empty slow MA then discards. Observably identical (the slow MA's own early
        * return already yields 0,0 here), but it is the difference between "a range
-       * shorter than the lookback reads nothing" being true of this function and
+       * that ends before the lookback reads nothing" being true of this function and
        * being false: with a caller-supplied inReal that stops short of endIdx, that
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
@@ -650,12 +652,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PPO openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("PPO openAndFill", inReal.length, startIdx, ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PPO openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("PPO openAndFill: " + retCode, retCode);
+      throw streamFailure("PPO openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind ppoOpen (composition seam). */
    PpoStream ppoOpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -671,12 +670,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PPO open: history shorter than lookback + 1");
+         throw insufficientHistory("PPO open", inReal.length, startIdx, ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PPO open: internal error", retCode);
-      }
-      throw new TALibArgumentException("PPO open: " + retCode, retCode);
+      throw streamFailure("PPO open", retCode);
    }
    /**
     * Open a live PPO stream over the warm-up history; the handle's
@@ -717,7 +713,7 @@
       int guardOutLen = openFillCount("PPO openAndFill", inReal.length, ppoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       requireLength("PPO openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("PPO openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("PPO openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

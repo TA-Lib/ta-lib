@@ -29,19 +29,6 @@ An inverted pair is not swapped: passing a fast period longer than the slow one 
 - `optInFastPeriod` — Number of bars in the short moving average.
 - `optInSlowPeriod` — Number of bars in the long moving average.
 
-## Implementation
-
-TA-Lib Definition: [`ao.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ao/ao.c) · [`ao.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/ao/ao.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_AO.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_AO.c) |
-| Rust | [`ao.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ao.rs) |
-| Java | [`Core_AO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_AO.java) |
-| C# | [`Core_AO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_AO.cs) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Awesome Oscillator, Bill Williams Awesome Oscillator, BW AO

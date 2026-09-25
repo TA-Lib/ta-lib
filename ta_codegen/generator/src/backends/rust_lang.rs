@@ -875,7 +875,7 @@ fn gen_public_entry(
 /// past the end of the series the caller supplied is a caller bug on every
 /// range, and the only reason C answers it with `TA_SUCCESS` is that it has no
 /// size to check against. `guardOutLen` is the count actually produced, which on
-/// a range shorter than the lookback is `0`: no output space is owed, so any
+/// a range that ends before the lookback is `0`: no output space is owed, so any
 /// length will do, including none (rule N1).
 ///
 /// B3 rides on `<N>_Lookback`'s `?`. Rule L2 makes the lookback's parameter
@@ -1790,7 +1790,7 @@ fn nullable_target_base<'a>(
 /// each other, and every unallocated `Vec` hands out the same dangling aligned
 /// pointer — so a bare `as_ptr()` comparison rejected three separately allocated
 /// empty `Vec`s while accepting three zero-length subslices of one buffer, which
-/// is worse than either answer. A range shorter than the lookback produces
+/// is worse than either answer. A range that ends before the lookback produces
 /// nothing and needs no output space (rule N1), so those calls are legal and C
 /// and Java always accepted them (Appendix D item 11).
 ///

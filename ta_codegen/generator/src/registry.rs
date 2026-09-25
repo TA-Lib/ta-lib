@@ -27,6 +27,9 @@ pub struct Registry {
     /// `mama` -> `["outMAMA", "outFAMA"]`) — the Java stream emitter routes
     /// dispatch OutSlots through named `cur_*` fields / `Value` members.
     callee_out_names: HashMap<String, Vec<String>>,
+    /// Each indicator's YAML-level definition (no body), for renderers that
+    /// need another function's signature, such as a C# `<seealso cref>`.
+    defs: HashMap<String, crate::ir::FuncDef>,
 }
 
 impl Registry {
@@ -36,6 +39,7 @@ impl Registry {
         let mut names = HashMap::new();
         let mut callee_sigs = HashMap::new();
         let mut callee_out_names = HashMap::new();
+        let mut defs = HashMap::new();
 
         if let Ok(entries) = std::fs::read_dir(base_dir) {
             for entry in entries.filter_map(std::result::Result::ok) {
@@ -62,6 +66,7 @@ impl Registry {
                         dir_name.clone(),
                         fd.outputs.iter().map(|o| o.name.clone()).collect(),
                     );
+                    defs.insert(dir_name.clone(), fd);
                     indicators.push(dir_name);
                 }
             }
@@ -70,7 +75,12 @@ impl Registry {
         // Sort by descending length so longest-match wins (e.g. "stochrsi" before "stoch")
         indicators.sort_by(|a, b| b.len().cmp(&a.len()).then(a.cmp(b)));
 
-        Registry { indicators, names, callee_sigs, callee_out_names }
+        Registry { indicators, names, callee_sigs, callee_out_names, defs }
+    }
+
+    /// The YAML-level definition of an indicator dir-name, if known.
+    pub(crate) fn def(&self, key: &str) -> Option<&crate::ir::FuncDef> {
+        self.defs.get(key)
     }
 
     /// The output names of an indicator in signature order (empty if unknown).

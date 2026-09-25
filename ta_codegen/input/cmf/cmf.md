@@ -44,18 +44,6 @@ There is no seeding and no recursion, hence no unstable period. Each output depe
 
 - `optInTimePeriod` — Number of bars in the window
 
-## Implementation
-
-TA-Lib Definition: [`cmf.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmf/cmf.c) · [`cmf.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmf/cmf.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CMF.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CMF.c) |
-| Rust | [`cmf.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cmf.rs) |
-| Java | [`Core_CMF.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CMF.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Chaikin Money Flow

@@ -812,16 +812,18 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htSineLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#htSineLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source price series.
     * @param outSine Sine of the dominant-cycle phase. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outLeadSine Sine of the phase advanced 45 degrees (lead) Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -876,16 +878,18 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htSineLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#htSineLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source price series.
     * @param outSine Sine of the dominant-cycle phase. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @param outLeadSine Sine of the phase advanced 45 degrees (lead) Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, htSineLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -1121,7 +1125,7 @@
             throw failure("HT_SINE update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("HT_SINE update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("HT_SINE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("HT_SINE update", "inReal");
          core.htSineStepImpl(this, inReal);
          this.outRangeCount++;
          out.sine = this.cur_outSine;
@@ -1141,7 +1145,7 @@
       public void peek( double inReal, HtSineOut out ) {
          requireArgument("HT_SINE peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("HT_SINE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("HT_SINE peek", "inReal");
          HtSineStream sp = this;
          int i = 0;
          double tempReal = 0.0;
@@ -2128,12 +2132,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("HT_SINE openAndFill", inReal.length, startIdx, htSineLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("HT_SINE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
+      throw streamFailure("HT_SINE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind htSineOpen (composition seam). */
    HtSineStream htSineOpenInternal( double inReal[], int startIdx )
@@ -2150,12 +2151,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("HT_SINE open: history shorter than lookback + 1");
+         throw insufficientHistory("HT_SINE open", inReal.length, startIdx, htSineLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("HT_SINE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("HT_SINE open: " + retCode, retCode);
+      throw streamFailure("HT_SINE open", retCode);
    }
    /**
     * Open a live HT_SINE stream over the warm-up history; the handle's
@@ -2193,7 +2191,7 @@
       requireLength("HT_SINE openAndFill", "outSine", outSine, guardOutLen);
       requireLength("HT_SINE openAndFill", "outLeadSine", outLeadSine, guardOutLen);
       if( (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine ) {
-         throw new TALibArgumentException("HT_SINE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("HT_SINE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

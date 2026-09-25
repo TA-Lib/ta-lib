@@ -144,14 +144,14 @@ impl Core {
     /// # Returns
     ///
     /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
-    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
-    /// succeeds with `count == 0`.
+    /// series' coordinates, and `count` is how many were written. A range that ends before the
+    /// lookback succeeds with `count == 0`.
     ///
     /// # Errors
     ///
     /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
     /// [`Core::INDEX_MAX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is
-    /// below `startIdx`. A range shorter than the lookback is not an error: it is [`Ok`] with a
+    /// below `startIdx`. A range that ends before the lookback is not an error: it is [`Ok`] with a
     /// zero [`OutRange::count`].
     ///
     /// Also [`RetCode::BadParam`] when a slice is too short: every input must cover

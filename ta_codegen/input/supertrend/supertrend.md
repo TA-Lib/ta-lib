@@ -41,18 +41,6 @@ SuperTrend = Upper while the trend is down, until Close > Upper flips it up
 - `optInTimePeriod` — Smoothing period of the Average True Range
 - `optInMultiplier` — Multiplier applied to the Average True Range to set the band width
 
-## Implementation
-
-TA-Lib Definition: [`supertrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/supertrend/supertrend.c) · [`supertrend.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/supertrend/supertrend.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_SUPERTREND.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SUPERTREND.c) |
-| Rust | [`supertrend.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/supertrend.rs) |
-| Java | [`Core_SUPERTREND.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SUPERTREND.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Super Trend, Supertrend Indicator

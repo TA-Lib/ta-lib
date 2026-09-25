@@ -374,8 +374,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#mfiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#mfiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -386,7 +386,8 @@
     * @param optInTimePeriod Lookback window for summing money flow (default 14;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Money Flow Index. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, mfiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -448,8 +449,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#mfiLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#mfiLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -460,7 +461,8 @@
     * @param optInTimePeriod Lookback window for summing money flow (default 14;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Money Flow Index. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, mfiLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -612,7 +614,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MFI update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MFI update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MFI update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : !Double.isFinite(inClose) ? "inClose" : "inVolume");
          core.mfiStepImpl(this, inHigh, inLow, inClose, inVolume);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -630,7 +632,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new TALibArgumentException("MFI peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MFI peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : !Double.isFinite(inClose) ? "inClose" : "inVolume");
          MfiStream sp = this;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
@@ -958,12 +960,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MFI openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MFI openAndFill", inHigh.length, startIdx, mfiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MFI openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MFI openAndFill: " + retCode, retCode);
+      throw streamFailure("MFI openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind mfiOpen (composition seam). */
    MfiStream mfiOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -979,12 +978,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MFI open: history shorter than lookback + 1");
+         throw insufficientHistory("MFI open", inHigh.length, startIdx, mfiLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MFI open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MFI open: " + retCode, retCode);
+      throw streamFailure("MFI open", retCode);
    }
    /**
     * Open a live MFI stream over the warm-up history; the handle's
@@ -1035,7 +1031,7 @@
       requireHistoryLength("MFI openAndFill", "inVolume", inVolume.length, inHigh.length);
       requireLength("MFI openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
-         throw new TALibArgumentException("MFI openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MFI openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

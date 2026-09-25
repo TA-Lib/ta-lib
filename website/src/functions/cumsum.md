@@ -55,5 +55,6 @@ TA-Lib Definition: [`cumsum.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C | [`ta_CUMSUM.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CUMSUM.c) |
 | Rust | [`cumsum.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cumsum.rs) |
 | Java | [`Core_CUMSUM.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CUMSUM.java) |
+| C# | [`Core_CUMSUM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CUMSUM.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).

@@ -203,8 +203,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlmarubozuLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlmarubozuLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -214,7 +214,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 on a white (bullish) marubozu, -100 on a black
     *        (bearish) marubozu, 0 when no pattern. Sign follows the candle color. Must
-    *        hold at least {@code endIdx - startIdx + 1} values.
+    *        hold at least {@code endIdx - max(startIdx, cdlmarubozuLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -274,8 +275,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlmarubozuLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdlmarubozuLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -285,7 +286,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 on a white (bullish) marubozu, -100 on a black
     *        (bearish) marubozu, 0 when no pattern. Sign follows the candle color. Must
-    *        hold at least {@code endIdx - startIdx + 1} values.
+    *        hold at least {@code endIdx - max(startIdx, cdlmarubozuLookback(...)) + 1}
+    *        values, the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -444,7 +446,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLMARUBOZU update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLMARUBOZU update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLMARUBOZU update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -462,7 +464,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLMARUBOZU peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLMARUBOZU peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdlmarubozuStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -676,12 +678,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLMARUBOZU openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLMARUBOZU openAndFill", inOpen.length, startIdx, cdlmarubozuLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLMARUBOZU openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLMARUBOZU openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLMARUBOZU openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlmarubozuOpen (composition seam). */
    CdlmarubozuStream cdlmarubozuOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -697,12 +696,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLMARUBOZU open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLMARUBOZU open", inOpen.length, startIdx, cdlmarubozuLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLMARUBOZU open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLMARUBOZU open: " + retCode, retCode);
+      throw streamFailure("CDLMARUBOZU open", retCode);
    }
    /**
     * Open a live CDLMARUBOZU stream over the warm-up history; the handle's
@@ -751,7 +747,7 @@
       requireHistoryLength("CDLMARUBOZU openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMARUBOZU openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLMARUBOZU openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLMARUBOZU openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

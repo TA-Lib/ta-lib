@@ -106,7 +106,7 @@ TA_LIB_API TA_RetCode TA_STDDEV( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* Nothing to produce: the range is shorter than the lookback. Return before
+   /* Nothing to produce: the range ends before the lookback. Return before
     * touching anything.
     *
     * Same shape as the guard in apo and bbands: the variance below runs on the
@@ -297,7 +297,7 @@ static TA_RetCode TA_STDDEV_OpenImpl( struct TA_STDDEV_Stream **stream, const do
    {
       int i;
       TA_RetCode retCode;
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Same shape as the guard in apo and bbands: the variance below runs on the

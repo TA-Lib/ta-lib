@@ -144,14 +144,14 @@ public partial class Core
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
          return RetCode.BadParam ;
       }
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the fast MA below runs first, and its lookback is SMALLER
        * than apo's own — so it reads the whole range and computes a result the
        * empty slow MA then discards. Observably identical (the slow MA's own early
        * return already yields 0,0 here), but it is the difference between "a range
-       * shorter than the lookback reads nothing" being true of this function and
+       * that ends before the lookback reads nothing" being true of this function and
        * being false: with a caller-supplied inReal that stops short of endIdx, that
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
@@ -279,8 +279,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>ApoLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>ApoLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -294,26 +299,36 @@ public partial class Core
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
-   /// <param name="outReal">Fast MA minus slow MA. Must hold at least <c>endIdx - startIdx + 1</c>
-   /// values.</param>
+   /// <param name="outReal">Fast MA minus slow MA. Must hold at least <c>endIdx - max(startIdx,
+   /// ApoLookback(...)) + 1</c> values, the count the call produces (none when
+   /// that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output partially overlaps an input.
+   /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Ppo(int, int, ReadOnlySpan{double}, int, int, MAType, Span{double})"/>
+   /// <seealso cref="Core.Macd(int, int, ReadOnlySpan{double}, int, int, int, Span{double}, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Ma(int, int, ReadOnlySpan{double}, int, MAType, Span{double})"/>
+   /// <seealso cref="Core.Ema(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Apo( int startIdx,
                         int endIdx,
                         ReadOnlySpan<double> inReal,
@@ -357,8 +372,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>ApoLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range that ends before <c>ApoLookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -372,28 +392,38 @@ public partial class Core
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
-   /// <param name="outReal">Fast MA minus slow MA. Must hold at least <c>endIdx - startIdx + 1</c>
-   /// values.</param>
+   /// <param name="outReal">Fast MA minus slow MA. Must hold at least <c>endIdx - max(startIdx,
+   /// ApoLookback(...)) + 1</c> values, the count the call produces (none when
+   /// that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. An output and
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output overlaps an input. An output and
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
-   /// overlap of their byte ranges is rejected.</exception>
+   /// overlap of their byte ranges is rejected.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Ppo(int, int, ReadOnlySpan{double}, int, int, MAType, Span{double})"/>
+   /// <seealso cref="Core.Macd(int, int, ReadOnlySpan{double}, int, int, int, Span{double}, Span{double}, Span{double})"/>
+   /// <seealso cref="Core.Ma(int, int, ReadOnlySpan{double}, int, MAType, Span{double})"/>
+   /// <seealso cref="Core.Ema(int, int, ReadOnlySpan{double}, int, Span{double})"/>
+   /// <seealso cref="Core.Sma(int, int, ReadOnlySpan{double}, int, Span{double})"/>
    public OutRange Apo( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inReal,
@@ -514,7 +544,7 @@ public partial class Core
       {
          if( outRangeBegIdx + outRangeCount > Core.IndexMax )
             throw Core.StreamFailure("APO", "update", RetCode.OutOfRangeEndIndex);
-         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("APO", "update", RetCode.BadParam);
+         if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("APO", "update", nameof(inReal));
          core.ApoStepImpl(this, inReal);
          outRangeCount++;
          return cur_outReal;
@@ -535,7 +565,7 @@ public partial class Core
       /// it.</returns>
       public double Peek( double inReal )
       {
-         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("APO", "peek", RetCode.BadParam);
+         if( !double.IsFinite(inReal) ) throw Core.NonFiniteBar("APO", "peek", nameof(inReal));
          ApoStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outReal = 0.0;
@@ -619,14 +649,14 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything.
        *
        * Without this the fast MA below runs first, and its lookback is SMALLER
        * than apo's own — so it reads the whole range and computes a result the
        * empty slow MA then discards. Observably identical (the slow MA's own early
        * return already yields 0,0 here), but it is the difference between "a range
-       * shorter than the lookback reads nothing" being true of this function and
+       * that ends before the lookback reads nothing" being true of this function and
        * being false: with a caller-supplied inReal that stops short of endIdx, that
        * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
        * probe over every guarded core.
@@ -689,6 +719,9 @@ public partial class Core
       if( retCode == RetCode.Success ) {
          return sp;
       }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("APO", "openAndFill", nameof(inReal), inReal.Length, startIdx, ApoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+      }
       throw StreamFailure("APO", "openAndFill", retCode);
    }
 
@@ -702,6 +735,9 @@ public partial class Core
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("APO", "open", nameof(inReal), inReal.Length, startIdx, ApoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       }
       throw StreamFailure("APO", "open", retCode);
    }

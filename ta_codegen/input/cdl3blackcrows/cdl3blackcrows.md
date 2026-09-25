@@ -26,18 +26,6 @@ A four-bar pattern: a white candle followed by three consecutive black (down) ca
 | -100 | Three Black Crows pattern detected: bearish |
 | 0 | No pattern |
 
-## Implementation
-
-TA-Lib Definition: [`cdl3blackcrows.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3blackcrows/cdl3blackcrows.c) · [`cdl3blackcrows.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3blackcrows/cdl3blackcrows.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDL3BLACKCROWS.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDL3BLACKCROWS.c) |
-| Rust | [`cdl3blackcrows.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdl3blackcrows.rs) |
-| Java | [`Core_CDL3BLACKCROWS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDL3BLACKCROWS.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Three Black Crows, 3 Black Crows

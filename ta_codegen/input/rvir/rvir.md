@@ -30,18 +30,6 @@ Both legs use the same `optInTimePeriod` and `optInStdDevPeriod`, so they warm o
 - `optInTimePeriod` — Wilder smoothing period applied to both legs of both indices
 - `optInStdDevPeriod` — Number of trailing values each standard deviation spans
 
-## Implementation
-
-TA-Lib Definition: [`rvir.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvir/rvir.c) · [`rvir.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/rvir/rvir.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_RVIR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_RVIR.c) |
-| Rust | [`rvir.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rvir.rs) |
-| Java | [`Core_RVIR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_RVIR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Relative Volatility Index (1995 revision), RVIr

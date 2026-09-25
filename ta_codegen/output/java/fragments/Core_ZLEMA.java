@@ -242,8 +242,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#zlemaLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#zlemaLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -252,7 +252,8 @@
     *        de-lag distance derives from it (default 30; range 1..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Zero-lag exponential moving average of the input. Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, zlemaLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -326,8 +327,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#zlemaLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#zlemaLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -336,7 +337,8 @@
     *        de-lag distance derives from it (default 30; range 1..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Zero-lag exponential moving average of the input. Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, zlemaLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -476,7 +478,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("ZLEMA update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("ZLEMA update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ZLEMA update", "inReal");
          core.zlemaStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -494,7 +496,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("ZLEMA peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ZLEMA peek", "inReal");
          ZlemaStream sp = this;
          double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
@@ -689,12 +691,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ZLEMA openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("ZLEMA openAndFill", inReal.length, startIdx, zlemaLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ZLEMA openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("ZLEMA openAndFill: " + retCode, retCode);
+      throw streamFailure("ZLEMA openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind zlemaOpen (composition seam). */
    ZlemaStream zlemaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -710,12 +709,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ZLEMA open: history shorter than lookback + 1");
+         throw insufficientHistory("ZLEMA open", inReal.length, startIdx, zlemaLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ZLEMA open: internal error", retCode);
-      }
-      throw new TALibArgumentException("ZLEMA open: " + retCode, retCode);
+      throw streamFailure("ZLEMA open", retCode);
    }
    /**
     * Open a live ZLEMA stream over the warm-up history; the handle's
@@ -754,7 +750,7 @@
       int guardOutLen = openFillCount("ZLEMA openAndFill", inReal.length, zlemaLookback(optInTimePeriod));
       requireLength("ZLEMA openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("ZLEMA openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("ZLEMA openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

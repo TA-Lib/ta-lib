@@ -36,18 +36,6 @@ swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, els
 - `optInLeftBars` — Bars before the pivot that it must strictly dominate
 - `optInRightBars` — Bars after the pivot that it must strictly dominate, and the delay before the verdict is reported
 
-## Implementation
-
-TA-Lib Definition: [`fractal.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fractal/fractal.c) · [`fractal.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/fractal/fractal.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_FRACTAL.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_FRACTAL.c) |
-| Rust | [`fractal.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/fractal.rs) |
-| Java | [`Core_FRACTAL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_FRACTAL.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Williams Fractal, Fractals, Swing High, Swing Low, Pivot High, Pivot Low

@@ -24,18 +24,6 @@ SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
 
 - `optInTimePeriod` — Number of bars in the averaging window
 
-## Implementation
-
-TA-Lib Definition: [`sma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sma/sma.c) · [`sma.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/sma/sma.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_SMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SMA.c) |
-| Rust | [`sma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sma.rs) |
-| Java | [`Core_SMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SMA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 simple moving average

@@ -78,15 +78,16 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#addLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#addLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal0 First operand series.
     * @param inReal1 Second operand series.
     * @param outReal Element-wise sum of the two inputs. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, addLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -136,15 +137,16 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#addLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#addLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal0 First operand series.
     * @param inReal1 Second operand series.
     * @param outReal Element-wise sum of the two inputs. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, addLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -271,7 +273,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("ADD update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("ADD update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ADD update", !Double.isFinite(inReal0) ? "inReal0" : "inReal1");
          core.addStepImpl(this, inReal0, inReal1);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -289,7 +291,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new TALibArgumentException("ADD peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ADD peek", !Double.isFinite(inReal0) ? "inReal0" : "inReal1");
          AddStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = inReal0 + inReal1;
@@ -366,12 +368,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ADD openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("ADD openAndFill", inReal0.length, startIdx, addLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ADD openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("ADD openAndFill: " + retCode, retCode);
+      throw streamFailure("ADD openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind addOpen (composition seam). */
    AddStream addOpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -387,12 +386,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ADD open: history shorter than lookback + 1");
+         throw insufficientHistory("ADD open", inReal0.length, startIdx, addLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ADD open: internal error", retCode);
-      }
-      throw new TALibArgumentException("ADD open: " + retCode, retCode);
+      throw streamFailure("ADD open", retCode);
    }
    /**
     * Open a live ADD stream over the warm-up history; the handle's
@@ -433,7 +429,7 @@
       requireHistoryLength("ADD openAndFill", "inReal1", inReal1.length, inReal0.length);
       requireLength("ADD openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
-         throw new TALibArgumentException("ADD openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("ADD openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

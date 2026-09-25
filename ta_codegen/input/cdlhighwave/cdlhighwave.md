@@ -31,18 +31,6 @@ One candle at index i. Hit when all hold: (1) short real body: real body < the B
 | 0 | No pattern |
 | 100 | High-Wave candle (white) — sharp indecision after a volatile session; sign marks the candle's color only, not a bullish/bearish call |
 
-## Implementation
-
-TA-Lib Definition: [`cdlhighwave.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhighwave/cdlhighwave.c) · [`cdlhighwave.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhighwave/cdlhighwave.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLHIGHWAVE.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHIGHWAVE.c) |
-| Rust | [`cdlhighwave.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlhighwave.rs) |
-| Java | [`Core_CDLHIGHWAVE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLHIGHWAVE.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 High-Wave Candle, High Wave

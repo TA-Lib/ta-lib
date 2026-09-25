@@ -250,7 +250,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlmorningstarLookback} is a
+    * valid range that ends before {@link Core#cdlmorningstarLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -264,7 +264,8 @@
     *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the morning star is detected, 0 otherwise.
     *        Never negative (pattern is exclusively bullish) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlmorningstarLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -330,7 +331,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlmorningstarLookback} is a
+    * valid range that ends before {@link Core#cdlmorningstarLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -344,7 +345,8 @@
     *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the morning star is detected, 0 otherwise.
     *        Never negative (pattern is exclusively bullish) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlmorningstarLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -527,7 +529,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLMORNINGSTAR update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLMORNINGSTAR update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLMORNINGSTAR update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlmorningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -545,7 +547,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLMORNINGSTAR peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLMORNINGSTAR peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdlmorningstarStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -814,12 +816,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLMORNINGSTAR openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLMORNINGSTAR openAndFill", inOpen.length, startIdx, cdlmorningstarLookback(optInPenetration));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLMORNINGSTAR openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLMORNINGSTAR openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlmorningstarOpen (composition seam). */
    CdlmorningstarStream cdlmorningstarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -835,12 +834,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLMORNINGSTAR open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLMORNINGSTAR open", inOpen.length, startIdx, cdlmorningstarLookback(optInPenetration));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLMORNINGSTAR open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLMORNINGSTAR open: " + retCode, retCode);
+      throw streamFailure("CDLMORNINGSTAR open", retCode);
    }
    /**
     * Open a live CDLMORNINGSTAR stream over the warm-up history; the handle's
@@ -891,7 +887,7 @@
       requireHistoryLength("CDLMORNINGSTAR openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLMORNINGSTAR openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLMORNINGSTAR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLMORNINGSTAR openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -25,7 +25,3 @@ outInteger[i] = (clamp((int)inReal[i], 2, optInTimePeriod+2) << 12) | (bits((int
 ## Parameters
 
 - `optInTimePeriod` — Ceiling for the magnitude clamp
-
-## Implementation
-
-TA-Lib Definition: [`synth2.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth2/synth2.c) · [`synth2.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth2/synth2.yaml)

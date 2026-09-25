@@ -59,6 +59,7 @@ TA-Lib Definition: [`dpo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_DPO.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_DPO.c) |
 | Rust | [`dpo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/dpo.rs) |
 | Java | [`Core_DPO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_DPO.java) |
+| C# | [`Core_DPO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_DPO.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

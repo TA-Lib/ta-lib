@@ -29,18 +29,6 @@ Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd 
 
 - `optInTimePeriod` — Number of bars spanned by the moving average being removed; the displacement is derived from it
 
-## Implementation
-
-TA-Lib Definition: [`dpo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dpo/dpo.c) · [`dpo.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/dpo/dpo.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_DPO.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_DPO.c) |
-| Rust | [`dpo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/dpo.rs) |
-| Java | [`Core_DPO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_DPO.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Detrended Price Oscillator

@@ -33,18 +33,6 @@ SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
 - `optInSlowD_Period` — Smoothing period for the SlowD signal line
 - `optInSlowD_MAType` — MA type used for the SlowD line
 
-## Implementation
-
-TA-Lib Definition: [`stoch.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stoch/stoch.c) · [`stoch.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/stoch/stoch.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_STOCH.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_STOCH.c) |
-| Rust | [`stoch.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/stoch.rs) |
-| Java | [`Core_STOCH.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_STOCH.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Stochastic, Stochastic Oscillator, Slow Stochastic

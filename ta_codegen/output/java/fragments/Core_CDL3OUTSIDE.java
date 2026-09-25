@@ -154,8 +154,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdl3outsideLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdl3outsideLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -165,8 +165,9 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 for Three Outside Up (bullish), -100 for Three
     *        Outside Down (bearish), 0 when no pattern. Emits both signs; value is
-    *        candle i-1's color * 100. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        candle i-1's color * 100. Must hold at least
+    *        {@code endIdx - max(startIdx, cdl3outsideLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -228,8 +229,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdl3outsideLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#cdl3outsideLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -239,8 +240,9 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 for Three Outside Up (bullish), -100 for Three
     *        Outside Down (bearish), 0 when no pattern. Emits both signs; value is
-    *        candle i-1's color * 100. Must hold at least {@code endIdx - startIdx + 1}
-    *        values.
+    *        candle i-1's color * 100. Must hold at least
+    *        {@code endIdx - max(startIdx, cdl3outsideLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -379,7 +381,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDL3OUTSIDE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDL3OUTSIDE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDL3OUTSIDE update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdl3outsideStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -397,7 +399,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDL3OUTSIDE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDL3OUTSIDE peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          Cdl3outsideStream sp = this;
          int cur_outInteger = 0;
          if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
@@ -556,12 +558,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDL3OUTSIDE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDL3OUTSIDE openAndFill", inOpen.length, startIdx, cdl3outsideLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDL3OUTSIDE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDL3OUTSIDE openAndFill: " + retCode, retCode);
+      throw streamFailure("CDL3OUTSIDE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdl3outsideOpen (composition seam). */
    Cdl3outsideStream cdl3outsideOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -577,12 +576,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDL3OUTSIDE open: history shorter than lookback + 1");
+         throw insufficientHistory("CDL3OUTSIDE open", inOpen.length, startIdx, cdl3outsideLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDL3OUTSIDE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDL3OUTSIDE open: " + retCode, retCode);
+      throw streamFailure("CDL3OUTSIDE open", retCode);
    }
    /**
     * Open a live CDL3OUTSIDE stream over the warm-up history; the handle's
@@ -631,7 +627,7 @@
       requireHistoryLength("CDL3OUTSIDE openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDL3OUTSIDE openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDL3OUTSIDE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDL3OUTSIDE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

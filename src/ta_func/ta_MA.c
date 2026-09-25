@@ -159,7 +159,7 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* Nothing to produce: the range is shorter than the lookback. Answer here
+   /* Nothing to produce: the range ends before the lookback. Answer here
     * rather than forwarding.
     *
     * The VALUE is the same either way: ma_lookback returns exactly the lookback

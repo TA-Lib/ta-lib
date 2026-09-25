@@ -419,8 +419,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#supertrendLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#supertrendLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -433,10 +433,13 @@
     *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
     *        the default).
     * @param outSupertrend The SuperTrend line: the band the trend is currently
-    *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        riding. Must hold at least
+    *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @param outTrend Trend direction: +1 while the trend rides the lower band,
     *        -1 while it rides the upper one. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -507,8 +510,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#supertrendLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#supertrendLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -521,10 +524,13 @@
     *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
     *        the default).
     * @param outSupertrend The SuperTrend line: the band the trend is currently
-    *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        riding. Must hold at least
+    *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @param outTrend Trend direction: +1 while the trend rides the lower band,
     *        -1 while it rides the upper one. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, supertrendLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -682,7 +688,7 @@
             throw failure("SUPERTREND update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("SUPERTREND update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("SUPERTREND update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SUPERTREND update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.supertrendStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.supertrend = this.cur_outSupertrend;
@@ -702,7 +708,7 @@
       public void peek( double inHigh, double inLow, double inClose, SupertrendOut out ) {
          requireArgument("SUPERTREND peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("SUPERTREND peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SUPERTREND peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          SupertrendStream sp = this;
          double val2 = 0.0;
          double val3 = 0.0;
@@ -1119,12 +1125,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SUPERTREND openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("SUPERTREND openAndFill", inHigh.length, startIdx, supertrendLookback(optInTimePeriod, optInMultiplier));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SUPERTREND openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("SUPERTREND openAndFill: " + retCode, retCode);
+      throw streamFailure("SUPERTREND openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind supertrendOpen (composition seam). */
    SupertrendStream supertrendOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier )
@@ -1141,12 +1144,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SUPERTREND open: history shorter than lookback + 1");
+         throw insufficientHistory("SUPERTREND open", inHigh.length, startIdx, supertrendLookback(optInTimePeriod, optInMultiplier));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SUPERTREND open: internal error", retCode);
-      }
-      throw new TALibArgumentException("SUPERTREND open: " + retCode, retCode);
+      throw streamFailure("SUPERTREND open", retCode);
    }
    /**
     * Open a live SUPERTREND stream over the warm-up history; the handle's
@@ -1194,7 +1194,7 @@
       requireLength("SUPERTREND openAndFill", "outSupertrend", outSupertrend, guardOutLen);
       requireLength("SUPERTREND openAndFill", "outTrend", outTrend, guardOutLen);
       if( (Object)outSupertrend == (Object)inHigh || (Object)outSupertrend == (Object)inLow || (Object)outSupertrend == (Object)inClose || (Object)outTrend == (Object)inHigh || (Object)outTrend == (Object)inLow || (Object)outTrend == (Object)inClose || (Object)outSupertrend == (Object)outTrend ) {
-         throw new TALibArgumentException("SUPERTREND openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("SUPERTREND openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

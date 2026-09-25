@@ -65,5 +65,6 @@ TA-Lib Definition: [`coppock.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C | [`ta_COPPOCK.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_COPPOCK.c) |
 | Rust | [`coppock.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/coppock.rs) |
 | Java | [`Core_COPPOCK.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_COPPOCK.java) |
+| C# | [`Core_COPPOCK.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_COPPOCK.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).

@@ -32,18 +32,6 @@ With `W` the window sorted ascending and `W[1]` its smallest value:
 
 - `optInTimePeriod` — Number of trailing values in the window
 
-## Implementation
-
-TA-Lib Definition: [`median.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/median/median.c) · [`median.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/median/median.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MEDIAN.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MEDIAN.c) |
-| Rust | [`median.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/median.rs) |
-| Java | [`Core_MEDIAN.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MEDIAN.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Rolling Median, Moving Median, Running Median

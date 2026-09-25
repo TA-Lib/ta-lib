@@ -27,18 +27,6 @@ Single-candle pattern: a small real body at the top of the range with a long low
 | 0 | No pattern |
 | 100 | Hammer detected — a bullish reversal signal that classically assumes a preceding downtrend, unverified by the function |
 
-## Implementation
-
-TA-Lib Definition: [`cdlhammer.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhammer/cdlhammer.c) · [`cdlhammer.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlhammer/cdlhammer.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLHAMMER.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHAMMER.c) |
-| Rust | [`cdlhammer.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlhammer.rs) |
-| Java | [`Core_CDLHAMMER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLHAMMER.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Hammer

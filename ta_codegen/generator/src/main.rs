@@ -2768,7 +2768,7 @@ $EX_QUICK_START_DOC
 //! * Every call returns [`Result`]`<`[`OutRange`]`, `[`RetCode`]`>`, so it composes with
 //!   `?`. [`OutRange`] says where the values start ([`beg_idx`](OutRange::beg_idx), in the
 //!   input series' coordinates) and how many there are ([`count`](OutRange::count)).
-//!   A range shorter than the lookback is a **success with no values**, not an error.
+//!   A range that ends before the lookback is a **success with no values**, not an error.
 //!
 //! [`Core`] is immutable after construction: its per-instance settings — unstable
 //! period and candlestick thresholds — are chosen up front with
@@ -2906,7 +2906,7 @@ start (`beg_idx`, in the input series' coordinates) and how many there are
 (`count`); `*_lookback` methods return how many leading values an indicator
 consumes before the first one exists.
 
-A range shorter than the lookback is a **success with no values** (`count == 0`),
+A range that ends before the lookback is a **success with no values** (`count == 0`),
 not an error — the same contract as C, Java and C#.
 
 ## Configuration

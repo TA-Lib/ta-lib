@@ -193,7 +193,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#maxindexLookback} is a <b>success
+    * valid range that ends before {@link Core#maxindexLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -203,7 +203,9 @@
     *        (default 30; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outInteger Absolute index (into inReal) of the highest value in
-    *        each window. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        each window. Must hold at least
+    *        {@code endIdx - max(startIdx, maxindexLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -259,7 +261,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#maxindexLookback} is a <b>success
+    * valid range that ends before {@link Core#maxindexLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -269,7 +271,9 @@
     *        (default 30; range 2..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param outInteger Absolute index (into inReal) of the highest value in
-    *        each window. Must hold at least {@code endIdx - startIdx + 1} values.
+    *        each window. Must hold at least
+    *        {@code endIdx - max(startIdx, maxindexLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -412,7 +416,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("MAXINDEX update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MAXINDEX update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MAXINDEX update", "inReal");
          core.maxindexStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -430,7 +434,7 @@
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("MAXINDEX peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("MAXINDEX peek", "inReal");
          MaxindexStream sp = this;
          double tmp = 0.0;
          int cur_outInteger = 0;
@@ -626,12 +630,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("MAXINDEX openAndFill", inReal.length, startIdx, maxindexLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MAXINDEX openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("MAXINDEX openAndFill: " + retCode, retCode);
+      throw streamFailure("MAXINDEX openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind maxindexOpen (composition seam). */
    MaxindexStream maxindexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -647,12 +648,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("MAXINDEX open: history shorter than lookback + 1");
+         throw insufficientHistory("MAXINDEX open", inReal.length, startIdx, maxindexLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("MAXINDEX open: internal error", retCode);
-      }
-      throw new TALibArgumentException("MAXINDEX open: " + retCode, retCode);
+      throw streamFailure("MAXINDEX open", retCode);
    }
    /**
     * Open a live MAXINDEX stream over the warm-up history; the handle's
@@ -691,7 +689,7 @@
       int guardOutLen = openFillCount("MAXINDEX openAndFill", inReal.length, maxindexLookback(optInTimePeriod));
       requireLength("MAXINDEX openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inReal ) {
-         throw new TALibArgumentException("MAXINDEX openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("MAXINDEX openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

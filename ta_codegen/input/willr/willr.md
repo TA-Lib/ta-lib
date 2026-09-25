@@ -22,18 +22,6 @@ Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]. Me
 
 - `optInTimePeriod` — Lookback bars for the high/low range
 
-## Implementation
-
-TA-Lib Definition: [`willr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/willr/willr.c) · [`willr.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/willr/willr.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_WILLR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_WILLR.c) |
-| Rust | [`willr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/willr.rs) |
-| Java | [`Core_WILLR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_WILLR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Williams %R, Williams Percent R, %R

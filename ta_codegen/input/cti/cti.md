@@ -32,18 +32,6 @@ A rising series therefore reads positive. The `y` side is data-independent and c
 
 - `optInTimePeriod` — Number of trailing values correlated against the ramp
 
-## Implementation
-
-TA-Lib Definition: [`cti.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cti/cti.c) · [`cti.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cti/cti.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CTI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CTI.c) |
-| Rust | [`cti.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cti.rs) |
-| Java | [`Core_CTI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CTI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Correlation Trend Indicator, Ehlers Correlation Trend Indicator, Correlation Trend

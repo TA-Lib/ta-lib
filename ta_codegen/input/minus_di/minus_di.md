@@ -26,18 +26,6 @@ Wilder's Minus Directional Indicator: the Wilder-smoothed downward directional m
 
 - `optInTimePeriod` — Smoothing/lookback period for -DM and TR
 
-## Implementation
-
-TA-Lib Definition: [`minus_di.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_di/minus_di.c) · [`minus_di.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/minus_di/minus_di.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MINUS_DI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MINUS_DI.c) |
-| Rust | [`minus_di.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/minus_di.rs) |
-| Java | [`Core_MINUS_DI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MINUS_DI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 -DI, Negative Directional Indicator

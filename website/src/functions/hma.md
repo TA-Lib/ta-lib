@@ -60,6 +60,7 @@ TA-Lib Definition: [`hma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | C | [`ta_HMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_HMA.c) |
 | Rust | [`hma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/hma.rs) |
 | Java | [`Core_HMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HMA.java) |
+| C# | [`Core_HMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HMA.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

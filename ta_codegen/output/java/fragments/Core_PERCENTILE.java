@@ -427,8 +427,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#percentileLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#percentileLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -438,7 +438,9 @@
     * @param optInPercentile Percentage position within the sorted window
     *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least
+    *        {@code endIdx - max(startIdx, percentileLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -501,8 +503,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#percentileLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#percentileLookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -512,7 +514,9 @@
     * @param optInPercentile Percentage position within the sorted window
     *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least
+    *        {@code endIdx - max(startIdx, percentileLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -666,7 +670,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("PERCENTILE update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("PERCENTILE update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PERCENTILE update", "inReal");
          core.percentileStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -684,7 +688,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("PERCENTILE peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("PERCENTILE peek", "inReal");
          PercentileStream sp = this;
          double newValue = 0.0;
          double result = 0.0;
@@ -1067,12 +1071,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PERCENTILE openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("PERCENTILE openAndFill", inReal.length, startIdx, percentileLookback(optInTimePeriod, optInPercentile));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PERCENTILE openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("PERCENTILE openAndFill: " + retCode, retCode);
+      throw streamFailure("PERCENTILE openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind percentileOpen (composition seam). */
    PercentileStream percentileOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInPercentile )
@@ -1088,12 +1089,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("PERCENTILE open: history shorter than lookback + 1");
+         throw insufficientHistory("PERCENTILE open", inReal.length, startIdx, percentileLookback(optInTimePeriod, optInPercentile));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("PERCENTILE open: internal error", retCode);
-      }
-      throw new TALibArgumentException("PERCENTILE open: " + retCode, retCode);
+      throw streamFailure("PERCENTILE open", retCode);
    }
    /**
     * Open a live PERCENTILE stream over the warm-up history; the handle's
@@ -1132,7 +1130,7 @@
       int guardOutLen = openFillCount("PERCENTILE openAndFill", inReal.length, percentileLookback(optInTimePeriod, optInPercentile));
       requireLength("PERCENTILE openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("PERCENTILE openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("PERCENTILE openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

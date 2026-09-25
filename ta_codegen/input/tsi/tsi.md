@@ -33,18 +33,6 @@ The first period is applied first, to the raw change; the second smooths its res
 - `optInFirstPeriod` — Period of the first smoothing, applied to the raw momentum
 - `optInSecondPeriod` — Period of the second smoothing, applied to the first
 
-## Implementation
-
-TA-Lib Definition: [`tsi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsi/tsi.c) · [`tsi.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/tsi/tsi.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_TSI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TSI.c) |
-| Rust | [`tsi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/tsi.rs) |
-| Java | [`Core_TSI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TSI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 true strength index, Blau true strength index

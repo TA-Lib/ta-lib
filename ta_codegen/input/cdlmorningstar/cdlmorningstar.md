@@ -32,18 +32,6 @@ A three-candle bottom-reversal pattern: a long black candle, a small-bodied star
 
 - `optInPenetration` — Fraction of the 1st candle's body the 3rd close must exceed above the 1st close; larger = deeper penetration required
 
-## Implementation
-
-TA-Lib Definition: [`cdlmorningstar.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmorningstar/cdlmorningstar.c) · [`cdlmorningstar.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlmorningstar/cdlmorningstar.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLMORNINGSTAR.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLMORNINGSTAR.c) |
-| Rust | [`cdlmorningstar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlmorningstar.rs) |
-| Java | [`Core_CDLMORNINGSTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLMORNINGSTAR.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Morning Star

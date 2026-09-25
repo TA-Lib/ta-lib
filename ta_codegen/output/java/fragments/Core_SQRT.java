@@ -80,14 +80,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#sqrtLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#sqrtLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values.
     * @param outReal Square root of each input value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, sqrtLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -135,14 +136,15 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#sqrtLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#sqrtLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Input values.
     * @param outReal Square root of each input value. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, sqrtLookback(...)) + 1} values, the count
+    *        the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -263,7 +265,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("SQRT update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("SQRT update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SQRT update", "inReal");
          core.sqrtStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -281,7 +283,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("SQRT peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("SQRT peek", "inReal");
          SqrtStream sp = this;
          double cur_outReal = 0.0;
          cur_outReal = Math.sqrt(inReal);
@@ -355,12 +357,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SQRT openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("SQRT openAndFill", inReal.length, startIdx, sqrtLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SQRT openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("SQRT openAndFill: " + retCode, retCode);
+      throw streamFailure("SQRT openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind sqrtOpen (composition seam). */
    SqrtStream sqrtOpenInternal( double inReal[], int startIdx )
@@ -376,12 +375,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("SQRT open: history shorter than lookback + 1");
+         throw insufficientHistory("SQRT open", inReal.length, startIdx, sqrtLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("SQRT open: internal error", retCode);
-      }
-      throw new TALibArgumentException("SQRT open: " + retCode, retCode);
+      throw streamFailure("SQRT open", retCode);
    }
    /**
     * Open a live SQRT stream over the warm-up history; the handle's
@@ -418,7 +414,7 @@
       int guardOutLen = openFillCount("SQRT openAndFill", inReal.length, sqrtLookback());
       requireLength("SQRT openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("SQRT openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("SQRT openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

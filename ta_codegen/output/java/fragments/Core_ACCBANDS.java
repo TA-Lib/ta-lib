@@ -293,7 +293,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#accbandsLookback} is a <b>success
+    * valid range that ends before {@link Core#accbandsLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -304,11 +304,14 @@
     * @param optInTimePeriod SMA smoothing period for all three bands (default
     *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outRealUpperBand SMA of the range-scaled high band. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @param outRealMiddleBand SMA of the close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @param outRealLowerBand SMA of the range-scaled low band. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -366,7 +369,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#accbandsLookback} is a <b>success
+    * valid range that ends before {@link Core#accbandsLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -377,11 +380,14 @@
     * @param optInTimePeriod SMA smoothing period for all three bands (default
     *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outRealUpperBand SMA of the range-scaled high band. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @param outRealMiddleBand SMA of the close. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @param outRealLowerBand SMA of the range-scaled low band. Must hold at
-    *        least {@code endIdx - startIdx + 1} values.
+    *        least {@code endIdx - max(startIdx, accbandsLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -537,7 +543,7 @@
             throw failure("ACCBANDS update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("ACCBANDS update", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ACCBANDS update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ACCBANDS update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.accbandsStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
          out.realUpperBand = this.cur_outRealUpperBand;
@@ -558,7 +564,7 @@
       public void peek( double inHigh, double inLow, double inClose, AccbandsOut out ) {
          requireArgument("ACCBANDS peek", "out", out);
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("ACCBANDS peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ACCBANDS peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          AccbandsStream sp = this;
          double tempUpper = 0.0;
          double tempMiddle = 0.0;
@@ -892,12 +898,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ACCBANDS openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("ACCBANDS openAndFill", inHigh.length, startIdx, accbandsLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ACCBANDS openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("ACCBANDS openAndFill: " + retCode, retCode);
+      throw streamFailure("ACCBANDS openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind accbandsOpen (composition seam). */
    AccbandsStream accbandsOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -915,12 +918,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ACCBANDS open: history shorter than lookback + 1");
+         throw insufficientHistory("ACCBANDS open", inHigh.length, startIdx, accbandsLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ACCBANDS open: internal error", retCode);
-      }
-      throw new TALibArgumentException("ACCBANDS open: " + retCode, retCode);
+      throw streamFailure("ACCBANDS open", retCode);
    }
    /**
     * Open a live ACCBANDS stream over the warm-up history; the handle's
@@ -969,7 +969,7 @@
       requireLength("ACCBANDS openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
       requireLength("ACCBANDS openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
-         throw new TALibArgumentException("ACCBANDS openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("ACCBANDS openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

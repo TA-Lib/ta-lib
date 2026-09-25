@@ -683,16 +683,19 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htPhasorLookback} is a <b>success
+    * valid range that ends before {@link Core#htPhasorLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source price series.
     * @param outInPhase In-phase component (detrender delayed 3 bars) Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @param outQuadrature Quadrature component (Q1 of the Hilbert Transform)
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least
+    *        {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -749,16 +752,19 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htPhasorLookback} is a <b>success
+    * valid range that ends before {@link Core#htPhasorLookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Source price series.
     * @param outInPhase In-phase component (detrender delayed 3 bars) Must hold
-    *        at least {@code endIdx - startIdx + 1} values.
+    *        at least {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @param outQuadrature Quadrature component (Q1 of the Hilbert Transform)
-    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    *        Must hold at least
+    *        {@code endIdx - max(startIdx, htPhasorLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -979,7 +985,7 @@
             throw failure("HT_PHASOR update", RetCode.OUT_OF_RANGE_END_INDEX);
          requireArgument("HT_PHASOR update", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("HT_PHASOR update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("HT_PHASOR update", "inReal");
          core.htPhasorStepImpl(this, inReal);
          this.outRangeCount++;
          out.inPhase = this.cur_outInPhase;
@@ -999,7 +1005,7 @@
       public void peek( double inReal, HtPhasorOut out ) {
          requireArgument("HT_PHASOR peek", "out", out);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("HT_PHASOR peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("HT_PHASOR peek", "inReal");
          HtPhasorStream sp = this;
          double adjustedPrevPeriod = 0.0;
          double smoothedValue = 0.0;
@@ -1743,12 +1749,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("HT_PHASOR openAndFill", inReal.length, startIdx, htPhasorLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("HT_PHASOR openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("HT_PHASOR openAndFill: " + retCode, retCode);
+      throw streamFailure("HT_PHASOR openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind htPhasorOpen (composition seam). */
    HtPhasorStream htPhasorOpenInternal( double inReal[], int startIdx )
@@ -1765,12 +1768,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("HT_PHASOR open: history shorter than lookback + 1");
+         throw insufficientHistory("HT_PHASOR open", inReal.length, startIdx, htPhasorLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("HT_PHASOR open: internal error", retCode);
-      }
-      throw new TALibArgumentException("HT_PHASOR open: " + retCode, retCode);
+      throw streamFailure("HT_PHASOR open", retCode);
    }
    /**
     * Open a live HT_PHASOR stream over the warm-up history; the handle's
@@ -1808,7 +1808,7 @@
       requireLength("HT_PHASOR openAndFill", "outInPhase", outInPhase, guardOutLen);
       requireLength("HT_PHASOR openAndFill", "outQuadrature", outQuadrature, guardOutLen);
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
-         throw new TALibArgumentException("HT_PHASOR openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("HT_PHASOR openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

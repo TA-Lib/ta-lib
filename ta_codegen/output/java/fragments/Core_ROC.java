@@ -175,8 +175,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rocLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rocLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -184,7 +184,8 @@
     * @param optInTimePeriod Lookback distance to the prior price (default 10;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Percent rate of change. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, rocLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -237,8 +238,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rocLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#rocLookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -246,7 +247,8 @@
     * @param optInTimePeriod Lookback distance to the prior price (default 10;
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Percent rate of change. Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, rocLookback(...)) + 1} values, the count the
+    *        call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -381,7 +383,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("ROC update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("ROC update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ROC update", "inReal");
          core.rocStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
@@ -399,7 +401,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new TALibArgumentException("ROC peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("ROC peek", "inReal");
          RocStream sp = this;
          double tempReal = 0.0;
          double cur_outReal = 0.0;
@@ -571,12 +573,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("ROC openAndFill", inReal.length, startIdx, rocLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ROC openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("ROC openAndFill: " + retCode, retCode);
+      throw streamFailure("ROC openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind rocOpen (composition seam). */
    RocStream rocOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -592,12 +591,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("ROC open: history shorter than lookback + 1");
+         throw insufficientHistory("ROC open", inReal.length, startIdx, rocLookback(optInTimePeriod));
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("ROC open: internal error", retCode);
-      }
-      throw new TALibArgumentException("ROC open: " + retCode, retCode);
+      throw streamFailure("ROC open", retCode);
    }
    /**
     * Open a live ROC stream over the warm-up history; the handle's
@@ -636,7 +632,7 @@
       int guardOutLen = openFillCount("ROC openAndFill", inReal.length, rocLookback(optInTimePeriod));
       requireLength("ROC openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw new TALibArgumentException("ROC openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("ROC openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -146,7 +146,7 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
 
    emaLookback = TA_EMA_Lookback(optInTimePeriod);
    lookbackTotal = TA_KC_Lookback(optInTimePeriod,optInATRPeriod,optInNbDev);
-   /* Nothing to produce: the range is shorter than the lookback. Return before
+   /* Nothing to produce: the range ends before the lookback. Return before
     * touching anything, so that a caller-supplied input which stops short of
     * endIdx is never read past its end.
     */
@@ -486,7 +486,7 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
       double *tempATR;
       emaLookback = TA_EMA_Lookback(optInTimePeriod);
       lookbackTotal = TA_KC_Lookback(optInTimePeriod,optInATRPeriod,optInNbDev);
-      /* Nothing to produce: the range is shorter than the lookback. Return before
+      /* Nothing to produce: the range ends before the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
        * endIdx is never read past its end.
        */

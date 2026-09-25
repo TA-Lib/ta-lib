@@ -35,18 +35,6 @@ where $\mathrm{upper}_t$, $\mathrm{middle}_t$ and $\mathrm{lower}_t$ are the [`B
 - `optInNbDevDn` — Standard-deviation multiplier for the lower band
 - `optInMAType` — Moving-average type for the middle band
 
-## Implementation
-
-TA-Lib Definition: [`bbw.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bbw/bbw.c) · [`bbw.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/bbw/bbw.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_BBW.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_BBW.c) |
-| Rust | [`bbw.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/bbw.rs) |
-| Java | [`Core_BBW.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_BBW.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Bollinger BandWidth, Bollinger Band Width, Bollinger Bands Width, BandWidth

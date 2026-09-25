@@ -26,18 +26,6 @@ d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum
 
 - `optInTimePeriod` — Number of trailing price changes summed
 
-## Implementation
-
-TA-Lib Definition: [`cmou.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmou/cmou.c) · [`cmou.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cmou/cmou.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CMOU.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CMOU.c) |
-| Rust | [`cmou.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cmou.rs) |
-| Java | [`Core_CMOU.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CMOU.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Chande Momentum Oscillator (Unsmoothed)

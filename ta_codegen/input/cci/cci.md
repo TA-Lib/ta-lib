@@ -25,18 +25,6 @@ CCI = (TP_last - SMA) / (0.015 * meanDev)
 
 - `optInTimePeriod` — Number of bars in the averaging/deviation window
 
-## Implementation
-
-TA-Lib Definition: [`cci.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cci/cci.c) · [`cci.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cci/cci.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CCI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CCI.c) |
-| Rust | [`cci.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cci.rs) |
-| Java | [`Core_CCI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CCI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Commodity Channel Index

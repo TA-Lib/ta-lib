@@ -32,18 +32,6 @@ No smoothing, no recursion, no seeding — three rolling sums over per-bar terms
 - Bar 0 has no term (all three need a prior bar) and is consumed exactly as [`TRANGE`](/functions/trange) consumes it, so the first output sits at index `optInTimePeriod`, not `optInTimePeriod − 1`.
 - Not start-dependent: each output depends only on the finite trailing window. No unstable period.
 
-## Implementation
-
-TA-Lib Definition: [`vortex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vortex/vortex.c) · [`vortex.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/vortex/vortex.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_VORTEX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_VORTEX.c) |
-| Rust | [`vortex.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vortex.rs) |
-| Java | [`Core_VORTEX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VORTEX.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Vortex Indicator (VI)

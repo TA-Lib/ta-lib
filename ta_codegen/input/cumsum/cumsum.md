@@ -26,15 +26,3 @@ Left-to-right in one double, no compensation — the same plain `+=` convention 
 
 - Lookback 0: `outBegIdx = startIdx`, one output per input bar. Streaming state is a single accumulator, so a peek commits nothing by construction.
 - The sum is uncompensated. A Kahan or Neumaier variant would diverge from `AD`'s own convention, which this follows.
-
-## Implementation
-
-TA-Lib Definition: [`cumsum.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cumsum/cumsum.c) · [`cumsum.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cumsum/cumsum.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CUMSUM.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CUMSUM.c) |
-| Rust | [`cumsum.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cumsum.rs) |
-| Java | [`Core_CUMSUM.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CUMSUM.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).

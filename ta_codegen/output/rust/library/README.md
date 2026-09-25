@@ -46,7 +46,7 @@ start (`beg_idx`, in the input series' coordinates) and how many there are
 (`count`); `*_lookback` methods return how many leading values an indicator
 consumes before the first one exists.
 
-A range shorter than the lookback is a **success with no values** (`count == 0`),
+A range that ends before the lookback is a **success with no values** (`count == 0`),
 not an error — the same contract as C, Java and C#.
 
 ## Configuration

@@ -69,8 +69,8 @@ public enum RetCode
     OUT_OF_RANGE_END_INDEX(13),
     /**
      * A stream opener was given fewer than {@code lookback + 1} bars — the
-     * library's one recoverable condition. Streaming only: a batch range
-     * shorter than the lookback is {@link #SUCCESS} with a zero count.
+     * library's one recoverable condition. Streaming only: a batch range that
+     * ends before the lookback is {@link #SUCCESS} with a zero count.
      */
     INSUFFICIENT_HISTORY(17),
     /** An invariant the library owns was violated. */

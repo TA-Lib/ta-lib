@@ -30,18 +30,6 @@ Two-candle pattern: a long real body followed by a short real body contained wit
 | 80 | Bullish Harami, weaker variant: the small body's edge lines up exactly with one end of the long black candle |
 | 100 | Bullish Harami: a small real body forms inside the prior long black candle — momentum stalling after a decline |
 
-## Implementation
-
-TA-Lib Definition: [`cdlharami.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharami/cdlharami.c) · [`cdlharami.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlharami/cdlharami.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLHARAMI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLHARAMI.c) |
-| Rust | [`cdlharami.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlharami.rs) |
-| Java | [`Core_CDLHARAMI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLHARAMI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Harami, Harami Pattern

@@ -24,18 +24,6 @@ E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * 
 
 - `optInTimePeriod` — EMA period used at each of the three smoothing passes
 
-## Implementation
-
-TA-Lib Definition: [`trix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trix/trix.c) · [`trix.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/trix/trix.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_TRIX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_TRIX.c) |
-| Rust | [`trix.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/trix.rs) |
-| Java | [`Core_TRIX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TRIX.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Triple Exponential Average

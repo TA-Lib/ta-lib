@@ -59,6 +59,7 @@ TA-Lib Definition: [`cdlgravestonedoji.c`](https://github.com/TA-Lib/ta-lib/blob
 | C | [`ta_CDLGRAVESTONEDOJI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLGRAVESTONEDOJI.c) |
 | Rust | [`cdlgravestonedoji.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlgravestonedoji.rs) |
 | Java | [`Core_CDLGRAVESTONEDOJI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLGRAVESTONEDOJI.java) |
+| C# | [`Core_CDLGRAVESTONEDOJI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLGRAVESTONEDOJI.cs) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

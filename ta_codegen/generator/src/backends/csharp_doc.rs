@@ -11,16 +11,16 @@
 //! These comments are load-bearing: the shipped `TALib.csproj` sets
 //! `GenerateDocumentationFile` + `TreatWarningsAsErrors`, so a public member
 //! without a `<summary>` (CS1591), a mis-named `<param>` (CS1572/CS1573) or
-//! malformed XML (CS1570) fails the library build. Method cross-references are
-//! deliberately plain `<c>` text, not `cref`: the wrapper and core methods are
-//! overload sets (double/float inputs, plus the internal RetCode cores of the
-//! same name), and an ambiguous `cref` is CS0419 — another error.
+//! malformed XML (CS1570) fails the library build. A batch method is an overload
+//! set (double and float inputs), so a bare method `cref` is ambiguous (CS0419):
+//! a cross-reference to one names its parameter types, or is plain `<c>` text.
 
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
 use super::doc_meta::{self, ensure_period, RangeMeta};
 use crate::ir::{DocDef, EnumDef, FuncDef, OptInput, Output, ParamType};
+use crate::registry::Registry;
 
 /// What the aliasing guard rejects, which differs by overload: only the
 /// `double` one can express computing wholly in place, since a `float` input and
@@ -47,6 +47,7 @@ pub fn guarded_docs(
     cs_name: &str,
     single_precision: bool,
     enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
 ) -> String {
     let empty = DocDef::default();
     let doc = func.doc.as_ref().unwrap_or(&empty);
@@ -82,9 +83,14 @@ pub fn guarded_docs(
         "Values are written only where the indicator is defined. The returned \
          <see cref=\"OutRange\"/> says where they start and how many there are; nothing \
          outside that range is touched, and the library never pads with NaN. A valid range \
-         shorter than <c>{cs_name}Lookback</c> is a <b>success with no values</b> \
+         that ends before <c>{cs_name}Lookback</c> is a <b>success with no values</b> \
          (<c>Count == 0</c>), not an error."
     ));
+    b.para(
+        "Every exception it throws, except the runtime's own \
+         <c>OutOfMemoryException</c>, implements <see cref=\"ITALibFailure\"/>, which \
+         carries the <see cref=\"RetCode\"/>.",
+    );
     b.close("remarks");
 
     b.param("startIdx", "First bar of the requested range (inclusive).");
@@ -95,15 +101,21 @@ pub fn guarded_docs(
     for opt in &func.optional_inputs {
         b.param(&opt.name, &param_doc(opt, doc, enums));
     }
+    let produced = format!(
+        "<c>endIdx - max(startIdx, {cs_name}Lookback(...)) + 1</c> values, the count \
+         the call produces (none when that is not positive)"
+    );
     for out in &func.outputs {
         // A nullable output may be declined; C# spells "declined" as an empty
         // span, which the signature cannot say on its own.
         let sizing = if out.is_nullable() {
-            "Pass an empty span to decline it: it is still computed where the \
-             algorithm needs it, but nothing is written out. Supplied, it must \
-             hold at least <c>endIdx - startIdx + 1</c> values."
+            format!(
+                "Pass an empty span to decline it: it is still computed where the \
+                 algorithm needs it, but nothing is written out. Supplied, it must \
+                 hold at least {produced}."
+            )
         } else {
-            "Must hold at least <c>endIdx - startIdx + 1</c> values."
+            format!("Must hold at least {produced}.")
         };
         b.param(&out.name, &format!("{} {sizing}", output_desc(out, doc)));
     }
@@ -118,25 +130,66 @@ pub fn guarded_docs(
         "<c>startIdx</c> or <c>endIdx</c> is negative or above \
          <see cref=\"Core.IndexMax\"/>, or <c>endIdx &lt; startIdx</c>.",
     );
-    b.exception(
-        "System.ArgumentException",
-        "An optional parameter is outside its documented range, or two outputs share \
-         one array.",
+    b.raw("<exception cref=\"System.ArgumentException\">");
+    b.text(
+        "One of the following, checked before anything is written, so a rejected call \
+         leaves every buffer untouched:",
     );
-    b.exception(
-        "System.ArgumentException",
+    b.raw("<list type=\"bullet\">");
+    b.item("An optional parameter is outside its documented range.");
+    b.item(
         "A span is too short for the range requested: any input this function \
          <i>declares</i> that does not reach <c>endIdx</c>, or an output that cannot hold \
-         the values produced. Checked before anything is written, so a rejected call \
-         leaves every buffer untouched. Declared, not read: a few candlestick patterns \
-         take an OHLC series they never index, and it is required all the same. An empty \
-         span — which is what a null array becomes, since a span cannot be null — is \
-         rejected on the same terms and no others: it is too short whenever the range \
-         produces a value, and fine when it produces none, and on an output this function \
-         documents as declinable it is how you decline.",
+         the values produced. Declared, not read: a few candlestick patterns take an OHLC \
+         series they never index, and it is required all the same. An empty span — which \
+         is what a null array becomes, since a span cannot be null — is rejected on the \
+         same terms and no others: it is too short whenever the range produces a value, \
+         and fine when it produces none, and on an output this function documents as \
+         declinable it is how you decline.",
     );
-    b.exception("System.ArgumentException", aliasing_exception_text(single_precision));
+    b.item(aliasing_exception_text(single_precision));
+    b.raw("</list>");
+    b.raw("</exception>");
+    for cref in doc.see_also.iter().filter_map(|n| see_also_cref(n, func, registry)) {
+        b.raw(&format!("<seealso cref=\"{cref}\"/>"));
+    }
     b.render()
+}
+
+/// A `<seealso>` target for a canonical `## See Also` entry: the named
+/// function's `double` batch overload, with its parameter types spelled out
+/// because the bare method name is an overload set. The name must be one the
+/// [`Registry`] knows; anything else is dropped, as `java_doc` drops it.
+fn see_also_cref(entry: &str, func: &FuncDef, registry: &Registry) -> Option<String> {
+    let name = entry.trim();
+    if name.is_empty() || name.eq_ignore_ascii_case(&func.name) {
+        return None;
+    }
+    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return None;
+    }
+    let target = registry.def(&name.to_lowercase())?;
+    let mut types: Vec<String> = vec!["int".to_string(), "int".to_string()];
+    for input in &target.inputs {
+        types.push(match input.param_type {
+            ParamType::Real => "ReadOnlySpan{double}".to_string(),
+            _ => "ReadOnlySpan{int}".to_string(),
+        });
+    }
+    for opt in &target.optional_inputs {
+        types.push(super::csharp::opt_param_type_str(opt).to_string());
+    }
+    for out in &target.outputs {
+        types.push(match out.param_type {
+            ParamType::Real => "Span{double}".to_string(),
+            _ => "Span{int}".to_string(),
+        });
+    }
+    Some(format!(
+        "Core.{}({})",
+        super::common::pascal_words(&target.name),
+        types.join(", ")
+    ))
 }
 
 
@@ -431,6 +484,10 @@ impl Block {
 
     fn param(&mut self, name: &str, text: &str) {
         self.element(&format!("<param name=\"{name}\">"), text, "</param>");
+    }
+
+    fn item(&mut self, text: &str) {
+        self.element("<item><description>", text, "</description></item>");
     }
 
     fn exception(&mut self, cref: &str, text: &str) {

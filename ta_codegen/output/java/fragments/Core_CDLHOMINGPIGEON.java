@@ -214,7 +214,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlhomingpigeonLookback} is a
+    * valid range that ends before {@link Core#cdlhomingpigeonLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -225,7 +225,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 when the pattern is detected, 0 otherwise. Never
     *        emits -100 (always bullish) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlhomingpigeonLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -285,7 +286,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlhomingpigeonLookback} is a
+    * valid range that ends before {@link Core#cdlhomingpigeonLookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -296,7 +297,8 @@
     * @param inClose Close price of each bar.
     * @param outInteger +100 when the pattern is detected, 0 otherwise. Never
     *        emits -100 (always bullish) Must hold at least
-    *        {@code endIdx - startIdx + 1} values.
+    *        {@code endIdx - max(startIdx, cdlhomingpigeonLookback(...)) + 1} values,
+    *        the count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -464,7 +466,7 @@
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
             throw failure("CDLHOMINGPIGEON update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLHOMINGPIGEON update: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLHOMINGPIGEON update", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          core.cdlhomingpigeonStepImpl(this, inOpen, inHigh, inLow, inClose);
          this.outRangeCount++;
          return this.cur_outInteger;
@@ -482,7 +484,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new TALibArgumentException("CDLHOMINGPIGEON peek: BAD_PARAM", RetCode.BAD_PARAM);
+            throw nonFiniteBar("CDLHOMINGPIGEON peek", !Double.isFinite(inOpen) ? "inOpen" : !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
          CdlhomingpigeonStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -724,12 +726,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLHOMINGPIGEON openAndFill: history shorter than lookback + 1");
+         throw insufficientHistory("CDLHOMINGPIGEON openAndFill", inOpen.length, startIdx, cdlhomingpigeonLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLHOMINGPIGEON openAndFill: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLHOMINGPIGEON openAndFill: " + retCode, retCode);
+      throw streamFailure("CDLHOMINGPIGEON openAndFill", retCode);
    }
    /* Internal startIdx-anchored open behind cdlhomingpigeonOpen (composition seam). */
    CdlhomingpigeonStream cdlhomingpigeonOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -745,12 +744,9 @@
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw new InsufficientHistoryException("CDLHOMINGPIGEON open: history shorter than lookback + 1");
+         throw insufficientHistory("CDLHOMINGPIGEON open", inOpen.length, startIdx, cdlhomingpigeonLookback());
       }
-      if( retCode == RetCode.INTERNAL_ERROR ) {
-         throw new TALibStateException("CDLHOMINGPIGEON open: internal error", retCode);
-      }
-      throw new TALibArgumentException("CDLHOMINGPIGEON open: " + retCode, retCode);
+      throw streamFailure("CDLHOMINGPIGEON open", retCode);
    }
    /**
     * Open a live CDLHOMINGPIGEON stream over the warm-up history; the handle's
@@ -799,7 +795,7 @@
       requireHistoryLength("CDLHOMINGPIGEON openAndFill", "inClose", inClose.length, inOpen.length);
       requireLength("CDLHOMINGPIGEON openAndFill", "outInteger", outInteger, guardOutLen);
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
-         throw new TALibArgumentException("CDLHOMINGPIGEON openAndFill: " + RetCode.BAD_PARAM, RetCode.BAD_PARAM);
+         throw streamFailure("CDLHOMINGPIGEON openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

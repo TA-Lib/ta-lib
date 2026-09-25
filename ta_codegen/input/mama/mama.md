@@ -25,18 +25,6 @@ FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
 - `optInFastLimit` — Upper bound on the adaptive smoothing factor
 - `optInSlowLimit` — Lower bound on the adaptive smoothing factor
 
-## Implementation
-
-TA-Lib Definition: [`mama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mama/mama.c) · [`mama.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/mama/mama.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MAMA.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MAMA.c) |
-| Rust | [`mama.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/mama.rs) |
-| Java | [`Core_MAMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MAMA.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 MESA Adaptive Moving Average, Ehlers MAMA

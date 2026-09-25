@@ -24,7 +24,7 @@ pub enum RetCode {
     ///
     /// The library's one **recoverable** condition: accumulate more bars and
     /// retry, rather than fix the call. Streaming only — the batch tier answers
-    /// a range shorter than its lookback with `Ok` and a zero count.
+    /// a range that ends before its lookback with `Ok` and a zero count.
     InsufficientHistory = 17,
     /// Internal error occurred.
     InternalError = 5000,
@@ -34,7 +34,7 @@ pub enum RetCode {
 ///
 /// Returned by every batch entry point and by the abstraction layer's
 /// [`ParamHolder::call`](crate::abstract_api::ParamHolder::call). A valid range
-/// shorter than the function's lookback is a **success with no values**
+/// that ends before the function's lookback is a **success with no values**
 /// (`count == 0`), not an error — the same contract as C's `TA_SUCCESS` with
 /// `outNBElement == 0`, and the same type Java and C# return.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -72,7 +72,7 @@ impl std::fmt::Display for RetCode {
             RetCode::OutOfRangeEndIndex => "end index out of range",
             RetCode::AllocErr => "allocation error",
             RetCode::InternalError => "internal error",
-            RetCode::InsufficientHistory => "history shorter than the lookback",
+            RetCode::InsufficientHistory => "history shorter than lookback + 1",
         };
         f.write_str(s)
     }

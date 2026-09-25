@@ -287,8 +287,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlkickingbylengthLookback</c> is a
+   /// NaN. A valid range that ends before <c>CdlkickingbylengthLookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -300,25 +305,33 @@ public partial class Core
    /// <param name="outInteger">+100 or -100 on a hit, 0 otherwise. Sign = candlecolor of the candle with
    /// the larger realbody (i if realbody(i) &gt; realbody(i-1), else i-1; tie
    /// goes to i-1): +100 if that marubozu is white, -100 if black. Must hold at
-   /// least <c>endIdx - startIdx + 1</c> values.</param>
+   /// least <c>endIdx - max(startIdx, CdlkickingbylengthLookback(...)) + 1</c>
+   /// values, the count the call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output partially overlaps an input.
+   /// Computing wholly in place (an output that IS an input) is allowed.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Cdlkicking(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
+   /// <seealso cref="Core.Cdlmarubozu(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
+   /// <seealso cref="Core.Cdlgapsidesidewhite(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    public OutRange Cdlkickingbylength( int startIdx,
                                        int endIdx,
                                        ReadOnlySpan<double> inOpen,
@@ -361,8 +374,13 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlkickingbylengthLookback</c> is a
+   /// NaN. A valid range that ends before <c>CdlkickingbylengthLookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
+   /// </para>
+   /// <para>
+   /// Every exception it throws, except the runtime's own
+   /// <c>OutOfMemoryException</c>, implements <see cref="ITALibFailure"/>, which
+   /// carries the <see cref="RetCode"/>.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -374,27 +392,35 @@ public partial class Core
    /// <param name="outInteger">+100 or -100 on a hit, 0 otherwise. Sign = candlecolor of the candle with
    /// the larger realbody (i if realbody(i) &gt; realbody(i-1), else i-1; tie
    /// goes to i-1): +100 if that marubozu is white, -100 if black. Must hold at
-   /// least <c>endIdx - startIdx + 1</c> values.</param>
+   /// least <c>endIdx - max(startIdx, CdlkickingbylengthLookback(...)) + 1</c>
+   /// values, the count the call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
    /// <exception cref="System.ArgumentOutOfRangeException"><c>startIdx</c> or <c>endIdx</c> is negative or above
    /// <see cref="Core.IndexMax"/>, or <c>endIdx &lt; startIdx</c>.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
-   /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: any input this function
+   /// <exception cref="System.ArgumentException">
+   /// One of the following, checked before anything is written, so a rejected
+   /// call leaves every buffer untouched:
+   /// <list type="bullet">
+   /// <item><description>An optional parameter is outside its documented range.</description></item>
+   /// <item><description>A span is too short for the range requested: any input this function
    /// <i>declares</i> that does not reach <c>endIdx</c>, or an output that
-   /// cannot hold the values produced. Checked before anything is written, so a
-   /// rejected call leaves every buffer untouched. Declared, not read: a few
-   /// candlestick patterns take an OHLC series they never index, and it is
-   /// required all the same. An empty span — which is what a null array becomes,
-   /// since a span cannot be null — is rejected on the same terms and no others:
-   /// it is too short whenever the range produces a value, and fine when it
-   /// produces none, and on an output this function documents as declinable it
-   /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. An output and
+   /// cannot hold the values produced. Declared, not read: a few candlestick
+   /// patterns take an OHLC series they never index, and it is required all the
+   /// same. An empty span — which is what a null array becomes, since a span
+   /// cannot be null — is rejected on the same terms and no others: it is too
+   /// short whenever the range produces a value, and fine when it produces none,
+   /// and on an output this function documents as declinable it is how you
+   /// decline.</description></item>
+   /// <item><description>Two output buffers overlap, or an output overlaps an input. An output and
    /// a real input never share an element type in this overload, so the two can
    /// never be the same span: there is no in-place case to allow, and any
-   /// overlap of their byte ranges is rejected.</exception>
+   /// overlap of their byte ranges is rejected.</description></item>
+   /// </list>
+   /// </exception>
+   /// <seealso cref="Core.Cdlkicking(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
+   /// <seealso cref="Core.Cdlmarubozu(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
+   /// <seealso cref="Core.Cdlgapsidesidewhite(int, int, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, ReadOnlySpan{double}, Span{int})"/>
    public OutRange Cdlkickingbylength( int startIdx,
                                        int endIdx,
                                        ReadOnlySpan<float> inOpen,
@@ -555,7 +581,7 @@ public partial class Core
       {
          if( outRangeBegIdx + outRangeCount > Core.IndexMax )
             throw Core.StreamFailure("CDLKICKINGBYLENGTH", "update", RetCode.OutOfRangeEndIndex);
-         if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLKICKINGBYLENGTH", "update", RetCode.BadParam);
+         if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("CDLKICKINGBYLENGTH", "update", !double.IsFinite(inOpen) ? nameof(inOpen) : !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          core.CdlkickingbylengthStepImpl(this, inOpen, inHigh, inLow, inClose);
          outRangeCount++;
          return cur_outInteger;
@@ -579,7 +605,7 @@ public partial class Core
       /// it.</returns>
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
-         if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLKICKINGBYLENGTH", "peek", RetCode.BadParam);
+         if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.NonFiniteBar("CDLKICKINGBYLENGTH", "peek", !double.IsFinite(inOpen) ? nameof(inOpen) : !double.IsFinite(inHigh) ? nameof(inHigh) : !double.IsFinite(inLow) ? nameof(inLow) : nameof(inClose));
          CdlkickingbylengthStream sp = this;
          int cur_outInteger = 0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -839,6 +865,9 @@ public partial class Core
       if( retCode == RetCode.Success ) {
          return sp;
       }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("CDLKICKINGBYLENGTH", "openAndFill", nameof(inOpen), inOpen.Length, startIdx, CdlkickingbylengthLookback());
+      }
       throw StreamFailure("CDLKICKINGBYLENGTH", "openAndFill", retCode);
    }
 
@@ -852,6 +881,9 @@ public partial class Core
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
          return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw InsufficientHistory("CDLKICKINGBYLENGTH", "open", nameof(inOpen), inOpen.Length, startIdx, CdlkickingbylengthLookback());
       }
       throw StreamFailure("CDLKICKINGBYLENGTH", "open", retCode);
    }

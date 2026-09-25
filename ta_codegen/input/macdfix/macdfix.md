@@ -28,18 +28,6 @@ Hist = MACD - Signal
 
 - `optInSignalPeriod` — Smoothing period for the signal line
 
-## Implementation
-
-TA-Lib Definition: [`macdfix.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdfix/macdfix.c) · [`macdfix.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/macdfix/macdfix.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_MACDFIX.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_MACDFIX.c) |
-| Rust | [`macdfix.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/macdfix.rs) |
-| Java | [`Core_MACDFIX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACDFIX.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Moving Average Convergence/Divergence Fix

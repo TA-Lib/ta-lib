@@ -32,18 +32,6 @@ One candle. Requires real body > BodyLong average (long body), then either: whit
 | 0 | No pattern |
 | 100 | Bullish belt-hold — opens at (or near) the low and rallies hard into the close, showing strong buyer conviction |
 
-## Implementation
-
-TA-Lib Definition: [`cdlbelthold.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbelthold/cdlbelthold.c) · [`cdlbelthold.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlbelthold/cdlbelthold.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_CDLBELTHOLD.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_CDLBELTHOLD.c) |
-| Rust | [`cdlbelthold.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlbelthold.rs) |
-| Java | [`Core_CDLBELTHOLD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLBELTHOLD.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Belt-hold, Belt Hold Line

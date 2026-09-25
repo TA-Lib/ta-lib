@@ -30,18 +30,6 @@ Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its u
 - ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.
 - No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.
 
-## Implementation
-
-TA-Lib Definition: [`eri.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/eri/eri.c) · [`eri.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/eri/eri.yaml)
-
-| Native | File |
-|--------|------|
-| C | [`ta_ERI.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ERI.c) |
-| Rust | [`eri.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/eri.rs) |
-| Java | [`Core_ERI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ERI.java) |
-
-TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
-
 ## Aliases
 
 Elder-Ray Index · Bull Power / Bear Power

@@ -25,7 +25,3 @@ outReal[i] = (inReal[i] - max(inReal[s-(n-1)], 1000) + 2(n-1) + 3 + 7.25) * 0.5,
 ## Parameters
 
 - `optInTimePeriod` — Time period
-
-## Implementation
-
-TA-Lib Definition: [`synth18.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth18/synth18.c) · [`synth18.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/generator/input_synth/synth18/synth18.yaml)
