@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	88734b3a3cd81800ce2c093719a4b70b734c8b3a
-#generated	2026-09-24T19:17:44Z
+#commit	2facff85198e809cea13bed3aa5f64c9bcd39d84
+#generated	2026-09-25T09:56:17Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -678,7 +678,7 @@ MASSI	open	0	1021909
 MASSI	openfill	0	1021899
 MASSI	peek	0	53261
 MASSI	update	0	109622
-MAVP	batch	0	407443
+MAVP	batch	0	401317
 MAVP	open	0	4075155
 MAVP	openfill	0	59076078
 MAVP	peek	0	99340
@@ -703,9 +703,9 @@ MEDPRICE	open	0	113
 MEDPRICE	openfill	0	80142
 MEDPRICE	peek	0	37900
 MEDPRICE	update	0	47117
-MFI	batch	0	1071112
-MFI	open	0	888213
-MFI	openfill	0	930022
+MFI	batch	0	1031149
+MFI	open	0	868236
+MFI	openfill	0	870076
 MFI	peek	0	85396
 MFI	update	0	112755
 MIDPOINT	batch	0	542733

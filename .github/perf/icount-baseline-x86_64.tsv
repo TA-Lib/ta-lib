@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	88734b3a3cd81800ce2c093719a4b70b734c8b3a
-#generated	2026-09-24T19:17:30Z
+#commit	2facff85198e809cea13bed3aa5f64c9bcd39d84
+#generated	2026-09-25T09:56:07Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -678,7 +678,7 @@ MASSI	open	0	1021909
 MASSI	openfill	0	1021899
 MASSI	peek	0	53261
 MASSI	update	0	109622
-MAVP	batch	0	5966063
+MAVP	batch	0	5961358
 MAVP	open	0	4075155
 MAVP	openfill	0	59076021
 MAVP	peek	0	99340
@@ -703,9 +703,9 @@ MEDPRICE	open	0	113
 MEDPRICE	openfill	0	80142
 MEDPRICE	peek	0	37900
 MEDPRICE	update	0	47117
-MFI	batch	0	1319891
-MFI	open	0	1280369
-MFI	openfill	0	1340321
+MFI	batch	0	1279928
+MFI	open	0	1260392
+MFI	openfill	0	1280375
 MFI	peek	0	103429
 MFI	update	0	131158
 MIDPOINT	batch	0	542733
@@ -775,7 +775,7 @@ OBV	peek	0	42745
 OBV	update	0	54767
 PERCENTILE	batch	0	6447412
 PERCENTILE	open	0	6547155
-PERCENTILE	openfill	0	6548989
+PERCENTILE	openfill	0	6547285
 PERCENTILE	peek	0	38928
 PERCENTILE	update	0	407828
 PERCENTRANK	batch	0	5034828
