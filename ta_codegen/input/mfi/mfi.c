@@ -25,6 +25,7 @@
  *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
  *               testing the money-flow sum against a literal 1.0; classify
  *               branchlessly; clamp the emitted ratio into [0,100].
+ *  092526 MF,CC #442. Allocate the money-flow ring only when there is output.
  */
 
 int mfi_lookback(int optInTimePeriod)
@@ -49,8 +50,6 @@ TA_RetCode mfi(int startIdx, int endIdx,
    typedef struct { double positive; double negative; } MoneyFlow;
    CIRCBUF_PROLOG_CLASS( mflow, MoneyFlow, 50 ); /* Id, Type, Static Size */
 
-   CIRCBUF_INIT_CLASS( mflow, MoneyFlow, optInTimePeriod );
-
    *outBegIdx = 0;
    *outNBElement = 0;
 
@@ -63,9 +62,10 @@ TA_RetCode mfi(int startIdx, int endIdx,
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      CIRCBUF_DESTROY(mflow);
       return TA_SUCCESS;
    }
+
+   CIRCBUF_INIT_CLASS( mflow, MoneyFlow, optInTimePeriod );
 
    outIdx = 0; /* Index into the output. */
 

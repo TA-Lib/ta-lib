@@ -128033,6 +128033,7 @@ class Core {
      *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
      *               testing the money-flow sum against a literal 1.0; classify
      *               branchlessly; clamp the emitted ratio into [0,100].
+     *  092526 MF,CC #442. Allocate the money-flow ring only when there is output.
      */
 
        /**
@@ -128098,11 +128099,6 @@ class Core {
              return RetCode.BAD_PARAM;
           }
           /* Id, Type, Static Size */
-          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          mflow_positive = new double[optInTimePeriod];
-          mflow_negative = new double[optInTimePeriod];
-          maxIdx_mflow = (optInTimePeriod)-1;
-          mflow_Idx = 0;
           outBegIdx.value = 0;
           outNBElement.value = 0;
           /* Adjust startIdx to account for the lookback period. */
@@ -128114,6 +128110,11 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.SUCCESS ;
           }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          mflow_positive = new double[optInTimePeriod];
+          mflow_negative = new double[optInTimePeriod];
+          maxIdx_mflow = (optInTimePeriod)-1;
+          mflow_Idx = 0;
           outIdx = 0;
           /* Index into the output. */
           /* Accumulate the positive and negative money flow
@@ -128282,11 +128283,6 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          mflow_positive = new double[optInTimePeriod];
-          mflow_negative = new double[optInTimePeriod];
-          maxIdx_mflow = (optInTimePeriod)-1;
-          mflow_Idx = 0;
           outBegIdx.value = 0;
           outNBElement.value = 0;
           lookbackTotal = optInTimePeriod;
@@ -128296,6 +128292,11 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.SUCCESS ;
           }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          mflow_positive = new double[optInTimePeriod];
+          mflow_negative = new double[optInTimePeriod];
+          maxIdx_mflow = (optInTimePeriod)-1;
+          mflow_Idx = 0;
           outIdx = 0;
           today = startIdx - lookbackTotal;
           prevValue = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
@@ -128795,11 +128796,6 @@ class Core {
              return RetCode.INSUFFICIENT_HISTORY;
           }
           /* Id, Type, Static Size */
-          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
-          mflow_positive = new double[optInTimePeriod];
-          mflow_negative = new double[optInTimePeriod];
-          maxIdx_mflow = (optInTimePeriod)-1;
-          mflow_Idx = 0;
           outBegIdx.value = 0;
           outNBElement.value = 0;
           /* Adjust startIdx to account for the lookback period. */
@@ -128811,6 +128807,11 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.INSUFFICIENT_HISTORY ;
           }
+          if( optInTimePeriod < 1 ) return RetCode.INTERNAL_ERROR;
+          mflow_positive = new double[optInTimePeriod];
+          mflow_negative = new double[optInTimePeriod];
+          maxIdx_mflow = (optInTimePeriod)-1;
+          mflow_Idx = 0;
           outIdx = 0;
           /* Index into the output. */
           /* Accumulate the positive and negative money flow
@@ -186790,7 +186791,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c7a4b44b347515c2";
+    static final String SPLICED_GENCODE_DIGEST = "3c6fc5c9fd6cd914";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -67,6 +67,7 @@
  *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
  *               testing the money-flow sum against a literal 1.0; classify
  *               branchlessly; clamp the emitted ratio into [0,100].
+ *  092526 MF,CC #442. Allocate the money-flow ring only when there is output.
  */
 
 // Import types from parent module
@@ -160,18 +161,6 @@ impl Core {
         let mut mflow_Idx: usize = 0;
         let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
-        if optInTimePeriod < 1 { return RetCode::InternalError; }
-        if (optInTimePeriod) as usize <= 50usize {
-            mflow_positive = &mut local_mflow_positive[..(optInTimePeriod) as usize];
-            mflow_negative = &mut local_mflow_negative[..(optInTimePeriod) as usize];
-        } else {
-            heap_mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
-            mflow_positive = &mut heap_mflow_positive;
-            heap_mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
-            mflow_negative = &mut heap_mflow_negative;
-        }
-        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
-        mflow_Idx = 0;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
@@ -187,6 +176,18 @@ impl Core {
         let inLow = &inLow[..=endIdx];
         let inClose = &inClose[..=endIdx];
         let inVolume = &inVolume[..=endIdx];
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 50usize {
+            mflow_positive = &mut local_mflow_positive[..(optInTimePeriod) as usize];
+            mflow_negative = &mut local_mflow_negative[..(optInTimePeriod) as usize];
+        } else {
+            heap_mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
+            mflow_positive = &mut heap_mflow_positive;
+            heap_mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
+            mflow_negative = &mut heap_mflow_negative;
+        }
+        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
+        mflow_Idx = 0;
         outIdx = 0;
         // Index into the output.
         // Accumulate the positive and negative money flow
@@ -571,11 +572,6 @@ impl Core {
         let mut mflow_Idx: usize = 0;
         let mut maxIdx_mflow: usize = 49;
         // Id, Type, Static Size
-        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
-        mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
-        mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
-        mflow_Idx = 0;
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
@@ -587,6 +583,11 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
+        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
+        mflow_positive = vec![0.0_f64; (optInTimePeriod) as usize];
+        mflow_negative = vec![0.0_f64; (optInTimePeriod) as usize];
+        maxIdx_mflow = ((optInTimePeriod) as usize) - 1;
+        mflow_Idx = 0;
         outIdx = 0;
         // Index into the output.
         // Accumulate the positive and negative money flow

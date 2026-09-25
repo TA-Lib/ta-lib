@@ -69,6 +69,7 @@ public partial class Core
     *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
     *               testing the money-flow sum against a literal 1.0; classify
     *               branchlessly; clamp the emitted ratio into [0,100].
+    *  092526 MF,CC #442. Allocate the money-flow ring only when there is output.
     */
    /// <summary>
    /// Number of leading input bars <c>Mfi</c> consumes before it can produce its
@@ -139,11 +140,6 @@ public partial class Core
          return RetCode.BadParam ;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      mflow_positive = new double[optInTimePeriod];
-      mflow_negative = new double[optInTimePeriod];
-      maxIdx_mflow = (optInTimePeriod)-1;
-      mflow_Idx = 0;
       outBegIdx = 0;
       outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
@@ -155,6 +151,11 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      mflow_positive = new double[optInTimePeriod];
+      mflow_negative = new double[optInTimePeriod];
+      maxIdx_mflow = (optInTimePeriod)-1;
+      mflow_Idx = 0;
       outIdx = 0;
       /* Index into the output. */
       /* Accumulate the positive and negative money flow
@@ -328,11 +329,6 @@ public partial class Core
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inVolume)) ) {
          return RetCode.BadParam ;
       }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      mflow_positive = new double[optInTimePeriod];
-      mflow_negative = new double[optInTimePeriod];
-      maxIdx_mflow = (optInTimePeriod)-1;
-      mflow_Idx = 0;
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = optInTimePeriod;
@@ -342,6 +338,11 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      mflow_positive = new double[optInTimePeriod];
+      mflow_negative = new double[optInTimePeriod];
+      maxIdx_mflow = (optInTimePeriod)-1;
+      mflow_Idx = 0;
       outIdx = 0;
       today = startIdx - lookbackTotal;
       prevValue = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
@@ -857,11 +858,6 @@ public partial class Core
          return RetCode.InsufficientHistory;
       }
       /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      mflow_positive = new double[optInTimePeriod];
-      mflow_negative = new double[optInTimePeriod];
-      maxIdx_mflow = (optInTimePeriod)-1;
-      mflow_Idx = 0;
       outBegIdx = 0;
       outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
@@ -873,6 +869,11 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.InsufficientHistory ;
       }
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      mflow_positive = new double[optInTimePeriod];
+      mflow_negative = new double[optInTimePeriod];
+      maxIdx_mflow = (optInTimePeriod)-1;
+      mflow_Idx = 0;
       outIdx = 0;
       /* Index into the output. */
       /* Accumulate the positive and negative money flow

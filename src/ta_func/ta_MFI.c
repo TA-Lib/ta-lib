@@ -69,6 +69,7 @@
  *  082326 MF,CC Fix #244. Detect an empty window by counting bars, not by
  *               testing the money-flow sum against a literal 1.0; classify
  *               branchlessly; clamp the emitted ratio into [0,100].
+ *  092526 MF,CC #442. Allocate the money-flow ring only when there is output.
  */
 
 TA_LIB_API int TA_MFI_Lookback( int optInTimePeriod )
@@ -136,6 +137,19 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
       return TA_BAD_PARAM;
 
    /* Id, Type, Static Size */
+   *outBegIdx= 0;
+   *outNBElement= 0;
+   /* Adjust startIdx to account for the lookback period. */
+   lookbackTotal = optInTimePeriod;
+   if( startIdx < lookbackTotal )
+   {
+      startIdx = lookbackTotal;
+   }
+   /* Make sure there is still something to evaluate. */
+   if( startIdx > endIdx )
+   {
+      return TA_SUCCESS;
+   }
    if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(351);
    if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )
    {
@@ -158,21 +172,6 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
    }
    maxIdx_mflow = (optInTimePeriod-1);
    mflow_Idx = 0;
-   *outBegIdx= 0;
-   *outNBElement= 0;
-   /* Adjust startIdx to account for the lookback period. */
-   lookbackTotal = optInTimePeriod;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   /* Make sure there is still something to evaluate. */
-   if( startIdx > endIdx )
-   {
-      if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
-      if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
-      return TA_SUCCESS;
-   }
    outIdx = 0;
    /* Index into the output. */
    /* Accumulate the positive and negative money flow
@@ -366,6 +365,17 @@ TA_RetCode TA_S_MFI( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   *outBegIdx= 0;
+   *outNBElement= 0;
+   lookbackTotal = optInTimePeriod;
+   if( startIdx < lookbackTotal )
+   {
+      startIdx = lookbackTotal;
+   }
+   if( startIdx > endIdx )
+   {
+      return TA_SUCCESS;
+   }
    if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(351);
    if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )
    {
@@ -388,19 +398,6 @@ TA_RetCode TA_S_MFI( int    startIdx,
    }
    maxIdx_mflow = (optInTimePeriod-1);
    mflow_Idx = 0;
-   *outBegIdx= 0;
-   *outNBElement= 0;
-   lookbackTotal = optInTimePeriod;
-   if( startIdx < lookbackTotal )
-   {
-      startIdx = lookbackTotal;
-   }
-   if( startIdx > endIdx )
-   {
-      if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
-      if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
-      return TA_SUCCESS;
-   }
    outIdx = 0;
    today = startIdx - lookbackTotal;
    prevValue = ((double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 3.0;
@@ -616,6 +613,19 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       int today;
       int nullRun = 0;
       /* Id, Type, Static Size */
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = optInTimePeriod;
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         return TA_INSUFFICIENT_HISTORY;
+      }
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(351);
       if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )
       {
@@ -638,21 +648,6 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       }
       maxIdx_mflow = (optInTimePeriod-1);
       mflow_Idx = 0;
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = optInTimePeriod;
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
-         if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
-         return TA_INSUFFICIENT_HISTORY;
-      }
       outIdx = 0;
       /* Index into the output. */
       /* Accumulate the positive and negative money flow
