@@ -2190,8 +2190,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         return;
     }
 
-    /* Reset all unstable periods to 0 — doRangeTest leaves them at
-     * high values which contaminates subsequent functions. */
+    /* Each function starts from unstable period 0, whatever ran before it. */
     TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
 
     printf("  %-40s ", funcInfo->name);

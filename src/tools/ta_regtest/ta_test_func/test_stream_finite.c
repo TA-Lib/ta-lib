@@ -45,6 +45,8 @@
  *  083026 MF,CC  Rule U3 asserted absolutely, not as a tier equivalence.
  *  090526 MF,CC  A rejection costs nothing; TA_StreamAdvance counts a skipped
  *                bar (#384).
+ *  092526 MF,CC  Start from the default unstable periods; a setup failure names
+ *                its leg.
  */
 
 /* Description:
@@ -178,6 +180,14 @@ static void sf_build_series( void )
       sfParamRejects++;                                                       \
    } while( 0 )
 
+static TA_RetCode sfOpenRc;
+
+#define SF_SETUP_FAILED( fname, code )                                        \
+   do {                                                                       \
+      printf( "  %s: open failed (retCode %d)\n", fname, (int)sfOpenRc );     \
+      return code;                                                            \
+   } while( 0 )
+
 /* ---- SMA: loop tier, one real input, one output ------------------------- */
 static ErrorNumber sf_sma( void )
 {
@@ -188,9 +198,9 @@ static ErrorNumber sf_sma( void )
       {
          TA_SMA_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
-         if( TA_SMA_Open( &sa, sfClose, warm, 10, &va ) != TA_SUCCESS ||
-             TA_SMA_Open( &sb, sfClose, warm, 10, &vb ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_SMA_Open( &sa, sfClose, warm, 10, &va )) != TA_SUCCESS ||
+             (sfOpenRc = TA_SMA_Open( &sb, sfClose, warm, 10, &vb )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "SMA", TA_STREAM_FINITE_SETUP_FAILED );
          SF_BAR_MUST_REJECT( "SMA", "update", TA_SMA_Update( sa, sfBad[b], &va ) );
          SF_BAR_MUST_REJECT( "SMA", "peek",   TA_SMA_Peek( sa, sfBad[b], &va ) );
          /* Same good bar on both; only `sa` was offered the bad one. */
@@ -214,9 +224,9 @@ static ErrorNumber sf_minus_di( void )
       {
          TA_MINUS_DI_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
-         if( TA_MINUS_DI_Open( &sa, sfHigh, sfLow, sfClose, warm, 14, &va ) != TA_SUCCESS ||
-             TA_MINUS_DI_Open( &sb, sfHigh, sfLow, sfClose, warm, 14, &vb ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_MINUS_DI_Open( &sa, sfHigh, sfLow, sfClose, warm, 14, &va )) != TA_SUCCESS ||
+             (sfOpenRc = TA_MINUS_DI_Open( &sb, sfHigh, sfLow, sfClose, warm, 14, &vb )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "MINUS_DI", TA_STREAM_FINITE_SETUP_FAILED );
          /* One slot at a time, so a check that only looked at the first input
           * cannot pass. */
          SF_BAR_MUST_REJECT( "MINUS_DI", "update(high)",
@@ -248,9 +258,9 @@ static ErrorNumber sf_ma( void )
       {
          TA_MA_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
-         if( TA_MA_Open( &sa, sfClose, warm, 10, TA_MAType_EMA, &va ) != TA_SUCCESS ||
-             TA_MA_Open( &sb, sfClose, warm, 10, TA_MAType_EMA, &vb ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_MA_Open( &sa, sfClose, warm, 10, TA_MAType_EMA, &va )) != TA_SUCCESS ||
+             (sfOpenRc = TA_MA_Open( &sb, sfClose, warm, 10, TA_MAType_EMA, &vb )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "MA", TA_STREAM_FINITE_SETUP_FAILED );
          SF_BAR_MUST_REJECT( "MA", "update", TA_MA_Update( sa, sfBad[b], &va ) );
          SF_BAR_MUST_REJECT( "MA", "peek",   TA_MA_Peek( sa, sfBad[b], &va ) );
          TA_MA_Update( sa, sfClose[warm], &va );
@@ -265,8 +275,8 @@ static ErrorNumber sf_ma( void )
           * sub would miss it entirely. */
          TA_MA_Stream *si = NULL;
          double vi = 0.0;
-         if( TA_MA_Open( &si, sfClose, warm, 1, TA_MAType_SMA, &vi ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_MA_Open( &si, sfClose, warm, 1, TA_MAType_SMA, &vi )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "MA(identity)", TA_STREAM_FINITE_SETUP_FAILED );
          SF_BAR_MUST_REJECT( "MA(identity)", "update", TA_MA_Update( si, sfBad[b], &vi ) );
          SF_BAR_MUST_REJECT( "MA(identity)", "peek",   TA_MA_Peek( si, sfBad[b], &vi ) );
          TA_MA_Close( si );
@@ -290,9 +300,9 @@ static ErrorNumber sf_mavp( void )
       {
          TA_MAVP_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
-         if( TA_MAVP_Open( &sa, sfClose, periods, warm, 2, 30, TA_MAType_SMA, &va ) != TA_SUCCESS ||
-             TA_MAVP_Open( &sb, sfClose, periods, warm, 2, 30, TA_MAType_SMA, &vb ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_MAVP_Open( &sa, sfClose, periods, warm, 2, 30, TA_MAType_SMA, &va )) != TA_SUCCESS ||
+             (sfOpenRc = TA_MAVP_Open( &sb, sfClose, periods, warm, 2, 30, TA_MAType_SMA, &vb )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "MAVP", TA_STREAM_FINITE_SETUP_FAILED );
          SF_BAR_MUST_REJECT( "MAVP", "update(real)",
             TA_MAVP_Update( sa, sfBad[b], periods[warm], &va ) );
          /* The one that matters most here: converting a non-finite double to
@@ -324,9 +334,9 @@ static ErrorNumber sf_bbands( void )
       {
          TA_BBANDS_Stream *sa = NULL, *sb = NULL;
          double a0 = 0.0, a1 = 0.0, a2 = 0.0, b0 = 0.0, b1 = 0.0, b2 = 0.0;
-         if( TA_BBANDS_Open( &sa, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &a0, &a1, &a2 ) != TA_SUCCESS ||
-             TA_BBANDS_Open( &sb, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &b0, &b1, &b2 ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_BBANDS_Open( &sa, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &a0, &a1, &a2 )) != TA_SUCCESS ||
+             (sfOpenRc = TA_BBANDS_Open( &sb, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &b0, &b1, &b2 )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "BBANDS", TA_STREAM_FINITE_SETUP_FAILED );
          SF_BAR_MUST_REJECT( "BBANDS", "update", TA_BBANDS_Update( sa, sfBad[b], &a0, &a1, &a2 ) );
          SF_BAR_MUST_REJECT( "BBANDS", "peek",   TA_BBANDS_Peek( sa, sfBad[b], &a0, &a1, &a2 ) );
          TA_BBANDS_Update( sa, sfClose[warm], &a0, &a1, &a2 );
@@ -347,10 +357,20 @@ static ErrorNumber sf_bbands( void )
       TA_BBANDS_Stream *st = NULL;
       SF_PARAM_MUST_REJECT( "BBANDS(nbDevUp)",
          TA_BBANDS_Open( &st, sfClose, SF_BARS, 20, sfBad[0], 2.0, TA_MAType_SMA, &d0, &d1, &d2 ) );
-      if( st ) { TA_BBANDS_Close( st ); return TA_STREAM_FINITE_PARAM_ACCEPTED; }
+      if( st )
+      {
+         printf( "  BBANDS(nbDevUp): a rejected open returned a handle\n" );
+         TA_BBANDS_Close( st );
+         return TA_STREAM_FINITE_PARAM_ACCEPTED;
+      }
       SF_PARAM_MUST_REJECT( "BBANDS(nbDevDn)",
          TA_BBANDS_Open( &st, sfClose, SF_BARS, 20, 2.0, sfBad[0], TA_MAType_SMA, &d0, &d1, &d2 ) );
-      if( st ) { TA_BBANDS_Close( st ); return TA_STREAM_FINITE_PARAM_ACCEPTED; }
+      if( st )
+      {
+         printf( "  BBANDS(nbDevDn): a rejected open returned a handle\n" );
+         TA_BBANDS_Close( st );
+         return TA_STREAM_FINITE_PARAM_ACCEPTED;
+      }
    }
    return TA_TEST_PASS;
 }
@@ -366,9 +386,9 @@ static ErrorNumber sf_stoch( void )
       {
          TA_STOCH_Stream *sa = NULL, *sb = NULL;
          double a0 = 0.0, a1 = 0.0, b0 = 0.0, b1 = 0.0;
-         if( TA_STOCH_Open( &sa, sfHigh, sfLow, sfClose, warm, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &a0, &a1 ) != TA_SUCCESS ||
-             TA_STOCH_Open( &sb, sfHigh, sfLow, sfClose, warm, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &b0, &b1 ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_STOCH_Open( &sa, sfHigh, sfLow, sfClose, warm, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &a0, &a1 )) != TA_SUCCESS ||
+             (sfOpenRc = TA_STOCH_Open( &sb, sfHigh, sfLow, sfClose, warm, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &b0, &b1 )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "STOCH", TA_STREAM_FINITE_SETUP_FAILED );
          SF_BAR_MUST_REJECT( "STOCH", "update",
             TA_STOCH_Update( sa, sfBad[b], sfLow[warm], sfClose[warm], &a0, &a1 ) );
          SF_BAR_MUST_REJECT( "STOCH", "peek",
@@ -394,9 +414,9 @@ static ErrorNumber sf_cdldoji( void )
       {
          TA_CDLDOJI_Stream *sa = NULL, *sb = NULL;
          int ia = 0, ib = 0;
-         if( TA_CDLDOJI_Open( &sa, sfOpen, sfHigh, sfLow, sfClose, warm, &ia ) != TA_SUCCESS ||
-             TA_CDLDOJI_Open( &sb, sfOpen, sfHigh, sfLow, sfClose, warm, &ib ) != TA_SUCCESS )
-            return TA_STREAM_FINITE_SETUP_FAILED;
+         if( (sfOpenRc = TA_CDLDOJI_Open( &sa, sfOpen, sfHigh, sfLow, sfClose, warm, &ia )) != TA_SUCCESS ||
+             (sfOpenRc = TA_CDLDOJI_Open( &sb, sfOpen, sfHigh, sfLow, sfClose, warm, &ib )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "CDLDOJI", TA_STREAM_FINITE_SETUP_FAILED );
          SF_BAR_MUST_REJECT( "CDLDOJI", "update(open)",
             TA_CDLDOJI_Update( sa, sfBad[b], sfHigh[warm], sfLow[warm], sfClose[warm], &ia ) );
          SF_BAR_MUST_REJECT( "CDLDOJI", "peek(close)",
@@ -694,8 +714,8 @@ static ErrorNumber sf_advance( void )
          TA_SMA_Stream *s = NULL;
          double seed = 0.0, v = SF_ADV_CANARY;
          double vp = 0.0, vq = 0.0;
-         if( TA_SMA_Open( &s, sfClose, warm, 10, &seed ) != TA_SUCCESS )
-            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         if( (sfOpenRc = TA_SMA_Open( &s, sfClose, warm, 10, &seed )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "SMA", TA_STREAM_ADVANCE_SETUP_FAILED );
          SF_ADV_PEEK( SMA, "SMA(bad)", s, TA_SMA_Peek( s, sfBad[b], &v ), TA_BAD_PARAM );
          SF_ADV_HELD( "SMA(peek bad)", v );
          SF_ADV_PEEK( SMA, "SMA(good)", s, TA_SMA_Peek( s, sfClose[warm], &seed ), TA_SUCCESS );
@@ -718,8 +738,8 @@ static ErrorNumber sf_advance( void )
          TA_MINUS_DI_Stream *s = NULL;
          double seed = 0.0, v = SF_ADV_CANARY;
          double vp = 0.0, vq = 0.0;
-         if( TA_MINUS_DI_Open( &s, sfHigh, sfLow, sfClose, warm, 14, &seed ) != TA_SUCCESS )
-            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         if( (sfOpenRc = TA_MINUS_DI_Open( &s, sfHigh, sfLow, sfClose, warm, 14, &seed )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "MINUS_DI", TA_STREAM_ADVANCE_SETUP_FAILED );
          SF_ADV_PEEK( MINUS_DI, "MINUS_DI(bad)", s,
             TA_MINUS_DI_Peek( s, sfHigh[warm], sfBad[b], sfClose[warm], &v ), TA_BAD_PARAM );
          SF_ADV_HELD( "MINUS_DI(peek bad)", v );
@@ -751,8 +771,8 @@ static ErrorNumber sf_advance( void )
             TA_MA_Stream *s = NULL;
             double seed = 0.0, v = SF_ADV_CANARY;
             double vp = 0.0, vq = 0.0;
-            if( TA_MA_Open( &s, sfClose, warm, mp[p], TA_MAType_SMA, &seed ) != TA_SUCCESS )
-               return TA_STREAM_ADVANCE_SETUP_FAILED;
+            if( (sfOpenRc = TA_MA_Open( &s, sfClose, warm, mp[p], TA_MAType_SMA, &seed )) != TA_SUCCESS )
+               SF_SETUP_FAILED( "MA", TA_STREAM_ADVANCE_SETUP_FAILED );
             SF_ADV_PEEK( MA, "MA(bad)", s, TA_MA_Peek( s, sfBad[b], &v ), TA_BAD_PARAM );
             SF_ADV_HELD( "MA(peek bad)", v );
             SF_ADV_PEEK( MA, "MA(good)", s, TA_MA_Peek( s, sfClose[warm], &seed ), TA_SUCCESS );
@@ -777,8 +797,8 @@ static ErrorNumber sf_advance( void )
          TA_MAVP_Stream *s = NULL;
          double seed = 0.0, v = SF_ADV_CANARY;
          double vp = 0.0, vq = 0.0;
-         if( TA_MAVP_Open( &s, sfClose, periods, warm, 2, 30, TA_MAType_SMA, &seed ) != TA_SUCCESS )
-            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         if( (sfOpenRc = TA_MAVP_Open( &s, sfClose, periods, warm, 2, 30, TA_MAType_SMA, &seed )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "MAVP", TA_STREAM_ADVANCE_SETUP_FAILED );
          SF_ADV_PEEK( MAVP, "MAVP(bad)", s,
             TA_MAVP_Peek( s, sfClose[warm], sfBad[b], &v ), TA_BAD_PARAM );
          SF_ADV_HELD( "MAVP(peek bad)", v );
@@ -804,8 +824,8 @@ static ErrorNumber sf_advance( void )
          double s0 = 0.0, s1 = 0.0, s2 = 0.0;
          double u = SF_ADV_CANARY, m = SF_ADV_CANARY, l = SF_ADV_CANARY;
          double up = 0.0, mp = 0.0, lp = 0.0, uq = 0.0, mq = 0.0, lq = 0.0;
-         if( TA_BBANDS_Open( &s, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &s0, &s1, &s2 ) != TA_SUCCESS )
-            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         if( (sfOpenRc = TA_BBANDS_Open( &s, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &s0, &s1, &s2 )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "BBANDS", TA_STREAM_ADVANCE_SETUP_FAILED );
          SF_ADV_PEEK( BBANDS, "BBANDS(bad)", s,
             TA_BBANDS_Peek( s, sfBad[b], &u, &m, &l ), TA_BAD_PARAM );
          SF_ADV_HELD( "BBANDS.upper(peek bad)",  u );
@@ -843,8 +863,8 @@ static ErrorNumber sf_advance( void )
          double s0 = 0.0, s1 = 0.0;
          double kv = SF_ADV_CANARY, dv = SF_ADV_CANARY;
          double kp = 0.0, dp = 0.0, kq = 0.0, dq = 0.0;
-         if( TA_STOCH_Open( &s, sfHigh, sfLow, sfClose, warm, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &s0, &s1 ) != TA_SUCCESS )
-            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         if( (sfOpenRc = TA_STOCH_Open( &s, sfHigh, sfLow, sfClose, warm, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &s0, &s1 )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "STOCH", TA_STREAM_ADVANCE_SETUP_FAILED );
          SF_ADV_PEEK( STOCH, "STOCH(bad)", s,
             TA_STOCH_Peek( s, sfHigh[warm], sfBad[b], sfClose[warm], &kv, &dv ), TA_BAD_PARAM );
          SF_ADV_HELD( "STOCH.slowK(peek bad)", kv );
@@ -877,8 +897,8 @@ static ErrorNumber sf_advance( void )
          TA_CDLDOJI_Stream *s = NULL;
          int seed = 0, v = SF_ADV_CANARY_I;
          int vp = 0, vq = 0;
-         if( TA_CDLDOJI_Open( &s, sfOpen, sfHigh, sfLow, sfClose, warm, &seed ) != TA_SUCCESS )
-            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         if( (sfOpenRc = TA_CDLDOJI_Open( &s, sfOpen, sfHigh, sfLow, sfClose, warm, &seed )) != TA_SUCCESS )
+            SF_SETUP_FAILED( "CDLDOJI", TA_STREAM_ADVANCE_SETUP_FAILED );
          SF_ADV_PEEK( CDLDOJI, "CDLDOJI(bad)", s,
             TA_CDLDOJI_Peek( s, sfOpen[warm], sfHigh[warm], sfLow[warm], sfBad[b], &v ), TA_BAD_PARAM );
          SF_ADV_HELD_I( "CDLDOJI(peek bad)", v );
@@ -926,8 +946,8 @@ static ErrorNumber sf_advance( void )
       TA_SMA_Stream *s = NULL;
       double seed = 0.0, v = SF_ADV_CANARY;
       int b0, n0, b1, n1;
-      if( TA_SMA_Open( &s, sfClose, warm, 10, &seed ) != TA_SUCCESS )
-         return TA_STREAM_ADVANCE_SETUP_FAILED;
+      if( (sfOpenRc = TA_SMA_Open( &s, sfClose, warm, 10, &seed )) != TA_SUCCESS )
+         SF_SETUP_FAILED( "SMA(ceiling)", TA_STREAM_ADVANCE_SETUP_FAILED );
       SF_ADV_READ( SMA, "SMA(ceiling)", s, b0, n0 );
       for( k = b0 + n0; k <= TA_INDEX_MAX; k++ )
       {
@@ -996,6 +1016,9 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    /* The reference history is unused: this needs a series long enough for
     * every tier's warm-up, and values it can poison in place. */
    (void)history;
+
+   /* Every opener below is sized for unstable period 0. */
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    sf_build_series();
    sfBarRejects = sfStateHolds = sfParamRejects = 0;

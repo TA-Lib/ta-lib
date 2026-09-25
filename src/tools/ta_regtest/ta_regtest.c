@@ -826,7 +826,10 @@ static ErrorNumber testTAFunction_ALL( void )
          showFeedback(); \
          retValue = func( &history ); \
          if( retValue != TA_TEST_PASS ) \
+         { \
+            printf( "\nFailed group [%s] with code=%d\n", str, retValue ); \
             return retValue; \
+         } \
          hideFeedback(); \
          if( (wantSv) && server_verify_active() && \
              server_verify_value_comparisons() == svBefore ) \

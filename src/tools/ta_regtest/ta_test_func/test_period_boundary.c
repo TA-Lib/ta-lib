@@ -646,7 +646,6 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
       if( errNb != TA_TEST_PASS ) return errNb;
    }
 
-   /* doRangeTest varies the unstable period and leaves it set. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    return TA_TEST_PASS;
@@ -1515,7 +1514,6 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
       }
    }
 
-   /* doRangeTest varies the unstable period and leaves it set. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    errNb = testMacdSignalOneHostile();
