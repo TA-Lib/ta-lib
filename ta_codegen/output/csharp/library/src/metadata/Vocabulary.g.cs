@@ -47,34 +47,34 @@ namespace TALib.Metadata;
 public enum FunctionGroup
 {
     /// <summary>Cycle Indicators.</summary>
-    CycleIndicators,
+    CycleIndicators = 0,
 
     /// <summary>Math Operators.</summary>
-    MathOperators,
+    MathOperators = 1,
 
     /// <summary>Math Transform.</summary>
-    MathTransform,
+    MathTransform = 2,
 
     /// <summary>Momentum Indicators.</summary>
-    MomentumIndicators,
+    MomentumIndicators = 3,
 
     /// <summary>Overlap Studies.</summary>
-    OverlapStudies,
+    OverlapStudies = 4,
 
     /// <summary>Pattern Recognition.</summary>
-    PatternRecognition,
+    PatternRecognition = 5,
 
     /// <summary>Price Transform.</summary>
-    PriceTransform,
+    PriceTransform = 6,
 
     /// <summary>Statistic Functions.</summary>
-    StatisticFunctions,
+    StatisticFunctions = 7,
 
     /// <summary>Volatility Indicators.</summary>
-    VolatilityIndicators,
+    VolatilityIndicators = 8,
 
     /// <summary>Volume Indicators.</summary>
-    VolumeIndicators,
+    VolumeIndicators = 9,
 }
 
 /// <summary>Display names for <see cref="FunctionGroup"/>.</summary>

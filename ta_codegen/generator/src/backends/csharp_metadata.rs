@@ -421,9 +421,10 @@ fn vocabulary(rows: &[FuncRow]) -> String {
         }
         let _ = write!(
             s,
-            "    /// <summary>{}.</summary>\n    {},\n",
+            "    /// <summary>{}.</summary>\n    {} = {},\n",
             xml_escape_raw(g.as_str()),
-            g.ident()
+            g.ident(),
+            *g as u32
         );
     }
     s.push_str("}\n\n");

@@ -39,18 +39,21 @@ use crate::ir::{EnumDef, FuncDef, Input, OptInput, Output, ParamType, PriceCompo
 // ---------------------------------------------------------------------------
 
 /// A function's group. Closed set: the YAML `group:` field may name nothing else.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+///
+/// The discriminants are the C# `FunctionGroup` values, frozen once published:
+/// a new group takes the next unused number, wherever it sorts in [`Group::ALL`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Group {
-    CycleIndicators,
-    MathOperators,
-    MathTransform,
-    MomentumIndicators,
-    OverlapStudies,
-    PatternRecognition,
-    PriceTransform,
-    StatisticFunctions,
-    VolatilityIndicators,
-    VolumeIndicators,
+    CycleIndicators = 0,
+    MathOperators = 1,
+    MathTransform = 2,
+    MomentumIndicators = 3,
+    OverlapStudies = 4,
+    PatternRecognition = 5,
+    PriceTransform = 6,
+    StatisticFunctions = 7,
+    VolatilityIndicators = 8,
+    VolumeIndicators = 9,
 }
 
 impl Group {

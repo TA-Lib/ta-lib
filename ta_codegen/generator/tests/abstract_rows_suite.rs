@@ -555,3 +555,32 @@ TA_RetCode max( int    startIdx,
 }
 
 // ---------------------------------------------------------------------------
+
+/// The C# `FunctionGroup` values freeze at the first publish, and a consumer's
+/// build copies them in.
+#[test]
+fn csharp_function_group_values_are_pinned() {
+    use ta_codegen_lib::backends::abstract_rows::Group;
+    let pinned = [
+        (Group::CycleIndicators, 0),
+        (Group::MathOperators, 1),
+        (Group::MathTransform, 2),
+        (Group::MomentumIndicators, 3),
+        (Group::OverlapStudies, 4),
+        (Group::PatternRecognition, 5),
+        (Group::PriceTransform, 6),
+        (Group::StatisticFunctions, 7),
+        (Group::VolatilityIndicators, 8),
+        (Group::VolumeIndicators, 9),
+    ];
+    let emitted = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../output/csharp/library/src/metadata/Vocabulary.g.cs"),
+    )
+    .expect("Vocabulary.g.cs");
+    for (g, value) in pinned {
+        assert_eq!(g as u32, value, "FunctionGroup.{} moved", g.ident());
+        let decl = format!("    {} = {value},\n", g.ident());
+        assert!(emitted.contains(&decl), "Vocabulary.g.cs lacks `{}`", decl.trim());
+    }
+}
