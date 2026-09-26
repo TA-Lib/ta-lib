@@ -225,6 +225,25 @@ GOLDEN = {
     "TA_SYNTH19": dict(
         params={"inReal": IN_REAL, "optInTimePeriod": PERIOD}, beg=3,
         outs={"outInteger": [100003720, 100003720, 100003722, 100003720, 100003725, 100003724, 100003724, 100003724, 100003720, 100003724, 100003725, 100003727, 100003724]}),
+
+    # SYNTH20 reads i-1 twice, then i twice, in its countdowns' order.
+    "TA_SYNTH20": dict(
+        params={"inReal": IN_REAL}, beg=1,
+        outs={"outReal": [701.0, 441.0, 3999940.0, 4000000.0, 100.5,
+                          100.49799999999999, 10.998000000000001, 611.0, 2000.0, 1424.0,
+                          200.0, 3176.0, 3090.0, 2089.8, 2439.8]}),
+
+    # Period 2 is the one whose divisor is zero: the `?:` never reads.
+    "TA_SYNTH21": dict(
+        params={"inReal": IN_REAL, "optInTimePeriod": 2}, beg=1,
+        outs={"outReal": IN_REAL[1:]}),
+
+    "TA_SYNTH22": dict(
+        params={"inReal": IN_REAL}, beg=1,
+        outs={"outReal": [150.5, -205.25, 1999927.375, -1000036.3125,
+                          -499967.90625, -250034.204125, -125011.60106249999, -62211.300531249995,
+                          -30705.650265624998, -16040.825132812499, -7944.412566406249, -2560.2062832031247,
+                          -2735.103141601562, -412.6515708007811, -986.2257854003906]}),
 }
 
 

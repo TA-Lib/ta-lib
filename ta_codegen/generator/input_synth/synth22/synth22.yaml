@@ -1,0 +1,13 @@
+name: SYNTH22
+group: Math Operators
+hint: Synthetic gate function 22 - a loop run as written because its windows never fit (never shipped)
+# `path_dependent`: each output adds half the previous one, starting at the
+# first requested bar, so a sub-range call answers differently.
+flags: [stream, path_dependent]
+inputs:
+  - name: inReal
+    type: real
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

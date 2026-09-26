@@ -2692,9 +2692,9 @@ fn rust_loops_that_are_not_pure_shifts_stay_loops() {
 }
 
 /// The block scans of the rolling-extremum family run check-free only as
-/// counted loops over windows (#442): the suffix and prefix passes in every
-/// member, and the combine pass where it does not branch. Every access inside
-/// such a loop must go through a window, or the check is back.
+/// counted loops over windows (#442). Every access inside such a loop must go
+/// through a window, or the check is back; only an array stored in a branch
+/// keeps its check.
 #[test]
 fn rust_block_scans_run_as_counted_windows() {
     let registry = make_registry();
@@ -2705,17 +2705,64 @@ fn rust_block_scans_run_as_counted_windows() {
         let loops = windowed_loop_bodies(&rust);
         assert!(loops.len() >= scans, "{name}: {} counted window loop(s), want at least {scans}:\n{rust}", loops.len());
         for body in &loops {
+            let branches = body.contains("} else {");
             for line in body.lines().map(str::trim).filter(|l| !l.starts_with("//")) {
                 for (at, _) in line.match_indices('[') {
                     let array = line[..at].rsplit(|c: char| !(c.is_alphanumeric() || c == '_')).next().unwrap_or("");
+                    let arm_store = branches && line.starts_with(&format!("{array}[")) && line.contains("] = ");
                     assert!(
-                        array.strip_prefix("_w").is_some_and(|j| !j.is_empty() && j.bytes().all(|b| b.is_ascii_digit())),
+                        arm_store || array.strip_prefix("_w").is_some_and(|j| !j.is_empty() && j.bytes().all(|b| b.is_ascii_digit())),
                         "{name}: `{array}[` is indexed directly inside a counted window loop: `{line}`"
                     );
                 }
             }
         }
     }
+}
+
+/// A candlestick's main loop that reads through a trailing index runs over
+/// windows (#442): the reads of its pattern test sit in `&&` chains and helper
+/// arms, so the windows are cut with `get`, while what the pattern's arms read
+/// and store keeps its check. One that reads only at or behind the counter
+/// stays as written.
+#[test]
+fn rust_candle_loops_read_their_inputs_through_windows() {
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let mut seen = 0usize;
+    for entry in std::fs::read_dir(&base).expect("input dir") {
+        let name = entry.expect("dir entry").file_name().to_string_lossy().to_string();
+        if !name.starts_with("cdl") {
+            continue;
+        }
+        let (func, enums) = load_indicator(&name);
+        let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+        let batch = &rust[..rust.find("_step_impl(").unwrap_or(rust.len())];
+        if !batch.contains("TrailingIdx") {
+            continue;
+        }
+        let loops = windowed_loop_bodies(batch);
+        assert!(
+            loops.iter().any(|body| body.contains("outIdx += 1;")),
+            "{name}: its main loop is not a counted window loop:\n{batch}"
+        );
+        // A data-dependent index (`in[c ? i : i - 1]`) is no window's to take.
+        let linear = |index: &str| index.split([' ', '+', '-']).filter(|t| !t.is_empty()).all(|t| t.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_'));
+        for body in &loops {
+            // The pattern test: the body up to the brace that opens its first arm.
+            let test = &body[..body.find("{\n").map_or(body.len(), |at| at + 1)];
+            for input in ["inOpen[", "inHigh[", "inLow[", "inClose["] {
+                for (at, _) in test.match_indices(input) {
+                    let rest = &test[at + input.len()..];
+                    let index = &rest[..rest.find(']').unwrap_or(rest.len())];
+                    assert!(!linear(index), "{name}: `{input}{index}]` indexed directly inside a counted window loop:\n{body}");
+                }
+            }
+        }
+        seen += 1;
+    }
+    assert!(seen >= 57, "saw {seen} candlestick functions reading a trailing index");
 }
 
 /// The bodies of the `for _wk in ...` loops in `rust`.

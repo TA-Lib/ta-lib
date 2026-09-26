@@ -173,10 +173,19 @@ impl Core {
         outIdx = 0;
         if outIdx < nbElement {
             let _wn: usize = nbElement - outIdx;
-            let _w0 = &mut outReal[outIdx..][.._wn];
-            for _wk in 0.._wn {
-                _w0[_wk] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
-                outIdx += 1;
+            if let (Some(_w0), Some(_w1), Some(_w2)) = (adx.get(outIdx..).and_then(|w| w.get(.._wn)), adx.get(outIdx.wrapping_add((optInTimePeriod) as usize).wrapping_sub(1)..).and_then(|w| w.get(.._wn)), outReal.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
+                let _w0 = &_w0[.._wn];
+                let _w1 = &_w1[.._wn];
+                let _w2 = &mut _w2[.._wn];
+                for _wk in 0.._wn {
+                    _w2[_wk] = ((((_w1[_wk] + _w0[_wk]) / 2.0)) as f64);
+                    outIdx += 1;
+                }
+            } else {
+                while outIdx < nbElement {
+                    outReal[outIdx] = ((((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0)) as f64);
+                    outIdx += 1;
+                }
             }
         }
         (*outBegIdx) = startIdx;

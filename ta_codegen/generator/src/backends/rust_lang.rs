@@ -2884,6 +2884,42 @@ fn pure_shift<'x>(condition: &Expr, body: &'x [Statement]) -> Option<(&'x str, b
         .then_some((a.as_str(), forward))
 }
 
+/// `e`, a sum of `usize` terms, rendered with wrapping steps: a start below
+/// zero comes out above any length, so the `get` it feeds fails instead of the
+/// subtraction panicking in a debug build.
+fn wrapping_index(e: &Expr, idx: &dyn Fn(&Expr) -> String) -> String {
+    fn terms<'e>(e: &'e Expr, plus: bool, out: &mut Vec<(&'e Expr, bool)>) {
+        match e {
+            Expr::BinOp(l, BinOp::Add, r) => {
+                terms(l, plus, out);
+                terms(r, plus, out);
+            }
+            Expr::BinOp(l, BinOp::Sub, r) => {
+                terms(l, plus, out);
+                terms(r, !plus, out);
+            }
+            other => out.push((other, plus)),
+        }
+    }
+    let mut ts = Vec::new();
+    terms(e, true, &mut ts);
+    let operand = |t: &Expr| {
+        let r = idx(t);
+        if r.chars().all(|c| c.is_alphanumeric() || c == '_') { r } else { format!("({r})") }
+    };
+    let mut acc = match ts.first() {
+        Some((Expr::IntLiteral(n), true)) => format!("{n}usize"),
+        Some((t, true)) => operand(t),
+        _ => "0usize".to_string(),
+    };
+    let skip = usize::from(matches!(ts.first(), Some((_, true))));
+    for (t, plus) in &ts[skip..] {
+        let op = if *plus { "wrapping_add" } else { "wrapping_sub" };
+        acc = format!("{acc}.{op}({})", idx(t));
+    }
+    acc
+}
+
 impl RustStmt<'_, '_> {
     /// The stream tier keeps every cursor; the batch tier only a ring's.
     fn circbuf_has_cursor(&self, id: &str) -> bool {
@@ -2919,13 +2955,15 @@ impl RustStmt<'_, '_> {
 
     /// The loop as [`super::rust_window`] lowers it, or `None` to render it as
     /// written. `as_written` is the loop after any `for` init, for a failed
-    /// guard the loop may still pass.
+    /// guard the loop may still pass. A `do_while` runs the pass the guard
+    /// counts, and one more when the guard fails.
     fn windowed(
         &self,
         condition: &Expr,
         body: &[Statement],
         update: Option<&Statement>,
         as_written: &Statement,
+        do_while: bool,
         indent: usize,
     ) -> Option<String> {
         use super::rust_window::{window_name, Names, PASS, TRIP};
@@ -2950,6 +2988,19 @@ impl RustStmt<'_, '_> {
             ring_storage: &ring_storage,
         };
         let plan = super::rust_window::plan(condition, body, update, &names)?;
+        // A tested counter steps before the do-while's first test, not its
+        // first pass.
+        if do_while && plan.cond_step.is_some() {
+            return None;
+        }
+        // `as_written` is a `for` loop past its init: the range lowering would
+        // restart it from the counter's declaration.
+        let unwindowed = |indent: usize| {
+            let mut plain = ctx.clone();
+            plain.window_loops = false;
+            plain.for_range_lowering = false;
+            RustStmt { ctx: &plain, ..*self }.walk_stmt(as_written, indent)
+        };
 
         let mut inner = ctx.clone();
         inner.index_vars.insert(TRIP.to_string());
@@ -2959,31 +3010,71 @@ impl RustStmt<'_, '_> {
         let pad = " ".repeat(indent);
         let guard = render_condition(&plan.guard, &inner, self.opt_real_params, self.registry, self.helpers);
         let mut out = format!("{pad}if {guard} {{\n{pad}    let {TRIP}: usize = {};\n", idx(&plan.trip));
-        for (j, w) in plan.windows.iter().enumerate() {
-            let m = if w.mutable { "mut " } else { "" };
-            let len = if w.extra == 0 { TRIP.to_string() } else { format!("{TRIP} + {}", w.extra) };
-            out.push_str(&format!(
-                "{pad}    let {} = &{m}{}[{}..][..{len}];\n",
-                window_name(j),
-                w.array,
-                idx(&w.start)
-            ));
-        }
+        let len = |extra: i64| if extra == 0 { TRIP.to_string() } else { format!("{TRIP} + {extra}") };
+        let deep = if plan.checked {
+            let (names, cuts): (Vec<String>, Vec<String>) = plan
+                .windows
+                .iter()
+                .enumerate()
+                .map(|(j, w)| {
+                    let get = if w.mutable { "get_mut" } else { "get" };
+                    let start = wrapping_index(&w.start, &idx);
+                    (format!("Some({})", window_name(j)), format!("{}.{get}({start}..).and_then(|w| w.{get}(..{}))", w.array, len(w.extra)))
+                })
+                .unzip();
+            let (names, cuts) = if names.len() == 1 {
+                (names[0].clone(), cuts[0].clone())
+            } else {
+                (format!("({})", names.join(", ")), format!("({})", cuts.join(", ")))
+            };
+            out.push_str(&format!("{pad}    if let {names} = {cuts} {{\n"));
+            // A window bound through the `Option` reaches LLVM without its
+            // length, which leaves a check on every access; cut again, once.
+            for (j, w) in plan.windows.iter().enumerate() {
+                let m = if w.mutable { "mut " } else { "" };
+                out.push_str(&format!("{pad}        let {n} = &{m}{n}[..{}];\n", len(w.extra), n = window_name(j)));
+            }
+            4
+        } else {
+            for (j, w) in plan.windows.iter().enumerate() {
+                let m = if w.mutable { "mut " } else { "" };
+                out.push_str(&format!(
+                    "{pad}    let {} = &{m}{}[{}..][..{}];\n",
+                    window_name(j),
+                    w.array,
+                    idx(&w.start),
+                    len(w.extra)
+                ));
+            }
+            0
+        };
+        let dpad = " ".repeat(indent + deep);
         let range = if plan.reverse { format!("(0..{TRIP}).rev()") } else { format!("0..{TRIP}") };
-        out.push_str(&format!("{pad}    for {PASS} in {range} {{\n"));
+        out.push_str(&format!("{dpad}    for {PASS} in {range} {{\n"));
         for s in &plan.body {
-            out.push_str(&inner_stmt.walk_stmt(s, indent + 8));
+            out.push_str(&inner_stmt.walk_stmt(s, indent + deep + 8));
         }
-        out.push_str(&format!("{pad}    }}\n"));
-        match &plan.cond_step {
+        out.push_str(&format!("{dpad}    }}\n"));
+        let last = plan.cond_step.as_ref().map(|c| format!("{c} = {c}.wrapping_sub(1);"));
+        if let Some(last) = &last {
+            out.push_str(&format!("{dpad}    {last}\n"));
+        }
+        if plan.checked {
+            out.push_str(&format!("{pad}    }} else {{\n"));
+            out.push_str(&unwindowed(indent + 8));
+            out.push_str(&format!("{pad}    }}\n"));
+        }
+        match &last {
+            None if do_while => {
+                out.push_str(&format!("{pad}}} else {{\n"));
+                out.push_str(&unwindowed(indent + 4));
+                out.push_str(&format!("{pad}}}\n"));
+            }
             None => out.push_str(&format!("{pad}}}\n")),
-            Some(c) => {
-                let last = format!("{c} = {c}.wrapping_sub(1);");
-                out.push_str(&format!("{pad}    {last}\n{pad}}} else {{\n"));
+            Some(last) => {
+                out.push_str(&format!("{pad}}} else {{\n"));
                 if plan.may_pass_unguarded {
-                    let mut unwindowed = ctx.clone();
-                    unwindowed.window_loops = false;
-                    out.push_str(&RustStmt { ctx: &unwindowed, ..*self }.walk_stmt(as_written, indent + 4));
+                    out.push_str(&unwindowed(indent + 4));
                 } else {
                     out.push_str(&format!("{pad}    {last}\n"));
                 }
@@ -3633,7 +3724,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
             }
         }
         let as_written = Statement::While { condition: condition.clone(), body: while_body.to_vec() };
-        if let Some(out) = self.windowed(condition, while_body, None, &as_written, indent) {
+        if let Some(out) = self.windowed(condition, while_body, None, &as_written, false, indent) {
             return out;
         }
         let mut out = format!(
@@ -3649,6 +3740,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
     }
 
     fn do_while(&self, condition: &Expr, while_body: &[Statement], indent: usize) -> String {
+        let as_written = Statement::DoWhile { condition: condition.clone(), body: while_body.to_vec() };
+        if let Some(out) = self.windowed(condition, while_body, None, &as_written, true, indent) {
+            return out;
+        }
         let pad = " ".repeat(indent);
         let mut out = format!("{pad}loop {{\n");
         for s in while_body {
@@ -3809,7 +3904,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         let mut after_init = for_body.to_vec();
         after_init.push(update.clone());
         let as_written = Statement::While { condition: condition.clone(), body: after_init };
-        if let Some(out) = self.windowed(condition, for_body, Some(update), &as_written, indent) {
+        if let Some(out) = self.windowed(condition, for_body, Some(update), &as_written, false, indent) {
             let inits = match init {
                 Statement::Block { body } => body.clone(),
                 other => vec![other.clone()],

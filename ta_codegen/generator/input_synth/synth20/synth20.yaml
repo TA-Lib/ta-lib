@@ -1,0 +1,11 @@
+name: SYNTH20
+group: Math Operators
+hint: Synthetic gate function 20 - a countdown nested in a countdown inside the main loop (never shipped)
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

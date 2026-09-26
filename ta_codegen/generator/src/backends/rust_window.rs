@@ -14,7 +14,9 @@
 //! loop.
 //!
 //! A window spans only elements that some access reaches on every pass, so
-//! cutting it panics only where the loop as written would.
+//! cutting it panics only where the loop as written would. When a window must
+//! also hold elements read only on some passes, every window is cut with
+//! `get`, and the loop runs as written when one does not fit.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -69,6 +71,10 @@ pub(crate) struct Plan {
     /// When `guard` fails the loop as written may still pass, so it runs in
     /// place of that failing test's step.
     pub may_pass_unguarded: bool,
+    /// Some window holds an element that no access reaches on every pass: the
+    /// windows are cut only if all of them fit, and the loop as written runs
+    /// otherwise. Their starts may then be below zero, so they wrap.
+    pub checked: bool,
 }
 
 /// What the renderer knows about names that the IR does not say.
@@ -100,10 +106,22 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
 
     let mut facts = Facts::of(&pass);
     // A ring's wrap reads its storage, which a `&mut` window would lock.
-    for s in &pass {
-        if let Statement::CircBuf(CircBuf::Next { id }) = s {
-            facts.bare.extend((names.ring_storage)(id));
+    fn advanced(pass: &[Statement], out: &mut Vec<String>) {
+        for s in pass {
+            match s {
+                Statement::CircBuf(CircBuf::Next { id }) => out.push(id.clone()),
+                Statement::If { then_body, else_body, .. } => {
+                    advanced(then_body, out);
+                    advanced(else_body, out);
+                }
+                _ => {}
+            }
         }
+    }
+    let mut rings = Vec::new();
+    advanced(&pass, &mut rings);
+    for id in &rings {
+        facts.bare.extend((names.ring_storage)(id));
     }
     let steps: BTreeMap<String, i64> = facts.induction().into_iter().filter(|(v, _)| (names.index)(v)).collect();
     // A counter that moves once per pass, the condition's own step included,
@@ -112,10 +130,11 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         return None;
     }
 
-    let an = Analysis { steps: &steps, facts: &facts, names };
+    let branches = pass.iter().any(|s| matches!(s, Statement::If { .. }));
+    let an = Analysis { steps: &steps, facts: &facts, names, branches };
     let occs = an.occurrences(&pass);
-    let (windows, reverse, assign) = an.windows(&occs, &form.counter)?;
-    let body = rewrite(&pass, &assign);
+    let (windows, reverse, assign, checked) = an.windows(&occs, &form.counter)?;
+    let body = rewrite(&pass, &assign, &mut 0);
     Some(Plan {
         guard: form.guard,
         trip: form.trip,
@@ -124,6 +143,7 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         body,
         cond_step: form.cond_step,
         may_pass_unguarded: form.may_pass_unguarded,
+        checked,
     })
 }
 
@@ -212,12 +232,8 @@ fn form(cond: &Expr, names: &Names) -> Option<Form> {
 // What a pass does
 // ---------------------------------------------------------------------------
 
-/// A pass with no branch, no nested loop and no exit but the condition, its
-/// blocks inlined; `None` for any other.
-///
-/// A body that branches keeps its checks: without them LLVM re-forms it (SLP
-/// pairs the terms the arms share, a select becomes a branch), and across the
-/// corpus that measured slower as often as faster.
+/// A pass with no nested loop and no exit but the condition, its blocks
+/// inlined and its short countdowns unrolled; `None` for any other.
 fn flat(body: &[Statement]) -> Option<Vec<Statement>> {
     let mut out = Vec::new();
     for s in body {
@@ -228,10 +244,57 @@ fn flat(body: &[Statement]) -> Option<Vec<Statement>> {
             | Statement::Comment(_)
             | Statement::UnrollHint { .. } => out.push(s.clone()),
             Statement::Block { body } => out.extend(flat(body)?),
+            Statement::If { condition, then_body, else_body, cond_comments } => out.push(Statement::If {
+                condition: condition.clone(),
+                then_body: flat(then_body)?,
+                else_body: flat(else_body)?,
+                cond_comments: cond_comments.clone(),
+            }),
+            Statement::ForC { init, condition, update, body } => out.extend(unrolled(init, condition, update, body)?),
             _ => return None,
         }
     }
     Some(out)
+}
+
+/// `for( v = a; v >= b; v-- ) body`, literal `a` and `b` a few apart and a
+/// body that leaves `v` alone, as one copy of the body per value, then
+/// `v = b`: where the Rust countdown leaves `v`.
+fn unrolled(init: &Statement, cond: &Expr, update: &Statement, body: &[Statement]) -> Option<Vec<Statement>> {
+    const MAX_PASSES: i64 = 8;
+    let Statement::Assign { target: Expr::Var(v), value: Expr::IntLiteral(a), compound: false } = init else {
+        return None;
+    };
+    let Expr::BinOp(l, BinOp::GreaterEq, r) = cond else { return None };
+    let (Expr::Var(c), Expr::IntLiteral(b)) = (l.as_ref(), r.as_ref()) else { return None };
+    let body = flat(body)?;
+    if c != v || as_step(update) != Some((v.as_str(), -1)) || a < b || a - b >= MAX_PASSES || Facts::of(&body).assigned.contains(v) {
+        return None;
+    }
+    let mut out = Vec::new();
+    for k in (*b..=*a).rev() {
+        out.extend(body.iter().map(|s| substitute_stmt(s, v, &int(k))));
+    }
+    out.push(Statement::Assign { target: var(v), value: int(*b), compound: false });
+    Some(out)
+}
+
+fn substitute_stmt(s: &Statement, v: &str, with: &Expr) -> Statement {
+    let sub = |e: &Expr| substitute(e, v, with);
+    let all = |b: &[Statement]| b.iter().map(|x| substitute_stmt(x, v, with)).collect();
+    match s {
+        Statement::Assign { target, value, compound } => {
+            Statement::Assign { target: sub(target), value: sub(value), compound: *compound }
+        }
+        Statement::Expr(e) => Statement::Expr(sub(e)),
+        Statement::If { condition, then_body, else_body, cond_comments } => Statement::If {
+            condition: sub(condition),
+            then_body: all(then_body),
+            else_body: all(else_body),
+            cond_comments: cond_comments.clone(),
+        },
+        other => other.clone(),
+    }
 }
 
 /// A body naming one of the emitted names would read ours.
@@ -247,17 +310,25 @@ fn mentions_reserved(cond: &Expr, body: &[Statement]) -> bool {
             }
         });
     };
-    check(cond);
-    for s in body {
-        match s {
-            Statement::Assign { target, value, .. } => {
-                check(target);
-                check(value);
+    fn walk(body: &[Statement], check: &mut dyn FnMut(&Expr)) {
+        for s in body {
+            match s {
+                Statement::Assign { target, value, .. } => {
+                    check(target);
+                    check(value);
+                }
+                Statement::Expr(e) => check(e),
+                Statement::If { condition, then_body, else_body, .. } => {
+                    check(condition);
+                    walk(then_body, check);
+                    walk(else_body, check);
+                }
+                _ => {}
             }
-            Statement::Expr(e) => check(e),
-            _ => {}
         }
     }
+    check(cond);
+    walk(body, &mut check);
     found
 }
 
@@ -371,6 +442,17 @@ impl Facts {
                 self.expr(e, None);
             }
             Statement::CircBuf(CircBuf::Next { id }) => self.store(&format!("{id}_Idx")),
+            // A step taken in an arm is not taken on every pass: what an arm
+            // assigns is no induction variable.
+            Statement::If { condition, then_body, else_body, .. } => {
+                self.expr(condition, None);
+                let arms = Facts::of(&[then_body.as_slice(), else_body.as_slice()].concat());
+                self.other.extend(arms.assigned.iter().cloned());
+                self.assigned.extend(arms.assigned);
+                self.other.extend(arms.other);
+                self.written.extend(arms.written);
+                self.bare.extend(arms.bare);
+            }
             _ => {}
         }
     }
@@ -446,8 +528,7 @@ struct Occ {
     elem: Option<(Group, i64)>,
     /// The variable's steps so far in the pass.
     offset: i64,
-    /// Evaluated on every pass: not under `?:`, `&&`, `||` or a call that
-    /// may skip an argument.
+    /// Made on every pass: [`Reach::Every`].
     every: bool,
 }
 
@@ -455,6 +536,7 @@ struct Analysis<'a> {
     steps: &'a BTreeMap<String, i64>,
     facts: &'a Facts,
     names: &'a Names<'a>,
+    branches: bool,
 }
 
 impl Analysis<'_> {
@@ -486,19 +568,20 @@ impl Analysis<'_> {
         let mut out = Vec::new();
         let mut off: BTreeMap<String, i64> = BTreeMap::new();
         for s in pass {
-            each_access(s, &mut |array, idx, every| {
+            each_access(s, &mut |array, idx, reach| {
                 let index = match idx {
                     Expr::PostIncrement(v) => v.as_ref().clone(),
                     other => other.clone(),
                 };
-                let usable = !array.contains('.')
+                let usable = reach != Reach::Arm
+                    && !array.contains('.')
                     && (self.names.sliceable)(array)
                     && !self.facts.assigned.contains(array)
                     && !self.facts.bare.contains(array);
                 let lin = if usable { self.linear(&index) } else { None };
                 let offset = lin.as_ref().map_or(0, |(v, _, _)| off.get(v).copied().unwrap_or(0));
                 let elem = lin.map(|(var, inv, c)| (Group { array: array.to_string(), var, inv }, c + offset));
-                out.push(Occ { array: array.to_string(), index, elem, offset, every });
+                out.push(Occ { array: array.to_string(), index, elem, offset, every: reach == Reach::Every });
             });
             if let Some((v, d)) = step_of(s) {
                 *off.entry(v.to_string()).or_default() += d;
@@ -507,48 +590,74 @@ impl Analysis<'_> {
         out
     }
 
-    /// The windows, the direction, and per access its window and offset in
-    /// it. `None` when no window would lift a check.
+    /// The windows, the direction, per access its window and offset in it, and
+    /// whether the windows are cut only when they fit. `None` when no window
+    /// would lift a check.
     #[allow(clippy::type_complexity)]
-    fn windows(&self, occs: &[Occ], counter: &str) -> Option<(Vec<Window>, bool, Vec<Option<(usize, i64)>>)> {
+    fn windows(&self, occs: &[Occ], counter: &str) -> Option<(Vec<Window>, bool, Vec<Option<(usize, i64)>>, bool)> {
         // Inputs of one length share their extents: an element one of them
         // reaches on every pass is in bounds in all of them.
         let pooled = |g: &Group| {
             let array = if (self.names.same_len)(&g.array) { String::new() } else { g.array.clone() };
             Group { array, ..g.clone() }
         };
-        let mut span: BTreeMap<Group, (i64, i64)> = BTreeMap::new();
-        for (g, e) in occs.iter().filter(|o| o.every).filter_map(|o| o.elem.as_ref()) {
-            let s = span.entry(pooled(g)).or_insert((*e, *e));
-            s.0 = s.0.min(*e);
-            s.1 = s.1.max(*e);
-        }
-        let dir = if span.keys().any(|g| self.steps[&g.var] > 0) { 1 } else { -1 };
-        span.retain(|g, _| self.steps[&g.var] == dir);
-        let fits = |o: &Occ| {
+        let extent = |every_only: bool| {
+            let mut span: BTreeMap<Group, (i64, i64)> = BTreeMap::new();
+            for (g, e) in occs.iter().filter(|o| o.every || !every_only).filter_map(|o| o.elem.as_ref()) {
+                let s = span.entry(pooled(g)).or_insert((*e, *e));
+                s.0 = s.0.min(*e);
+                s.1 = s.1.max(*e);
+            }
+            span
+        };
+        let (mut sure, mut all) = (extent(true), extent(false));
+        let led = if sure.is_empty() { &all } else { &sure };
+        let dir = if led.keys().any(|g| self.steps[&g.var] > 0) { 1 } else { -1 };
+        sure.retain(|g, _| self.steps[&g.var] == dir);
+        all.retain(|g, _| self.steps[&g.var] == dir);
+        let fits = |span: &BTreeMap<Group, (i64, i64)>, o: &Occ| {
             o.elem.clone().filter(|(g, e)| span.get(&pooled(g)).is_some_and(|(lo, hi)| lo <= e && e <= hi))
         };
 
         // Each array's own extent within its pool's.
-        let mut own: BTreeMap<Group, (i64, i64)> = BTreeMap::new();
-        for (g, e) in occs.iter().filter_map(fits) {
-            let s = own.entry(g).or_insert((e, e));
-            s.0 = s.0.min(e);
-            s.1 = s.1.max(e);
-        }
-        // An array stored to takes one mutable window, holding every access.
-        for a in &self.facts.written {
-            let groups = own.keys().filter(|g| &g.array == a).count();
-            if groups > 1 || occs.iter().any(|o| &o.array == a && fits(o).is_none()) {
-                own.retain(|g, _| &g.array != a);
+        let own_in = |span: &BTreeMap<Group, (i64, i64)>| {
+            let mut own: BTreeMap<Group, (i64, i64)> = BTreeMap::new();
+            for (g, e) in occs.iter().filter_map(|o| fits(span, o)) {
+                let s = own.entry(g).or_insert((e, e));
+                s.0 = s.0.min(e);
+                s.1 = s.1.max(e);
             }
+            // An array stored to takes one mutable window, holding every access.
+            for a in &self.facts.written {
+                let groups = own.keys().filter(|g| &g.array == a).count();
+                if groups > 1 || occs.iter().any(|o| &o.array == a && fits(span, o).is_none()) {
+                    own.retain(|g, _| &g.array != a);
+                }
+            }
+            own
+        };
+        let narrow = own_in(&sure);
+        let wide = own_in(&all);
+        let (mut span, mut own) = (sure, narrow);
+        let checked = wide != own;
+        if checked {
+            (span, own) = (all, wide);
         }
         // An input read at the counter's own value is usually bounded already,
-        // and windowing a loop of nothing else measured slower.
+        // and windowing a loop of nothing else measured slower. In a body that
+        // branches, so does one read at a fixed step behind the counter.
         let free = |g: &Group| {
-            (self.names.same_len)(&g.array) && g.var == counter && g.inv.is_empty() && own[g] == (0, 0)
+            let (lo, hi) = own[g];
+            let reach = if self.branches { lo <= 0 && hi <= 0 } else { (lo, hi) == (0, 0) };
+            (self.names.same_len)(&g.array) && g.var == counter && g.inv.is_empty() && reach
         };
         if own.keys().all(free) {
+            return None;
+        }
+        // A branching body is windowed only for reads some passes skip: for
+        // every-pass reads alone, LLVM re-forms the branch once their checks go,
+        // which measured slower.
+        if self.branches && !checked {
             return None;
         }
 
@@ -558,11 +667,12 @@ impl Analysis<'_> {
             let (lo_own, hi_own) = own[*g];
             let key = pooled(g);
             let lo = span[&key].0;
-            // An access reaching the pool's lowest element on every pass: the
-            // window starts a fixed step above what it computes.
+            // An access reaching the pool's lowest element, on every pass unless
+            // the windows are checked: the window starts a fixed step above what
+            // it computes.
             let rep = occs
                 .iter()
-                .find(|o| o.every && o.elem.as_ref().is_some_and(|(x, e)| pooled(x) == key && *e == lo))?;
+                .find(|o| (o.every || checked) && o.elem.as_ref().is_some_and(|(x, e)| pooled(x) == key && *e == lo))?;
             let at = if dir > 0 {
                 shifted(&g.var, rep.offset)
             } else {
@@ -574,6 +684,12 @@ impl Analysis<'_> {
                 }
             };
             let first = substitute(&rep.index, &g.var, &at);
+            // A checked start may come from an access the loop never makes, so
+            // it must not be able to fault on its own: sums and differences of
+            // names and literals only, which wrap.
+            if checked && !wraps(&first) {
+                return None;
+            }
             windows.push(Window {
                 array: g.array.clone(),
                 mutable: self.facts.written.contains(&g.array),
@@ -584,24 +700,34 @@ impl Analysis<'_> {
         let assign = occs
             .iter()
             .map(|o| {
-                let (g, e) = fits(o)?;
+                let (g, e) = fits(&span, o)?;
                 let j = order.iter().position(|x| **x == g)?;
                 Some((j, e - own[&g].0))
             })
             .collect();
-        Some((windows, dir < 0, assign))
+        Some((windows, dir < 0, assign, checked))
     }
 }
 
 /// `pass` with each access `assign` places re-indexed into its window.
-fn rewrite(pass: &[Statement], assign: &[Option<(usize, i64)>]) -> Vec<Statement> {
-    let mut next = 0usize;
+/// `next` counts the accesses already placed.
+fn rewrite(pass: &[Statement], assign: &[Option<(usize, i64)>], next: &mut usize) -> Vec<Statement> {
     let mut out = Vec::new();
     for s in pass {
+        if let Statement::If { condition, then_body, else_body, cond_comments } = s {
+            let head = Statement::Expr(condition.clone());
+            let Statement::Expr(condition) = rewrite(std::slice::from_ref(&head), assign, next).remove(0) else {
+                unreachable!()
+            };
+            let then_body = rewrite(then_body, assign, next);
+            let else_body = rewrite(else_body, assign, next);
+            out.push(Statement::If { condition, then_body, else_body, cond_comments: cond_comments.clone() });
+            continue;
+        }
         let mapped = map_accesses(s, &mut |e| {
             let Expr::ArrayAccess(a, i) = e else { return e };
-            let m = assign[next].map(|(j, d)| marker(j, d));
-            next += 1;
+            let m = assign[*next].map(|(j, d)| marker(j, d));
+            *next += 1;
             Expr::ArrayAccess(a, Box::new(m.unwrap_or(*i)))
         });
         // A `v++` whose access now reads a window leaves its step behind.
@@ -616,26 +742,43 @@ fn rewrite(pass: &[Statement], assign: &[Option<(usize, i64)>]) -> Vec<Statement
 
 /// Calls `f(array, index, every)` for each element access in `s`, in
 /// evaluation order.
-fn each_access(s: &Statement, f: &mut dyn FnMut(&str, &Expr, bool)) {
-    fn go(expr: &Expr, every: bool, visit: &mut dyn FnMut(&str, &Expr, bool)) {
+fn each_access(s: &Statement, f: &mut dyn FnMut(&str, &Expr, Reach)) {
+    each_access_in(s, Reach::Every, f);
+}
+
+/// How often an access is made.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum Reach {
+    Every,
+    /// Under `?:`, `&&`, `||` or a call that may skip an argument.
+    Some,
+    /// In a branch's arm, where it keeps its check: a checked access there is
+    /// what keeps LLVM from re-forming the branch, and reads skipped this way
+    /// measured no gain.
+    Arm,
+}
+
+fn each_access_in(s: &Statement, reach: Reach, f: &mut dyn FnMut(&str, &Expr, Reach)) {
+    fn go(expr: &Expr, reach: Reach, visit: &mut dyn FnMut(&str, &Expr, Reach)) {
+        let some = if reach == Reach::Every { Reach::Some } else { reach };
         match expr {
             Expr::ArrayAccess(array, idx) => {
-                go(idx, every, visit);
-                visit(array, idx, every);
+                go(idx, reach, visit);
+                visit(array, idx, reach);
             }
             Expr::BinOp(lhs, op, rhs) => {
-                go(lhs, every, visit);
-                go(rhs, every && !matches!(op, BinOp::And | BinOp::Or), visit);
+                go(lhs, reach, visit);
+                go(rhs, if matches!(op, BinOp::And | BinOp::Or) { some } else { reach }, visit);
             }
             Expr::Ternary(cond, then, other) => {
-                go(cond, every, visit);
-                go(then, false, visit);
-                go(other, false, visit);
+                go(cond, reach, visit);
+                go(then, some, visit);
+                go(other, some, visit);
             }
             Expr::FuncCall(name, args) => {
-                let every = every && eager_call(name);
+                let reach = if eager_call(name) { reach } else { some };
                 for arg in args {
-                    go(arg, every, visit);
+                    go(arg, reach, visit);
                 }
             }
             Expr::Cast(_, inner)
@@ -645,16 +788,22 @@ fn each_access(s: &Statement, f: &mut dyn FnMut(&str, &Expr, bool)) {
             | Expr::PostIncrement(inner)
             | Expr::PostDecrement(inner)
             | Expr::PreIncrement(inner)
-            | Expr::PreDecrement(inner) => go(inner, every, visit),
+            | Expr::PreDecrement(inner) => go(inner, reach, visit),
             Expr::Literal(_) | Expr::IntLiteral(_) | Expr::Var(_) | Expr::PointerDeref(_) => {}
         }
     }
     match s {
         Statement::Assign { target, value, .. } => {
-            go(value, true, f);
-            go(target, true, f);
+            go(value, reach, f);
+            go(target, reach, f);
         }
-        Statement::Expr(e) => go(e, true, f),
+        Statement::Expr(e) => go(e, reach, f),
+        Statement::If { condition, then_body, else_body, .. } => {
+            go(condition, reach, f);
+            for arm in then_body.iter().chain(else_body) {
+                each_access_in(arm, Reach::Arm, f);
+            }
+        }
         _ => {}
     }
 }
@@ -696,6 +845,12 @@ fn map_accesses(s: &Statement, f: &mut dyn FnMut(Expr) -> Expr) -> Statement {
             Statement::Assign { target: go(target, f), value, compound: *compound }
         }
         Statement::Expr(e) => Statement::Expr(go(e, f)),
+        Statement::If { condition, then_body, else_body, cond_comments } => {
+            let condition = go(condition, f);
+            let then_body = then_body.iter().map(|x| map_accesses(x, f)).collect();
+            let else_body = else_body.iter().map(|x| map_accesses(x, f)).collect();
+            Statement::If { condition, then_body, else_body, cond_comments: cond_comments.clone() }
+        }
         other => other.clone(),
     }
 }
@@ -719,6 +874,16 @@ fn shifted(v: &str, k: i64) -> Expr {
         k if k > 0 => bin(var(v), BinOp::Add, int(k)),
         k => bin(var(v), BinOp::Sub, int(-k)),
     }
+}
+
+fn wraps(e: &Expr) -> bool {
+    let mut terms = Vec::new();
+    flatten(e, true, &mut terms);
+    terms.iter().all(|(t, _)| match t {
+        Expr::IntLiteral(_) | Expr::Var(_) | Expr::PointerDeref(_) => true,
+        Expr::Cast(_, inner) => matches!(inner.as_ref(), Expr::Var(_) | Expr::PointerDeref(_)),
+        _ => false,
+    })
 }
 
 fn flatten<'e>(e: &'e Expr, plus: bool, out: &mut Vec<(&'e Expr, bool)>) {
@@ -878,7 +1043,7 @@ mod tests {
     }
 
     #[test]
-    fn a_conditional_read_outside_every_pass_extent_keeps_its_index() {
+    fn a_conditional_read_outside_every_pass_extent_makes_the_windows_checked() {
         // while( i < e ) { x = in[i]; y = c ? in[i + 1] : 0; out[i] = x + y; i++; }
         let body = [
             set(v("x"), at("in", v("i"))),
@@ -887,10 +1052,9 @@ mod tests {
             inc("i"),
         ];
         let p = run(&bin(v("i"), BinOp::Less, v("e")), &body).expect("windowed");
-        let a = accesses(&p);
-        assert_eq!(a[0], "in[_w0[_wk]]");
-        assert!(a[1].starts_with("in[BinOp"), "{a:?}");
-        // Within the extent, a conditional read is windowed too.
+        assert!(p.checked);
+        assert_eq!(accesses(&p)[..2], ["in[_w0[_wk]]", "in[_w0[_wk + 1]]"]);
+        // Within the extent, a conditional read is windowed too, unchecked.
         let body2 = [
             set(v("x"), at("in", plus(v("i"), int(1)))),
             set(v("y"), Expr::Ternary(Box::new(v("c")), Box::new(at("in", v("i"))), Box::new(int(0)))),
@@ -899,7 +1063,22 @@ mod tests {
             inc("i"),
         ];
         let p2 = run(&bin(v("i"), BinOp::Less, v("e")), &body2).expect("windowed");
+        assert!(!p2.checked);
         assert_eq!(accesses(&p2)[1], "in[_w0[_wk]]");
+    }
+
+    #[test]
+    fn a_window_with_no_every_pass_access_is_checked_and_starts_where_any_access_does() {
+        // while( i < e ) { x = c ? in[i - 2] : 0; out[i] = x; i++; }
+        let body = [
+            set(v("x"), Expr::Ternary(Box::new(v("c")), Box::new(at("in", bin(v("i"), BinOp::Sub, int(2)))), Box::new(int(0)))),
+            set(at("out", v("i")), v("x")),
+            inc("i"),
+        ];
+        let p = run(&bin(v("i"), BinOp::Less, v("e")), &body).expect("windowed");
+        assert!(p.checked);
+        let w = p.windows.iter().find(|w| w.array == "in").expect("in windows");
+        assert_eq!(text(&w.start), text(&bin(v("i"), BinOp::Sub, int(2))));
     }
 
     #[test]
@@ -913,8 +1092,10 @@ mod tests {
             inc("k"),
         ];
         let cond = bin(v("i"), BinOp::Less, v("e"));
-        assert!(accesses(&run_with(&cond, &body, true).unwrap())[1].starts_with("in2[_w"));
-        assert!(accesses(&run_with(&cond, &body, false).unwrap())[1].starts_with("in2[Var"));
+        let pooled = run_with(&cond, &body, true).unwrap();
+        assert!(accesses(&pooled)[1].starts_with("in2[_w") && !pooled.checked);
+        let apart = run_with(&cond, &body, false).unwrap();
+        assert!(accesses(&apart)[1].starts_with("in2[_w") && apart.checked);
     }
 
     #[test]
@@ -925,13 +1106,15 @@ mod tests {
         let p = run(&lt, &body).expect("the input still windows");
         assert!(p.windows.iter().all(|w| w.array != "out"));
         assert!(accesses(&p).iter().all(|a| !a.starts_with("out[_w")));
-        // out[i + 5], read only conditionally, lies outside out's extent.
+        // out[i + 5], read only conditionally: one checked window holds both.
         let beyond = [
             set(at("out", v("i")), at("in", v("i"))),
             set(v("y"), Expr::Ternary(Box::new(v("c")), Box::new(at("out", plus(v("i"), int(5)))), Box::new(int(0)))),
             inc("i"),
         ];
-        assert!(run(&lt, &beyond).expect("in windows").windows.iter().all(|w| w.array != "out"));
+        let p = run(&lt, &beyond).expect("windowed");
+        let outs: Vec<i64> = p.windows.iter().filter(|w| w.array == "out").map(|w| w.extra).collect();
+        assert!(p.checked && outs == [5], "{outs:?}");
     }
 
     #[test]
@@ -967,7 +1150,7 @@ mod tests {
     }
 
     #[test]
-    fn a_short_circuit_operand_does_not_widen_a_window() {
+    fn a_short_circuit_operand_widens_a_window_only_checked() {
         // while( i < e ) { x = in[i]; y = c && in[i + 1]; out[i] = x + y; i++; }
         let body = [
             set(v("x"), at("in", v("i"))),
@@ -976,7 +1159,8 @@ mod tests {
             inc("i"),
         ];
         let p = run(&bin(v("i"), BinOp::Less, v("e")), &body).expect("windowed");
-        assert_eq!(p.windows.iter().find(|w| w.array == "in").map(|w| w.extra), Some(0));
+        assert_eq!(p.windows.iter().find(|w| w.array == "in").map(|w| w.extra), Some(1));
+        assert!(p.checked);
     }
 
     #[test]
@@ -1036,20 +1220,151 @@ mod tests {
         assert!(run(&bin(v("i"), BinOp::GreaterEq, v("b")), &[body[0].clone(), dec("i"), inc("k")]).is_none());
     }
 
+    fn branch(c: Expr, then_body: Vec<Statement>, else_body: Vec<Statement>) -> Statement {
+        Statement::If { condition: c, then_body, else_body, cond_comments: vec![] }
+    }
+
     #[test]
-    fn a_body_that_branches_keeps_its_checks() {
+    fn a_branch_is_windowed_but_its_arms_keep_their_checks() {
+        // while( i < e ) { if( in[i] > 0 && in[j] > 0 ) out[k] = in[j]; else out[k] = 0; k++; i++; j++; }
         let body = [
-            Statement::If {
-                condition: v("c"),
-                then_body: vec![set(v("x"), int(1))],
-                else_body: vec![],
-                cond_comments: vec![],
-            },
-            set(at("out", v("k")), at("in", v("i"))),
-            inc("i"),
+            branch(
+                bin(bin(at("in", v("i")), BinOp::Greater, int(0)), BinOp::And, bin(at("in", v("j")), BinOp::Greater, int(0))),
+                vec![set(at("out", v("k")), at("in", v("j")))],
+                vec![set(at("out", v("k")), int(0))],
+            ),
             inc("k"),
+            inc("i"),
+            inc("j"),
+        ];
+        let p = run_with(&bin(v("i"), BinOp::Less, v("e")), &body, true).expect("windowed");
+        let a = accesses(&p);
+        assert!(a[0].starts_with("in[_w") && a[1].starts_with("in[_w"), "{a:?}");
+        assert!(a[2].starts_with("in[Var") && a[3].starts_with("out[Var") && a[4].starts_with("out[Var"), "{a:?}");
+        assert!(p.checked, "in[j] is read only past the `&&`");
+        // Read only in an arm, it is no reason to window the loop.
+        let arm_only = [
+            branch(
+                bin(at("in", v("i")), BinOp::Greater, int(0)),
+                vec![set(at("out", v("k")), at("in", v("j")))],
+                vec![set(at("out", v("k")), int(0))],
+            ),
+            inc("k"),
+            inc("i"),
+            inc("j"),
+        ];
+        assert!(run_with(&bin(v("i"), BinOp::Less, v("e")), &arm_only, true).is_none());
+    }
+
+    #[test]
+    fn a_branch_whose_windows_need_no_check_stays_as_written() {
+        // while( i < e ) { x = in[j]; if( x > 0 ) n++; else n = 0; out[i] = x; i++; j++; }
+        let body = [
+            set(v("x"), at("in", v("j"))),
+            branch(bin(v("x"), BinOp::Greater, int(0)), vec![inc("n")], vec![set(v("n"), int(0))]),
+            set(at("out", v("i")), v("x")),
+            inc("i"),
+            inc("j"),
         ];
         assert!(run(&bin(v("i"), BinOp::Less, v("e")), &body).is_none());
+        // Without the branch the same reads are windowed.
+        let straight = [body[0].clone(), body[2].clone(), body[3].clone(), body[4].clone()];
+        assert!(run(&bin(v("i"), BinOp::Less, v("e")), &straight).is_some());
+    }
+
+    #[test]
+    fn a_branch_reading_only_at_or_behind_the_counter_stays_as_written() {
+        // while( i < e ) { if( in[i] > in[i - 1] && c > in[i - 2] ) out[k] = 1; else out[k] = 0; k++; i++; }
+        let at_i = |d: i64| at("in", if d == 0 { v("i") } else if d > 0 { plus(v("i"), int(d)) } else { bin(v("i"), BinOp::Sub, int(-d)) });
+        let body = |far: i64| {
+            [
+                branch(
+                    bin(bin(at_i(0), BinOp::Greater, at_i(-1)), BinOp::And, bin(v("c"), BinOp::Greater, at_i(far))),
+                    vec![set(at("out", v("k")), int(1))],
+                    vec![set(at("out", v("k")), int(0))],
+                ),
+                inc("k"),
+                inc("i"),
+            ]
+        };
+        let lt = bin(v("i"), BinOp::Less, v("e"));
+        assert!(run_with(&lt, &body(-2), true).is_none());
+        // One bar ahead is not bounded by the test on the counter.
+        assert!(run_with(&lt, &body(1), true).is_some());
+    }
+
+    #[test]
+    fn a_short_countdown_in_a_pass_is_unrolled() {
+        // while( i < e ) { for( t = 2; t >= 0; t-- ) x += in[i - t]; out[i] = x; i++; }
+        let countdown = Statement::ForC {
+            init: Box::new(set(v("t"), int(2))),
+            condition: bin(v("t"), BinOp::GreaterEq, int(0)),
+            update: Box::new(dec("t")),
+            body: vec![Statement::Assign { target: v("x"), value: at("in", bin(v("i"), BinOp::Sub, v("t"))), compound: true }],
+        };
+        let body = [countdown, set(at("out", v("i")), v("x")), inc("i")];
+        let p = run(&bin(v("i"), BinOp::Less, v("e")), &body).expect("windowed");
+        assert_eq!(accesses(&p)[..3], ["in[_w0[_wk]]", "in[_w0[_wk + 1]]", "in[_w0[_wk + 2]]"]);
+        assert_eq!(format!("{:?}", p.body[3]), format!("{:?}", set(v("t"), int(0))));
+        // A countdown that moves its own counter stays a loop, and so the pass.
+        let Statement::ForC { init, condition, update, body: mut inner } = body[0].clone() else { unreachable!() };
+        inner.push(dec("t"));
+        let moved = [Statement::ForC { init, condition, update, body: inner }, body[1].clone(), body[2].clone()];
+        assert!(run(&bin(v("i"), BinOp::Less, v("e")), &moved).is_none());
+    }
+
+    fn countdown(v: &str, from: i64, body: Vec<Statement>) -> Statement {
+        Statement::ForC {
+            init: Box::new(set(var(v), int(from))),
+            condition: bin(var(v), BinOp::GreaterEq, int(0)),
+            update: Box::new(dec(v)),
+            body,
+        }
+    }
+
+    #[test]
+    fn a_countdown_nested_in_a_countdown_substitutes_both_counters() {
+        // while( i < e ) { for( a = 1; a >= 0; a-- ) for( b = 1; b >= 0; b-- ) x += in[i - a - b]; out[i] = x; i++; }
+        let read = Statement::Assign {
+            target: v("x"),
+            value: at("in", bin(bin(v("i"), BinOp::Sub, v("a")), BinOp::Sub, v("b"))),
+            compound: true,
+        };
+        let body = [countdown("a", 1, vec![countdown("b", 1, vec![read])]), set(at("out", v("i")), v("x")), inc("i")];
+        let p = run(&bin(v("i"), BinOp::Less, v("e")), &body).expect("windowed");
+        assert_eq!(accesses(&p)[..4], ["in[_w0[_wk]]", "in[_w0[_wk + 1]]", "in[_w0[_wk + 1]]", "in[_w0[_wk + 2]]"]);
+    }
+
+    #[test]
+    fn a_checked_start_that_could_fault_is_not_cut() {
+        // while( i < e ) { x = in[i]; if( d != 0 ) y = in[i + n / d]; out[i] = x; i++; }
+        let body = [
+            set(v("x"), at("in", v("i"))),
+            branch(
+                bin(v("d"), BinOp::NotEq, int(0)),
+                vec![set(v("y"), at("in", plus(v("i"), bin(v("n"), BinOp::Div, v("d")))))],
+                vec![],
+            ),
+            set(at("out", v("i")), v("x")),
+            inc("i"),
+        ];
+        assert!(run(&bin(v("i"), BinOp::Less, v("e")), &body).is_none());
+    }
+
+    #[test]
+    fn a_step_taken_in_an_arm_is_no_induction() {
+        // while( i < e ) { if( c && in[j] > 0 ) k++; out[k] = in[i]; i++; j++; }
+        let body = [
+            branch(bin(v("c"), BinOp::And, bin(at("in", v("j")), BinOp::Greater, int(0))), vec![inc("k")], vec![]),
+            set(at("out", v("k")), at("in", v("i"))),
+            inc("i"),
+            inc("j"),
+        ];
+        let p = run(&bin(v("i"), BinOp::Less, v("e")), &body).expect("in windows");
+        assert!(p.windows.iter().all(|w| w.array != "out"));
+        // Nor may the counter step in one.
+        let counter = [branch(v("c"), vec![inc("i")], vec![]), set(at("out", v("k")), at("in", v("i"))), inc("i"), inc("k")];
+        assert!(run(&bin(v("i"), BinOp::Less, v("e")), &counter).is_none());
     }
 
     #[test]
