@@ -6,8 +6,8 @@
 #policy	accepted
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	2f725048775ce75f34e32d3dede13806f605fcff
-#generated	2026-09-25T22:49:25Z
+#commit	a8b212168e8716b2a9e3fe87e1d304ca03acd1e7
+#generated	2026-09-26T05:18:11Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -433,11 +433,16 @@ CEIL	open	0	143
 CEIL	openfill	0	420124
 CEIL	peek	0	47117
 CEIL	update	0	57357
-CMF	batch	0	839953
-CMF	open	0	900345
-CMF	openfill	0	900344
-CMF	peek	0	88077
-CMF	update	0	113730
+CG	batch	0	1399476
+CG	open	0	1379753
+CG	openfill	0	1399774
+CG	peek	0	218128
+CG	update	0	183810
+CMF	batch	0	999865
+CMF	open	0	1060246
+CMF	openfill	0	1080229
+CMF	peek	0	90125
+CMF	update	0	117826
 CMO	batch	0	619848
 CMO	open	0	599950
 CMO	openfill	0	599969
@@ -685,9 +690,9 @@ MASSI	peek	0	53261
 MASSI	update	0	109622
 MAVP	batch	0	5961358
 MAVP	open	0	4075155
-MAVP	openfill	0	59076021
-MAVP	peek	0	99340
-MAVP	update	0	3085325
+MAVP	openfill	0	33178775
+MAVP	peek	0	92175
+MAVP	update	0	1761296
 MAX	batch	0	321078
 MAX	open	0	646640
 MAX	openfill	0	646628
@@ -798,7 +803,7 @@ PLUS_DM	open	0	460070
 PLUS_DM	openfill	0	480079
 PLUS_DM	peek	0	52237
 PLUS_DM	update	0	68621
-PPO	batch	0	641200
+PPO	batch	0	640915
 PPO	open	0	961947
 PPO	openfill	0	960693
 PPO	peek	0	157709
@@ -808,9 +813,9 @@ PVI	open	0	351265
 PVI	openfill	0	431012
 PVI	peek	0	55023
 PVI	update	0	62525
-PVO	batch	0	641003
+PVO	batch	0	640983
 PVO	open	0	961961
-PVO	openfill	0	960754
+PVO	openfill	0	960744
 PVO	peek	0	157709
 PVO	update	0	259085
 PVT	batch	0	280074
@@ -863,11 +868,11 @@ RVIR	open	0	3718735
 RVIR	openfill	0	3717858
 RVIR	peek	0	223287
 RVIR	update	0	375149
-RVOL	batch	0	319968
-RVOL	open	0	240350
-RVOL	openfill	0	300320
+RVOL	batch	0	439828
+RVOL	open	0	400271
+RVOL	openfill	0	420452
 RVOL	peek	0	34832
-RVOL	update	0	73742
+RVOL	update	0	80910
 SAR	batch	0	456194
 SAR	open	0	931066
 SAR	openfill	0	891110
@@ -1013,11 +1018,11 @@ VWAP	open	0	500191
 VWAP	openfill	0	480191
 VWAP	peek	0	67597
 VWAP	update	0	78861
-VWMA	batch	0	519715
-VWMA	open	0	500196
-VWMA	openfill	0	520162
-VWMA	peek	0	57359
-VWMA	update	0	99346
+VWMA	batch	0	599574
+VWMA	open	0	600024
+VWMA	openfill	0	620225
+VWMA	peek	0	55311
+VWMA	update	0	102418
 WAD	batch	0	260130
 WAD	open	0	250196
 WAD	openfill	0	270217

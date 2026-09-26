@@ -13,6 +13,7 @@
  *  072026 MF,CC  First version (#131).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero count.
  *
  */
 
@@ -33,11 +34,12 @@ TA_RetCode vwma(int startIdx, int endIdx,
    double tempPV;
    double tempV;
    double tempReal;
+   double trailingVolume;
    size_t i;
    size_t outIdx;
    size_t trailingIdx;
    size_t lookbackTotal;
-   int nullRun;
+   int zeroCount;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -86,11 +88,12 @@ TA_RetCode vwma(int startIdx, int endIdx,
    sumV = 0.0;
    trailingIdx = startIdx - lookbackTotal;
 
-   /* Consecutive zero-volume bars. Once they fill a window both sums are
-    * exactly zero, where add-then-subtract would leave the rounding residue of
-    * the bars that departed, of either sign.
+   /* Zero-volume bars in the window. Once they fill it both sums are exactly
+    * zero, where add-then-subtract would leave the rounding residue of the bars
+    * that departed, of either sign. The test is fabs(v) <= 0.0 rather than
+    * == 0.0: the same result, NaN included, from one flag instead of two.
     */
-   nullRun = 0;
+   zeroCount = 0;
 
    i = trailingIdx;
    if( optInTimePeriod > 1 )
@@ -99,7 +102,7 @@ TA_RetCode vwma(int startIdx, int endIdx,
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
-         nullRun = inVolume[i] == 0.0 ? nullRun+1 : 0;
+         zeroCount += fabs(inVolume[i]) <= 0.0 ? 1 : 0;
          i = i + 1;
       }
    }
@@ -114,31 +117,43 @@ TA_RetCode vwma(int startIdx, int endIdx,
       tempReal = inReal[i] * inVolume[i];
       sumPV += tempReal;
       sumV += inVolume[i];
-      nullRun = inVolume[i] == 0.0 ? nullRun+1 : 0;
+      zeroCount += fabs(inVolume[i]) <= 0.0 ? 1 : 0;
       i = i + 1;
-      if( nullRun >= optInTimePeriod )
-      {
-         nullRun = optInTimePeriod;
-         sumPV = 0.0;
-         sumV = 0.0;
-      }
-
-      /* Snapshot both sums before removing the trailing bar, mirroring the
-       * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-       * window, that order is what makes this bit-identical to
-       * SMA(inReal*inVolume)/SMA(inVolume).
-       */
-      tempPV = sumPV;
-      tempV = sumV;
 
       /* Read the trailing values before writing the output, since the caller
        * may pass the same buffer for an input and the output.
        */
-      tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-      sumPV -= tempReal;
-      sumV -= inVolume[trailingIdx];
+      trailingVolume = inVolume[trailingIdx];
+      tempReal = inReal[trailingIdx] * trailingVolume;
 
-      outReal[outIdx] = (tempPV / (double)optInTimePeriod) / (tempV / (double)optInTimePeriod);
+      /* Each branch writes its own output: a branch that only zeroes the sums
+       * is if-converted into a mask on their dependency chain.
+       */
+      if( zeroCount >= optInTimePeriod )
+      {
+         /* Zero, then subtract the departing bar: a non-finite price times its
+          * zero volume is NaN, not zero.
+          */
+         tempPV = 0.0;
+         tempV = 0.0;
+         sumPV = 0.0 - tempReal;
+         sumV = 0.0 - trailingVolume;
+         outReal[outIdx] = (tempPV / (double)optInTimePeriod) / (tempV / (double)optInTimePeriod);
+      }
+      else
+      {
+         /* Snapshot both sums before removing the trailing bar, mirroring the
+          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+          * dead window, that order is what makes this bit-identical to
+          * SMA(inReal*inVolume)/SMA(inVolume).
+          */
+         tempPV = sumPV;
+         tempV = sumV;
+         sumPV -= tempReal;
+         sumV -= trailingVolume;
+         outReal[outIdx] = (tempPV / (double)optInTimePeriod) / (tempV / (double)optInTimePeriod);
+      }
+      zeroCount -= fabs(trailingVolume) <= 0.0 ? 1 : 0;
 
       trailingIdx = trailingIdx + 1;
       outIdx = outIdx + 1;

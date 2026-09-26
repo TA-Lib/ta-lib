@@ -71663,6 +71663,7 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  072126 MF,CC  First version (issue #134).
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero run.
  */
 
    /**
@@ -71709,6 +71710,7 @@ public final class Core {
       int i = 0;
       int today = 0;
       int nullRun = 0;
+      int zeroVol = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -71763,7 +71765,9 @@ public final class Core {
       sumVol = 0.0;
       /* Consecutive zero-volume bars. Once they fill a window both sums are
        * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign.
+       * the bars that departed, of either sign. It advances as a product rather
+       * than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
+       * that mispredicts on scattered zero volumes.
        */
       nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
@@ -71780,7 +71784,8 @@ public final class Core {
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -71813,14 +71818,18 @@ public final class Core {
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
+         /* The reset writes its own output: a branch that only zeroes the sums is
+          * if-converted into a mask on their dependency chain.
+          */
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumMFV = 0.0;
             sumVol = 0.0;
-         }
-         if( sumVol > 0.0 ) {
+            outReal[outIdx++] = 0.0;
+         } else if( sumVol > 0.0 ) {
             outReal[outIdx++] = sumMFV / sumVol;
          } else {
             outReal[outIdx++] = 0.0;
@@ -71855,6 +71864,7 @@ public final class Core {
       int i = 0;
       int today = 0;
       int nullRun = 0;
+      int zeroVol = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -71903,7 +71913,8 @@ public final class Core {
          mfv_volume[mfv_Idx] = (double)inVolume[today];
          sumMFV += mfv;
          sumVol += (double)inVolume[today];
-         nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = ((double)inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -71929,14 +71940,15 @@ public final class Core {
          mfv_volume[mfv_Idx] = (double)inVolume[today];
          sumMFV += mfv;
          sumVol += (double)inVolume[today];
-         nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = ((double)inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumMFV = 0.0;
             sumVol = 0.0;
-         }
-         if( sumVol > 0.0 ) {
+            outReal[outIdx++] = 0.0;
+         } else if( sumVol > 0.0 ) {
             outReal[outIdx++] = sumMFV / sumVol;
          } else {
             outReal[outIdx++] = 0.0;
@@ -72261,6 +72273,7 @@ public final class Core {
          double close = 0.0;
          double tmp = 0.0;
          double mfv = 0.0;
+         int zeroVol = 0;
          double cur_outReal = 0.0;
          int nullRun = sp.nullRun;
          double sumMFV = sp.sumMFV;
@@ -72278,13 +72291,17 @@ public final class Core {
          }
          sumMFV += mfv;
          sumVol += inVolume;
-         nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
+         zeroVol = (inVolume == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
+         /* The reset writes its own output: a branch that only zeroes the sums is
+          * if-converted into a mask on their dependency chain.
+          */
          if( nullRun >= sp.optInTimePeriod ) {
             nullRun = sp.optInTimePeriod;
             sumMFV = 0.0;
             sumVol = 0.0;
-         }
-         if( sumVol > 0.0 ) {
+            cur_outReal = 0.0;
+         } else if( sumVol > 0.0 ) {
             cur_outReal = sumMFV / sumVol;
          } else {
             cur_outReal = 0.0;
@@ -72325,6 +72342,7 @@ public final class Core {
       double close = 0.0;
       double tmp = 0.0;
       double mfv = 0.0;
+      int zeroVol = 0;
       sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
       sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
       high = inHigh;
@@ -72340,13 +72358,17 @@ public final class Core {
       sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
       sp.sumMFV += mfv;
       sp.sumVol += inVolume;
-      sp.nullRun = (inVolume == 0.0) ? sp.nullRun + 1 : 0;
+      zeroVol = (inVolume == 0.0) ? 1 : 0;
+      sp.nullRun = (sp.nullRun + zeroVol) * zeroVol;
+      /* The reset writes its own output: a branch that only zeroes the sums is
+       * if-converted into a mask on their dependency chain.
+       */
       if( sp.nullRun >= sp.optInTimePeriod ) {
          sp.nullRun = sp.optInTimePeriod;
          sp.sumMFV = 0.0;
          sp.sumVol = 0.0;
-      }
-      if( sp.sumVol > 0.0 ) {
+         sp.cur_outReal = 0.0;
+      } else if( sp.sumVol > 0.0 ) {
          sp.cur_outReal = sp.sumMFV / sp.sumVol;
       } else {
          sp.cur_outReal = 0.0;
@@ -72370,6 +72392,7 @@ public final class Core {
       int i = 0;
       int today = 0;
       int nullRun = 0;
+      int zeroVol = 0;
       double[] mfv_flow;
       double[] mfv_volume;
       int mfv_Idx = 0;
@@ -72434,7 +72457,9 @@ public final class Core {
       sumVol = 0.0;
       /* Consecutive zero-volume bars. Once they fill a window both sums are
        * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign.
+       * the bars that departed, of either sign. It advances as a product rather
+       * than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
+       * that mispredicts on scattered zero volumes.
        */
       nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 ) {
@@ -72451,7 +72476,8 @@ public final class Core {
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -72484,14 +72510,18 @@ public final class Core {
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
+         /* The reset writes its own output: a branch that only zeroes the sums is
+          * if-converted into a mask on their dependency chain.
+          */
          if( nullRun >= optInTimePeriod ) {
             nullRun = optInTimePeriod;
             sumMFV = 0.0;
             sumVol = 0.0;
-         }
-         if( sumVol > 0.0 ) {
+            outReal[outIdx++ * outStride] = 0.0;
+         } else if( sumVol > 0.0 ) {
             outReal[outIdx++ * outStride] = sumMFV / sumVol;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
@@ -156859,6 +156889,7 @@ public final class Core {
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#370).
  *  092526 MF,CC  #446 exact zero total on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero count.
  */
 
    /**
@@ -156894,11 +156925,14 @@ public final class Core {
       double periodTotal = 0;
       double baseline = 0;
       double todayVolume = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -156924,15 +156958,16 @@ public final class Core {
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window the total is
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the volumes that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it the total is exactly
+       * zero, where add-then-subtract would leave the rounding residue of the
+       * volumes that departed, of either sign. The test is fabs(v) <= 0.0 rather
+       * than == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
@@ -156943,14 +156978,16 @@ public final class Core {
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)optInTimePeriod;
-         periodTotal -= (double)inVolume[trailingIdx];
+         trailingVolume = (double)inVolume[trailingIdx];
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= optInTimePeriod ) {
             periodTotal = 0.0;
          }
          outReal[outIdx] = todayVolume / baseline;
@@ -156971,11 +157008,14 @@ public final class Core {
       double periodTotal = 0;
       double baseline = 0;
       double todayVolume = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -156998,24 +157038,26 @@ public final class Core {
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
-         nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs((double)inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
       while( i <= endIdx ) {
          baseline = periodTotal / (double)optInTimePeriod;
-         periodTotal -= (double)inVolume[trailingIdx];
+         trailingVolume = (double)inVolume[trailingIdx];
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= optInTimePeriod ) {
             periodTotal = 0.0;
          }
          outReal[outIdx] = todayVolume / baseline;
@@ -157192,7 +157234,7 @@ public final class Core {
       private Core core;
       private int optInTimePeriod;
       private double periodTotal;
-      private int nullRun;
+      private int zeroCount;
       private int ringPos_trailingIdx;
       private int ringCap_trailingIdx;
       private double[] ring_trailingIdx_inVolume;
@@ -157240,7 +157282,7 @@ public final class Core {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.nullRun = other.nullRun;
+         this.zeroCount = other.zeroCount;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inVolume = other.ring_trailingIdx_inVolume.clone();
@@ -157291,9 +157333,12 @@ public final class Core {
          RvolStream sp = this;
          double baseline = 0.0;
          double todayVolume = 0.0;
+         double trailingVolume = 0.0;
+         int zeroIn = 0;
+         int zeroOut = 0;
          double cur_outReal = 0.0;
-         int nullRun = sp.nullRun;
          double periodTotal = sp.periodTotal;
+         int zeroCount = sp.zeroCount;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          if( sp.ringCap_trailingIdx == 0 ) {
@@ -157306,12 +157351,14 @@ public final class Core {
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)sp.optInTimePeriod;
-         periodTotal -= (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
+         trailingVolume = (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          todayVolume = (double)inVolume;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= sp.optInTimePeriod ) {
-            nullRun = sp.optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= sp.optInTimePeriod ) {
             periodTotal = 0.0;
          }
          cur_outReal = todayVolume / baseline;
@@ -157348,6 +157395,9 @@ public final class Core {
    {
       double baseline = 0.0;
       double todayVolume = 0.0;
+      double trailingVolume = 0.0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inVolume[0] = inVolume;
       }
@@ -157357,12 +157407,14 @@ public final class Core {
        * differs only in the last ulp, so no tolerance can tell the two apart.
        */
       baseline = sp.periodTotal / (double)sp.optInTimePeriod;
-      sp.periodTotal -= (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+      trailingVolume = (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+      sp.periodTotal -= trailingVolume;
+      zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
       todayVolume = (double)inVolume;
       sp.periodTotal += todayVolume;
-      sp.nullRun = (todayVolume == 0.0) ? sp.nullRun + 1 : 0;
-      if( sp.nullRun >= sp.optInTimePeriod ) {
-         sp.nullRun = sp.optInTimePeriod;
+      zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+      sp.zeroCount = sp.zeroCount + zeroIn - zeroOut;
+      if( sp.zeroCount >= sp.optInTimePeriod ) {
          sp.periodTotal = 0.0;
       }
       sp.cur_outReal = todayVolume / baseline;
@@ -157377,11 +157429,14 @@ public final class Core {
       double periodTotal = 0;
       double baseline = 0;
       double todayVolume = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       int historyLen = inVolume.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -157414,15 +157469,16 @@ public final class Core {
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window the total is
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the volumes that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it the total is exactly
+       * zero, where add-then-subtract would leave the rounding residue of the
+       * volumes that departed, of either sign. The test is fabs(v) <= 0.0 rather
+       * than == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
@@ -157433,14 +157489,16 @@ public final class Core {
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)optInTimePeriod;
-         periodTotal -= (double)inVolume[trailingIdx];
+         trailingVolume = (double)inVolume[trailingIdx];
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= optInTimePeriod ) {
             periodTotal = 0.0;
          }
          outReal[outIdx * outStride] = todayVolume / baseline;
@@ -157458,7 +157516,7 @@ public final class Core {
       System.arraycopy(inVolume, historyLen - cap_trailingIdx, capRing_trailingIdx_inVolume, 0, cap_trailingIdx);
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
-      sp.nullRun = nullRun;
+      sp.zeroCount = zeroCount;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
@@ -184096,6 +184154,7 @@ public final class Core {
  *  072026 MF,CC  First version (#131).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero count.
  */
 
    /**
@@ -184133,11 +184192,12 @@ public final class Core {
       double tempPV = 0;
       double tempV = 0;
       double tempReal = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -184190,18 +184250,19 @@ public final class Core {
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window both sums are
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it both sums are exactly
+       * zero, where add-then-subtract would leave the rounding residue of the bars
+       * that departed, of either sign. The test is fabs(v) <= 0.0 rather than
+       * == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
-            nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+            zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
             i = i + 1;
          }
       }
@@ -184214,27 +184275,38 @@ public final class Core {
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
-         }
-         /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-          * window, that order is what makes this bit-identical to
-          * SMA(inReal*inVolume)/SMA(inVolume).
-          */
-         tempPV = sumPV;
-         tempV = sumV;
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         trailingVolume = inVolume[trailingIdx];
+         tempReal = inReal[trailingIdx] * trailingVolume;
+         /* Each branch writes its own output: a branch that only zeroes the sums
+          * is if-converted into a mask on their dependency chain.
+          */
+         if( zeroCount >= optInTimePeriod ) {
+            /* Zero, then subtract the departing bar: a non-finite price times its
+             * zero volume is NaN, not zero.
+             */
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         } else {
+            /* Snapshot both sums before removing the trailing bar, mirroring the
+             * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+             * dead window, that order is what makes this bit-identical to
+             * SMA(inReal*inVolume)/SMA(inVolume).
+             */
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         }
+         zeroCount -= (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          outIdx = outIdx + 1;
       }
@@ -184257,11 +184329,12 @@ public final class Core {
       double tempPV = 0;
       double tempV = 0;
       double tempReal = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -184295,14 +184368,14 @@ public final class Core {
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = (double)inReal[i] * (double)inVolume[i];
             sumPV += tempReal;
             sumV += (double)inVolume[i];
-            nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
+            zeroCount += (Math.abs((double)inVolume[i]) <= 0.0) ? 1 : 0;
             i = i + 1;
          }
       }
@@ -184311,19 +184384,24 @@ public final class Core {
          tempReal = (double)inReal[i] * (double)inVolume[i];
          sumPV += tempReal;
          sumV += (double)inVolume[i];
-         nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs((double)inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
+         trailingVolume = (double)inVolume[trailingIdx];
+         tempReal = (double)inReal[trailingIdx] * trailingVolume;
+         if( zeroCount >= optInTimePeriod ) {
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         } else {
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
          }
-         tempPV = sumPV;
-         tempV = sumV;
-         tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= (double)inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         zeroCount -= (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          outIdx = outIdx + 1;
       }
@@ -184503,7 +184581,7 @@ public final class Core {
       private int optInTimePeriod;
       private double sumPV;
       private double sumV;
-      private int nullRun;
+      private int zeroCount;
       private int ringPos_trailingIdx;
       private int ringCap_trailingIdx;
       private double[] ring_trailingIdx_inReal;
@@ -184553,7 +184631,7 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.nullRun = other.nullRun;
+         this.zeroCount = other.zeroCount;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
@@ -184606,10 +184684,11 @@ public final class Core {
          double tempPV = 0.0;
          double tempV = 0.0;
          double tempReal = 0.0;
+         double trailingVolume = 0.0;
          double cur_outReal = 0.0;
-         int nullRun = sp.nullRun;
          double sumPV = sp.sumPV;
          double sumV = sp.sumV;
+         int zeroCount = sp.zeroCount;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          int pkSlot1 = -1;
@@ -184627,26 +184706,36 @@ public final class Core {
          tempReal = inReal * inVolume;
          sumPV += tempReal;
          sumV += inVolume;
-         nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= sp.optInTimePeriod ) {
-            nullRun = sp.optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
-         }
-         /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-          * window, that order is what makes this bit-identical to
-          * SMA(inReal*inVolume)/SMA(inVolume).
-          */
-         tempPV = sumPV;
-         tempV = sumV;
+         zeroCount += (Math.abs(inVolume) <= 0.0) ? 1 : 0;
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1);
-         sumPV -= tempReal;
-         sumV -= (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1;
-         cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         trailingVolume = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1;
+         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * trailingVolume;
+         /* Each branch writes its own output: a branch that only zeroes the sums
+          * is if-converted into a mask on their dependency chain.
+          */
+         if( zeroCount >= sp.optInTimePeriod ) {
+            /* Zero, then subtract the departing bar: a non-finite price times its
+             * zero volume is NaN, not zero.
+             */
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         } else {
+            /* Snapshot both sums before removing the trailing bar, mirroring the
+             * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+             * dead window, that order is what makes this bit-identical to
+             * SMA(inReal*inVolume)/SMA(inVolume).
+             */
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         }
          return cur_outReal;
       }
 
@@ -184681,6 +184770,7 @@ public final class Core {
       double tempPV = 0.0;
       double tempV = 0.0;
       double tempReal = 0.0;
+      double trailingVolume = 0.0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
@@ -184692,26 +184782,37 @@ public final class Core {
       tempReal = inReal * inVolume;
       sp.sumPV += tempReal;
       sp.sumV += inVolume;
-      sp.nullRun = (inVolume == 0.0) ? sp.nullRun + 1 : 0;
-      if( sp.nullRun >= sp.optInTimePeriod ) {
-         sp.nullRun = sp.optInTimePeriod;
-         sp.sumPV = 0.0;
-         sp.sumV = 0.0;
-      }
-      /* Snapshot both sums before removing the trailing bar, mirroring the
-       * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-       * window, that order is what makes this bit-identical to
-       * SMA(inReal*inVolume)/SMA(inVolume).
-       */
-      tempPV = sp.sumPV;
-      tempV = sp.sumV;
+      sp.zeroCount += (Math.abs(inVolume) <= 0.0) ? 1 : 0;
       /* Read the trailing values before writing the output, since the caller
        * may pass the same buffer for an input and the output.
        */
-      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-      sp.sumPV -= tempReal;
-      sp.sumV -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-      sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+      trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
+      /* Each branch writes its own output: a branch that only zeroes the sums
+       * is if-converted into a mask on their dependency chain.
+       */
+      if( sp.zeroCount >= sp.optInTimePeriod ) {
+         /* Zero, then subtract the departing bar: a non-finite price times its
+          * zero volume is NaN, not zero.
+          */
+         tempPV = 0.0;
+         tempV = 0.0;
+         sp.sumPV = 0.0 - tempReal;
+         sp.sumV = 0.0 - trailingVolume;
+         sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+      } else {
+         /* Snapshot both sums before removing the trailing bar, mirroring the
+          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+          * dead window, that order is what makes this bit-identical to
+          * SMA(inReal*inVolume)/SMA(inVolume).
+          */
+         tempPV = sp.sumPV;
+         tempV = sp.sumV;
+         sp.sumPV -= tempReal;
+         sp.sumV -= trailingVolume;
+         sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+      }
+      sp.zeroCount -= (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -184726,11 +184827,12 @@ public final class Core {
       double tempPV = 0;
       double tempV = 0;
       double tempReal = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -184761,7 +184863,7 @@ public final class Core {
          sp.optInTimePeriod = optInTimePeriod;
          sp.sumPV = 0.0;
          sp.sumV = 0.0;
-         sp.nullRun = 0;
+         sp.zeroCount = 0;
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
@@ -184804,18 +184906,19 @@ public final class Core {
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window both sums are
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it both sums are exactly
+       * zero, where add-then-subtract would leave the rounding residue of the bars
+       * that departed, of either sign. The test is fabs(v) <= 0.0 rather than
+       * == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
-            nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+            zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
             i = i + 1;
          }
       }
@@ -184828,27 +184931,38 @@ public final class Core {
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
-         }
-         /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-          * window, that order is what makes this bit-identical to
-          * SMA(inReal*inVolume)/SMA(inVolume).
-          */
-         tempPV = sumPV;
-         tempV = sumV;
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= inVolume[trailingIdx];
-         outReal[outIdx * outStride] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         trailingVolume = inVolume[trailingIdx];
+         tempReal = inReal[trailingIdx] * trailingVolume;
+         /* Each branch writes its own output: a branch that only zeroes the sums
+          * is if-converted into a mask on their dependency chain.
+          */
+         if( zeroCount >= optInTimePeriod ) {
+            /* Zero, then subtract the departing bar: a non-finite price times its
+             * zero volume is NaN, not zero.
+             */
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            outReal[outIdx * outStride] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         } else {
+            /* Snapshot both sums before removing the trailing bar, mirroring the
+             * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+             * dead window, that order is what makes this bit-identical to
+             * SMA(inReal*inVolume)/SMA(inVolume).
+             */
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            outReal[outIdx * outStride] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         }
+         zeroCount -= (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          outIdx = outIdx + 1;
       }
@@ -184868,7 +184982,7 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumPV = sumPV;
       sp.sumV = sumV;
-      sp.nullRun = nullRun;
+      sp.zeroCount = zeroCount;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;

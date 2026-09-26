@@ -55,6 +55,7 @@
  *  -------------------------------------------------------------------
  *  072126 MF,CC  First version (issue #134).
  *  092526 MF,CC  #446 exact zero sums on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero run.
  */
 
 TA_LIB_API int TA_CMF_Lookback( int optInTimePeriod )
@@ -89,6 +90,7 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
    int i;
    int today;
    int nullRun;
+   int zeroVol;
    double local_mfv_flow[50];
    double *mfv_flow = &local_mfv_flow[0];
    double local_mfv_volume[50];
@@ -176,7 +178,9 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
    sumVol = 0.0;
    /* Consecutive zero-volume bars. Once they fill a window both sums are
     * exactly zero, where add-then-subtract would leave the rounding residue of
-    * the bars that departed, of either sign.
+    * the bars that departed, of either sign. It advances as a product rather
+    * than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
+    * that mispredicts on scattered zero volumes.
     */
    nullRun = 0;
    for( i = optInTimePeriod; i > 0; i -= 1 )
@@ -196,7 +200,8 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
-      nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+      zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+      nullRun = (nullRun + zeroVol) * zeroVol;
       today += 1;
       mfv_Idx++;
       if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
@@ -234,15 +239,19 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = inVolume[today];
       sumMFV += mfv;
       sumVol += inVolume[today];
-      nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+      zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+      nullRun = (nullRun + zeroVol) * zeroVol;
       today += 1;
+      /* The reset writes its own output: a branch that only zeroes the sums is
+       * if-converted into a mask on their dependency chain.
+       */
       if( nullRun >= optInTimePeriod )
       {
          nullRun = optInTimePeriod;
          sumMFV = 0.0;
          sumVol = 0.0;
-      }
-      if( sumVol > 0.0 )
+         outReal[outIdx++] = 0.0;
+      } else if( sumVol > 0.0 )
       {
          outReal[outIdx++] = sumMFV / sumVol;
       } else 
@@ -282,6 +291,7 @@ TA_RetCode TA_S_CMF( int    startIdx,
    int i;
    int today;
    int nullRun;
+   int zeroVol;
    double local_mfv_flow[50];
    double *mfv_flow = &local_mfv_flow[0];
    double local_mfv_volume[50];
@@ -366,7 +376,8 @@ TA_RetCode TA_S_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = (double)inVolume[today];
       sumMFV += mfv;
       sumVol += (double)inVolume[today];
-      nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
+      zeroVol = ((double)inVolume[today] == 0.0) ? 1 : 0;
+      nullRun = (nullRun + zeroVol) * zeroVol;
       today += 1;
       mfv_Idx++;
       if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
@@ -397,15 +408,16 @@ TA_RetCode TA_S_CMF( int    startIdx,
       mfv_volume[mfv_Idx] = (double)inVolume[today];
       sumMFV += mfv;
       sumVol += (double)inVolume[today];
-      nullRun = ((double)inVolume[today] == 0.0) ? nullRun + 1 : 0;
+      zeroVol = ((double)inVolume[today] == 0.0) ? 1 : 0;
+      nullRun = (nullRun + zeroVol) * zeroVol;
       today += 1;
       if( nullRun >= optInTimePeriod )
       {
          nullRun = optInTimePeriod;
          sumMFV = 0.0;
          sumVol = 0.0;
-      }
-      if( sumVol > 0.0 )
+         outReal[outIdx++] = 0.0;
+      } else if( sumVol > 0.0 )
       {
          outReal[outIdx++] = sumMFV / sumVol;
       } else 
@@ -458,6 +470,7 @@ static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inL
    double close;
    double tmp;
    double mfv;
+   int zeroVol;
    double sumMFV;
    double sumVol;
 
@@ -480,14 +493,18 @@ static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inL
    sp->cb_mfv_volume[sp->mfv_Idx] = inVolume;
    sumMFV += mfv;
    sumVol += inVolume;
-   sp->nullRun = (inVolume == 0.0) ? sp->nullRun + 1 : 0;
+   zeroVol = (inVolume == 0.0) ? 1 : 0;
+   sp->nullRun = (sp->nullRun + zeroVol) * zeroVol;
+   /* The reset writes its own output: a branch that only zeroes the sums is
+    * if-converted into a mask on their dependency chain.
+    */
    if( sp->nullRun >= sp->optInTimePeriod )
    {
       sp->nullRun = sp->optInTimePeriod;
       sumMFV = 0.0;
       sumVol = 0.0;
-   }
-   if( sumVol > 0.0 )
+      *outReal= 0.0;
+   } else if( sumVol > 0.0 )
    {
       *outReal= sumMFV / sumVol;
    } else 
@@ -546,6 +563,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       int i;
       int today;
       int nullRun = 0;
+      int zeroVol;
       /* Both the per-bar money flow volume and the volume that produced it are
        * carried in the circular buffer. Keeping the volume here rather than
        * re-reading inVolume[] at the trailing index is what makes outReal safe to
@@ -604,7 +622,9 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       sumVol = 0.0;
       /* Consecutive zero-volume bars. Once they fill a window both sums are
        * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign.
+       * the bars that departed, of either sign. It advances as a product rather
+       * than as v == 0.0 ? nullRun+1 : 0, which gcc and RyuJIT compile to a branch
+       * that mispredicts on scattered zero volumes.
        */
       nullRun = 0;
       for( i = optInTimePeriod; i > 0; i -= 1 )
@@ -624,7 +644,8 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
@@ -662,15 +683,19 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
          mfv_volume[mfv_Idx] = inVolume[today];
          sumMFV += mfv;
          sumVol += inVolume[today];
-         nullRun = (inVolume[today] == 0.0) ? nullRun + 1 : 0;
+         zeroVol = (inVolume[today] == 0.0) ? 1 : 0;
+         nullRun = (nullRun + zeroVol) * zeroVol;
          today += 1;
+         /* The reset writes its own output: a branch that only zeroes the sums is
+          * if-converted into a mask on their dependency chain.
+          */
          if( nullRun >= optInTimePeriod )
          {
             nullRun = optInTimePeriod;
             sumMFV = 0.0;
             sumVol = 0.0;
-         }
-         if( sumVol > 0.0 )
+            outReal[outIdx++ * outStride] = 0.0;
+         } else if( sumVol > 0.0 )
          {
             outReal[outIdx++ * outStride] = sumMFV / sumVol;
          } else 
@@ -772,6 +797,7 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    double close;
    double tmp;
    double mfv;
+   int zeroVol;
    int nullRun;
    double sumMFV;
    double sumVol;
@@ -800,14 +826,18 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    }
    sumMFV += mfv;
    sumVol += inVolume;
-   nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
+   zeroVol = (inVolume == 0.0) ? 1 : 0;
+   nullRun = (nullRun + zeroVol) * zeroVol;
+   /* The reset writes its own output: a branch that only zeroes the sums is
+    * if-converted into a mask on their dependency chain.
+    */
    if( nullRun >= sp->optInTimePeriod )
    {
       nullRun = sp->optInTimePeriod;
       sumMFV = 0.0;
       sumVol = 0.0;
-   }
-   if( sumVol > 0.0 )
+      *outReal= 0.0;
+   } else if( sumVol > 0.0 )
    {
       *outReal= sumMFV / sumVol;
    } else 

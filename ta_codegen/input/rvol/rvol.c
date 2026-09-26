@@ -11,6 +11,7 @@
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#370).
  *  092526 MF,CC  #446 exact zero total on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero count.
  */
 
 int rvol_lookback(int optInTimePeriod)
@@ -27,11 +28,14 @@ TA_RetCode rvol(int startIdx, int endIdx,
    double periodTotal;
    double baseline;
    double todayVolume;
+   double trailingVolume;
    size_t i;
    size_t outIdx;
    size_t trailingIdx;
    size_t lookbackTotal;
-   int nullRun;
+   int zeroCount;
+   int zeroIn;
+   int zeroOut;
 
    /* One bar more than a moving average of the same period: today is excluded
     * from its own baseline.
@@ -52,15 +56,16 @@ TA_RetCode rvol(int startIdx, int endIdx,
    periodTotal = 0.0;
    trailingIdx = startIdx - lookbackTotal;
 
-   /* Consecutive zero-volume bars. Once they fill a window the total is
-    * exactly zero, where add-then-subtract would leave the rounding residue of
-    * the volumes that departed, of either sign.
+   /* Zero-volume bars in the window. Once they fill it the total is exactly
+    * zero, where add-then-subtract would leave the rounding residue of the
+    * volumes that departed, of either sign. The test is fabs(v) <= 0.0 rather
+    * than == 0.0: the same result, NaN included, from one flag instead of two.
     */
-   nullRun = 0;
+   zeroCount = 0;
    i = trailingIdx;
    while( i < startIdx ) {
       periodTotal += (double)(inVolume[i]);
-      nullRun = inVolume[i] == 0.0 ? nullRun+1 : 0;
+      zeroCount += fabs(inVolume[i]) <= 0.0 ? 1 : 0;
       i = i + 1;
    }
 
@@ -73,17 +78,17 @@ TA_RetCode rvol(int startIdx, int endIdx,
        * differs only in the last ulp, so no tolerance can tell the two apart.
        */
       baseline = periodTotal / (double)optInTimePeriod;
-      periodTotal -= (double)(inVolume[trailingIdx]);
+      trailingVolume = (double)(inVolume[trailingIdx]);
+      periodTotal -= trailingVolume;
+      zeroOut = fabs(trailingVolume) <= 0.0 ? 1 : 0;
       trailingIdx = trailingIdx + 1;
       todayVolume = (double)(inVolume[i]);
       i = i + 1;
       periodTotal += todayVolume;
-      nullRun = todayVolume == 0.0 ? nullRun+1 : 0;
-      if( nullRun >= optInTimePeriod )
-      {
-         nullRun = optInTimePeriod;
+      zeroIn = fabs(todayVolume) <= 0.0 ? 1 : 0;
+      zeroCount = zeroCount + zeroIn - zeroOut;
+      if( zeroCount >= optInTimePeriod )
          periodTotal = 0.0;
-      }
       outReal[outIdx] = todayVolume / baseline;
       outIdx = outIdx + 1;
    }

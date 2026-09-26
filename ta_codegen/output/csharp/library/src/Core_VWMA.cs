@@ -57,6 +57,7 @@ public partial class Core
     *  072026 MF,CC  First version (#131).
     *  080926 MF,CC  Allow period of 1. Just copy input into output.
     *  092526 MF,CC  #446 exact zero sums on a dead volume window.
+    *  092626 MF,CC  #446 branch-free zero count.
     */
    /// <summary>
    /// Number of leading input bars <c>Vwma</c> consumes before it can produce
@@ -96,11 +97,12 @@ public partial class Core
       double tempPV = 0;
       double tempV = 0;
       double tempReal = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -156,18 +158,19 @@ public partial class Core
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window both sums are
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it both sums are exactly
+       * zero, where add-then-subtract would leave the rounding residue of the bars
+       * that departed, of either sign. The test is fabs(v) <= 0.0 rather than
+       * == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
-            nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+            zeroCount += (Math.Abs(inVolume[i]) <= 0.0) ? 1 : 0;
             i = i + 1;
          }
       }
@@ -180,27 +183,38 @@ public partial class Core
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.Abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
-         }
-         /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-          * window, that order is what makes this bit-identical to
-          * SMA(inReal*inVolume)/SMA(inVolume).
-          */
-         tempPV = sumPV;
-         tempV = sumV;
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         trailingVolume = inVolume[trailingIdx];
+         tempReal = inReal[trailingIdx] * trailingVolume;
+         /* Each branch writes its own output: a branch that only zeroes the sums
+          * is if-converted into a mask on their dependency chain.
+          */
+         if( zeroCount >= optInTimePeriod ) {
+            /* Zero, then subtract the departing bar: a non-finite price times its
+             * zero volume is NaN, not zero.
+             */
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         } else {
+            /* Snapshot both sums before removing the trailing bar, mirroring the
+             * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+             * dead window, that order is what makes this bit-identical to
+             * SMA(inReal*inVolume)/SMA(inVolume).
+             */
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         }
+         zeroCount -= (Math.Abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          outIdx = outIdx + 1;
       }
@@ -225,11 +239,12 @@ public partial class Core
       double tempPV = 0;
       double tempV = 0;
       double tempReal = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
       if( (startIdx < 0) || (startIdx > IndexMax) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -266,14 +281,14 @@ public partial class Core
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = (double)inReal[i] * (double)inVolume[i];
             sumPV += tempReal;
             sumV += (double)inVolume[i];
-            nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
+            zeroCount += (Math.Abs((double)inVolume[i]) <= 0.0) ? 1 : 0;
             i = i + 1;
          }
       }
@@ -282,19 +297,24 @@ public partial class Core
          tempReal = (double)inReal[i] * (double)inVolume[i];
          sumPV += tempReal;
          sumV += (double)inVolume[i];
-         nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.Abs((double)inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
+         trailingVolume = (double)inVolume[trailingIdx];
+         tempReal = (double)inReal[trailingIdx] * trailingVolume;
+         if( zeroCount >= optInTimePeriod ) {
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         } else {
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
          }
-         tempPV = sumPV;
-         tempV = sumV;
-         tempReal = (double)inReal[trailingIdx] * (double)inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= (double)inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         zeroCount -= (Math.Abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          outIdx = outIdx + 1;
       }
@@ -510,7 +530,7 @@ public partial class Core
       internal int optInTimePeriod;
       internal double sumPV;
       internal double sumV;
-      internal int nullRun;
+      internal int zeroCount;
       internal int ringPos_trailingIdx;
       internal int ringCap_trailingIdx;
       internal double[] ring_trailingIdx_inReal = [];
@@ -560,7 +580,7 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
-         this.nullRun = other.nullRun;
+         this.zeroCount = other.zeroCount;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
@@ -622,10 +642,11 @@ public partial class Core
          double tempPV = 0.0;
          double tempV = 0.0;
          double tempReal = 0.0;
+         double trailingVolume = 0.0;
          double cur_outReal = 0.0;
-         int nullRun = sp.nullRun;
          double sumPV = sp.sumPV;
          double sumV = sp.sumV;
+         int zeroCount = sp.zeroCount;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          int pkSlot1 = -1;
@@ -643,26 +664,36 @@ public partial class Core
          tempReal = inReal * inVolume;
          sumPV += tempReal;
          sumV += inVolume;
-         nullRun = (inVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= sp.optInTimePeriod ) {
-            nullRun = sp.optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
-         }
-         /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-          * window, that order is what makes this bit-identical to
-          * SMA(inReal*inVolume)/SMA(inVolume).
-          */
-         tempPV = sumPV;
-         tempV = sumV;
+         zeroCount += (Math.Abs(inVolume) <= 0.0) ? 1 : 0;
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1);
-         sumPV -= tempReal;
-         sumV -= (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1;
-         cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         trailingVolume = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1;
+         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * trailingVolume;
+         /* Each branch writes its own output: a branch that only zeroes the sums
+          * is if-converted into a mask on their dependency chain.
+          */
+         if( zeroCount >= sp.optInTimePeriod ) {
+            /* Zero, then subtract the departing bar: a non-finite price times its
+             * zero volume is NaN, not zero.
+             */
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         } else {
+            /* Snapshot both sums before removing the trailing bar, mirroring the
+             * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+             * dead window, that order is what makes this bit-identical to
+             * SMA(inReal*inVolume)/SMA(inVolume).
+             */
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         }
          return cur_outReal;
       }
 
@@ -688,6 +719,7 @@ public partial class Core
       double tempPV = 0.0;
       double tempV = 0.0;
       double tempReal = 0.0;
+      double trailingVolume = 0.0;
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
          return ;
@@ -699,26 +731,37 @@ public partial class Core
       tempReal = inReal * inVolume;
       sp.sumPV += tempReal;
       sp.sumV += inVolume;
-      sp.nullRun = (inVolume == 0.0) ? sp.nullRun + 1 : 0;
-      if( sp.nullRun >= sp.optInTimePeriod ) {
-         sp.nullRun = sp.optInTimePeriod;
-         sp.sumPV = 0.0;
-         sp.sumV = 0.0;
-      }
-      /* Snapshot both sums before removing the trailing bar, mirroring the
-       * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-       * window, that order is what makes this bit-identical to
-       * SMA(inReal*inVolume)/SMA(inVolume).
-       */
-      tempPV = sp.sumPV;
-      tempV = sp.sumV;
+      sp.zeroCount += (Math.Abs(inVolume) <= 0.0) ? 1 : 0;
       /* Read the trailing values before writing the output, since the caller
        * may pass the same buffer for an input and the output.
        */
-      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-      sp.sumPV -= tempReal;
-      sp.sumV -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
-      sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+      trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+      tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] * trailingVolume;
+      /* Each branch writes its own output: a branch that only zeroes the sums
+       * is if-converted into a mask on their dependency chain.
+       */
+      if( sp.zeroCount >= sp.optInTimePeriod ) {
+         /* Zero, then subtract the departing bar: a non-finite price times its
+          * zero volume is NaN, not zero.
+          */
+         tempPV = 0.0;
+         tempV = 0.0;
+         sp.sumPV = 0.0 - tempReal;
+         sp.sumV = 0.0 - trailingVolume;
+         sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+      } else {
+         /* Snapshot both sums before removing the trailing bar, mirroring the
+          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+          * dead window, that order is what makes this bit-identical to
+          * SMA(inReal*inVolume)/SMA(inVolume).
+          */
+         tempPV = sp.sumPV;
+         tempV = sp.sumV;
+         sp.sumPV -= tempReal;
+         sp.sumV -= trailingVolume;
+         sp.cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+      }
+      sp.zeroCount -= (Math.Abs(trailingVolume) <= 0.0) ? 1 : 0;
       sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
       sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -736,11 +779,12 @@ public partial class Core
       double tempPV = 0;
       double tempV = 0;
       double tempReal = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -771,7 +815,7 @@ public partial class Core
          sp.optInTimePeriod = optInTimePeriod;
          sp.sumPV = 0.0;
          sp.sumV = 0.0;
-         sp.nullRun = 0;
+         sp.zeroCount = 0;
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
@@ -814,18 +858,19 @@ public partial class Core
       sumPV = 0.0;
       sumV = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window both sums are
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the bars that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it both sums are exactly
+       * zero, where add-then-subtract would leave the rounding residue of the bars
+       * that departed, of either sign. The test is fabs(v) <= 0.0 rather than
+       * == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       if( optInTimePeriod > 1 ) {
          while( i < startIdx ) {
             tempReal = inReal[i] * inVolume[i];
             sumPV += tempReal;
             sumV += inVolume[i];
-            nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+            zeroCount += (Math.Abs(inVolume[i]) <= 0.0) ? 1 : 0;
             i = i + 1;
          }
       }
@@ -838,27 +883,38 @@ public partial class Core
          tempReal = inReal[i] * inVolume[i];
          sumPV += tempReal;
          sumV += inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.Abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
-            sumPV = 0.0;
-            sumV = 0.0;
-         }
-         /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. Up to the first dead
-          * window, that order is what makes this bit-identical to
-          * SMA(inReal*inVolume)/SMA(inVolume).
-          */
-         tempPV = sumPV;
-         tempV = sumV;
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= inVolume[trailingIdx];
-         outReal[outIdx * outStride] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         trailingVolume = inVolume[trailingIdx];
+         tempReal = inReal[trailingIdx] * trailingVolume;
+         /* Each branch writes its own output: a branch that only zeroes the sums
+          * is if-converted into a mask on their dependency chain.
+          */
+         if( zeroCount >= optInTimePeriod ) {
+            /* Zero, then subtract the departing bar: a non-finite price times its
+             * zero volume is NaN, not zero.
+             */
+            tempPV = 0.0;
+            tempV = 0.0;
+            sumPV = 0.0 - tempReal;
+            sumV = 0.0 - trailingVolume;
+            outReal[outIdx * outStride] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         } else {
+            /* Snapshot both sums before removing the trailing bar, mirroring the
+             * add-new / snapshot / subtract-old order of TA_SMA. Up to the first
+             * dead window, that order is what makes this bit-identical to
+             * SMA(inReal*inVolume)/SMA(inVolume).
+             */
+            tempPV = sumPV;
+            tempV = sumV;
+            sumPV -= tempReal;
+            sumV -= trailingVolume;
+            outReal[outIdx * outStride] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         }
+         zeroCount -= (Math.Abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          outIdx = outIdx + 1;
       }
@@ -878,7 +934,7 @@ public partial class Core
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumPV = sumPV;
       sp.sumV = sumV;
-      sp.nullRun = nullRun;
+      sp.zeroCount = zeroCount;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;

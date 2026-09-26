@@ -53,6 +53,7 @@
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#370).
  *  092526 MF,CC  #446 exact zero total on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero count.
  */
 
 // Import types from parent module
@@ -119,11 +120,14 @@ impl Core {
         let mut periodTotal: f64 = 0.0_f64;
         let mut baseline: f64 = 0.0_f64;
         let mut todayVolume: f64 = 0.0_f64;
+        let mut trailingVolume: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut nullRun: usize = 0_usize;
+        let mut zeroCount: usize = 0_usize;
+        let mut zeroIn: usize = 0_usize;
+        let mut zeroOut: usize = 0_usize;
         // One bar more than a moving average of the same period: today is excluded
         // from its own baseline.
         lookbackTotal = optInTimePeriod as usize;
@@ -138,14 +142,15 @@ impl Core {
         let inVolume = &inVolume[..=endIdx];
         periodTotal = 0.0;
         trailingIdx = startIdx - lookbackTotal;
-        // Consecutive zero-volume bars. Once they fill a window the total is
-        // exactly zero, where add-then-subtract would leave the rounding residue of
-        // the volumes that departed, of either sign.
-        nullRun = 0;
+        // Zero-volume bars in the window. Once they fill it the total is exactly
+        // zero, where add-then-subtract would leave the rounding residue of the
+        // volumes that departed, of either sign. The test is fabs(v) <= 0.0 rather
+        // than == 0.0: the same result, NaN included, from one flag instead of two.
+        zeroCount = 0;
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inVolume[i] as f64;
-            nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
+            zeroCount += (if (inVolume[i]).abs() <= 0.0 { 1 } else { 0 });
             i = i + 1;
         }
         outIdx = 0;
@@ -155,14 +160,16 @@ impl Core {
             // average of the same period at the previous bar; the reverse order
             // differs only in the last ulp, so no tolerance can tell the two apart.
             baseline = periodTotal / (optInTimePeriod as f64);
-            periodTotal -= inVolume[trailingIdx] as f64;
+            trailingVolume = inVolume[trailingIdx] as f64;
+            periodTotal -= trailingVolume;
+            zeroOut = (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
             trailingIdx = trailingIdx + 1;
             todayVolume = inVolume[i] as f64;
             i = i + 1;
             periodTotal += todayVolume;
-            nullRun = (if todayVolume == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((optInTimePeriod) as usize) {
-                nullRun = (optInTimePeriod) as usize;
+            zeroIn = (if (todayVolume).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount = zeroCount + zeroIn - zeroOut;
+            if zeroCount >= ((optInTimePeriod) as usize) {
                 periodTotal = 0.0;
             }
             outReal[outIdx] = todayVolume / baseline;
@@ -304,7 +311,7 @@ pub struct RvolStream {
 struct RvolStreamState {
     optInTimePeriod: i32,
     periodTotal: f64,
-    nullRun: usize,
+    zeroCount: usize,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inVolume: Vec<f64>,
@@ -320,6 +327,9 @@ impl Core {
     fn rvol_step_impl(sp: &mut RvolStreamState, inVolume: f64, outReal: &mut f64) {
         let mut baseline: f64 = 0.0_f64;
         let mut todayVolume: f64 = 0.0_f64;
+        let mut trailingVolume: f64 = 0.0_f64;
+        let mut zeroIn: usize = 0_usize;
+        let mut zeroOut: usize = 0_usize;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inVolume[0] = inVolume;
         }
@@ -328,12 +338,14 @@ impl Core {
         // average of the same period at the previous bar; the reverse order
         // differs only in the last ulp, so no tolerance can tell the two apart.
         baseline = sp.periodTotal / (sp.optInTimePeriod as f64);
-        sp.periodTotal -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] as f64;
+        trailingVolume = sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] as f64;
+        sp.periodTotal -= trailingVolume;
+        zeroOut = (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
         todayVolume = inVolume as f64;
         sp.periodTotal += todayVolume;
-        sp.nullRun = (if todayVolume == 0.0 { sp.nullRun + 1 } else { 0 });
-        if sp.nullRun >= ((sp.optInTimePeriod) as usize) {
-            sp.nullRun = (sp.optInTimePeriod) as usize;
+        zeroIn = (if (todayVolume).abs() <= 0.0 { 1 } else { 0 });
+        sp.zeroCount = sp.zeroCount + zeroIn - zeroOut;
+        if sp.zeroCount >= ((sp.optInTimePeriod) as usize) {
             sp.periodTotal = 0.0;
         }
         (*outReal) = todayVolume / baseline;
@@ -374,11 +386,14 @@ impl Core {
         let mut periodTotal: f64 = 0.0_f64;
         let mut baseline: f64 = 0.0_f64;
         let mut todayVolume: f64 = 0.0_f64;
+        let mut trailingVolume: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let mut nullRun: usize = 0_usize;
+        let mut zeroCount: usize = 0_usize;
+        let mut zeroIn: usize = 0_usize;
+        let mut zeroOut: usize = 0_usize;
         // One bar more than a moving average of the same period: today is excluded
         // from its own baseline.
         lookbackTotal = optInTimePeriod as usize;
@@ -392,14 +407,15 @@ impl Core {
         }
         periodTotal = 0.0;
         trailingIdx = startIdx - lookbackTotal;
-        // Consecutive zero-volume bars. Once they fill a window the total is
-        // exactly zero, where add-then-subtract would leave the rounding residue of
-        // the volumes that departed, of either sign.
-        nullRun = 0;
+        // Zero-volume bars in the window. Once they fill it the total is exactly
+        // zero, where add-then-subtract would leave the rounding residue of the
+        // volumes that departed, of either sign. The test is fabs(v) <= 0.0 rather
+        // than == 0.0: the same result, NaN included, from one flag instead of two.
+        zeroCount = 0;
         i = trailingIdx;
         while i < startIdx {
             periodTotal += inVolume[i] as f64;
-            nullRun = (if inVolume[i] == 0.0 { nullRun + 1 } else { 0 });
+            zeroCount += (if (inVolume[i]).abs() <= 0.0 { 1 } else { 0 });
             i = i + 1;
         }
         outIdx = 0;
@@ -409,14 +425,16 @@ impl Core {
             // average of the same period at the previous bar; the reverse order
             // differs only in the last ulp, so no tolerance can tell the two apart.
             baseline = periodTotal / (optInTimePeriod as f64);
-            periodTotal -= inVolume[trailingIdx] as f64;
+            trailingVolume = inVolume[trailingIdx] as f64;
+            periodTotal -= trailingVolume;
+            zeroOut = (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
             trailingIdx = trailingIdx + 1;
             todayVolume = inVolume[i] as f64;
             i = i + 1;
             periodTotal += todayVolume;
-            nullRun = (if todayVolume == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((optInTimePeriod) as usize) {
-                nullRun = (optInTimePeriod) as usize;
+            zeroIn = (if (todayVolume).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount = zeroCount + zeroIn - zeroOut;
+            if zeroCount >= ((optInTimePeriod) as usize) {
                 periodTotal = 0.0;
             }
             outReal[(outIdx * outStride) as usize] = todayVolume / baseline;
@@ -437,7 +455,7 @@ impl Core {
         let state = RvolStreamState {
             optInTimePeriod,
             periodTotal,
-            nullRun,
+            zeroCount,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
@@ -614,8 +632,11 @@ impl RvolStream {
             let outReal = &mut outReal;
             let mut baseline: f64 = 0.0_f64;
             let mut todayVolume: f64 = 0.0_f64;
-            let mut nullRun = sp.nullRun;
+            let mut trailingVolume: f64 = 0.0_f64;
+            let mut zeroIn: usize = 0_usize;
+            let mut zeroOut: usize = 0_usize;
             let mut periodTotal = sp.periodTotal;
+            let mut zeroCount = sp.zeroCount;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             if sp.ringCap_trailingIdx == 0 {
@@ -627,12 +648,14 @@ impl RvolStream {
             // average of the same period at the previous bar; the reverse order
             // differs only in the last ulp, so no tolerance can tell the two apart.
             baseline = periodTotal / (sp.optInTimePeriod as f64);
-            periodTotal -= (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] } else { pkVal0 }) as f64;
+            trailingVolume = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] } else { pkVal0 }) as f64;
+            periodTotal -= trailingVolume;
+            zeroOut = (if (trailingVolume).abs() <= 0.0 { 1 } else { 0 });
             todayVolume = inVolume as f64;
             periodTotal += todayVolume;
-            nullRun = (if todayVolume == 0.0 { nullRun + 1 } else { 0 });
-            if nullRun >= ((sp.optInTimePeriod) as usize) {
-                nullRun = (sp.optInTimePeriod) as usize;
+            zeroIn = (if (todayVolume).abs() <= 0.0 { 1 } else { 0 });
+            zeroCount = zeroCount + zeroIn - zeroOut;
+            if zeroCount >= ((sp.optInTimePeriod) as usize) {
                 periodTotal = 0.0;
             }
             (*outReal) = todayVolume / baseline;

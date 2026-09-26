@@ -11,6 +11,7 @@
  *  -------------------------------------------------------------------
  *  090426 MF,CC  Initial version (#370).
  *  092526 MF,CC  #446 exact zero total on a dead volume window.
+ *  092626 MF,CC  #446 branch-free zero count.
  */
 
    /**
@@ -46,11 +47,14 @@
       double periodTotal = 0;
       double baseline = 0;
       double todayVolume = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -76,15 +80,16 @@
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window the total is
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the volumes that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it the total is exactly
+       * zero, where add-then-subtract would leave the rounding residue of the
+       * volumes that departed, of either sign. The test is fabs(v) <= 0.0 rather
+       * than == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
@@ -95,14 +100,16 @@
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)optInTimePeriod;
-         periodTotal -= (double)inVolume[trailingIdx];
+         trailingVolume = (double)inVolume[trailingIdx];
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= optInTimePeriod ) {
             periodTotal = 0.0;
          }
          outReal[outIdx] = todayVolume / baseline;
@@ -123,11 +130,14 @@
       double periodTotal = 0;
       double baseline = 0;
       double todayVolume = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -150,24 +160,26 @@
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
-         nullRun = ((double)inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs((double)inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
       while( i <= endIdx ) {
          baseline = periodTotal / (double)optInTimePeriod;
-         periodTotal -= (double)inVolume[trailingIdx];
+         trailingVolume = (double)inVolume[trailingIdx];
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= optInTimePeriod ) {
             periodTotal = 0.0;
          }
          outReal[outIdx] = todayVolume / baseline;
@@ -344,7 +356,7 @@
       private Core core;
       private int optInTimePeriod;
       private double periodTotal;
-      private int nullRun;
+      private int zeroCount;
       private int ringPos_trailingIdx;
       private int ringCap_trailingIdx;
       private double[] ring_trailingIdx_inVolume;
@@ -392,7 +404,7 @@
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
-         this.nullRun = other.nullRun;
+         this.zeroCount = other.zeroCount;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
          this.ring_trailingIdx_inVolume = other.ring_trailingIdx_inVolume.clone();
@@ -443,9 +455,12 @@
          RvolStream sp = this;
          double baseline = 0.0;
          double todayVolume = 0.0;
+         double trailingVolume = 0.0;
+         int zeroIn = 0;
+         int zeroOut = 0;
          double cur_outReal = 0.0;
-         int nullRun = sp.nullRun;
          double periodTotal = sp.periodTotal;
+         int zeroCount = sp.zeroCount;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          if( sp.ringCap_trailingIdx == 0 ) {
@@ -458,12 +473,14 @@
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)sp.optInTimePeriod;
-         periodTotal -= (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
+         trailingVolume = (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal0);
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          todayVolume = (double)inVolume;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= sp.optInTimePeriod ) {
-            nullRun = sp.optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= sp.optInTimePeriod ) {
             periodTotal = 0.0;
          }
          cur_outReal = todayVolume / baseline;
@@ -500,6 +517,9 @@
    {
       double baseline = 0.0;
       double todayVolume = 0.0;
+      double trailingVolume = 0.0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inVolume[0] = inVolume;
       }
@@ -509,12 +529,14 @@
        * differs only in the last ulp, so no tolerance can tell the two apart.
        */
       baseline = sp.periodTotal / (double)sp.optInTimePeriod;
-      sp.periodTotal -= (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+      trailingVolume = (double)sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
+      sp.periodTotal -= trailingVolume;
+      zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
       todayVolume = (double)inVolume;
       sp.periodTotal += todayVolume;
-      sp.nullRun = (todayVolume == 0.0) ? sp.nullRun + 1 : 0;
-      if( sp.nullRun >= sp.optInTimePeriod ) {
-         sp.nullRun = sp.optInTimePeriod;
+      zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+      sp.zeroCount = sp.zeroCount + zeroIn - zeroOut;
+      if( sp.zeroCount >= sp.optInTimePeriod ) {
          sp.periodTotal = 0.0;
       }
       sp.cur_outReal = todayVolume / baseline;
@@ -529,11 +551,14 @@
       double periodTotal = 0;
       double baseline = 0;
       double todayVolume = 0;
+      double trailingVolume = 0;
       int i = 0;
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      int nullRun = 0;
+      int zeroCount = 0;
+      int zeroIn = 0;
+      int zeroOut = 0;
       int historyLen = inVolume.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -566,15 +591,16 @@
       }
       periodTotal = 0.0;
       trailingIdx = startIdx - lookbackTotal;
-      /* Consecutive zero-volume bars. Once they fill a window the total is
-       * exactly zero, where add-then-subtract would leave the rounding residue of
-       * the volumes that departed, of either sign.
+      /* Zero-volume bars in the window. Once they fill it the total is exactly
+       * zero, where add-then-subtract would leave the rounding residue of the
+       * volumes that departed, of either sign. The test is fabs(v) <= 0.0 rather
+       * than == 0.0: the same result, NaN included, from one flag instead of two.
        */
-      nullRun = 0;
+      zeroCount = 0;
       i = trailingIdx;
       while( i < startIdx ) {
          periodTotal += (double)inVolume[i];
-         nullRun = (inVolume[i] == 0.0) ? nullRun + 1 : 0;
+         zeroCount += (Math.abs(inVolume[i]) <= 0.0) ? 1 : 0;
          i = i + 1;
       }
       outIdx = 0;
@@ -585,14 +611,16 @@
           * differs only in the last ulp, so no tolerance can tell the two apart.
           */
          baseline = periodTotal / (double)optInTimePeriod;
-         periodTotal -= (double)inVolume[trailingIdx];
+         trailingVolume = (double)inVolume[trailingIdx];
+         periodTotal -= trailingVolume;
+         zeroOut = (Math.abs(trailingVolume) <= 0.0) ? 1 : 0;
          trailingIdx = trailingIdx + 1;
          todayVolume = (double)inVolume[i];
          i = i + 1;
          periodTotal += todayVolume;
-         nullRun = (todayVolume == 0.0) ? nullRun + 1 : 0;
-         if( nullRun >= optInTimePeriod ) {
-            nullRun = optInTimePeriod;
+         zeroIn = (Math.abs(todayVolume) <= 0.0) ? 1 : 0;
+         zeroCount = zeroCount + zeroIn - zeroOut;
+         if( zeroCount >= optInTimePeriod ) {
             periodTotal = 0.0;
          }
          outReal[outIdx * outStride] = todayVolume / baseline;
@@ -610,7 +638,7 @@
       System.arraycopy(inVolume, historyLen - cap_trailingIdx, capRing_trailingIdx_inVolume, 0, cap_trailingIdx);
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
-      sp.nullRun = nullRun;
+      sp.zeroCount = zeroCount;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
