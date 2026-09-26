@@ -82,16 +82,19 @@ public sealed record NamedRealValue
 
 /// <summary>The values an optional parameter accepts.</summary>
 /// <remarks>The typed replacement for C's <c>void *dataSet</c> plus a separate
-/// type tag. The hierarchy is closed — the constructor is
-/// <see langword="private protected"/>, so the four nested records below are the
-/// only cases that can exist — which lets a consumer <c>switch</c> over it
-/// exhaustively.</remarks>
+/// type tag. The hierarchy is closed: the four nested records below are the only
+/// cases that can exist, so a <c>_</c> arm in a <c>switch</c> over it is
+/// unreachable.</remarks>
 public abstract record OptInputDomain
 {
     private protected OptInputDomain() { }
 
     /// <summary>The documented default, as C reports it in <c>defaultValue</c>.</summary>
     public abstract double DefaultValue { get; }
+
+    // What closes the hierarchy: a record must expose its copy constructor, but a
+    // type derived outside this assembly cannot implement this.
+    private protected abstract void Closed();
 
     /// <summary>A continuous range of real values.</summary>
     public sealed record RealRange : OptInputDomain
@@ -131,6 +134,8 @@ public abstract record OptInputDomain
 
         /// <inheritdoc/>
         public override double DefaultValue => Default;
+
+        private protected override void Closed() { }
 
         /// <summary>The suggested sweep values, low to high.</summary>
         /// <returns><see cref="Default"/> alone when <see cref="SuggestedIncrement"/>
@@ -201,6 +206,8 @@ public abstract record OptInputDomain
         /// <inheritdoc/>
         public override double DefaultValue => Default;
 
+        private protected override void Closed() { }
+
         /// <summary>The suggested sweep values, low to high.</summary>
         /// <returns><see cref="Default"/> alone when <see cref="SuggestedIncrement"/>
         /// is not positive.</returns>
@@ -234,6 +241,8 @@ public abstract record OptInputDomain
         /// <inheritdoc/>
         public override double DefaultValue => Default;
 
+        private protected override void Closed() { }
+
         /// <summary>The list in C's <c>"0=SMA;1=EMA;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
         public string ToValueListString() => string.Join(";", Values.Select(v => FormattableString.Invariant($"{v.Value}={v.Name}")));
@@ -256,6 +265,8 @@ public abstract record OptInputDomain
 
         /// <inheritdoc/>
         public override double DefaultValue => Default;
+
+        private protected override void Closed() { }
 
         /// <summary>The list in C's <c>"value=name;..."</c> form.</summary>
         /// <returns>Semicolon-separated <c>value=name</c> pairs.</returns>
