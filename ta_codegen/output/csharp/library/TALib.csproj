@@ -32,6 +32,13 @@
          rather than a claim: IL2026/IL3050 (trim/AOT-unsafe) become warnings
          here, and TreatWarningsAsErrors turns them into build failures. -->
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- PublicAPI.Shipped.txt is the surface of the last publish: removing a
+         member listed there, or changing its signature, fails the build
+         (RS0017), and deleting its line is how a break is accepted. Not seen: a
+         changed base type, interface list, enum underlying type or sealedness,
+         and a member added to an interface. Additions pass and join the file at
+         the next publish, through scripts/csharp_public_api.py. -->
+    <NoWarn Condition="'$(TalibApiRefresh)' != 'true'">$(NoWarn);RS0016</NoWarn>
     <IsPackable>true</IsPackable>
     <!-- Written by scripts/sync.py from the VERSION file, like the pom and the
          Cargo manifests. Never hand-edit it. -->
@@ -75,6 +82,10 @@
     <None Include="../../../../LICENSE" Pack="true" PackagePath="" />
     <None Include="README.md" Pack="true" PackagePath="" />
     <None Include="../../../../website/src/.vuepress/public/android-chrome-512x512.png" Pack="true" PackagePath="icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

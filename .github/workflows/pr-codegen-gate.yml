@@ -194,7 +194,7 @@ jobs:
         run: |
           if ! dotnet build ta_codegen/output/csharp/library/TALib.csproj \
                -c Release --nologo; then
-            echo "::error::The generated C# library does not compile. Fix the emitter (ta_codegen/generator/src/backends/csharp*.rs), never the generated file. CS1591 is the doc gate, not a warning to silence: the csproj pairs TreatWarningsAsErrors with GenerateDocumentationFile, so a public member with no XML doc fails the shipped build too."
+            echo "::error::The generated C# library does not compile. Fix the emitter (ta_codegen/generator/src/backends/csharp*.rs), never the generated file. CS1591 is the doc gate, not a warning to silence: the csproj pairs TreatWarningsAsErrors with GenerateDocumentationFile, so a public member with no XML doc fails the shipped build too. RS0017 means a published member was removed or its signature changed: restore it, or, if the break is intended, delete its line from PublicAPI.Shipped.txt."
             exit 1
           fi
 
