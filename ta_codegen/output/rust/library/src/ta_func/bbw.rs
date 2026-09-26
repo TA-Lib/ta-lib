@@ -344,8 +344,9 @@ impl Core {
                     if !(_i <= _tileEnd) { break; }
                 }
                 // Each band is rounded as TA_BBANDS rounds it and the width is taken
-                // from the two rounded bands, which keeps BBW bit-identical to
-                // (upper - lower) / middle over TA_BBANDS' outputs.
+                // from the two rounded bands, then scaled after the divide, which
+                // keeps BBW bit-identical to ((upper - lower) / middle) * 100 over
+                // TA_BBANDS' outputs.
                 //
                 // Store, then overwrite: gcc keeps a guarded or selected quotient
                 // scalar under -ftrapping-math, and says nothing.
@@ -357,7 +358,7 @@ impl Core {
                         tempReal = (outReal[_tileBase + _k]).sqrt() * optInNbDevUp;
                         upper = middle + tempReal;
                         lower = middle - tempReal;
-                        outReal[_tileBase + _k] = (upper - lower) / middle;
+                        outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                         if middle == 0.0 {
                             outReal[_tileBase + _k] = 0.0;
                         }
@@ -371,7 +372,7 @@ impl Core {
                         deviation = (outReal[_tileBase + _k]).sqrt();
                         upper = (deviation as f64).mul_add(optInNbDevUp, middle);
                         lower = middle - deviation * optInNbDevDn;
-                        outReal[_tileBase + _k] = (upper - lower) / middle;
+                        outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                         if middle == 0.0 {
                             outReal[_tileBase + _k] = 0.0;
                         }
@@ -410,7 +411,7 @@ impl Core {
                 tempReal = (outReal[i]).sqrt() * optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
-                outReal[i] = (upper - lower) / middle;
+                outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
                     outReal[i] = 0.0;
                 }
@@ -424,7 +425,7 @@ impl Core {
                 deviation = (outReal[i]).sqrt();
                 upper = (deviation as f64).mul_add(optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
-                outReal[i] = (upper - lower) / middle;
+                outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
                     outReal[i] = 0.0;
                 }
@@ -433,9 +434,9 @@ impl Core {
         }
         return RetCode::Success;
     }
-    /// Bollinger BandWidth: the distance between the upper and lower Bollinger Bands, normalised by
-    /// the middle band. Low values mark contracting volatility, the setup John Bollinger calls the
-    /// Squeeze; high values mark expanding volatility.
+    /// Bollinger BandWidth: the distance between the upper and lower Bollinger Bands as a
+    /// percentage of the middle band. Low values mark contracting volatility, the setup John
+    /// Bollinger calls the Squeeze; high values mark expanding volatility.
     ///
     /// Formula and more info at [ta-lib.org/functions/bbw](https://ta-lib.org/functions/bbw).
     ///
@@ -451,7 +452,7 @@ impl Core {
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, 12=ZLEMA, 13=RMA, `MAType::DEFAULT` selects the default)
-    /// * `outReal` — Width of the bands as a fraction of the middle band.
+    /// * `outReal` — Width of the bands as a percentage of the middle band.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters
     /// [`Core::REAL_DEFAULT`], to select their default value.
@@ -603,7 +604,7 @@ impl Core {
             tempReal = (cur_outReal).sqrt() * sp.optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            cur_outReal = (upper - lower) / middle;
+            cur_outReal = (upper - lower) / middle * 100.0;
             if middle == 0.0 {
                 cur_outReal = 0.0;
             }
@@ -612,7 +613,7 @@ impl Core {
             deviation = (cur_outReal).sqrt();
             upper = (deviation as f64).mul_add(sp.optInNbDevUp, middle);
             lower = middle - deviation * sp.optInNbDevDn;
-            cur_outReal = (upper - lower) / middle;
+            cur_outReal = (upper - lower) / middle * 100.0;
             if middle == 0.0 {
                 cur_outReal = 0.0;
             }
@@ -701,7 +702,7 @@ impl Core {
                 tempReal = (sc_outReal[i]).sqrt() * optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
-                sc_outReal[i] = (upper - lower) / middle;
+                sc_outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
                     sc_outReal[i] = 0.0;
                 }
@@ -715,7 +716,7 @@ impl Core {
                 deviation = (sc_outReal[i]).sqrt();
                 upper = (deviation as f64).mul_add(optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
-                sc_outReal[i] = (upper - lower) / middle;
+                sc_outReal[i] = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
                     sc_outReal[i] = 0.0;
                 }
@@ -924,7 +925,7 @@ impl BbwStream {
                 tempReal = (cur_outReal).sqrt() * sp.optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
-                cur_outReal = (upper - lower) / middle;
+                cur_outReal = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
                     cur_outReal = 0.0;
                 }
@@ -933,7 +934,7 @@ impl BbwStream {
                 deviation = (cur_outReal).sqrt();
                 upper = (deviation as f64).mul_add(sp.optInNbDevUp, middle);
                 lower = middle - deviation * sp.optInNbDevDn;
-                cur_outReal = (upper - lower) / middle;
+                cur_outReal = (upper - lower) / middle * 100.0;
                 if middle == 0.0 {
                     cur_outReal = 0.0;
                 }

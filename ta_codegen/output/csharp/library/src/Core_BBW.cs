@@ -275,8 +275,9 @@ public partial class Core
                _i += 1;
             } while( _i <= _tileEnd );
             /* Each band is rounded as TA_BBANDS rounds it and the width is taken
-             * from the two rounded bands, which keeps BBW bit-identical to
-             * (upper - lower) / middle over TA_BBANDS' outputs.
+             * from the two rounded bands, then scaled after the divide, which
+             * keeps BBW bit-identical to ((upper - lower) / middle) * 100 over
+             * TA_BBANDS' outputs.
              *
              * Store, then overwrite: gcc keeps a guarded or selected quotient
              * scalar under -ftrapping-math, and says nothing.
@@ -287,7 +288,7 @@ public partial class Core
                   tempReal = Math.Sqrt(outReal[_tileBase + _k]) * optInNbDevUp;
                   upper = middle + tempReal;
                   lower = middle - tempReal;
-                  outReal[_tileBase + _k] = (upper - lower) / middle;
+                  outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                   if( middle == 0.0 ) {
                      outReal[_tileBase + _k] = 0.0;
                   }
@@ -298,7 +299,7 @@ public partial class Core
                   deviation = Math.Sqrt(outReal[_tileBase + _k]);
                   upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
                   lower = middle - deviation * optInNbDevDn;
-                  outReal[_tileBase + _k] = (upper - lower) / middle;
+                  outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                   if( middle == 0.0 ) {
                      outReal[_tileBase + _k] = 0.0;
                   }
@@ -334,7 +335,7 @@ public partial class Core
             tempReal = Math.Sqrt(outReal[i]) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            outReal[i] = (upper - lower) / middle;
+            outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                outReal[i] = 0.0;
             }
@@ -345,7 +346,7 @@ public partial class Core
             deviation = Math.Sqrt(outReal[i]);
             upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
-            outReal[i] = (upper - lower) / middle;
+            outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                outReal[i] = 0.0;
             }
@@ -525,7 +526,7 @@ public partial class Core
                   tempReal = Math.Sqrt(outReal[_tileBase + _k]) * optInNbDevUp;
                   upper = middle + tempReal;
                   lower = middle - tempReal;
-                  outReal[_tileBase + _k] = (upper - lower) / middle;
+                  outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                   if( middle == 0.0 ) {
                      outReal[_tileBase + _k] = 0.0;
                   }
@@ -536,7 +537,7 @@ public partial class Core
                   deviation = Math.Sqrt(outReal[_tileBase + _k]);
                   upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
                   lower = middle - deviation * optInNbDevDn;
-                  outReal[_tileBase + _k] = (upper - lower) / middle;
+                  outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                   if( middle == 0.0 ) {
                      outReal[_tileBase + _k] = 0.0;
                   }
@@ -568,7 +569,7 @@ public partial class Core
             tempReal = Math.Sqrt(outReal[i]) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            outReal[i] = (upper - lower) / middle;
+            outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                outReal[i] = 0.0;
             }
@@ -579,7 +580,7 @@ public partial class Core
             deviation = Math.Sqrt(outReal[i]);
             upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
-            outReal[i] = (upper - lower) / middle;
+            outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                outReal[i] = 0.0;
             }
@@ -589,7 +590,7 @@ public partial class Core
    }
    /// <summary>
    /// Bollinger BandWidth: the distance between the upper and lower Bollinger
-   /// Bands, normalised by the middle band. Low values mark contracting
+   /// Bands as a percentage of the middle band. Low values mark contracting
    /// volatility, the setup John Bollinger calls the Squeeze; high values mark
    /// expanding volatility.
    /// </summary>
@@ -599,11 +600,11 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is four times the window's coefficient of variation: its standard deviation divided by its mean.</description></item>
+   /// <item><description>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</description></item>
    /// <item><description>The two deviation multipliers enter only through their sum.</description></item>
-   /// <item><description>The result is a ratio; multiply by 100 to read it as a percentage of the middle band.</description></item>
+   /// <item><description>The result is in percent: 10 means the bands are 10% of the middle band apart.</description></item>
    /// <item><description>Any <c>optInMAType</c> other than SMA is a TA-Lib generalisation, as it is for BBANDS: the deviation stays the population standard deviation about the simple mean.</description></item>
-   /// <item><description>Wherever the middle band is not 0, BBW is bit for bit <c>(upper - lower) / middle</c> computed from BBANDS' own outputs.</description></item>
+   /// <item><description>Wherever the middle band is not 0, BBW is bit for bit <c>((upper - lower) / middle) * 100</c> computed from BBANDS' own outputs.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -631,7 +632,7 @@ public partial class Core
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
-   /// <param name="outReal">Width of the bands as a fraction of the middle band. Must hold at least
+   /// <param name="outReal">Width of the bands as a percentage of the middle band. Must hold at least
    /// <c>endIdx - max(startIdx, BbwLookback(...)) + 1</c> values, the count the
    /// call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -682,7 +683,7 @@ public partial class Core
    }
    /// <summary>
    /// Bollinger BandWidth: the distance between the upper and lower Bollinger
-   /// Bands, normalised by the middle band. Low values mark contracting
+   /// Bands as a percentage of the middle band. Low values mark contracting
    /// volatility, the setup John Bollinger calls the Squeeze; high values mark
    /// expanding volatility.
    /// </summary>
@@ -692,11 +693,11 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is four times the window's coefficient of variation: its standard deviation divided by its mean.</description></item>
+   /// <item><description>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</description></item>
    /// <item><description>The two deviation multipliers enter only through their sum.</description></item>
-   /// <item><description>The result is a ratio; multiply by 100 to read it as a percentage of the middle band.</description></item>
+   /// <item><description>The result is in percent: 10 means the bands are 10% of the middle band apart.</description></item>
    /// <item><description>Any <c>optInMAType</c> other than SMA is a TA-Lib generalisation, as it is for BBANDS: the deviation stays the population standard deviation about the simple mean.</description></item>
-   /// <item><description>Wherever the middle band is not 0, BBW is bit for bit <c>(upper - lower) / middle</c> computed from BBANDS' own outputs.</description></item>
+   /// <item><description>Wherever the middle band is not 0, BBW is bit for bit <c>((upper - lower) / middle) * 100</c> computed from BBANDS' own outputs.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -730,7 +731,7 @@ public partial class Core
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
-   /// <param name="outReal">Width of the bands as a fraction of the middle band. Must hold at least
+   /// <param name="outReal">Width of the bands as a percentage of the middle band. Must hold at least
    /// <c>endIdx - max(startIdx, BbwLookback(...)) + 1</c> values, the count the
    /// call produces (none when that is not positive).</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -922,7 +923,7 @@ public partial class Core
             tempReal = Math.Sqrt(cur_outReal) * sp.optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            cur_outReal = (upper - lower) / middle;
+            cur_outReal = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                cur_outReal = 0.0;
             }
@@ -931,7 +932,7 @@ public partial class Core
             deviation = Math.Sqrt(cur_outReal);
             upper = Math.FusedMultiplyAdd(deviation, sp.optInNbDevUp, middle);
             lower = middle - deviation * sp.optInNbDevDn;
-            cur_outReal = (upper - lower) / middle;
+            cur_outReal = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                cur_outReal = 0.0;
             }
@@ -974,7 +975,7 @@ public partial class Core
          tempReal = Math.Sqrt(cur_outReal) * sp.optInNbDevUp;
          upper = middle + tempReal;
          lower = middle - tempReal;
-         cur_outReal = (upper - lower) / middle;
+         cur_outReal = (upper - lower) / middle * 100.0;
          if( middle == 0.0 ) {
             cur_outReal = 0.0;
          }
@@ -983,7 +984,7 @@ public partial class Core
          deviation = Math.Sqrt(cur_outReal);
          upper = Math.FusedMultiplyAdd(deviation, sp.optInNbDevUp, middle);
          lower = middle - deviation * sp.optInNbDevDn;
-         cur_outReal = (upper - lower) / middle;
+         cur_outReal = (upper - lower) / middle * 100.0;
          if( middle == 0.0 ) {
             cur_outReal = 0.0;
          }
@@ -1068,7 +1069,7 @@ public partial class Core
             tempReal = Math.Sqrt(sc_outReal[i]) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            sc_outReal[i] = (upper - lower) / middle;
+            sc_outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                sc_outReal[i] = 0.0;
             }
@@ -1079,7 +1080,7 @@ public partial class Core
             deviation = Math.Sqrt(sc_outReal[i]);
             upper = Math.FusedMultiplyAdd(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
-            sc_outReal[i] = (upper - lower) / middle;
+            sc_outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 ) {
                sc_outReal[i] = 0.0;
             }
@@ -1185,7 +1186,7 @@ public partial class Core
    /// range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <param name="optInMAType">As in the batch call; see <see cref="BbwLookback"/> for its default and
    /// range (<c>MAType.DEFAULT</c> selects the default).</param>
-   /// <param name="outReal">Width of the bands as a fraction of the middle band. Must hold at least
+   /// <param name="outReal">Width of the bands as a percentage of the middle band. Must hold at least
    /// <c>historyLen - BbwLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BbwLookback(...) + 1</c> bars.</exception>

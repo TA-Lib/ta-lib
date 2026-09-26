@@ -153,8 +153,9 @@ TA_RetCode bbw(int startIdx, int endIdx,
          } while( _i <= _tileEnd );
 
          /* Each band is rounded as TA_BBANDS rounds it and the width is taken
-          * from the two rounded bands, which keeps BBW bit-identical to
-          * (upper - lower) / middle over TA_BBANDS' outputs.
+          * from the two rounded bands, then scaled after the divide, which
+          * keeps BBW bit-identical to ((upper - lower) / middle) * 100 over
+          * TA_BBANDS' outputs.
           *
           * Store, then overwrite: gcc keeps a guarded or selected quotient
           * scalar under -ftrapping-math, and says nothing.
@@ -167,7 +168,7 @@ TA_RetCode bbw(int startIdx, int endIdx,
                tempReal = sqrt(outReal[_tileBase+_k]) * optInNbDevUp;
                upper    = middle + tempReal;
                lower    = middle - tempReal;
-               outReal[_tileBase+_k] = (upper - lower) / middle;
+               outReal[_tileBase+_k] = ((upper - lower) / middle) * 100.0;
                if( middle == 0.0 )
                   outReal[_tileBase+_k] = 0.0;
             }
@@ -180,7 +181,7 @@ TA_RetCode bbw(int startIdx, int endIdx,
                deviation = sqrt(outReal[_tileBase+_k]);
                upper     = middle + (deviation * optInNbDevUp);
                lower     = middle - (deviation * optInNbDevDn);
-               outReal[_tileBase+_k] = (upper - lower) / middle;
+               outReal[_tileBase+_k] = ((upper - lower) / middle) * 100.0;
                if( middle == 0.0 )
                   outReal[_tileBase+_k] = 0.0;
             }
@@ -242,7 +243,7 @@ TA_RetCode bbw(int startIdx, int endIdx,
          tempReal = sqrt(outReal[i]) * optInNbDevUp;
          upper    = middle + tempReal;
          lower    = middle - tempReal;
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = ((upper - lower) / middle) * 100.0;
          if( middle == 0.0 )
             outReal[i] = 0.0;
       }
@@ -255,7 +256,7 @@ TA_RetCode bbw(int startIdx, int endIdx,
          deviation = sqrt(outReal[i]);
          upper     = middle + (deviation * optInNbDevUp);
          lower     = middle - (deviation * optInNbDevDn);
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = ((upper - lower) / middle) * 100.0;
          if( middle == 0.0 )
             outReal[i] = 0.0;
       }
@@ -414,7 +415,7 @@ TA_RetCode bbw_ALT1(int startIdx, int endIdx,
                tempReal = sqrt(_var[_k]) * optInNbDevUp;
                upper    = middle + tempReal;
                lower    = middle - tempReal;
-               _var[_k] = (upper - lower) / middle;
+               _var[_k] = ((upper - lower) / middle) * 100.0;
             }
          }
          else
@@ -425,7 +426,7 @@ TA_RetCode bbw_ALT1(int startIdx, int endIdx,
                deviation = sqrt(_var[_k]);
                upper     = middle + (deviation * optInNbDevUp);
                lower     = middle - (deviation * optInNbDevDn);
-               _var[_k]  = (upper - lower) / middle;
+               _var[_k]  = ((upper - lower) / middle) * 100.0;
             }
          }
 
@@ -497,7 +498,7 @@ TA_RetCode bbw_ALT1(int startIdx, int endIdx,
          tempReal = sqrt(outReal[i]) * optInNbDevUp;
          upper    = middle + tempReal;
          lower    = middle - tempReal;
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = ((upper - lower) / middle) * 100.0;
       }
    }
    else
@@ -508,7 +509,7 @@ TA_RetCode bbw_ALT1(int startIdx, int endIdx,
          deviation = sqrt(outReal[i]);
          upper     = middle + (deviation * optInNbDevUp);
          lower     = middle - (deviation * optInNbDevDn);
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = ((upper - lower) / middle) * 100.0;
       }
    }
 

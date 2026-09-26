@@ -267,8 +267,9 @@ TA_LIB_API TA_RetCode TA_BBW( int    startIdx,
             _i += 1;
          } while( _i <= _tileEnd );
          /* Each band is rounded as TA_BBANDS rounds it and the width is taken
-          * from the two rounded bands, which keeps BBW bit-identical to
-          * (upper - lower) / middle over TA_BBANDS' outputs.
+          * from the two rounded bands, then scaled after the divide, which
+          * keeps BBW bit-identical to ((upper - lower) / middle) * 100 over
+          * TA_BBANDS' outputs.
           *
           * Store, then overwrite: gcc keeps a guarded or selected quotient
           * scalar under -ftrapping-math, and says nothing.
@@ -281,7 +282,7 @@ TA_LIB_API TA_RetCode TA_BBW( int    startIdx,
                tempReal = sqrt(outReal[_tileBase + _k]) * optInNbDevUp;
                upper = middle + tempReal;
                lower = middle - tempReal;
-               outReal[_tileBase + _k] = (upper - lower) / middle;
+               outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                if( middle == 0.0 )
                {
                   outReal[_tileBase + _k] = 0.0;
@@ -295,7 +296,7 @@ TA_LIB_API TA_RetCode TA_BBW( int    startIdx,
                deviation = sqrt(outReal[_tileBase + _k]);
                upper = fma(deviation, optInNbDevUp, middle);
                lower = middle - deviation * optInNbDevDn;
-               outReal[_tileBase + _k] = (upper - lower) / middle;
+               outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                if( middle == 0.0 )
                {
                   outReal[_tileBase + _k] = 0.0;
@@ -349,7 +350,7 @@ TA_LIB_API TA_RetCode TA_BBW( int    startIdx,
          tempReal = sqrt(outReal[i]) * optInNbDevUp;
          upper = middle + tempReal;
          lower = middle - tempReal;
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = (upper - lower) / middle * 100.0;
          if( middle == 0.0 )
          {
             outReal[i] = 0.0;
@@ -363,7 +364,7 @@ TA_LIB_API TA_RetCode TA_BBW( int    startIdx,
          deviation = sqrt(outReal[i]);
          upper = fma(deviation, optInNbDevUp, middle);
          lower = middle - deviation * optInNbDevDn;
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = (upper - lower) / middle * 100.0;
          if( middle == 0.0 )
          {
             outReal[i] = 0.0;
@@ -563,7 +564,7 @@ TA_RetCode TA_S_BBW( int    startIdx,
                tempReal = sqrt(outReal[_tileBase + _k]) * optInNbDevUp;
                upper = middle + tempReal;
                lower = middle - tempReal;
-               outReal[_tileBase + _k] = (upper - lower) / middle;
+               outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                if( middle == 0.0 )
                {
                   outReal[_tileBase + _k] = 0.0;
@@ -577,7 +578,7 @@ TA_RetCode TA_S_BBW( int    startIdx,
                deviation = sqrt(outReal[_tileBase + _k]);
                upper = fma(deviation, optInNbDevUp, middle);
                lower = middle - deviation * optInNbDevDn;
-               outReal[_tileBase + _k] = (upper - lower) / middle;
+               outReal[_tileBase + _k] = (upper - lower) / middle * 100.0;
                if( middle == 0.0 )
                {
                   outReal[_tileBase + _k] = 0.0;
@@ -627,7 +628,7 @@ TA_RetCode TA_S_BBW( int    startIdx,
          tempReal = sqrt(outReal[i]) * optInNbDevUp;
          upper = middle + tempReal;
          lower = middle - tempReal;
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = (upper - lower) / middle * 100.0;
          if( middle == 0.0 )
          {
             outReal[i] = 0.0;
@@ -641,7 +642,7 @@ TA_RetCode TA_S_BBW( int    startIdx,
          deviation = sqrt(outReal[i]);
          upper = fma(deviation, optInNbDevUp, middle);
          lower = middle - deviation * optInNbDevDn;
-         outReal[i] = (upper - lower) / middle;
+         outReal[i] = (upper - lower) / middle * 100.0;
          if( middle == 0.0 )
          {
             outReal[i] = 0.0;
@@ -696,7 +697,7 @@ static TA_RetCode TA_BBW_StepImpl( struct TA_BBW_Stream *sp, double inReal, doub
       tempReal = sqrt(cur_outReal) * sp->optInNbDevUp;
       upper = middle + tempReal;
       lower = middle - tempReal;
-      cur_outReal = (upper - lower) / middle;
+      cur_outReal = (upper - lower) / middle * 100.0;
       if( middle == 0.0 )
       {
          cur_outReal = 0.0;
@@ -707,7 +708,7 @@ static TA_RetCode TA_BBW_StepImpl( struct TA_BBW_Stream *sp, double inReal, doub
       deviation = sqrt(cur_outReal);
       upper = fma(deviation, sp->optInNbDevUp, middle);
       lower = middle - deviation * sp->optInNbDevDn;
-      cur_outReal = (upper - lower) / middle;
+      cur_outReal = (upper - lower) / middle * 100.0;
       if( middle == 0.0 )
       {
          cur_outReal = 0.0;
@@ -848,7 +849,7 @@ static TA_RetCode TA_BBW_OpenImpl( struct TA_BBW_Stream **stream, const double i
             tempReal = sqrt(sc_outReal[i]) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            sc_outReal[i] = (upper - lower) / middle;
+            sc_outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 )
             {
                sc_outReal[i] = 0.0;
@@ -862,7 +863,7 @@ static TA_RetCode TA_BBW_OpenImpl( struct TA_BBW_Stream **stream, const double i
             deviation = sqrt(sc_outReal[i]);
             upper = fma(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
-            sc_outReal[i] = (upper - lower) / middle;
+            sc_outReal[i] = (upper - lower) / middle * 100.0;
             if( middle == 0.0 )
             {
                sc_outReal[i] = 0.0;
@@ -983,7 +984,7 @@ TA_LIB_API TA_RetCode TA_BBW_Peek( const TA_BBW_Stream *stream, double inReal, d
       tempReal = sqrt(cur_outReal) * sp->optInNbDevUp;
       upper = middle + tempReal;
       lower = middle - tempReal;
-      cur_outReal = (upper - lower) / middle;
+      cur_outReal = (upper - lower) / middle * 100.0;
       if( middle == 0.0 )
       {
          cur_outReal = 0.0;
@@ -994,7 +995,7 @@ TA_LIB_API TA_RetCode TA_BBW_Peek( const TA_BBW_Stream *stream, double inReal, d
       deviation = sqrt(cur_outReal);
       upper = fma(deviation, sp->optInNbDevUp, middle);
       lower = middle - deviation * sp->optInNbDevDn;
-      cur_outReal = (upper - lower) / middle;
+      cur_outReal = (upper - lower) / middle * 100.0;
       if( middle == 0.0 )
       {
          cur_outReal = 0.0;

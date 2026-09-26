@@ -15183,7 +15183,7 @@ class Core {
                       tempReal = Math.sqrt(_var[_k]) * optInNbDevUp;
                       upper = middle + tempReal;
                       lower = middle - tempReal;
-                      _var[_k] = (upper - lower) / middle;
+                      _var[_k] = (upper - lower) / middle * 100.0;
                    }
                 } else {
                    for( _k = 0; _k < _t; _k += 1 ) {
@@ -15191,7 +15191,7 @@ class Core {
                       deviation = Math.sqrt(_var[_k]);
                       upper = Math.fma(deviation, optInNbDevUp, middle);
                       lower = middle - deviation * optInNbDevDn;
-                      _var[_k] = (upper - lower) / middle;
+                      _var[_k] = (upper - lower) / middle * 100.0;
                    }
                 }
                 if( _zero != 0 ) {
@@ -15233,7 +15233,7 @@ class Core {
                 tempReal = Math.sqrt(outReal[i]) * optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
-                outReal[i] = (upper - lower) / middle;
+                outReal[i] = (upper - lower) / middle * 100.0;
              }
           } else {
              for( i = 0; i < (int)outNBElement.value; i += 1 ) {
@@ -15241,7 +15241,7 @@ class Core {
                 deviation = Math.sqrt(outReal[i]);
                 upper = Math.fma(deviation, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
-                outReal[i] = (upper - lower) / middle;
+                outReal[i] = (upper - lower) / middle * 100.0;
              }
           }
           for( i = 0; i < (int)outNBElement.value; i += 1 ) {
@@ -15424,7 +15424,7 @@ class Core {
                       tempReal = Math.sqrt(_var[_k]) * optInNbDevUp;
                       upper = middle + tempReal;
                       lower = middle - tempReal;
-                      _var[_k] = (upper - lower) / middle;
+                      _var[_k] = (upper - lower) / middle * 100.0;
                    }
                 } else {
                    for( _k = 0; _k < _t; _k += 1 ) {
@@ -15432,7 +15432,7 @@ class Core {
                       deviation = Math.sqrt(_var[_k]);
                       upper = Math.fma(deviation, optInNbDevUp, middle);
                       lower = middle - deviation * optInNbDevDn;
-                      _var[_k] = (upper - lower) / middle;
+                      _var[_k] = (upper - lower) / middle * 100.0;
                    }
                 }
                 if( _zero != 0 ) {
@@ -15473,7 +15473,7 @@ class Core {
                 tempReal = Math.sqrt(outReal[i]) * optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
-                outReal[i] = (upper - lower) / middle;
+                outReal[i] = (upper - lower) / middle * 100.0;
              }
           } else {
              for( i = 0; i < (int)outNBElement.value; i += 1 ) {
@@ -15481,7 +15481,7 @@ class Core {
                 deviation = Math.sqrt(outReal[i]);
                 upper = Math.fma(deviation, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
-                outReal[i] = (upper - lower) / middle;
+                outReal[i] = (upper - lower) / middle * 100.0;
              }
           }
           for( i = 0; i < (int)outNBElement.value; i += 1 ) {
@@ -15493,18 +15493,18 @@ class Core {
        }
        /**
         * Bollinger BandWidth: the distance between the upper and lower Bollinger
-        * Bands, normalised by the middle band. Low values mark contracting
+        * Bands as a percentage of the middle band. Low values mark contracting
         * volatility, the setup John Bollinger calls the Squeeze; high values mark
         * expanding volatility.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is four times the window's coefficient of variation: its standard deviation divided by its mean.</li>
+        * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</li>
         * <li>The two deviation multipliers enter only through their sum.</li>
-        * <li>The result is a ratio; multiply by 100 to read it as a percentage of the middle band.</li>
+        * <li>The result is in percent: 10 means the bands are 10% of the middle band apart.</li>
         * <li>Any {@code optInMAType} other than SMA is a TA-Lib generalisation, as it is for BBANDS: the deviation stays the population standard deviation about the simple mean.</li>
-        * <li>Wherever the middle band is not 0, BBW is bit for bit {@code (upper - lower) / middle} computed from BBANDS' own outputs.</li>
+        * <li>Wherever the middle band is not 0, BBW is bit for bit {@code ((upper - lower) / middle) * 100} computed from BBANDS' own outputs.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -15525,7 +15525,7 @@ class Core {
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
-        * @param outReal Width of the bands as a fraction of the middle band. Must
+        * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
         *        the count the call produces (none when that is not positive).
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -15573,18 +15573,18 @@ class Core {
        }
        /**
         * Bollinger BandWidth: the distance between the upper and lower Bollinger
-        * Bands, normalised by the middle band. Low values mark contracting
+        * Bands as a percentage of the middle band. Low values mark contracting
         * volatility, the setup John Bollinger calls the Squeeze; high values mark
         * expanding volatility.
         * <p>Formula and more info at <a
         * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
         * <p><b>Notes</b>
         * <ul>
-        * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is four times the window's coefficient of variation: its standard deviation divided by its mean.</li>
+        * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is 400 times the window's coefficient of variation: its standard deviation divided by its mean.</li>
         * <li>The two deviation multipliers enter only through their sum.</li>
-        * <li>The result is a ratio; multiply by 100 to read it as a percentage of the middle band.</li>
+        * <li>The result is in percent: 10 means the bands are 10% of the middle band apart.</li>
         * <li>Any {@code optInMAType} other than SMA is a TA-Lib generalisation, as it is for BBANDS: the deviation stays the population standard deviation about the simple mean.</li>
-        * <li>Wherever the middle band is not 0, BBW is bit for bit {@code (upper - lower) / middle} computed from BBANDS' own outputs.</li>
+        * <li>Wherever the middle band is not 0, BBW is bit for bit {@code ((upper - lower) / middle) * 100} computed from BBANDS' own outputs.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -15608,7 +15608,7 @@ class Core {
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
-        * @param outReal Width of the bands as a fraction of the middle band. Must
+        * @param outReal Width of the bands as a percentage of the middle band. Must
         *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
         *        the count the call produces (none when that is not positive).
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -15787,7 +15787,7 @@ class Core {
                 tempReal = Math.sqrt(cur_outReal) * sp.optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
-                cur_outReal = (upper - lower) / middle;
+                cur_outReal = (upper - lower) / middle * 100.0;
                 if( middle == 0.0 ) {
                    cur_outReal = 0.0;
                 }
@@ -15796,7 +15796,7 @@ class Core {
                 deviation = Math.sqrt(cur_outReal);
                 upper = Math.fma(deviation, sp.optInNbDevUp, middle);
                 lower = middle - deviation * sp.optInNbDevDn;
-                cur_outReal = (upper - lower) / middle;
+                cur_outReal = (upper - lower) / middle * 100.0;
                 if( middle == 0.0 ) {
                    cur_outReal = 0.0;
                 }
@@ -15848,7 +15848,7 @@ class Core {
              tempReal = Math.sqrt(cur_outReal) * sp.optInNbDevUp;
              upper = middle + tempReal;
              lower = middle - tempReal;
-             cur_outReal = (upper - lower) / middle;
+             cur_outReal = (upper - lower) / middle * 100.0;
              if( middle == 0.0 ) {
                 cur_outReal = 0.0;
              }
@@ -15857,7 +15857,7 @@ class Core {
              deviation = Math.sqrt(cur_outReal);
              upper = Math.fma(deviation, sp.optInNbDevUp, middle);
              lower = middle - deviation * sp.optInNbDevDn;
-             cur_outReal = (upper - lower) / middle;
+             cur_outReal = (upper - lower) / middle * 100.0;
              if( middle == 0.0 ) {
                 cur_outReal = 0.0;
              }
@@ -15937,7 +15937,7 @@ class Core {
                 tempReal = Math.sqrt(sc_outReal[i]) * optInNbDevUp;
                 upper = middle + tempReal;
                 lower = middle - tempReal;
-                sc_outReal[i] = (upper - lower) / middle;
+                sc_outReal[i] = (upper - lower) / middle * 100.0;
                 if( middle == 0.0 ) {
                    sc_outReal[i] = 0.0;
                 }
@@ -15948,7 +15948,7 @@ class Core {
                 deviation = Math.sqrt(sc_outReal[i]);
                 upper = Math.fma(deviation, optInNbDevUp, middle);
                 lower = middle - deviation * optInNbDevDn;
-                sc_outReal[i] = (upper - lower) / middle;
+                sc_outReal[i] = (upper - lower) / middle * 100.0;
                 if( middle == 0.0 ) {
                    sc_outReal[i] = 0.0;
                 }
@@ -190201,7 +190201,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "4d09ea22e36d3e31";
+    static final String SPLICED_GENCODE_DIGEST = "9ce35cb483c6c493";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
