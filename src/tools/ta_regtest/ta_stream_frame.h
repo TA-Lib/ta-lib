@@ -3601,6 +3601,42 @@ static TA_RetCode TA_CEIL_SFrameClose( void *stream )
    return TA_CEIL_Close( (TA_CEIL_Stream *)stream );
 }
 
+static TA_RetCode TA_CG_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CG_Open(
+               (TA_CG_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CG_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CG_OpenAndFill(
+               (TA_CG_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CG_SFrameClose( void *stream )
+{
+   return TA_CG_Close( (TA_CG_Stream *)stream );
+}
+
 static TA_RetCode TA_CMF_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8482,6 +8518,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      4, TA_VIn_CDLXSIDEGAP3METHODS, 0, NULL, 1, TA_VOutIsInt_CDLXSIDEGAP3METHODS },
    { "CEIL", TA_CEIL_SFrameOpen, TA_CEIL_SFrameFill, TA_CEIL_SFrameClose,
      1, TA_VIn_CEIL, 0, NULL, 1, TA_VOutIsInt_CEIL },
+   { "CG", TA_CG_SFrameOpen, TA_CG_SFrameFill, TA_CG_SFrameClose,
+     1, TA_VIn_CG, 1, TA_VOpt_CG, 1, TA_VOutIsInt_CG },
    { "CMF", TA_CMF_SFrameOpen, TA_CMF_SFrameFill, TA_CMF_SFrameClose,
      4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, TA_VOutIsInt_CMF },
    { "CMO", TA_CMO_SFrameOpen, TA_CMO_SFrameFill, TA_CMO_SFrameClose,
@@ -8728,6 +8766,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 207
+#define TA_STREAM_TABLE_SIZE 208
 
 #endif /* TA_STREAM_FRAME_H */

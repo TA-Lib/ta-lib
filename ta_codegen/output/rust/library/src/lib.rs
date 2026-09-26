@@ -176,7 +176,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (49)
+//! ## Momentum Indicators (50)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -187,6 +187,7 @@
 //! * [`AROONOSC`](Core::aroonosc) — Aroon Oscillator
 //! * [`BOP`](Core::bop) — Balance Of Power
 //! * [`CCI`](Core::cci) — Commodity Channel Index
+//! * [`CG`](Core::cg) — Center of Gravity Oscillator
 //! * [`CMO`](Core::cmo) — Chande Momentum Oscillator
 //! * [`CMOU`](Core::cmou) — Chande Momentum Oscillator (Unsmoothed)
 //! * [`COPPOCK`](Core::coppock) — Coppock Curve

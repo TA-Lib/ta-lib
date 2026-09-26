@@ -311,6 +311,9 @@ final class Dispatch {
          case "CEIL":
             return core.ceil(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "CG":
+            return core.cg(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "CMF":
             return core.cmf(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.realOutput(0));
@@ -858,6 +861,8 @@ final class Dispatch {
             return core.cdlxsidegap3methodsLookback();
          case "CEIL":
             return core.ceilLookback();
+         case "CG":
+            return core.cgLookback(h.intOpt(0));
          case "CMF":
             return core.cmfLookback(h.intOpt(0));
          case "CMO":

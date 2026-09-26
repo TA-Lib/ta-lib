@@ -1503,6 +1503,45 @@ DEF_FUNCTION( CEIL,
              );
 /* CEIL END */
 
+/* CG BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CG_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   10,
+   "Number of bars in the window",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_CG_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CG_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CG_OptInputs[] =
+{ &TA_DEF_UI_D_CG_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( CG,
+              TA_GroupId_MomentumIndicators,
+              "Center of Gravity Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* CG END */
+
 /* CMF BEGIN */
 static const TA_InputParameterInfo    *TA_CMF_Inputs[]    =
 {
@@ -2018,6 +2057,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLUPSIDEGAP2CROWS),
    ADD_TO_TABLE(CDLXSIDEGAP3METHODS),
    ADD_TO_TABLE(CEIL),
+   ADD_TO_TABLE(CG),
    ADD_TO_TABLE(CMF),
    ADD_TO_TABLE(CMO),
    ADD_TO_TABLE(CMOU),

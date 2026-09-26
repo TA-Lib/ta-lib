@@ -3716,6 +3716,45 @@ static TA_RetCode TA_CEIL_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_CEIL[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_CEIL[] = { 0 };
 
+static TA_RetCode TA_CG_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CG(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CG_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_CG(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_CG[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_CG[] = { 0 };
+static const TA_VOptSpec TA_VOpt_CG[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
+};
+
 static TA_RetCode TA_CMF_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8922,6 +8961,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      4, TA_VIn_CDLXSIDEGAP3METHODS, 0, NULL, 1, TA_VOutIsInt_CDLXSIDEGAP3METHODS, 0 },
    { "CEIL", TA_CEIL_VFrameD, TA_CEIL_VFrameS,
      1, TA_VIn_CEIL, 0, NULL, 1, TA_VOutIsInt_CEIL, 0 },
+   { "CG", TA_CG_VFrameD, TA_CG_VFrameS,
+     1, TA_VIn_CG, 1, TA_VOpt_CG, 1, TA_VOutIsInt_CG, 0 },
    { "CMF", TA_CMF_VFrameD, TA_CMF_VFrameS,
      4, TA_VIn_CMF, 1, TA_VOpt_CMF, 1, TA_VOutIsInt_CMF, 0 },
    { "CMO", TA_CMO_VFrameD, TA_CMO_VFrameS,
@@ -9168,6 +9209,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 207
+#define TA_VARIANT_TABLE_SIZE 208
 
 #endif /* TA_VARIANT_FRAME_H */

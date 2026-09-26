@@ -14,6 +14,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   target. An autotools install still provides `ta-lib.pc` only. (#422)
 - New TA Functions:
   - BBW: Bollinger BandWidth, the band spread over the middle band (#447)
+  - CG: Center of Gravity Oscillator, Ehlers' balance point of the window (#450)
   - CRSI: Connors RSI (#431)
   - CTI: Correlation Trend Indicator (#430)
   - KURTOSIS: Rolling Excess Kurtosis (#433)

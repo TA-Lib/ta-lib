@@ -198,6 +198,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeCdlupsidegap2crows(),
             MakeCdlxsidegap3methods(),
             MakeCeil(),
+            MakeCg(),
             MakeCmf(),
             MakeCmo(),
             MakeCmou(),
@@ -2149,6 +2150,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Ceil(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FuncInfo MakeCg() => new(
+        name: "CG",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Center of Gravity Oscillator",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.CgLookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Cg(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeCmf() => new(
         name: "CMF",

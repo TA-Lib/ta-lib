@@ -7397,6 +7397,92 @@ TA_LIB_API TA_RetCode TA_CEIL_Advance( TA_CEIL_Stream *stream );
 TA_LIB_API TA_RetCode TA_CEIL_Clone( const TA_CEIL_Stream *stream, TA_CEIL_Stream **clone );
 
 /*
+ * TA_CG - Center of Gravity Oscillator
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of bars in the window
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CG( int    startIdx,
+                             int    endIdx,
+                                        const double inReal[],
+                                        int           optInTimePeriod, /* From 2 to 100000 */
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_CG( int    startIdx,
+                               int    endIdx,
+                                          const float  inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API int TA_CG_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_CG: incremental per-bar evaluation.
+ */
+typedef struct TA_CG_Stream TA_CG_Stream;
+
+TA_LIB_API TA_RetCode TA_CG_Open( TA_CG_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CG_Update( TA_CG_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CG_Peek( const TA_CG_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CG_Close( TA_CG_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_CG( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_CG_OpenAndFill( TA_CG_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_CG_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_CG_Value( const TA_CG_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_CG reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_CG_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_CG_OutRange( const TA_CG_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_CG_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_CG_Advance( TA_CG_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_CG_Clone( const TA_CG_Stream *stream, TA_CG_Stream **clone );
+
+/*
  * TA_CMF - Chaikin Money Flow
  * 
  * Input  = High, Low, Close, Volume

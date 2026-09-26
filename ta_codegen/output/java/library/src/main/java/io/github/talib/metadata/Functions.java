@@ -205,6 +205,7 @@ public final class Functions {
       put(m, f_CDLUPSIDEGAP2CROWS());
       put(m, f_CDLXSIDEGAP3METHODS());
       put(m, f_CEIL());
+      put(m, f_CG());
       put(m, f_CMF());
       put(m, f_CMO());
       put(m, f_CMOU());
@@ -1554,6 +1555,24 @@ public final class Functions {
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_CG() {
+      return new FuncInfo(
+         "CG", "Momentum Indicators", "Center of Gravity Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of bars in the window", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

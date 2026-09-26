@@ -812,6 +812,15 @@ TA_RetCode TA_CEIL_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CEIL_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_CG_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_CG_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_CMF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

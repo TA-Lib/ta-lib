@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 435
+next: 436
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -154,6 +154,7 @@ sites:
   CDLUNIQUE3RIVER.ringcap.BodyShortTrailingIdx: 311
   CDLUPSIDEGAP2CROWS.ringcap.BodyLongTrailingIdx: 312
   CDLUPSIDEGAP2CROWS.ringcap.BodyShortTrailingIdx: 313
+  CG.wincap.i: 435
   CMF.cbsize.mfv: 315
   CMF.circbuf.mfv: 314
   CMOU.ringcap.trailingIdx: 316

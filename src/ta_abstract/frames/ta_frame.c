@@ -1990,6 +1990,26 @@ unsigned int TA_CEIL_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_CEIL_Lookback( );
 }
+TA_RetCode TA_CG_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_CG(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_CG_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_CG_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_CMF_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

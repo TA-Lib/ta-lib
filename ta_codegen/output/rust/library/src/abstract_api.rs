@@ -212,6 +212,8 @@ pub enum FuncId {
     CDLXSIDEGAP3METHODS,
     /// Vector Ceil — [`Core::ceil`](crate::Core::ceil).
     CEIL,
+    /// Center of Gravity Oscillator — [`Core::cg`](crate::Core::cg).
+    CG,
     /// Chaikin Money Flow — [`Core::cmf`](crate::Core::cmf).
     CMF,
     /// Chande Momentum Oscillator — [`Core::cmo`](crate::Core::cmo).
@@ -460,7 +462,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 207;
+    pub const COUNT: usize = 208;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -787,7 +789,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 207] = [
+static FUNC_TABLE: [FuncInfo; 208] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1720,6 +1722,17 @@ static FUNC_TABLE: [FuncInfo; 207] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::CG,
+        name: "CG",
+        group: Group::MomentumIndicators,
+        hint: "Center of Gravity Oscillator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -3168,6 +3181,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CDLUPSIDEGAP2CROWS" => FuncId::CDLUPSIDEGAP2CROWS,
         "CDLXSIDEGAP3METHODS" => FuncId::CDLXSIDEGAP3METHODS,
         "CEIL" => FuncId::CEIL,
+        "CG" => FuncId::CG,
         "CMF" => FuncId::CMF,
         "CMO" => FuncId::CMO,
         "CMOU" => FuncId::CMOU,
@@ -3632,6 +3646,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CDLUPSIDEGAP2CROWS => self.core.cdlupsidegap2crows_lookback(),
             FuncId::CDLXSIDEGAP3METHODS => self.core.cdlxsidegap3methods_lookback(),
             FuncId::CEIL => self.core.ceil_lookback(),
+            FuncId::CG => self.core.cg_lookback(self.int_opt[0]),
             FuncId::CMF => self.core.cmf_lookback(self.int_opt[0]),
             FuncId::CMO => self.core.cmo_lookback(self.int_opt[0]),
             FuncId::CMOU => self.core.cmou_lookback(self.int_opt[0]),
@@ -4861,6 +4876,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.ceil(start_idx, end_idx, i0, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CG => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.cg(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
