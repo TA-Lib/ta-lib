@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	a8b212168e8716b2a9e3fe87e1d304ca03acd1e7
-#generated	2026-09-26T05:18:29Z
+#commit	9042bc97891f4593a3e820f93a97a3e287e03f50
+#generated	2026-09-26T09:39:02Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -783,6 +783,11 @@ OBV	open	0	180097
 OBV	openfill	0	200934
 OBV	peek	0	41947
 OBV	update	0	53417
+PERCENTB	batch	0	776055
+PERCENTB	open	0	1243467
+PERCENTB	openfill	0	1247456
+PERCENTB	peek	0	163171
+PERCENTB	update	0	269427
 PERCENTILE	batch	0	3357765
 PERCENTILE	open	0	3431211
 PERCENTILE	openfill	0	3430885
@@ -803,7 +808,7 @@ PLUS_DM	open	0	460070
 PLUS_DM	openfill	0	480079
 PLUS_DM	peek	0	52237
 PLUS_DM	update	0	68621
-PPO	batch	0	640915
+PPO	batch	0	640751
 PPO	open	0	961947
 PPO	openfill	0	960693
 PPO	peek	0	157709
@@ -909,7 +914,7 @@ SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
 STDDEV	batch	0	763885
-STDDEV	open	0	786387
+STDDEV	open	0	786370
 STDDEV	openfill	0	785420
 STDDEV	peek	0	98317
 STDDEV	update	0	150489
@@ -1020,7 +1025,7 @@ VWAP	peek	0	67597
 VWAP	update	0	78861
 VWMA	batch	0	599574
 VWMA	open	0	600024
-VWMA	openfill	0	620225
+VWMA	openfill	0	620145
 VWMA	peek	0	55311
 VWMA	update	0	102418
 WAD	batch	0	205032
