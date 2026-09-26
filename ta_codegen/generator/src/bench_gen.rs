@@ -128,7 +128,7 @@ fn input_name_to_global(name: &str, real_idx: usize) -> String {
 
 fn generate_bench_func(s: &mut String, funcs: &[FuncDef]) {
     // Volatile sink prevents LTO from eliminating function calls
-    s.push_str("static volatile int g_sink = 0;\n\n");
+    s.push_str("static volatile double g_sink = 0.0;\n\n");
     s.push_str("static void bench_all(const char *filter, int iters) {\n");
 
     for func in funcs {
@@ -211,7 +211,7 @@ fn generate_bench_func(s: &mut String, funcs: &[FuncDef]) {
                     s.push_str(&format!("            g_sink += g_outIntBuf{sink_int}[0];\n"));
                     sink_int += 1;
                 } else {
-                    s.push_str(&format!("            g_sink += (int)g_outBuf{sink_real}[0];\n"));
+                    s.push_str(&format!("            g_sink += g_outBuf{sink_real}[0];\n"));
                     sink_real += 1;
                 }
             }
@@ -414,7 +414,7 @@ static int bench_stream_summary(void)
 
 #[allow(clippy::too_many_lines)]
 fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
-    s.push_str("static volatile int g_sink = 0;\n\n");
+    s.push_str("static volatile double g_sink = 0.0;\n\n");
     s.push_str("#define BENCH_MASK 4095\n\n");
     s.push_str(STREAM_ROW_HELPER);
     s.push_str("static void bench_stream_all(const char *filter, int iters) {\n");
@@ -596,13 +596,13 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str("                }\n");
         s.push_str("                if( best_p < 0 || tp < best_p ) best_p = tp;\n");
         s.push_str("            }\n");
-        s.push_str("            g_sink += (int)acc + nb;\n");
+        s.push_str("            g_sink += acc + nb;\n");
         s.push_str(&format!("            {ta}_Close(st);\n"));
         s.push_str(&format!(
             "            bench_stream_row(\"{name}\", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);\n"
         ));
         s.push_str("        } else {\n");
-        s.push_str("            g_sink += (int)acc + nb;\n");
+        s.push_str("            g_sink += acc + nb;\n");
         s.push_str("            if( st ) { g_ta_track = 0; ");
         s.push_str(&format!("{ta}_Close(st); }}\n"));
         s.push_str(&format!(
@@ -1021,7 +1021,7 @@ __CORPUS_ARGS__    }
            g_corpus.refPeriod, g_corpus.trendStrength);
     fflush(stdout);
     icount_all(func_filter, n_iters);
-    printf("# rows=%d measured=%d skipped=%d sink=%d\n", g_rows, g_measured, g_skipped, g_sink);
+    printf("# rows=%d measured=%d skipped=%d sink=%g\n", g_rows, g_measured, g_skipped, g_sink);
     free(g_open); free(g_high); free(g_low); free(g_close); free(g_volume); free(g_oi); free(g_periods);
     return 0;
 }
@@ -1101,7 +1101,7 @@ fn generate_icount_one(s: &mut String, func: &FuncDef) {
         generate_icount_stream(s, func, &in_arrays, &bar_scalars, &out_arrays,
                                &out_first, &opt_args, &out_addrs, &out_acc);
     }
-    s.push_str("    g_sink += (int)acc + outNBElement;\n}\n\n");
+    s.push_str("    g_sink += acc + outNBElement;\n}\n\n");
 }
 
 /// The four streaming regions, appended to the body `generate_icount_one` opened.
@@ -1194,7 +1194,7 @@ pub fn generate_c_icount_bench(funcs: &[FuncDef]) -> String {
     for k in 0..n_out_int {
         let _ = writeln!(s, "static int g_outIntBuf{k}[MAX_POINTS];");
     }
-    s.push_str("\nstatic volatile int g_sink = 0;\n");
+    s.push_str("\nstatic volatile double g_sink = 0.0;\n");
 
     s.push_str(FUNC_MATCHES);
 

@@ -372,7 +372,7 @@ static int func_matches(const char *filter, const char *name) {
     return 0;
 }
 
-static volatile int g_sink = 0;
+static volatile double g_sink = 0.0;
 
 #define BENCH_MASK 4095
 
@@ -510,11 +510,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_AC_Close(st);
             bench_stream_row("AC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_AC_Close(st); }
             bench_stream_row("AC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -587,11 +587,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ACCBANDS_Close(st);
             bench_stream_row("ACCBANDS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ACCBANDS_Close(st); }
             bench_stream_row("ACCBANDS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -651,11 +651,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ACOS_Close(st);
             bench_stream_row("ACOS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ACOS_Close(st); }
             bench_stream_row("ACOS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -718,11 +718,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_AD_Close(st);
             bench_stream_row("AD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_AD_Close(st); }
             bench_stream_row("AD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -783,11 +783,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ADD_Close(st);
             bench_stream_row("ADD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ADD_Close(st); }
             bench_stream_row("ADD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -852,11 +852,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ADOSC_Close(st);
             bench_stream_row("ADOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ADOSC_Close(st); }
             bench_stream_row("ADOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -918,11 +918,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ADR_Close(st);
             bench_stream_row("ADR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ADR_Close(st); }
             bench_stream_row("ADR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -985,11 +985,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ADX_Close(st);
             bench_stream_row("ADX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ADX_Close(st); }
             bench_stream_row("ADX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1052,11 +1052,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ADXR_Close(st);
             bench_stream_row("ADXR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ADXR_Close(st); }
             bench_stream_row("ADXR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1119,11 +1119,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_AO_Close(st);
             bench_stream_row("AO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_AO_Close(st); }
             bench_stream_row("AO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1186,11 +1186,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_APO_Close(st);
             bench_stream_row("APO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_APO_Close(st); }
             bench_stream_row("APO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1257,11 +1257,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_AROON_Close(st);
             bench_stream_row("AROON", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_AROON_Close(st); }
             bench_stream_row("AROON", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1323,11 +1323,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_AROONOSC_Close(st);
             bench_stream_row("AROONOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_AROONOSC_Close(st); }
             bench_stream_row("AROONOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1387,11 +1387,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ASIN_Close(st);
             bench_stream_row("ASIN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ASIN_Close(st); }
             bench_stream_row("ASIN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1451,11 +1451,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ATAN_Close(st);
             bench_stream_row("ATAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ATAN_Close(st); }
             bench_stream_row("ATAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1518,11 +1518,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ATR_Close(st);
             bench_stream_row("ATR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ATR_Close(st); }
             bench_stream_row("ATR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1583,11 +1583,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_AVGDEV_Close(st);
             bench_stream_row("AVGDEV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_AVGDEV_Close(st); }
             bench_stream_row("AVGDEV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1650,11 +1650,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_AVGPRICE_Close(st);
             bench_stream_row("AVGPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_AVGPRICE_Close(st); }
             bench_stream_row("AVGPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1728,11 +1728,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_BBANDS_Close(st);
             bench_stream_row("BBANDS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_BBANDS_Close(st); }
             bench_stream_row("BBANDS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1796,11 +1796,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_BBW_Close(st);
             bench_stream_row("BBW", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_BBW_Close(st); }
             bench_stream_row("BBW", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1862,11 +1862,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_BETA_Close(st);
             bench_stream_row("BETA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_BETA_Close(st); }
             bench_stream_row("BETA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1929,11 +1929,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_BOP_Close(st);
             bench_stream_row("BOP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_BOP_Close(st); }
             bench_stream_row("BOP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -1996,11 +1996,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CCI_Close(st);
             bench_stream_row("CCI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CCI_Close(st); }
             bench_stream_row("CCI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2063,11 +2063,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDL2CROWS_Close(st);
             bench_stream_row("CDL2CROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL2CROWS_Close(st); }
             bench_stream_row("CDL2CROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2130,11 +2130,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDL3BLACKCROWS_Close(st);
             bench_stream_row("CDL3BLACKCROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3BLACKCROWS_Close(st); }
             bench_stream_row("CDL3BLACKCROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2197,11 +2197,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDL3INSIDE_Close(st);
             bench_stream_row("CDL3INSIDE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3INSIDE_Close(st); }
             bench_stream_row("CDL3INSIDE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2264,11 +2264,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDL3LINESTRIKE_Close(st);
             bench_stream_row("CDL3LINESTRIKE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3LINESTRIKE_Close(st); }
             bench_stream_row("CDL3LINESTRIKE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2331,11 +2331,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDL3OUTSIDE_Close(st);
             bench_stream_row("CDL3OUTSIDE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3OUTSIDE_Close(st); }
             bench_stream_row("CDL3OUTSIDE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2398,11 +2398,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDL3STARSINSOUTH_Close(st);
             bench_stream_row("CDL3STARSINSOUTH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3STARSINSOUTH_Close(st); }
             bench_stream_row("CDL3STARSINSOUTH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2465,11 +2465,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDL3WHITESOLDIERS_Close(st);
             bench_stream_row("CDL3WHITESOLDIERS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3WHITESOLDIERS_Close(st); }
             bench_stream_row("CDL3WHITESOLDIERS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2533,11 +2533,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLABANDONEDBABY_Close(st);
             bench_stream_row("CDLABANDONEDBABY", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLABANDONEDBABY_Close(st); }
             bench_stream_row("CDLABANDONEDBABY", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2600,11 +2600,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLADVANCEBLOCK_Close(st);
             bench_stream_row("CDLADVANCEBLOCK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLADVANCEBLOCK_Close(st); }
             bench_stream_row("CDLADVANCEBLOCK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2667,11 +2667,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLBELTHOLD_Close(st);
             bench_stream_row("CDLBELTHOLD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLBELTHOLD_Close(st); }
             bench_stream_row("CDLBELTHOLD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2734,11 +2734,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLBREAKAWAY_Close(st);
             bench_stream_row("CDLBREAKAWAY", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLBREAKAWAY_Close(st); }
             bench_stream_row("CDLBREAKAWAY", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2801,11 +2801,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLCLOSINGMARUBOZU_Close(st);
             bench_stream_row("CDLCLOSINGMARUBOZU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLCLOSINGMARUBOZU_Close(st); }
             bench_stream_row("CDLCLOSINGMARUBOZU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2868,11 +2868,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLCONCEALBABYSWALL_Close(st);
             bench_stream_row("CDLCONCEALBABYSWALL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLCONCEALBABYSWALL_Close(st); }
             bench_stream_row("CDLCONCEALBABYSWALL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -2935,11 +2935,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLCOUNTERATTACK_Close(st);
             bench_stream_row("CDLCOUNTERATTACK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLCOUNTERATTACK_Close(st); }
             bench_stream_row("CDLCOUNTERATTACK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3003,11 +3003,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLDARKCLOUDCOVER_Close(st);
             bench_stream_row("CDLDARKCLOUDCOVER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDARKCLOUDCOVER_Close(st); }
             bench_stream_row("CDLDARKCLOUDCOVER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3070,11 +3070,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLDOJI_Close(st);
             bench_stream_row("CDLDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDOJI_Close(st); }
             bench_stream_row("CDLDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3137,11 +3137,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLDOJISTAR_Close(st);
             bench_stream_row("CDLDOJISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDOJISTAR_Close(st); }
             bench_stream_row("CDLDOJISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3204,11 +3204,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLDRAGONFLYDOJI_Close(st);
             bench_stream_row("CDLDRAGONFLYDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDRAGONFLYDOJI_Close(st); }
             bench_stream_row("CDLDRAGONFLYDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3271,11 +3271,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLENGULFING_Close(st);
             bench_stream_row("CDLENGULFING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLENGULFING_Close(st); }
             bench_stream_row("CDLENGULFING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3339,11 +3339,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLEVENINGDOJISTAR_Close(st);
             bench_stream_row("CDLEVENINGDOJISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLEVENINGDOJISTAR_Close(st); }
             bench_stream_row("CDLEVENINGDOJISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3407,11 +3407,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLEVENINGSTAR_Close(st);
             bench_stream_row("CDLEVENINGSTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLEVENINGSTAR_Close(st); }
             bench_stream_row("CDLEVENINGSTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3474,11 +3474,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLGAPSIDESIDEWHITE_Close(st);
             bench_stream_row("CDLGAPSIDESIDEWHITE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLGAPSIDESIDEWHITE_Close(st); }
             bench_stream_row("CDLGAPSIDESIDEWHITE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3541,11 +3541,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLGRAVESTONEDOJI_Close(st);
             bench_stream_row("CDLGRAVESTONEDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLGRAVESTONEDOJI_Close(st); }
             bench_stream_row("CDLGRAVESTONEDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3608,11 +3608,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHAMMER_Close(st);
             bench_stream_row("CDLHAMMER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHAMMER_Close(st); }
             bench_stream_row("CDLHAMMER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3675,11 +3675,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHANGINGMAN_Close(st);
             bench_stream_row("CDLHANGINGMAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHANGINGMAN_Close(st); }
             bench_stream_row("CDLHANGINGMAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3742,11 +3742,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHARAMI_Close(st);
             bench_stream_row("CDLHARAMI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHARAMI_Close(st); }
             bench_stream_row("CDLHARAMI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3809,11 +3809,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHARAMICROSS_Close(st);
             bench_stream_row("CDLHARAMICROSS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHARAMICROSS_Close(st); }
             bench_stream_row("CDLHARAMICROSS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3876,11 +3876,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHIGHWAVE_Close(st);
             bench_stream_row("CDLHIGHWAVE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHIGHWAVE_Close(st); }
             bench_stream_row("CDLHIGHWAVE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -3943,11 +3943,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHIKKAKE_Close(st);
             bench_stream_row("CDLHIKKAKE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHIKKAKE_Close(st); }
             bench_stream_row("CDLHIKKAKE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4010,11 +4010,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHIKKAKEMOD_Close(st);
             bench_stream_row("CDLHIKKAKEMOD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHIKKAKEMOD_Close(st); }
             bench_stream_row("CDLHIKKAKEMOD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4077,11 +4077,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLHOMINGPIGEON_Close(st);
             bench_stream_row("CDLHOMINGPIGEON", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHOMINGPIGEON_Close(st); }
             bench_stream_row("CDLHOMINGPIGEON", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4144,11 +4144,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLIDENTICAL3CROWS_Close(st);
             bench_stream_row("CDLIDENTICAL3CROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLIDENTICAL3CROWS_Close(st); }
             bench_stream_row("CDLIDENTICAL3CROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4211,11 +4211,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLINNECK_Close(st);
             bench_stream_row("CDLINNECK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLINNECK_Close(st); }
             bench_stream_row("CDLINNECK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4278,11 +4278,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLINVERTEDHAMMER_Close(st);
             bench_stream_row("CDLINVERTEDHAMMER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLINVERTEDHAMMER_Close(st); }
             bench_stream_row("CDLINVERTEDHAMMER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4345,11 +4345,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLKICKING_Close(st);
             bench_stream_row("CDLKICKING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLKICKING_Close(st); }
             bench_stream_row("CDLKICKING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4412,11 +4412,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLKICKINGBYLENGTH_Close(st);
             bench_stream_row("CDLKICKINGBYLENGTH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLKICKINGBYLENGTH_Close(st); }
             bench_stream_row("CDLKICKINGBYLENGTH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4479,11 +4479,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLLADDERBOTTOM_Close(st);
             bench_stream_row("CDLLADDERBOTTOM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLLADDERBOTTOM_Close(st); }
             bench_stream_row("CDLLADDERBOTTOM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4546,11 +4546,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLLONGLEGGEDDOJI_Close(st);
             bench_stream_row("CDLLONGLEGGEDDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLLONGLEGGEDDOJI_Close(st); }
             bench_stream_row("CDLLONGLEGGEDDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4613,11 +4613,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLLONGLINE_Close(st);
             bench_stream_row("CDLLONGLINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLLONGLINE_Close(st); }
             bench_stream_row("CDLLONGLINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4680,11 +4680,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLMARUBOZU_Close(st);
             bench_stream_row("CDLMARUBOZU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMARUBOZU_Close(st); }
             bench_stream_row("CDLMARUBOZU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4747,11 +4747,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLMATCHINGLOW_Close(st);
             bench_stream_row("CDLMATCHINGLOW", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMATCHINGLOW_Close(st); }
             bench_stream_row("CDLMATCHINGLOW", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4815,11 +4815,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLMATHOLD_Close(st);
             bench_stream_row("CDLMATHOLD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMATHOLD_Close(st); }
             bench_stream_row("CDLMATHOLD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4883,11 +4883,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLMORNINGDOJISTAR_Close(st);
             bench_stream_row("CDLMORNINGDOJISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMORNINGDOJISTAR_Close(st); }
             bench_stream_row("CDLMORNINGDOJISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -4951,11 +4951,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLMORNINGSTAR_Close(st);
             bench_stream_row("CDLMORNINGSTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMORNINGSTAR_Close(st); }
             bench_stream_row("CDLMORNINGSTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5018,11 +5018,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLONNECK_Close(st);
             bench_stream_row("CDLONNECK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLONNECK_Close(st); }
             bench_stream_row("CDLONNECK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5085,11 +5085,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLPIERCING_Close(st);
             bench_stream_row("CDLPIERCING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLPIERCING_Close(st); }
             bench_stream_row("CDLPIERCING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5152,11 +5152,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLRICKSHAWMAN_Close(st);
             bench_stream_row("CDLRICKSHAWMAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLRICKSHAWMAN_Close(st); }
             bench_stream_row("CDLRICKSHAWMAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5219,11 +5219,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLRISEFALL3METHODS_Close(st);
             bench_stream_row("CDLRISEFALL3METHODS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLRISEFALL3METHODS_Close(st); }
             bench_stream_row("CDLRISEFALL3METHODS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5286,11 +5286,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLSEPARATINGLINES_Close(st);
             bench_stream_row("CDLSEPARATINGLINES", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSEPARATINGLINES_Close(st); }
             bench_stream_row("CDLSEPARATINGLINES", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5353,11 +5353,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLSHOOTINGSTAR_Close(st);
             bench_stream_row("CDLSHOOTINGSTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSHOOTINGSTAR_Close(st); }
             bench_stream_row("CDLSHOOTINGSTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5420,11 +5420,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLSHORTLINE_Close(st);
             bench_stream_row("CDLSHORTLINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSHORTLINE_Close(st); }
             bench_stream_row("CDLSHORTLINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5487,11 +5487,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLSPINNINGTOP_Close(st);
             bench_stream_row("CDLSPINNINGTOP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSPINNINGTOP_Close(st); }
             bench_stream_row("CDLSPINNINGTOP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5554,11 +5554,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLSTALLEDPATTERN_Close(st);
             bench_stream_row("CDLSTALLEDPATTERN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSTALLEDPATTERN_Close(st); }
             bench_stream_row("CDLSTALLEDPATTERN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5621,11 +5621,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLSTICKSANDWICH_Close(st);
             bench_stream_row("CDLSTICKSANDWICH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSTICKSANDWICH_Close(st); }
             bench_stream_row("CDLSTICKSANDWICH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5688,11 +5688,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLTAKURI_Close(st);
             bench_stream_row("CDLTAKURI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTAKURI_Close(st); }
             bench_stream_row("CDLTAKURI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5755,11 +5755,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLTASUKIGAP_Close(st);
             bench_stream_row("CDLTASUKIGAP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTASUKIGAP_Close(st); }
             bench_stream_row("CDLTASUKIGAP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5822,11 +5822,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLTHRUSTING_Close(st);
             bench_stream_row("CDLTHRUSTING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTHRUSTING_Close(st); }
             bench_stream_row("CDLTHRUSTING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5889,11 +5889,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLTRISTAR_Close(st);
             bench_stream_row("CDLTRISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTRISTAR_Close(st); }
             bench_stream_row("CDLTRISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -5956,11 +5956,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLUNIQUE3RIVER_Close(st);
             bench_stream_row("CDLUNIQUE3RIVER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLUNIQUE3RIVER_Close(st); }
             bench_stream_row("CDLUNIQUE3RIVER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6023,11 +6023,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLUPSIDEGAP2CROWS_Close(st);
             bench_stream_row("CDLUPSIDEGAP2CROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLUPSIDEGAP2CROWS_Close(st); }
             bench_stream_row("CDLUPSIDEGAP2CROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6090,11 +6090,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CDLXSIDEGAP3METHODS_Close(st);
             bench_stream_row("CDLXSIDEGAP3METHODS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLXSIDEGAP3METHODS_Close(st); }
             bench_stream_row("CDLXSIDEGAP3METHODS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6154,11 +6154,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CEIL_Close(st);
             bench_stream_row("CEIL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CEIL_Close(st); }
             bench_stream_row("CEIL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6219,11 +6219,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CG_Close(st);
             bench_stream_row("CG", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CG_Close(st); }
             bench_stream_row("CG", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6287,11 +6287,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CMF_Close(st);
             bench_stream_row("CMF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CMF_Close(st); }
             bench_stream_row("CMF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6352,11 +6352,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CMO_Close(st);
             bench_stream_row("CMO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CMO_Close(st); }
             bench_stream_row("CMO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6417,11 +6417,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CMOU_Close(st);
             bench_stream_row("CMOU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CMOU_Close(st); }
             bench_stream_row("CMOU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6484,11 +6484,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_COPPOCK_Close(st);
             bench_stream_row("COPPOCK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_COPPOCK_Close(st); }
             bench_stream_row("COPPOCK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6550,11 +6550,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CORREL_Close(st);
             bench_stream_row("CORREL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CORREL_Close(st); }
             bench_stream_row("CORREL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6614,11 +6614,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_COS_Close(st);
             bench_stream_row("COS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_COS_Close(st); }
             bench_stream_row("COS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6678,11 +6678,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_COSH_Close(st);
             bench_stream_row("COSH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_COSH_Close(st); }
             bench_stream_row("COSH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6745,11 +6745,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CRSI_Close(st);
             bench_stream_row("CRSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CRSI_Close(st); }
             bench_stream_row("CRSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6810,11 +6810,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CTI_Close(st);
             bench_stream_row("CTI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CTI_Close(st); }
             bench_stream_row("CTI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6874,11 +6874,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CUMSUM_Close(st);
             bench_stream_row("CUMSUM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CUMSUM_Close(st); }
             bench_stream_row("CUMSUM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -6941,11 +6941,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_CVI_Close(st);
             bench_stream_row("CVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_CVI_Close(st); }
             bench_stream_row("CVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7006,11 +7006,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_DEMA_Close(st);
             bench_stream_row("DEMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_DEMA_Close(st); }
             bench_stream_row("DEMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7071,11 +7071,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_DIV_Close(st);
             bench_stream_row("DIV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_DIV_Close(st); }
             bench_stream_row("DIV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7147,11 +7147,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_DONCHIAN_Close(st);
             bench_stream_row("DONCHIAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_DONCHIAN_Close(st); }
             bench_stream_row("DONCHIAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7212,11 +7212,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_DPO_Close(st);
             bench_stream_row("DPO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_DPO_Close(st); }
             bench_stream_row("DPO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7279,11 +7279,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_DX_Close(st);
             bench_stream_row("DX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_DX_Close(st); }
             bench_stream_row("DX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7345,11 +7345,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_EFI_Close(st);
             bench_stream_row("EFI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_EFI_Close(st); }
             bench_stream_row("EFI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7410,11 +7410,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_EMA_Close(st);
             bench_stream_row("EMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_EMA_Close(st); }
             bench_stream_row("EMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7475,11 +7475,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ER_Close(st);
             bench_stream_row("ER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ER_Close(st); }
             bench_stream_row("ER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7547,11 +7547,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ERI_Close(st);
             bench_stream_row("ERI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ERI_Close(st); }
             bench_stream_row("ERI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7611,11 +7611,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_EXP_Close(st);
             bench_stream_row("EXP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_EXP_Close(st); }
             bench_stream_row("EXP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7675,11 +7675,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_FLOOR_Close(st);
             bench_stream_row("FLOOR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_FLOOR_Close(st); }
             bench_stream_row("FLOOR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7740,11 +7740,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_FOSC_Close(st);
             bench_stream_row("FOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_FOSC_Close(st); }
             bench_stream_row("FOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7812,11 +7812,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_FRACTAL_Close(st);
             bench_stream_row("FRACTAL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_FRACTAL_Close(st); }
             bench_stream_row("FRACTAL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7894,11 +7894,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HA_Close(st);
             bench_stream_row("HA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HA_Close(st); }
             bench_stream_row("HA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -7959,11 +7959,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HMA_Close(st);
             bench_stream_row("HMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HMA_Close(st); }
             bench_stream_row("HMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8023,11 +8023,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HT_DCPERIOD_Close(st);
             bench_stream_row("HT_DCPERIOD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_DCPERIOD_Close(st); }
             bench_stream_row("HT_DCPERIOD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8087,11 +8087,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HT_DCPHASE_Close(st);
             bench_stream_row("HT_DCPHASE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_DCPHASE_Close(st); }
             bench_stream_row("HT_DCPHASE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8156,11 +8156,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HT_PHASOR_Close(st);
             bench_stream_row("HT_PHASOR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_PHASOR_Close(st); }
             bench_stream_row("HT_PHASOR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8225,11 +8225,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HT_SINE_Close(st);
             bench_stream_row("HT_SINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_SINE_Close(st); }
             bench_stream_row("HT_SINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8289,11 +8289,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HT_TRENDLINE_Close(st);
             bench_stream_row("HT_TRENDLINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_TRENDLINE_Close(st); }
             bench_stream_row("HT_TRENDLINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8353,11 +8353,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_HT_TRENDMODE_Close(st);
             bench_stream_row("HT_TRENDMODE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_TRENDMODE_Close(st); }
             bench_stream_row("HT_TRENDMODE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8419,11 +8419,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_IMI_Close(st);
             bench_stream_row("IMI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_IMI_Close(st); }
             bench_stream_row("IMI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8484,11 +8484,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_KAMA_Close(st);
             bench_stream_row("KAMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_KAMA_Close(st); }
             bench_stream_row("KAMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8563,11 +8563,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_KC_Close(st);
             bench_stream_row("KC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_KC_Close(st); }
             bench_stream_row("KC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8644,11 +8644,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_KDJ_Close(st);
             bench_stream_row("KDJ", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_KDJ_Close(st); }
             bench_stream_row("KDJ", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8709,11 +8709,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_KURTOSIS_Close(st);
             bench_stream_row("KURTOSIS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_KURTOSIS_Close(st); }
             bench_stream_row("KURTOSIS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8774,11 +8774,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_LINEARREG_Close(st);
             bench_stream_row("LINEARREG", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_Close(st); }
             bench_stream_row("LINEARREG", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8839,11 +8839,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_LINEARREG_ANGLE_Close(st);
             bench_stream_row("LINEARREG_ANGLE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_ANGLE_Close(st); }
             bench_stream_row("LINEARREG_ANGLE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8904,11 +8904,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_LINEARREG_INTERCEPT_Close(st);
             bench_stream_row("LINEARREG_INTERCEPT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_INTERCEPT_Close(st); }
             bench_stream_row("LINEARREG_INTERCEPT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -8969,11 +8969,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_LINEARREG_SLOPE_Close(st);
             bench_stream_row("LINEARREG_SLOPE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_SLOPE_Close(st); }
             bench_stream_row("LINEARREG_SLOPE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9033,11 +9033,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_LN_Close(st);
             bench_stream_row("LN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_LN_Close(st); }
             bench_stream_row("LN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9097,11 +9097,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_LOG10_Close(st);
             bench_stream_row("LOG10", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_LOG10_Close(st); }
             bench_stream_row("LOG10", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9163,11 +9163,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MA_Close(st);
             bench_stream_row("MA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MA_Close(st); }
             bench_stream_row("MA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9240,11 +9240,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MACD_Close(st);
             bench_stream_row("MACD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MACD_Close(st); }
             bench_stream_row("MACD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9320,11 +9320,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MACDEXT_Close(st);
             bench_stream_row("MACDEXT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MACDEXT_Close(st); }
             bench_stream_row("MACDEXT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9395,11 +9395,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MACDFIX_Close(st);
             bench_stream_row("MACDFIX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MACDFIX_Close(st); }
             bench_stream_row("MACDFIX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9466,11 +9466,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MAMA_Close(st);
             bench_stream_row("MAMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MAMA_Close(st); }
             bench_stream_row("MAMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9532,11 +9532,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MARKETFI_Close(st);
             bench_stream_row("MARKETFI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MARKETFI_Close(st); }
             bench_stream_row("MARKETFI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9599,11 +9599,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MASSI_Close(st);
             bench_stream_row("MASSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MASSI_Close(st); }
             bench_stream_row("MASSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9667,11 +9667,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MAVP_Close(st);
             bench_stream_row("MAVP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MAVP_Close(st); }
             bench_stream_row("MAVP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9732,11 +9732,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MAX_Close(st);
             bench_stream_row("MAX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MAX_Close(st); }
             bench_stream_row("MAX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9797,11 +9797,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MAXINDEX_Close(st);
             bench_stream_row("MAXINDEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MAXINDEX_Close(st); }
             bench_stream_row("MAXINDEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9862,11 +9862,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MEDIAN_Close(st);
             bench_stream_row("MEDIAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MEDIAN_Close(st); }
             bench_stream_row("MEDIAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9927,11 +9927,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MEDPRICE_Close(st);
             bench_stream_row("MEDPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MEDPRICE_Close(st); }
             bench_stream_row("MEDPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -9995,11 +9995,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MFI_Close(st);
             bench_stream_row("MFI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MFI_Close(st); }
             bench_stream_row("MFI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10060,11 +10060,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MIDPOINT_Close(st);
             bench_stream_row("MIDPOINT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MIDPOINT_Close(st); }
             bench_stream_row("MIDPOINT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10126,11 +10126,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MIDPRICE_Close(st);
             bench_stream_row("MIDPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MIDPRICE_Close(st); }
             bench_stream_row("MIDPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10191,11 +10191,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MIN_Close(st);
             bench_stream_row("MIN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MIN_Close(st); }
             bench_stream_row("MIN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10256,11 +10256,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MININDEX_Close(st);
             bench_stream_row("MININDEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MININDEX_Close(st); }
             bench_stream_row("MININDEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10326,11 +10326,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MINMAX_Close(st);
             bench_stream_row("MINMAX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MINMAX_Close(st); }
             bench_stream_row("MINMAX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10396,11 +10396,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MINMAXINDEX_Close(st);
             bench_stream_row("MINMAXINDEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MINMAXINDEX_Close(st); }
             bench_stream_row("MINMAXINDEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10463,11 +10463,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MINUS_DI_Close(st);
             bench_stream_row("MINUS_DI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MINUS_DI_Close(st); }
             bench_stream_row("MINUS_DI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10529,11 +10529,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MINUS_DM_Close(st);
             bench_stream_row("MINUS_DM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MINUS_DM_Close(st); }
             bench_stream_row("MINUS_DM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10594,11 +10594,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MOM_Close(st);
             bench_stream_row("MOM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MOM_Close(st); }
             bench_stream_row("MOM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10659,11 +10659,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_MULT_Close(st);
             bench_stream_row("MULT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_MULT_Close(st); }
             bench_stream_row("MULT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10726,11 +10726,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_NATR_Close(st);
             bench_stream_row("NATR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_NATR_Close(st); }
             bench_stream_row("NATR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10791,11 +10791,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_NVI_Close(st);
             bench_stream_row("NVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_NVI_Close(st); }
             bench_stream_row("NVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10856,11 +10856,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_OBV_Close(st);
             bench_stream_row("OBV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_OBV_Close(st); }
             bench_stream_row("OBV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10924,11 +10924,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PERCENTB_Close(st);
             bench_stream_row("PERCENTB", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PERCENTB_Close(st); }
             bench_stream_row("PERCENTB", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -10990,11 +10990,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PERCENTILE_Close(st);
             bench_stream_row("PERCENTILE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PERCENTILE_Close(st); }
             bench_stream_row("PERCENTILE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11055,11 +11055,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PERCENTRANK_Close(st);
             bench_stream_row("PERCENTRANK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PERCENTRANK_Close(st); }
             bench_stream_row("PERCENTRANK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11122,11 +11122,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PLUS_DI_Close(st);
             bench_stream_row("PLUS_DI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PLUS_DI_Close(st); }
             bench_stream_row("PLUS_DI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11188,11 +11188,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PLUS_DM_Close(st);
             bench_stream_row("PLUS_DM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PLUS_DM_Close(st); }
             bench_stream_row("PLUS_DM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11255,11 +11255,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PPO_Close(st);
             bench_stream_row("PPO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PPO_Close(st); }
             bench_stream_row("PPO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11320,11 +11320,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PVI_Close(st);
             bench_stream_row("PVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PVI_Close(st); }
             bench_stream_row("PVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11387,11 +11387,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PVO_Close(st);
             bench_stream_row("PVO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PVO_Close(st); }
             bench_stream_row("PVO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11452,11 +11452,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_PVT_Close(st);
             bench_stream_row("PVT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_PVT_Close(st); }
             bench_stream_row("PVT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11518,11 +11518,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_QSTICK_Close(st);
             bench_stream_row("QSTICK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_QSTICK_Close(st); }
             bench_stream_row("QSTICK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11583,11 +11583,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_RMA_Close(st);
             bench_stream_row("RMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_RMA_Close(st); }
             bench_stream_row("RMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11648,11 +11648,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ROC_Close(st);
             bench_stream_row("ROC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ROC_Close(st); }
             bench_stream_row("ROC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11713,11 +11713,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ROCP_Close(st);
             bench_stream_row("ROCP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ROCP_Close(st); }
             bench_stream_row("ROCP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11778,11 +11778,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ROCR_Close(st);
             bench_stream_row("ROCR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ROCR_Close(st); }
             bench_stream_row("ROCR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11843,11 +11843,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ROCR100_Close(st);
             bench_stream_row("ROCR100", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ROCR100_Close(st); }
             bench_stream_row("ROCR100", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11908,11 +11908,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_RSI_Close(st);
             bench_stream_row("RSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_RSI_Close(st); }
             bench_stream_row("RSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -11974,11 +11974,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_RVI_Close(st);
             bench_stream_row("RVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_RVI_Close(st); }
             bench_stream_row("RVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12041,11 +12041,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_RVIR_Close(st);
             bench_stream_row("RVIR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_RVIR_Close(st); }
             bench_stream_row("RVIR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12106,11 +12106,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_RVOL_Close(st);
             bench_stream_row("RVOL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_RVOL_Close(st); }
             bench_stream_row("RVOL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12173,11 +12173,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SAR_Close(st);
             bench_stream_row("SAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SAR_Close(st); }
             bench_stream_row("SAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12246,11 +12246,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SAREXT_Close(st);
             bench_stream_row("SAREXT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SAREXT_Close(st); }
             bench_stream_row("SAREXT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12310,11 +12310,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SIN_Close(st);
             bench_stream_row("SIN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SIN_Close(st); }
             bench_stream_row("SIN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12374,11 +12374,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SINH_Close(st);
             bench_stream_row("SINH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SINH_Close(st); }
             bench_stream_row("SINH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12439,11 +12439,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SMA_Close(st);
             bench_stream_row("SMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SMA_Close(st); }
             bench_stream_row("SMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12514,11 +12514,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SMI_Close(st);
             bench_stream_row("SMI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SMI_Close(st); }
             bench_stream_row("SMI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12578,11 +12578,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SQRT_Close(st);
             bench_stream_row("SQRT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SQRT_Close(st); }
             bench_stream_row("SQRT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12644,11 +12644,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_STDDEV_Close(st);
             bench_stream_row("STDDEV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_STDDEV_Close(st); }
             bench_stream_row("STDDEV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12720,11 +12720,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_STOCH_Close(st);
             bench_stream_row("STOCH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_STOCH_Close(st); }
             bench_stream_row("STOCH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12794,11 +12794,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_STOCHF_Close(st);
             bench_stream_row("STOCHF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_STOCHF_Close(st); }
             bench_stream_row("STOCHF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12867,11 +12867,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_STOCHRSI_Close(st);
             bench_stream_row("STOCHRSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_STOCHRSI_Close(st); }
             bench_stream_row("STOCHRSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12932,11 +12932,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SUB_Close(st);
             bench_stream_row("SUB", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SUB_Close(st); }
             bench_stream_row("SUB", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -12997,11 +12997,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SUM_Close(st);
             bench_stream_row("SUM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SUM_Close(st); }
             bench_stream_row("SUM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13070,11 +13070,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_SUPERTREND_Close(st);
             bench_stream_row("SUPERTREND", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_SUPERTREND_Close(st); }
             bench_stream_row("SUPERTREND", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13136,11 +13136,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_T3_Close(st);
             bench_stream_row("T3", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_T3_Close(st); }
             bench_stream_row("T3", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13200,11 +13200,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TAN_Close(st);
             bench_stream_row("TAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TAN_Close(st); }
             bench_stream_row("TAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13264,11 +13264,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TANH_Close(st);
             bench_stream_row("TANH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TANH_Close(st); }
             bench_stream_row("TANH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13329,11 +13329,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TEMA_Close(st);
             bench_stream_row("TEMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TEMA_Close(st); }
             bench_stream_row("TEMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13395,11 +13395,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TRANGE_Close(st);
             bench_stream_row("TRANGE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TRANGE_Close(st); }
             bench_stream_row("TRANGE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13460,11 +13460,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TRIMA_Close(st);
             bench_stream_row("TRIMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TRIMA_Close(st); }
             bench_stream_row("TRIMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13525,11 +13525,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TRIX_Close(st);
             bench_stream_row("TRIX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TRIX_Close(st); }
             bench_stream_row("TRIX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13590,11 +13590,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TSF_Close(st);
             bench_stream_row("TSF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TSF_Close(st); }
             bench_stream_row("TSF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13656,11 +13656,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TSI_Close(st);
             bench_stream_row("TSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TSI_Close(st); }
             bench_stream_row("TSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13722,11 +13722,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_TYPPRICE_Close(st);
             bench_stream_row("TYPPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_TYPPRICE_Close(st); }
             bench_stream_row("TYPPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13791,11 +13791,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ULTOSC_Close(st);
             bench_stream_row("ULTOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ULTOSC_Close(st); }
             bench_stream_row("ULTOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13857,11 +13857,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_VAR_Close(st);
             bench_stream_row("VAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_VAR_Close(st); }
             bench_stream_row("VAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13922,11 +13922,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_VHF_Close(st);
             bench_stream_row("VHF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_VHF_Close(st); }
             bench_stream_row("VHF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -13994,11 +13994,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_VORTEX_Close(st);
             bench_stream_row("VORTEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_VORTEX_Close(st); }
             bench_stream_row("VORTEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -14061,11 +14061,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_VWAP_Close(st);
             bench_stream_row("VWAP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_VWAP_Close(st); }
             bench_stream_row("VWAP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -14127,11 +14127,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_VWMA_Close(st);
             bench_stream_row("VWMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_VWMA_Close(st); }
             bench_stream_row("VWMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -14193,11 +14193,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_WAD_Close(st);
             bench_stream_row("WAD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_WAD_Close(st); }
             bench_stream_row("WAD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -14259,11 +14259,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_WCLPRICE_Close(st);
             bench_stream_row("WCLPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_WCLPRICE_Close(st); }
             bench_stream_row("WCLPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -14326,11 +14326,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_WILLR_Close(st);
             bench_stream_row("WILLR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_WILLR_Close(st); }
             bench_stream_row("WILLR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -14391,11 +14391,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_WMA_Close(st);
             bench_stream_row("WMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_WMA_Close(st); }
             bench_stream_row("WMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
@@ -14456,11 +14456,11 @@ static void bench_stream_all(const char *filter, int iters) {
                 }
                 if( best_p < 0 || tp < best_p ) best_p = tp;
             }
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             TA_ZLEMA_Close(st);
             bench_stream_row("ZLEMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
-            g_sink += (int)acc + nb;
+            g_sink += acc + nb;
             if( st ) { g_ta_track = 0; TA_ZLEMA_Close(st); }
             bench_stream_row("ZLEMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }

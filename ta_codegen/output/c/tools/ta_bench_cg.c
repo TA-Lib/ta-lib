@@ -333,7 +333,7 @@ static int func_matches(const char *filter, const char *name) {
     return 0;
 }
 
-static volatile int g_sink = 0;
+static volatile double g_sink = 0.0;
 
 static void bench_all(const char *filter, int iters) {
     if( func_matches(filter, "AC") ) {
@@ -347,7 +347,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("AC %lld\n", best / iters);
         fflush(stdout);
@@ -363,9 +363,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("ACCBANDS %lld\n", best / iters);
         fflush(stdout);
@@ -381,7 +381,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ACOS %lld\n", best / iters);
         fflush(stdout);
@@ -397,7 +397,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("AD %lld\n", best / iters);
         fflush(stdout);
@@ -413,7 +413,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ADD %lld\n", best / iters);
         fflush(stdout);
@@ -429,7 +429,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ADOSC %lld\n", best / iters);
         fflush(stdout);
@@ -445,7 +445,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ADR %lld\n", best / iters);
         fflush(stdout);
@@ -461,7 +461,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ADX %lld\n", best / iters);
         fflush(stdout);
@@ -477,7 +477,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ADXR %lld\n", best / iters);
         fflush(stdout);
@@ -493,7 +493,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("AO %lld\n", best / iters);
         fflush(stdout);
@@ -509,7 +509,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("APO %lld\n", best / iters);
         fflush(stdout);
@@ -525,8 +525,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("AROON %lld\n", best / iters);
         fflush(stdout);
@@ -542,7 +542,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("AROONOSC %lld\n", best / iters);
         fflush(stdout);
@@ -558,7 +558,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ASIN %lld\n", best / iters);
         fflush(stdout);
@@ -574,7 +574,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ATAN %lld\n", best / iters);
         fflush(stdout);
@@ -590,7 +590,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ATR %lld\n", best / iters);
         fflush(stdout);
@@ -606,7 +606,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("AVGDEV %lld\n", best / iters);
         fflush(stdout);
@@ -622,7 +622,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("AVGPRICE %lld\n", best / iters);
         fflush(stdout);
@@ -638,9 +638,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("BBANDS %lld\n", best / iters);
         fflush(stdout);
@@ -656,7 +656,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("BBW %lld\n", best / iters);
         fflush(stdout);
@@ -672,7 +672,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("BETA %lld\n", best / iters);
         fflush(stdout);
@@ -688,7 +688,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("BOP %lld\n", best / iters);
         fflush(stdout);
@@ -704,7 +704,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CCI %lld\n", best / iters);
         fflush(stdout);
@@ -1696,7 +1696,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CEIL %lld\n", best / iters);
         fflush(stdout);
@@ -1712,7 +1712,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CG %lld\n", best / iters);
         fflush(stdout);
@@ -1728,7 +1728,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CMF %lld\n", best / iters);
         fflush(stdout);
@@ -1744,7 +1744,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CMO %lld\n", best / iters);
         fflush(stdout);
@@ -1760,7 +1760,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CMOU %lld\n", best / iters);
         fflush(stdout);
@@ -1776,7 +1776,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("COPPOCK %lld\n", best / iters);
         fflush(stdout);
@@ -1792,7 +1792,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CORREL %lld\n", best / iters);
         fflush(stdout);
@@ -1808,7 +1808,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("COS %lld\n", best / iters);
         fflush(stdout);
@@ -1824,7 +1824,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("COSH %lld\n", best / iters);
         fflush(stdout);
@@ -1840,7 +1840,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CRSI %lld\n", best / iters);
         fflush(stdout);
@@ -1856,7 +1856,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CTI %lld\n", best / iters);
         fflush(stdout);
@@ -1872,7 +1872,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CUMSUM %lld\n", best / iters);
         fflush(stdout);
@@ -1888,7 +1888,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("CVI %lld\n", best / iters);
         fflush(stdout);
@@ -1904,7 +1904,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("DEMA %lld\n", best / iters);
         fflush(stdout);
@@ -1920,7 +1920,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("DIV %lld\n", best / iters);
         fflush(stdout);
@@ -1936,9 +1936,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("DONCHIAN %lld\n", best / iters);
         fflush(stdout);
@@ -1954,7 +1954,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("DPO %lld\n", best / iters);
         fflush(stdout);
@@ -1970,7 +1970,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("DX %lld\n", best / iters);
         fflush(stdout);
@@ -1986,7 +1986,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("EFI %lld\n", best / iters);
         fflush(stdout);
@@ -2002,7 +2002,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("EMA %lld\n", best / iters);
         fflush(stdout);
@@ -2018,7 +2018,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ER %lld\n", best / iters);
         fflush(stdout);
@@ -2034,8 +2034,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("ERI %lld\n", best / iters);
         fflush(stdout);
@@ -2051,7 +2051,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("EXP %lld\n", best / iters);
         fflush(stdout);
@@ -2067,7 +2067,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("FLOOR %lld\n", best / iters);
         fflush(stdout);
@@ -2083,7 +2083,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("FOSC %lld\n", best / iters);
         fflush(stdout);
@@ -2116,10 +2116,10 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
-            g_sink += (int)g_outBuf3[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
+            g_sink += g_outBuf3[0];
         }
         printf("HA %lld\n", best / iters);
         fflush(stdout);
@@ -2135,7 +2135,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("HMA %lld\n", best / iters);
         fflush(stdout);
@@ -2151,7 +2151,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("HT_DCPERIOD %lld\n", best / iters);
         fflush(stdout);
@@ -2167,7 +2167,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("HT_DCPHASE %lld\n", best / iters);
         fflush(stdout);
@@ -2183,8 +2183,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("HT_PHASOR %lld\n", best / iters);
         fflush(stdout);
@@ -2200,8 +2200,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("HT_SINE %lld\n", best / iters);
         fflush(stdout);
@@ -2217,7 +2217,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("HT_TRENDLINE %lld\n", best / iters);
         fflush(stdout);
@@ -2249,7 +2249,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("IMI %lld\n", best / iters);
         fflush(stdout);
@@ -2265,7 +2265,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("KAMA %lld\n", best / iters);
         fflush(stdout);
@@ -2281,9 +2281,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("KC %lld\n", best / iters);
         fflush(stdout);
@@ -2299,9 +2299,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("KDJ %lld\n", best / iters);
         fflush(stdout);
@@ -2317,7 +2317,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("KURTOSIS %lld\n", best / iters);
         fflush(stdout);
@@ -2333,7 +2333,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("LINEARREG %lld\n", best / iters);
         fflush(stdout);
@@ -2349,7 +2349,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("LINEARREG_ANGLE %lld\n", best / iters);
         fflush(stdout);
@@ -2365,7 +2365,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("LINEARREG_INTERCEPT %lld\n", best / iters);
         fflush(stdout);
@@ -2381,7 +2381,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("LINEARREG_SLOPE %lld\n", best / iters);
         fflush(stdout);
@@ -2397,7 +2397,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("LN %lld\n", best / iters);
         fflush(stdout);
@@ -2413,7 +2413,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("LOG10 %lld\n", best / iters);
         fflush(stdout);
@@ -2429,7 +2429,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MA %lld\n", best / iters);
         fflush(stdout);
@@ -2445,9 +2445,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("MACD %lld\n", best / iters);
         fflush(stdout);
@@ -2463,9 +2463,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("MACDEXT %lld\n", best / iters);
         fflush(stdout);
@@ -2481,9 +2481,9 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
-            g_sink += (int)g_outBuf2[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+            g_sink += g_outBuf2[0];
         }
         printf("MACDFIX %lld\n", best / iters);
         fflush(stdout);
@@ -2499,8 +2499,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("MAMA %lld\n", best / iters);
         fflush(stdout);
@@ -2516,7 +2516,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MARKETFI %lld\n", best / iters);
         fflush(stdout);
@@ -2532,7 +2532,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MASSI %lld\n", best / iters);
         fflush(stdout);
@@ -2548,7 +2548,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MAVP %lld\n", best / iters);
         fflush(stdout);
@@ -2564,7 +2564,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MAX %lld\n", best / iters);
         fflush(stdout);
@@ -2596,7 +2596,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MEDIAN %lld\n", best / iters);
         fflush(stdout);
@@ -2612,7 +2612,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MEDPRICE %lld\n", best / iters);
         fflush(stdout);
@@ -2628,7 +2628,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MFI %lld\n", best / iters);
         fflush(stdout);
@@ -2644,7 +2644,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MIDPOINT %lld\n", best / iters);
         fflush(stdout);
@@ -2660,7 +2660,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MIDPRICE %lld\n", best / iters);
         fflush(stdout);
@@ -2676,7 +2676,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MIN %lld\n", best / iters);
         fflush(stdout);
@@ -2708,8 +2708,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("MINMAX %lld\n", best / iters);
         fflush(stdout);
@@ -2742,7 +2742,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MINUS_DI %lld\n", best / iters);
         fflush(stdout);
@@ -2758,7 +2758,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MINUS_DM %lld\n", best / iters);
         fflush(stdout);
@@ -2774,7 +2774,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MOM %lld\n", best / iters);
         fflush(stdout);
@@ -2790,7 +2790,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("MULT %lld\n", best / iters);
         fflush(stdout);
@@ -2806,7 +2806,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("NATR %lld\n", best / iters);
         fflush(stdout);
@@ -2822,7 +2822,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("NVI %lld\n", best / iters);
         fflush(stdout);
@@ -2838,7 +2838,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("OBV %lld\n", best / iters);
         fflush(stdout);
@@ -2854,7 +2854,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PERCENTB %lld\n", best / iters);
         fflush(stdout);
@@ -2870,7 +2870,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PERCENTILE %lld\n", best / iters);
         fflush(stdout);
@@ -2886,7 +2886,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PERCENTRANK %lld\n", best / iters);
         fflush(stdout);
@@ -2902,7 +2902,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PLUS_DI %lld\n", best / iters);
         fflush(stdout);
@@ -2918,7 +2918,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PLUS_DM %lld\n", best / iters);
         fflush(stdout);
@@ -2934,7 +2934,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PPO %lld\n", best / iters);
         fflush(stdout);
@@ -2950,7 +2950,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PVI %lld\n", best / iters);
         fflush(stdout);
@@ -2966,7 +2966,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PVO %lld\n", best / iters);
         fflush(stdout);
@@ -2982,7 +2982,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("PVT %lld\n", best / iters);
         fflush(stdout);
@@ -2998,7 +2998,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("QSTICK %lld\n", best / iters);
         fflush(stdout);
@@ -3014,7 +3014,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("RMA %lld\n", best / iters);
         fflush(stdout);
@@ -3030,7 +3030,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ROC %lld\n", best / iters);
         fflush(stdout);
@@ -3046,7 +3046,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ROCP %lld\n", best / iters);
         fflush(stdout);
@@ -3062,7 +3062,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ROCR %lld\n", best / iters);
         fflush(stdout);
@@ -3078,7 +3078,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ROCR100 %lld\n", best / iters);
         fflush(stdout);
@@ -3094,7 +3094,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("RSI %lld\n", best / iters);
         fflush(stdout);
@@ -3110,7 +3110,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("RVI %lld\n", best / iters);
         fflush(stdout);
@@ -3126,7 +3126,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("RVIR %lld\n", best / iters);
         fflush(stdout);
@@ -3142,7 +3142,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("RVOL %lld\n", best / iters);
         fflush(stdout);
@@ -3158,7 +3158,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SAR %lld\n", best / iters);
         fflush(stdout);
@@ -3174,7 +3174,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SAREXT %lld\n", best / iters);
         fflush(stdout);
@@ -3190,7 +3190,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SIN %lld\n", best / iters);
         fflush(stdout);
@@ -3206,7 +3206,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SINH %lld\n", best / iters);
         fflush(stdout);
@@ -3222,7 +3222,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SMA %lld\n", best / iters);
         fflush(stdout);
@@ -3238,8 +3238,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("SMI %lld\n", best / iters);
         fflush(stdout);
@@ -3255,7 +3255,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SQRT %lld\n", best / iters);
         fflush(stdout);
@@ -3271,7 +3271,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("STDDEV %lld\n", best / iters);
         fflush(stdout);
@@ -3287,8 +3287,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("STOCH %lld\n", best / iters);
         fflush(stdout);
@@ -3304,8 +3304,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("STOCHF %lld\n", best / iters);
         fflush(stdout);
@@ -3321,8 +3321,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("STOCHRSI %lld\n", best / iters);
         fflush(stdout);
@@ -3338,7 +3338,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SUB %lld\n", best / iters);
         fflush(stdout);
@@ -3354,7 +3354,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("SUM %lld\n", best / iters);
         fflush(stdout);
@@ -3370,7 +3370,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
             g_sink += g_outIntBuf0[0];
         }
         printf("SUPERTREND %lld\n", best / iters);
@@ -3387,7 +3387,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("T3 %lld\n", best / iters);
         fflush(stdout);
@@ -3403,7 +3403,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TAN %lld\n", best / iters);
         fflush(stdout);
@@ -3419,7 +3419,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TANH %lld\n", best / iters);
         fflush(stdout);
@@ -3435,7 +3435,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TEMA %lld\n", best / iters);
         fflush(stdout);
@@ -3451,7 +3451,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TRANGE %lld\n", best / iters);
         fflush(stdout);
@@ -3467,7 +3467,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TRIMA %lld\n", best / iters);
         fflush(stdout);
@@ -3483,7 +3483,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TRIX %lld\n", best / iters);
         fflush(stdout);
@@ -3499,7 +3499,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TSF %lld\n", best / iters);
         fflush(stdout);
@@ -3515,7 +3515,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TSI %lld\n", best / iters);
         fflush(stdout);
@@ -3531,7 +3531,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("TYPPRICE %lld\n", best / iters);
         fflush(stdout);
@@ -3547,7 +3547,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ULTOSC %lld\n", best / iters);
         fflush(stdout);
@@ -3563,7 +3563,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("VAR %lld\n", best / iters);
         fflush(stdout);
@@ -3579,7 +3579,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("VHF %lld\n", best / iters);
         fflush(stdout);
@@ -3595,8 +3595,8 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
-            g_sink += (int)g_outBuf1[0];
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
         }
         printf("VORTEX %lld\n", best / iters);
         fflush(stdout);
@@ -3612,7 +3612,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("VWAP %lld\n", best / iters);
         fflush(stdout);
@@ -3628,7 +3628,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("VWMA %lld\n", best / iters);
         fflush(stdout);
@@ -3644,7 +3644,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("WAD %lld\n", best / iters);
         fflush(stdout);
@@ -3660,7 +3660,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("WCLPRICE %lld\n", best / iters);
         fflush(stdout);
@@ -3676,7 +3676,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("WILLR %lld\n", best / iters);
         fflush(stdout);
@@ -3692,7 +3692,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("WMA %lld\n", best / iters);
         fflush(stdout);
@@ -3708,7 +3708,7 @@ static void bench_all(const char *filter, int iters) {
             long long elapsed = get_nanotime() - t0;
             if( !best || elapsed < best ) best = elapsed;
             g_sink += outNBElement;
-            g_sink += (int)g_outBuf0[0];
+            g_sink += g_outBuf0[0];
         }
         printf("ZLEMA %lld\n", best / iters);
         fflush(stdout);
