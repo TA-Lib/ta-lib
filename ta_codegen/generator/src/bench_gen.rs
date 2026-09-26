@@ -10,7 +10,7 @@
 //! `--shape` / `--list-shapes`. The default shape reproduces the seed-42 walk
 //! these binaries generated inline before the corpus header existed.
 
-use crate::ir::{FuncDef, ParamType};
+use crate::ir::{FuncDef, OptInput, ParamType};
 use crate::server_gen::expand_input_names;
 use std::path::Path;
 use std::fmt::Write as _;
@@ -259,15 +259,14 @@ pub fn write_c_bench(funcs: &[FuncDef], output_dir: &Path) {
 // - peek_ns       : one `TA_XXX_Peek` (the same transition, rewritten to commit
 //   nothing) — the same rotating feed and index cost as update, so the
 //   peek-minus-update delta is what running it non-committing costs.
-// - lookback      : `TA_XXX_Lookback(defaults)` — contextualises batch_last.
+// - lookback      : `TA_XXX_Lookback(params)`, which contextualises batch_last.
 // - handle_bytes  : retained bytes of the open handle, measured by overriding
 //   TA_Malloc/TA_Free with a registry and taking the net-live delta across
 //   Open (scratch temporaries use raw malloc/free and are invisible, which is
 //   correct — they are freed before Open returns; only retained state counts).
 //
-// All params are at their defaults, so every Open succeeds (default MAType is
-// always SMA, a supported arm); a rejecting Open still prints its batch_last
-// and lookback with REJECT in the update/peek columns.
+// All params are at their defaults unless `--period` sets `optInTimePeriod`,
+// and the defaults always open (default MAType is always SMA, a supported arm).
 
 /// The per-bar out-scalar declarations and address-argument lists shared by a
 /// function's Open / Update / Peek calls (outputs appear in the same declared
@@ -297,8 +296,7 @@ fn stream_out_bits(func: &FuncDef, decl_ind: &str, acc_ind: &str) -> (String, St
     (decls, addrs.join(", "), acc)
 }
 
-/// Optional-param default values as C call arguments (shared by Open, batch,
-/// and Lookback). Mirrors the batch emitter exactly.
+/// Optional-param default values as C literals. Mirrors the batch emitter exactly.
 fn stream_opt_args(func: &FuncDef) -> Vec<String> {
     let mut args = Vec::new();
     for opt in &func.optional_inputs {
@@ -314,6 +312,27 @@ fn stream_opt_args(func: &FuncDef) -> Vec<String> {
     args
 }
 
+/// `(local declarations, argument names)` for the optional inputs.
+fn stream_opt_locals(func: &FuncDef) -> (String, Vec<String>) {
+    let mut decls = String::new();
+    for (opt, default) in func.optional_inputs.iter().zip(stream_opt_args(func)) {
+        let ty = if opt.param_type == ParamType::Real { "double" } else { "int" };
+        let value = if is_period_opt(opt) {
+            format!("g_period > 0 ? g_period : {default}")
+        } else {
+            default
+        };
+        let _ = writeln!(decls, "        const {ty} {} = bench_opaque_{ty}({value});", opt.name);
+    }
+    (decls, func.optional_inputs.iter().map(|o| o.name.clone()).collect())
+}
+
+/// Must match `ta_bench --period`'s selection, so both benches open the same
+/// handle for the same flag.
+fn is_period_opt(opt: &OptInput) -> bool {
+    opt.param_type == ParamType::Integer && opt.name == "optInTimePeriod"
+}
+
 /// Row printer + the tally behind the summary and `--min-ratio`.
 ///
 /// `speedup = batch_last_ns / update_ns` is the number this binary exists to
@@ -321,15 +340,46 @@ fn stream_opt_args(func: &FuncDef) -> Vec<String> {
 /// above 1. Both halves are measured in one TU on one input, so unlike every
 /// other ratio in the tree it is not comparing two build configurations.
 const STREAM_ROW_HELPER: &str = r##"static double g_min_ratio = 0.0;   /* 0 = report only, no gate */
+static int    g_period = 0;        /* --period; 0 = every optInTimePeriod at its default */
 static double g_worst_ratio = -1.0;
 static char   g_worst_name[64] = "";
-static int    g_rows = 0, g_slow = 0, g_below = 0, g_reject = 0;
+static int    g_rows = 0, g_slow = 0, g_below = 0, g_reject = 0, g_short = 0;
 
-static void bench_stream_row(const char *name, double b, double u, double p,
-                             int lb, size_t hb)
+/* Every param reaches Lookback, batch and Open through one of these: a literal
+   folds into the inlined batch body and times a cheaper call than the
+   library's, with nothing to show it. */
+static int    bench_opaque_int(int v)       { volatile int x = v; return x; }
+static double bench_opaque_double(double v) { volatile double x = v; return x; }
+
+/* batch@last appends from index lb, so the history must hold lb + iters bars;
+   a long --period outgrows the headroom main reserves. */
+static void bench_rt_reserve(long long need) {
+    double **rt[7] = { &g_rt_open, &g_rt_high, &g_rt_low, &g_rt_close,
+                       &g_rt_volume, &g_rt_oi, &g_rt_periods };
+    const double *src[7] = { g_open, g_high, g_low, g_close, g_volume, g_oi, g_periods };
+    if( need <= g_rtCap ) return;
+    if( need > INT_MAX ) TA_TOOL_OOM("the batch@last history");
+    for( int k = 0; k < 7; k++ ) {
+        double *p = realloc(*rt[k], sizeof(double) * (size_t)need);
+        if( !p ) TA_TOOL_OOM("the batch@last history");
+        for( int i = g_rtCap; i < (int)need; i++ ) p[i] = src[k][i % g_nPoints];
+        *rt[k] = p;
+    }
+    g_rtCap = (int)need;
+}
+
+static void bench_stream_row(const char *name, TA_RetCode orc, double b, double u,
+                             double p, int lb, size_t hb)
 {
-    if( u <= 0.0 ) {   /* Open rejected the default params */
-        printf("%s %.3f -1 -1 %d 0 -1\n", name, b, lb);
+    if( u <= 0.0 && orc == TA_INSUFFICIENT_HISTORY ) {   /* lb >= --points */
+        printf("%s %.3f -1 -1 %d 0 short\n", name, b, lb);
+        g_short++;
+        return;
+    }
+    if( u <= 0.0 ) {   /* Open rejected the params */
+        /* lb < 0: Lookback refused them too, so batch_last timed rejections. */
+        if( lb < 0 ) printf("%s -1 -1 -1 %d 0 -1\n", name, lb);
+        else         printf("%s %.3f -1 -1 %d 0 -1\n", name, b, lb);
         g_reject++;
         return;
     }
@@ -348,8 +398,9 @@ static void bench_stream_row(const char *name, double b, double u, double p,
    something came in under it, so this can gate a nightly. */
 static int bench_stream_summary(void)
 {
-    printf("# %d timed, %d rejected; %d slower than batch@last; worst %s %.2fx\n",
-           g_rows, g_reject, g_slow,
+    printf("# %d timed, %d rejected, %d short (lookback >= --points); "
+           "%d slower than batch@last; worst %s %.2fx\n",
+           g_rows, g_reject, g_short, g_slow,
            g_worst_name[0] ? g_worst_name : "-", g_worst_ratio);
     if( g_min_ratio > 0.0 ) {
         printf("# --min-ratio=%.2f: %d below -> %s\n",
@@ -367,6 +418,8 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
     s.push_str("#define BENCH_MASK 4095\n\n");
     s.push_str(STREAM_ROW_HELPER);
     s.push_str("static void bench_stream_all(const char *filter, int iters) {\n");
+    s.push_str("    if( g_period > 0 )\n");
+    s.push_str("        printf(\"# --period=%d: every optInTimePeriod; all other params at their defaults\\n\", g_period);\n");
     s.push_str("    printf(\"# func batch_last_ns update_ns peek_ns lookback handle_bytes speedup\\n\");\n");
     s.push_str("    fflush(stdout);\n");
 
@@ -377,7 +430,7 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         let name = &func.name;
         let ta = format!("TA_{name}");
         let input_names = expand_input_names(&func.inputs);
-        let opt_args = stream_opt_args(func);
+        let (param_decls, opt_args) = stream_opt_locals(func);
         let (out_decls, out_addrs, out_acc) =
             stream_out_bits(func, "            ", "                    ");
 
@@ -431,13 +484,14 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str("        int begIdx = 0, nb = 0;\n");
         s.push_str("        size_t handle_bytes = 0;\n");
         s.push_str("        double acc = 0.0;\n");
+        s.push_str(&param_decls);
         // Lookback contextualises batch@last and sizes its compute window.
         s.push_str(&format!("        int lb = {ta}_Lookback({opt_only});\n"));
-        s.push_str("        if( lb < 0 ) lb = 0;\n");
+        s.push_str("        bench_rt_reserve((long long)lb + iters);\n");
         // batch@last: append the incoming bar at `t` in the growing buffer, then
         // compute one output over the last `lb` bars (startIdx==endIdx==t).
         s.push_str("        for( int pass = 0; pass < 3; pass++ ) {\n");
-        s.push_str("            int t = lb;\n");
+        s.push_str("            int t = lb < 0 ? 0 : lb;\n");
         s.push_str("            long long t0 = get_nanotime();\n");
         s.push_str("            for( int it = 0; it < iters; it++ ) {\n");
         for (k, rt) in rt_arrays.iter().enumerate() {
@@ -545,14 +599,14 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str("            g_sink += (int)acc + nb;\n");
         s.push_str(&format!("            {ta}_Close(st);\n"));
         s.push_str(&format!(
-            "            bench_stream_row(\"{name}\", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);\n"
+            "            bench_stream_row(\"{name}\", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);\n"
         ));
         s.push_str("        } else {\n");
         s.push_str("            g_sink += (int)acc + nb;\n");
         s.push_str("            if( st ) { g_ta_track = 0; ");
         s.push_str(&format!("{ta}_Close(st); }}\n"));
         s.push_str(&format!(
-            "            bench_stream_row(\"{name}\", best_b/(double)iters, -1.0, -1.0, lb, 0);\n"
+            "            bench_stream_row(\"{name}\", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);\n"
         ));
         s.push_str("        }\n");
         s.push_str("        fflush(stdout);\n");
@@ -572,7 +626,7 @@ pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
     s.push_str(" * Output: `NAME batch_last update peek lookback handle_bytes` per line.\n");
     s.push_str(" */\n");
     s.push_str("#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n");
-    s.push_str("#include <math.h>\n#include <time.h>\n#include <ctype.h>\n");
+    s.push_str("#include <math.h>\n#include <time.h>\n#include <ctype.h>\n#include <limits.h>\n");
     s.push_str("#ifdef _WIN32\n#include <windows.h>\n#endif\n#ifdef __APPLE__\n#include <mach/mach_time.h>\n#endif\n\n");
     // The shared benchmark input corpus (src/tools/ta_bench is on the include
     // path — see the ta_bench_cg / ta_bench_stream gcc invocations in main.rs).
@@ -682,6 +736,7 @@ int main(int argc, char *argv[]) {
     int n_iters = 500;
     int verify_corpus = 0;
     const char *func_filter = NULL;
+    g_corpus.refPeriod = 0;   /* 0 = derive after the loop */
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--iters=", 8) == 0 ) n_iters = atoi(argv[i]+8);
@@ -689,34 +744,20 @@ int main(int argc, char *argv[]) {
         /* Gate: exit non-zero if any function streams slower than this multiple
            of its batch@last cost. Stream-bench only, hence not in CORPUS_ARGS. */
         else if( strncmp(argv[i], "--min-ratio=", 12) == 0 ) g_min_ratio = atof(argv[i]+12);
+        else if( strncmp(argv[i], "--period=", 9) == 0 ) g_period = atoi(argv[i]+9);
 __CORPUS_ARGS__    }
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
     if( n_iters < 1 ) n_iters = 1;
+    /* The trend/chop regime length is relative to the window under test. */
+    if( g_corpus.refPeriod <= 0 )
+        g_corpus.refPeriod = (g_period > 0) ? g_period : BENCH_CORPUS_PERIOD;
     /* After the loop, so the check runs at the n actually benchmarked
        regardless of where --points sits in argv. */
     if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
     generate_price_data(n_points);
-    /* Growing history for batch@last: one buffer sized to hold the whole run
-       (n_iters appended bars + lookback headroom) so it never recycles within a pass. */
-    g_rtCap = n_iters + 8192;
-    g_rt_open   = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_high   = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_low    = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_close  = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_volume = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_oi     = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_periods = malloc(sizeof(double) * (size_t)g_rtCap);
-    if( g_rtCap <= 0 || !g_rt_open || !g_rt_high || !g_rt_low || !g_rt_close || !g_rt_volume || !g_rt_oi || !g_rt_periods ) {
-        fprintf( stderr, "ta_bench_stream: allocation failed (try a smaller --iters)\n" );
-        return 1;
-    }
-    for( int i = 0; i < g_rtCap; i++ ) {
-        int j = i % g_nPoints;
-        g_rt_open[i]=g_open[j]; g_rt_high[i]=g_high[j]; g_rt_low[i]=g_low[j];
-        g_rt_close[i]=g_close[j]; g_rt_volume[i]=g_volume[j]; g_rt_oi[i]=g_oi[j];
-        g_rt_periods[i]=g_periods[j];
-    }
+    /* Growing history for batch@last, sized so it never recycles within a pass. */
+    bench_rt_reserve((long long)n_iters + 8192);
     bench_stream_all(func_filter, n_iters);
     int rc = bench_stream_summary();
     free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi); free(g_rt_periods);

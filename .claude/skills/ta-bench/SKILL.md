@@ -133,7 +133,7 @@ Why it exists next to five timing tools: a count is **exact**. Two runs of the
 same binary on a loaded runner and an idle one agree to the instruction, which
 is what lets a 10% threshold gate anything on a shared vCPU. The timing tools
 all concede that ground: `--max-spread=25`, `--no-signal=1.20`,
-`--min-ratio=0.35`.
+`--min-ratio=0.05`.
 
 What a count cannot see, and where it actively misleads:
 
@@ -172,8 +172,21 @@ unlike `ta_bench_direct`'s ratio it is not comparing two build configurations.
 
 ```bash
 cd bin && ./ta_bench_stream --points=20000 --iters=50
-./ta_bench_stream --points=20000 --iters=50 --min-ratio=0.35   # exits 1 if any func is below
+./ta_bench_stream --min-ratio=0.05                             # exits 1 if any func is below
+./ta_bench_stream --points=20000 --iters=50 --function=CG,VHF --period=100
 ```
+
+`--period=N` sets every integer `optInTimePeriod`, as `ta_bench --period` does:
+MACD's fast/slow pair and ULTOSC's three periods keep their defaults. As there,
+it also sets the trend/chop regime length unless `--regime-period` is given. A value outside a function's range counts the row as rejected.
+Open wants more bars than the lookback, so a lookback at or above `--points`
+cannot open: the row still times `batch_last_ns`, ends in `short` and counts
+apart from the rejected ones. Raise `--points` (at most 200000) to time its
+update.
+
+Every param reaches the batch call as a runtime value, as it does from a caller
+of the shipped library, so no row's `batch_last_ns` times a body specialised on
+a constant.
 
 `ta_bench_stream` is **C only**. For the Rust, Java and C# streaming tiers,
 `scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar — or `open`, which times
@@ -212,16 +225,18 @@ scripts/stream_ab.py --base=origin/dev --lang=csharp --call=peek
 scripts/stream_ab.py --base=origin/dev --call=open --mark=BBANDS,STDDEV   # the Open tier
 ```
 
-Current shape: median ~1.6x, but **~25 stream slower than
-batch** and another ~50 sit under 1.5x. Recursive/multi-stage state wins big
-(`HT_TRENDLINE` ~24x, `TRIX`/`TEMA` ~16x); window-recomputers and stateless
-patterns lose (`AVGDEV`, `MAVP`, `MIDPRICE`, `WILLR`, CDL*) because the handle
-buys nothing and costs indirection. Those losers overlap the rolling-extremum
-family — see the corpus note below.
+Current shape, from default runs on a Ryzen 7 PRO 8840U under WSL2, each row
+the median of 30: median ~2.0x, but **~40 stream slower than batch** and
+another ~45 sit under 1.5x. Recursive or multi-stage state wins big
+(`HT_TRENDLINE` ~20x, `TRIX`/`TEMA` ~14x). The worst rows are `PERCENTRANK`
+(~0.2x) and `MAVP` (~0.4x); most of the others under 1.0 are stateless or
+one-step (price and math transforms, the `ROC` family, the running sums,
+a few CDL*), where the handle buys nothing and costs indirection.
 
-`--min-ratio` is a cliff detector, not a quality bar: run to run the worst ratio
-moves 0.42–0.50 and the worst function's *name* changes, so a threshold near 1.0
-just flaps. 0.35 has headroom while still failing on a real regression.
+`--min-ratio` is a cliff detector, not a quality bar. The worst row is usually
+`PERCENTRANK` near 0.2x, but now and then a noise spike puts another row
+near 0.1x, so a threshold above that flaps; 0.05 passed every default run
+measured here.
 
 ## Benchmark input corpus
 

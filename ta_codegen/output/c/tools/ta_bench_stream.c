@@ -8,6 +8,7 @@
 #include <math.h>
 #include <time.h>
 #include <ctype.h>
+#include <limits.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -376,15 +377,46 @@ static volatile int g_sink = 0;
 #define BENCH_MASK 4095
 
 static double g_min_ratio = 0.0;   /* 0 = report only, no gate */
+static int    g_period = 0;        /* --period; 0 = every optInTimePeriod at its default */
 static double g_worst_ratio = -1.0;
 static char   g_worst_name[64] = "";
-static int    g_rows = 0, g_slow = 0, g_below = 0, g_reject = 0;
+static int    g_rows = 0, g_slow = 0, g_below = 0, g_reject = 0, g_short = 0;
 
-static void bench_stream_row(const char *name, double b, double u, double p,
-                             int lb, size_t hb)
+/* Every param reaches Lookback, batch and Open through one of these: a literal
+   folds into the inlined batch body and times a cheaper call than the
+   library's, with nothing to show it. */
+static int    bench_opaque_int(int v)       { volatile int x = v; return x; }
+static double bench_opaque_double(double v) { volatile double x = v; return x; }
+
+/* batch@last appends from index lb, so the history must hold lb + iters bars;
+   a long --period outgrows the headroom main reserves. */
+static void bench_rt_reserve(long long need) {
+    double **rt[7] = { &g_rt_open, &g_rt_high, &g_rt_low, &g_rt_close,
+                       &g_rt_volume, &g_rt_oi, &g_rt_periods };
+    const double *src[7] = { g_open, g_high, g_low, g_close, g_volume, g_oi, g_periods };
+    if( need <= g_rtCap ) return;
+    if( need > INT_MAX ) TA_TOOL_OOM("the batch@last history");
+    for( int k = 0; k < 7; k++ ) {
+        double *p = realloc(*rt[k], sizeof(double) * (size_t)need);
+        if( !p ) TA_TOOL_OOM("the batch@last history");
+        for( int i = g_rtCap; i < (int)need; i++ ) p[i] = src[k][i % g_nPoints];
+        *rt[k] = p;
+    }
+    g_rtCap = (int)need;
+}
+
+static void bench_stream_row(const char *name, TA_RetCode orc, double b, double u,
+                             double p, int lb, size_t hb)
 {
-    if( u <= 0.0 ) {   /* Open rejected the default params */
-        printf("%s %.3f -1 -1 %d 0 -1\n", name, b, lb);
+    if( u <= 0.0 && orc == TA_INSUFFICIENT_HISTORY ) {   /* lb >= --points */
+        printf("%s %.3f -1 -1 %d 0 short\n", name, b, lb);
+        g_short++;
+        return;
+    }
+    if( u <= 0.0 ) {   /* Open rejected the params */
+        /* lb < 0: Lookback refused them too, so batch_last timed rejections. */
+        if( lb < 0 ) printf("%s -1 -1 -1 %d 0 -1\n", name, lb);
+        else         printf("%s %.3f -1 -1 %d 0 -1\n", name, b, lb);
         g_reject++;
         return;
     }
@@ -403,8 +435,9 @@ static void bench_stream_row(const char *name, double b, double u, double p,
    something came in under it, so this can gate a nightly. */
 static int bench_stream_summary(void)
 {
-    printf("# %d timed, %d rejected; %d slower than batch@last; worst %s %.2fx\n",
-           g_rows, g_reject, g_slow,
+    printf("# %d timed, %d rejected, %d short (lookback >= --points); "
+           "%d slower than batch@last; worst %s %.2fx\n",
+           g_rows, g_reject, g_short, g_slow,
            g_worst_name[0] ? g_worst_name : "-", g_worst_ratio);
     if( g_min_ratio > 0.0 ) {
         printf("# --min-ratio=%.2f: %d below -> %s\n",
@@ -415,6 +448,8 @@ static int bench_stream_summary(void)
 }
 
 static void bench_stream_all(const char *filter, int iters) {
+    if( g_period > 0 )
+        printf("# --period=%d: every optInTimePeriod; all other params at their defaults\n", g_period);
     printf("# func batch_last_ns update_ns peek_ns lookback handle_bytes speedup\n");
     fflush(stdout);
     if( func_matches(filter, "AC") ) {
@@ -422,15 +457,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_AC_Lookback(5, 34, 5);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(5);
+        const int optInSlowPeriod = bench_opaque_int(34);
+        const int optInSignalPeriod = bench_opaque_int(5);
+        int lb = TA_AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_AC(t, t, g_rt_high, g_rt_low, 5, 34, 5, &begIdx, &nb, g_outBuf0);
+                TA_AC(t, t, g_rt_high, g_rt_low, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -440,7 +478,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AC_Open(&st, g_high, g_low, g_nPoints, 5, 34, 5, &v0);
+        TA_RetCode orc = TA_AC_Open(&st, g_high, g_low, g_nPoints, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -474,11 +512,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_AC_Close(st);
-            bench_stream_row("AC", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("AC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_AC_Close(st); }
-            bench_stream_row("AC", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("AC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -487,16 +525,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ACCBANDS_Lookback(20);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        int lb = TA_ACCBANDS_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ACCBANDS(t, t, g_rt_high, g_rt_low, g_rt_close, 20, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_ACCBANDS(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -510,7 +549,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ACCBANDS_Open(&st, g_high, g_low, g_close, g_nPoints, 20, &v0, &v1, &v2);
+        TA_RetCode orc = TA_ACCBANDS_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -550,11 +589,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ACCBANDS_Close(st);
-            bench_stream_row("ACCBANDS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ACCBANDS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ACCBANDS_Close(st); }
-            bench_stream_row("ACCBANDS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ACCBANDS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -564,9 +603,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_ACOS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -614,11 +653,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ACOS_Close(st);
-            bench_stream_row("ACOS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ACOS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ACOS_Close(st); }
-            bench_stream_row("ACOS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ACOS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -628,9 +667,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_AD_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -681,11 +720,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_AD_Close(st);
-            bench_stream_row("AD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("AD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_AD_Close(st); }
-            bench_stream_row("AD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("AD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -695,9 +734,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_ADD_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -746,11 +785,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ADD_Close(st);
-            bench_stream_row("ADD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ADD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ADD_Close(st); }
-            bench_stream_row("ADD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ADD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -759,17 +798,19 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ADOSC_Lookback(3, 10);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(3);
+        const int optInSlowPeriod = bench_opaque_int(10);
+        int lb = TA_ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_volume[t] = g_volume[it & BENCH_MASK];
-                TA_ADOSC(t, t, g_rt_high, g_rt_low, g_rt_close, g_rt_volume, 3, 10, &begIdx, &nb, g_outBuf0);
+                TA_ADOSC(t, t, g_rt_high, g_rt_low, g_rt_close, g_rt_volume, optInFastPeriod, optInSlowPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -779,7 +820,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADOSC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADOSC_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, 3, 10, &v0);
+        TA_RetCode orc = TA_ADOSC_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, optInFastPeriod, optInSlowPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -813,11 +854,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ADOSC_Close(st);
-            bench_stream_row("ADOSC", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ADOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ADOSC_Close(st); }
-            bench_stream_row("ADOSC", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ADOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -826,15 +867,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ADR_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_ADR_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_ADR(t, t, g_rt_high, g_rt_low, 14, &begIdx, &nb, g_outBuf0);
+                TA_ADR(t, t, g_rt_high, g_rt_low, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -844,7 +886,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADR_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_ADR_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -878,11 +920,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ADR_Close(st);
-            bench_stream_row("ADR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ADR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ADR_Close(st); }
-            bench_stream_row("ADR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ADR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -891,16 +933,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ADX_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_ADX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ADX(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_ADX(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -910,7 +953,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADX_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_ADX_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -944,11 +987,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ADX_Close(st);
-            bench_stream_row("ADX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ADX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ADX_Close(st); }
-            bench_stream_row("ADX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ADX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -957,16 +1000,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ADXR_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_ADXR_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ADXR(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_ADXR(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -976,7 +1020,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ADXR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ADXR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_ADXR_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1010,11 +1054,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ADXR_Close(st);
-            bench_stream_row("ADXR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ADXR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ADXR_Close(st); }
-            bench_stream_row("ADXR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ADXR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1023,15 +1067,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_AO_Lookback(5, 34);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(5);
+        const int optInSlowPeriod = bench_opaque_int(34);
+        int lb = TA_AO_Lookback(optInFastPeriod, optInSlowPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_AO(t, t, g_rt_high, g_rt_low, 5, 34, &begIdx, &nb, g_outBuf0);
+                TA_AO(t, t, g_rt_high, g_rt_low, optInFastPeriod, optInSlowPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1041,7 +1087,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AO_Open(&st, g_high, g_low, g_nPoints, 5, 34, &v0);
+        TA_RetCode orc = TA_AO_Open(&st, g_high, g_low, g_nPoints, optInFastPeriod, optInSlowPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1075,11 +1121,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_AO_Close(st);
-            bench_stream_row("AO", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("AO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_AO_Close(st); }
-            bench_stream_row("AO", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("AO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1088,14 +1134,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_APO_Lookback(12, 26, 1);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(12);
+        const int optInSlowPeriod = bench_opaque_int(26);
+        const int optInMAType = bench_opaque_int(1);
+        int lb = TA_APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_APO(t, t, g_rt_close, 12, 26, 1, &begIdx, &nb, g_outBuf0);
+                TA_APO(t, t, g_rt_close, optInFastPeriod, optInSlowPeriod, optInMAType, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1105,7 +1154,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_APO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_APO_Open(&st, g_close, g_nPoints, 12, 26, 1, &v0);
+        TA_RetCode orc = TA_APO_Open(&st, g_close, g_nPoints, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1139,11 +1188,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_APO_Close(st);
-            bench_stream_row("APO", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("APO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_APO_Close(st); }
-            bench_stream_row("APO", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("APO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1152,15 +1201,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_AROON_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_AROON_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_AROON(t, t, g_rt_high, g_rt_low, 14, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_AROON(t, t, g_rt_high, g_rt_low, optInTimePeriod, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -1172,7 +1222,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AROON_Open(&st, g_high, g_low, g_nPoints, 14, &v0, &v1);
+        TA_RetCode orc = TA_AROON_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1209,11 +1259,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_AROON_Close(st);
-            bench_stream_row("AROON", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("AROON", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_AROON_Close(st); }
-            bench_stream_row("AROON", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("AROON", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1222,15 +1272,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_AROONOSC_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_AROONOSC_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_AROONOSC(t, t, g_rt_high, g_rt_low, 14, &begIdx, &nb, g_outBuf0);
+                TA_AROONOSC(t, t, g_rt_high, g_rt_low, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1240,7 +1291,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AROONOSC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AROONOSC_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_AROONOSC_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1274,11 +1325,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_AROONOSC_Close(st);
-            bench_stream_row("AROONOSC", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("AROONOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_AROONOSC_Close(st); }
-            bench_stream_row("AROONOSC", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("AROONOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1288,9 +1339,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_ASIN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -1338,11 +1389,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ASIN_Close(st);
-            bench_stream_row("ASIN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ASIN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ASIN_Close(st); }
-            bench_stream_row("ASIN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ASIN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1352,9 +1403,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_ATAN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -1402,11 +1453,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ATAN_Close(st);
-            bench_stream_row("ATAN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ATAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ATAN_Close(st); }
-            bench_stream_row("ATAN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ATAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1415,16 +1466,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ATR_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_ATR_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ATR(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_ATR(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1434,7 +1486,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ATR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ATR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_ATR_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1468,11 +1520,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ATR_Close(st);
-            bench_stream_row("ATR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ATR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ATR_Close(st); }
-            bench_stream_row("ATR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ATR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1481,14 +1533,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_AVGDEV_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_AVGDEV_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_AVGDEV(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_AVGDEV(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1498,7 +1551,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_AVGDEV_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_AVGDEV_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_AVGDEV_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1532,11 +1585,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_AVGDEV_Close(st);
-            bench_stream_row("AVGDEV", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("AVGDEV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_AVGDEV_Close(st); }
-            bench_stream_row("AVGDEV", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("AVGDEV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1546,9 +1599,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_AVGPRICE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -1599,11 +1652,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_AVGPRICE_Close(st);
-            bench_stream_row("AVGPRICE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("AVGPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_AVGPRICE_Close(st); }
-            bench_stream_row("AVGPRICE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("AVGPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1612,14 +1665,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_BBANDS_Lookback(20, 2.000000000000000, 2.000000000000000, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        const double optInNbDevUp = bench_opaque_double(2.000000000000000);
+        const double optInNbDevDn = bench_opaque_double(2.000000000000000);
+        const int optInMAType = bench_opaque_int(0);
+        int lb = TA_BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_BBANDS(t, t, g_rt_close, 20, 2.000000000000000, 2.000000000000000, 0, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_BBANDS(t, t, g_rt_close, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -1633,7 +1690,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_BBANDS_Open(&st, g_close, g_nPoints, 20, 2.000000000000000, 2.000000000000000, 0, &v0, &v1, &v2);
+        TA_RetCode orc = TA_BBANDS_Open(&st, g_close, g_nPoints, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1673,11 +1730,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_BBANDS_Close(st);
-            bench_stream_row("BBANDS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("BBANDS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_BBANDS_Close(st); }
-            bench_stream_row("BBANDS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("BBANDS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1686,14 +1743,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_BBW_Lookback(20, 2.000000000000000, 2.000000000000000, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        const double optInNbDevUp = bench_opaque_double(2.000000000000000);
+        const double optInNbDevDn = bench_opaque_double(2.000000000000000);
+        const int optInMAType = bench_opaque_int(0);
+        int lb = TA_BBW_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_BBW(t, t, g_rt_close, 20, 2.000000000000000, 2.000000000000000, 0, &begIdx, &nb, g_outBuf0);
+                TA_BBW(t, t, g_rt_close, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1703,7 +1764,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_BBW_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_BBW_Open(&st, g_close, g_nPoints, 20, 2.000000000000000, 2.000000000000000, 0, &v0);
+        TA_RetCode orc = TA_BBW_Open(&st, g_close, g_nPoints, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1737,11 +1798,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_BBW_Close(st);
-            bench_stream_row("BBW", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("BBW", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_BBW_Close(st); }
-            bench_stream_row("BBW", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("BBW", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1750,15 +1811,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_BETA_Lookback(5);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 5);
+        int lb = TA_BETA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
-                TA_BETA(t, t, g_rt_close, g_rt_high, 5, &begIdx, &nb, g_outBuf0);
+                TA_BETA(t, t, g_rt_close, g_rt_high, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1768,7 +1830,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_BETA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_BETA_Open(&st, g_close, g_high, g_nPoints, 5, &v0);
+        TA_RetCode orc = TA_BETA_Open(&st, g_close, g_high, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1802,11 +1864,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_BETA_Close(st);
-            bench_stream_row("BETA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("BETA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_BETA_Close(st); }
-            bench_stream_row("BETA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("BETA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1816,9 +1878,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_BOP_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -1869,11 +1931,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_BOP_Close(st);
-            bench_stream_row("BOP", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("BOP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_BOP_Close(st); }
-            bench_stream_row("BOP", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("BOP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1882,16 +1944,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CCI_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_CCI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CCI(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_CCI(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -1901,7 +1964,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CCI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CCI_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_CCI_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -1935,11 +1998,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CCI_Close(st);
-            bench_stream_row("CCI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CCI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CCI_Close(st); }
-            bench_stream_row("CCI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CCI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -1949,9 +2012,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDL2CROWS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2002,11 +2065,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDL2CROWS_Close(st);
-            bench_stream_row("CDL2CROWS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDL2CROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL2CROWS_Close(st); }
-            bench_stream_row("CDL2CROWS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDL2CROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2016,9 +2079,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDL3BLACKCROWS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2069,11 +2132,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDL3BLACKCROWS_Close(st);
-            bench_stream_row("CDL3BLACKCROWS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDL3BLACKCROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3BLACKCROWS_Close(st); }
-            bench_stream_row("CDL3BLACKCROWS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDL3BLACKCROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2083,9 +2146,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDL3INSIDE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2136,11 +2199,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDL3INSIDE_Close(st);
-            bench_stream_row("CDL3INSIDE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDL3INSIDE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3INSIDE_Close(st); }
-            bench_stream_row("CDL3INSIDE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDL3INSIDE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2150,9 +2213,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDL3LINESTRIKE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2203,11 +2266,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDL3LINESTRIKE_Close(st);
-            bench_stream_row("CDL3LINESTRIKE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDL3LINESTRIKE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3LINESTRIKE_Close(st); }
-            bench_stream_row("CDL3LINESTRIKE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDL3LINESTRIKE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2217,9 +2280,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDL3OUTSIDE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2270,11 +2333,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDL3OUTSIDE_Close(st);
-            bench_stream_row("CDL3OUTSIDE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDL3OUTSIDE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3OUTSIDE_Close(st); }
-            bench_stream_row("CDL3OUTSIDE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDL3OUTSIDE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2284,9 +2347,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDL3STARSINSOUTH_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2337,11 +2400,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDL3STARSINSOUTH_Close(st);
-            bench_stream_row("CDL3STARSINSOUTH", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDL3STARSINSOUTH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3STARSINSOUTH_Close(st); }
-            bench_stream_row("CDL3STARSINSOUTH", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDL3STARSINSOUTH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2351,9 +2414,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDL3WHITESOLDIERS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2404,11 +2467,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDL3WHITESOLDIERS_Close(st);
-            bench_stream_row("CDL3WHITESOLDIERS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDL3WHITESOLDIERS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDL3WHITESOLDIERS_Close(st); }
-            bench_stream_row("CDL3WHITESOLDIERS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDL3WHITESOLDIERS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2417,17 +2480,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CDLABANDONEDBABY_Lookback(0.300000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInPenetration = bench_opaque_double(0.300000000000000);
+        int lb = TA_CDLABANDONEDBABY_Lookback(optInPenetration);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CDLABANDONEDBABY(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, 0.300000000000000, &begIdx, &nb, g_outIntBuf0);
+                TA_CDLABANDONEDBABY(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, optInPenetration, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -2437,7 +2501,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLABANDONEDBABY_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLABANDONEDBABY_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
+        TA_RetCode orc = TA_CDLABANDONEDBABY_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, optInPenetration, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2471,11 +2535,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLABANDONEDBABY_Close(st);
-            bench_stream_row("CDLABANDONEDBABY", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLABANDONEDBABY", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLABANDONEDBABY_Close(st); }
-            bench_stream_row("CDLABANDONEDBABY", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLABANDONEDBABY", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2485,9 +2549,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLADVANCEBLOCK_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2538,11 +2602,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLADVANCEBLOCK_Close(st);
-            bench_stream_row("CDLADVANCEBLOCK", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLADVANCEBLOCK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLADVANCEBLOCK_Close(st); }
-            bench_stream_row("CDLADVANCEBLOCK", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLADVANCEBLOCK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2552,9 +2616,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLBELTHOLD_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2605,11 +2669,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLBELTHOLD_Close(st);
-            bench_stream_row("CDLBELTHOLD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLBELTHOLD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLBELTHOLD_Close(st); }
-            bench_stream_row("CDLBELTHOLD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLBELTHOLD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2619,9 +2683,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLBREAKAWAY_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2672,11 +2736,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLBREAKAWAY_Close(st);
-            bench_stream_row("CDLBREAKAWAY", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLBREAKAWAY", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLBREAKAWAY_Close(st); }
-            bench_stream_row("CDLBREAKAWAY", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLBREAKAWAY", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2686,9 +2750,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLCLOSINGMARUBOZU_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2739,11 +2803,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLCLOSINGMARUBOZU_Close(st);
-            bench_stream_row("CDLCLOSINGMARUBOZU", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLCLOSINGMARUBOZU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLCLOSINGMARUBOZU_Close(st); }
-            bench_stream_row("CDLCLOSINGMARUBOZU", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLCLOSINGMARUBOZU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2753,9 +2817,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLCONCEALBABYSWALL_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2806,11 +2870,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLCONCEALBABYSWALL_Close(st);
-            bench_stream_row("CDLCONCEALBABYSWALL", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLCONCEALBABYSWALL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLCONCEALBABYSWALL_Close(st); }
-            bench_stream_row("CDLCONCEALBABYSWALL", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLCONCEALBABYSWALL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2820,9 +2884,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLCOUNTERATTACK_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -2873,11 +2937,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLCOUNTERATTACK_Close(st);
-            bench_stream_row("CDLCOUNTERATTACK", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLCOUNTERATTACK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLCOUNTERATTACK_Close(st); }
-            bench_stream_row("CDLCOUNTERATTACK", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLCOUNTERATTACK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2886,17 +2950,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CDLDARKCLOUDCOVER_Lookback(0.500000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInPenetration = bench_opaque_double(0.500000000000000);
+        int lb = TA_CDLDARKCLOUDCOVER_Lookback(optInPenetration);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CDLDARKCLOUDCOVER(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, 0.500000000000000, &begIdx, &nb, g_outIntBuf0);
+                TA_CDLDARKCLOUDCOVER(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, optInPenetration, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -2906,7 +2971,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLDARKCLOUDCOVER_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLDARKCLOUDCOVER_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.500000000000000, &iv0);
+        TA_RetCode orc = TA_CDLDARKCLOUDCOVER_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, optInPenetration, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -2940,11 +3005,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLDARKCLOUDCOVER_Close(st);
-            bench_stream_row("CDLDARKCLOUDCOVER", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLDARKCLOUDCOVER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDARKCLOUDCOVER_Close(st); }
-            bench_stream_row("CDLDARKCLOUDCOVER", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLDARKCLOUDCOVER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -2954,9 +3019,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLDOJI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3007,11 +3072,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLDOJI_Close(st);
-            bench_stream_row("CDLDOJI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDOJI_Close(st); }
-            bench_stream_row("CDLDOJI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3021,9 +3086,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLDOJISTAR_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3074,11 +3139,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLDOJISTAR_Close(st);
-            bench_stream_row("CDLDOJISTAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLDOJISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDOJISTAR_Close(st); }
-            bench_stream_row("CDLDOJISTAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLDOJISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3088,9 +3153,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLDRAGONFLYDOJI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3141,11 +3206,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLDRAGONFLYDOJI_Close(st);
-            bench_stream_row("CDLDRAGONFLYDOJI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLDRAGONFLYDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLDRAGONFLYDOJI_Close(st); }
-            bench_stream_row("CDLDRAGONFLYDOJI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLDRAGONFLYDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3155,9 +3220,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLENGULFING_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3208,11 +3273,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLENGULFING_Close(st);
-            bench_stream_row("CDLENGULFING", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLENGULFING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLENGULFING_Close(st); }
-            bench_stream_row("CDLENGULFING", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLENGULFING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3221,17 +3286,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CDLEVENINGDOJISTAR_Lookback(0.300000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInPenetration = bench_opaque_double(0.300000000000000);
+        int lb = TA_CDLEVENINGDOJISTAR_Lookback(optInPenetration);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CDLEVENINGDOJISTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, 0.300000000000000, &begIdx, &nb, g_outIntBuf0);
+                TA_CDLEVENINGDOJISTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, optInPenetration, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -3241,7 +3307,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLEVENINGDOJISTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLEVENINGDOJISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
+        TA_RetCode orc = TA_CDLEVENINGDOJISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, optInPenetration, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3275,11 +3341,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLEVENINGDOJISTAR_Close(st);
-            bench_stream_row("CDLEVENINGDOJISTAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLEVENINGDOJISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLEVENINGDOJISTAR_Close(st); }
-            bench_stream_row("CDLEVENINGDOJISTAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLEVENINGDOJISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3288,17 +3354,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CDLEVENINGSTAR_Lookback(0.300000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInPenetration = bench_opaque_double(0.300000000000000);
+        int lb = TA_CDLEVENINGSTAR_Lookback(optInPenetration);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CDLEVENINGSTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, 0.300000000000000, &begIdx, &nb, g_outIntBuf0);
+                TA_CDLEVENINGSTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, optInPenetration, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -3308,7 +3375,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLEVENINGSTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLEVENINGSTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
+        TA_RetCode orc = TA_CDLEVENINGSTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, optInPenetration, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -3342,11 +3409,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLEVENINGSTAR_Close(st);
-            bench_stream_row("CDLEVENINGSTAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLEVENINGSTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLEVENINGSTAR_Close(st); }
-            bench_stream_row("CDLEVENINGSTAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLEVENINGSTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3356,9 +3423,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLGAPSIDESIDEWHITE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3409,11 +3476,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLGAPSIDESIDEWHITE_Close(st);
-            bench_stream_row("CDLGAPSIDESIDEWHITE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLGAPSIDESIDEWHITE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLGAPSIDESIDEWHITE_Close(st); }
-            bench_stream_row("CDLGAPSIDESIDEWHITE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLGAPSIDESIDEWHITE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3423,9 +3490,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLGRAVESTONEDOJI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3476,11 +3543,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLGRAVESTONEDOJI_Close(st);
-            bench_stream_row("CDLGRAVESTONEDOJI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLGRAVESTONEDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLGRAVESTONEDOJI_Close(st); }
-            bench_stream_row("CDLGRAVESTONEDOJI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLGRAVESTONEDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3490,9 +3557,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHAMMER_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3543,11 +3610,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHAMMER_Close(st);
-            bench_stream_row("CDLHAMMER", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHAMMER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHAMMER_Close(st); }
-            bench_stream_row("CDLHAMMER", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHAMMER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3557,9 +3624,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHANGINGMAN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3610,11 +3677,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHANGINGMAN_Close(st);
-            bench_stream_row("CDLHANGINGMAN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHANGINGMAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHANGINGMAN_Close(st); }
-            bench_stream_row("CDLHANGINGMAN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHANGINGMAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3624,9 +3691,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHARAMI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3677,11 +3744,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHARAMI_Close(st);
-            bench_stream_row("CDLHARAMI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHARAMI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHARAMI_Close(st); }
-            bench_stream_row("CDLHARAMI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHARAMI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3691,9 +3758,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHARAMICROSS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3744,11 +3811,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHARAMICROSS_Close(st);
-            bench_stream_row("CDLHARAMICROSS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHARAMICROSS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHARAMICROSS_Close(st); }
-            bench_stream_row("CDLHARAMICROSS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHARAMICROSS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3758,9 +3825,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHIGHWAVE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3811,11 +3878,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHIGHWAVE_Close(st);
-            bench_stream_row("CDLHIGHWAVE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHIGHWAVE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHIGHWAVE_Close(st); }
-            bench_stream_row("CDLHIGHWAVE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHIGHWAVE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3825,9 +3892,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHIKKAKE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3878,11 +3945,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHIKKAKE_Close(st);
-            bench_stream_row("CDLHIKKAKE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHIKKAKE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHIKKAKE_Close(st); }
-            bench_stream_row("CDLHIKKAKE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHIKKAKE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3892,9 +3959,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHIKKAKEMOD_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -3945,11 +4012,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHIKKAKEMOD_Close(st);
-            bench_stream_row("CDLHIKKAKEMOD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHIKKAKEMOD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHIKKAKEMOD_Close(st); }
-            bench_stream_row("CDLHIKKAKEMOD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHIKKAKEMOD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -3959,9 +4026,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLHOMINGPIGEON_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4012,11 +4079,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLHOMINGPIGEON_Close(st);
-            bench_stream_row("CDLHOMINGPIGEON", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLHOMINGPIGEON", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLHOMINGPIGEON_Close(st); }
-            bench_stream_row("CDLHOMINGPIGEON", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLHOMINGPIGEON", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4026,9 +4093,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLIDENTICAL3CROWS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4079,11 +4146,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLIDENTICAL3CROWS_Close(st);
-            bench_stream_row("CDLIDENTICAL3CROWS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLIDENTICAL3CROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLIDENTICAL3CROWS_Close(st); }
-            bench_stream_row("CDLIDENTICAL3CROWS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLIDENTICAL3CROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4093,9 +4160,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLINNECK_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4146,11 +4213,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLINNECK_Close(st);
-            bench_stream_row("CDLINNECK", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLINNECK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLINNECK_Close(st); }
-            bench_stream_row("CDLINNECK", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLINNECK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4160,9 +4227,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLINVERTEDHAMMER_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4213,11 +4280,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLINVERTEDHAMMER_Close(st);
-            bench_stream_row("CDLINVERTEDHAMMER", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLINVERTEDHAMMER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLINVERTEDHAMMER_Close(st); }
-            bench_stream_row("CDLINVERTEDHAMMER", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLINVERTEDHAMMER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4227,9 +4294,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLKICKING_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4280,11 +4347,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLKICKING_Close(st);
-            bench_stream_row("CDLKICKING", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLKICKING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLKICKING_Close(st); }
-            bench_stream_row("CDLKICKING", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLKICKING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4294,9 +4361,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLKICKINGBYLENGTH_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4347,11 +4414,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLKICKINGBYLENGTH_Close(st);
-            bench_stream_row("CDLKICKINGBYLENGTH", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLKICKINGBYLENGTH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLKICKINGBYLENGTH_Close(st); }
-            bench_stream_row("CDLKICKINGBYLENGTH", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLKICKINGBYLENGTH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4361,9 +4428,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLLADDERBOTTOM_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4414,11 +4481,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLLADDERBOTTOM_Close(st);
-            bench_stream_row("CDLLADDERBOTTOM", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLLADDERBOTTOM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLLADDERBOTTOM_Close(st); }
-            bench_stream_row("CDLLADDERBOTTOM", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLLADDERBOTTOM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4428,9 +4495,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLLONGLEGGEDDOJI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4481,11 +4548,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLLONGLEGGEDDOJI_Close(st);
-            bench_stream_row("CDLLONGLEGGEDDOJI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLLONGLEGGEDDOJI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLLONGLEGGEDDOJI_Close(st); }
-            bench_stream_row("CDLLONGLEGGEDDOJI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLLONGLEGGEDDOJI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4495,9 +4562,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLLONGLINE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4548,11 +4615,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLLONGLINE_Close(st);
-            bench_stream_row("CDLLONGLINE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLLONGLINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLLONGLINE_Close(st); }
-            bench_stream_row("CDLLONGLINE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLLONGLINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4562,9 +4629,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLMARUBOZU_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4615,11 +4682,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLMARUBOZU_Close(st);
-            bench_stream_row("CDLMARUBOZU", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLMARUBOZU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMARUBOZU_Close(st); }
-            bench_stream_row("CDLMARUBOZU", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLMARUBOZU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4629,9 +4696,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLMATCHINGLOW_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4682,11 +4749,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLMATCHINGLOW_Close(st);
-            bench_stream_row("CDLMATCHINGLOW", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLMATCHINGLOW", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMATCHINGLOW_Close(st); }
-            bench_stream_row("CDLMATCHINGLOW", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLMATCHINGLOW", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4695,17 +4762,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CDLMATHOLD_Lookback(0.500000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInPenetration = bench_opaque_double(0.500000000000000);
+        int lb = TA_CDLMATHOLD_Lookback(optInPenetration);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CDLMATHOLD(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, 0.500000000000000, &begIdx, &nb, g_outIntBuf0);
+                TA_CDLMATHOLD(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, optInPenetration, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -4715,7 +4783,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMATHOLD_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMATHOLD_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.500000000000000, &iv0);
+        TA_RetCode orc = TA_CDLMATHOLD_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, optInPenetration, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4749,11 +4817,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLMATHOLD_Close(st);
-            bench_stream_row("CDLMATHOLD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLMATHOLD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMATHOLD_Close(st); }
-            bench_stream_row("CDLMATHOLD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLMATHOLD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4762,17 +4830,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CDLMORNINGDOJISTAR_Lookback(0.300000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInPenetration = bench_opaque_double(0.300000000000000);
+        int lb = TA_CDLMORNINGDOJISTAR_Lookback(optInPenetration);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CDLMORNINGDOJISTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, 0.300000000000000, &begIdx, &nb, g_outIntBuf0);
+                TA_CDLMORNINGDOJISTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, optInPenetration, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -4782,7 +4851,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMORNINGDOJISTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMORNINGDOJISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
+        TA_RetCode orc = TA_CDLMORNINGDOJISTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, optInPenetration, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4816,11 +4885,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLMORNINGDOJISTAR_Close(st);
-            bench_stream_row("CDLMORNINGDOJISTAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLMORNINGDOJISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMORNINGDOJISTAR_Close(st); }
-            bench_stream_row("CDLMORNINGDOJISTAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLMORNINGDOJISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4829,17 +4898,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CDLMORNINGSTAR_Lookback(0.300000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInPenetration = bench_opaque_double(0.300000000000000);
+        int lb = TA_CDLMORNINGSTAR_Lookback(optInPenetration);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CDLMORNINGSTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, 0.300000000000000, &begIdx, &nb, g_outIntBuf0);
+                TA_CDLMORNINGSTAR(t, t, g_rt_open, g_rt_high, g_rt_low, g_rt_close, optInPenetration, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -4849,7 +4919,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CDLMORNINGSTAR_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CDLMORNINGSTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, 0.300000000000000, &iv0);
+        TA_RetCode orc = TA_CDLMORNINGSTAR_Open(&st, g_open, g_high, g_low, g_close, g_nPoints, optInPenetration, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -4883,11 +4953,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLMORNINGSTAR_Close(st);
-            bench_stream_row("CDLMORNINGSTAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLMORNINGSTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLMORNINGSTAR_Close(st); }
-            bench_stream_row("CDLMORNINGSTAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLMORNINGSTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4897,9 +4967,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLONNECK_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -4950,11 +5020,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLONNECK_Close(st);
-            bench_stream_row("CDLONNECK", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLONNECK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLONNECK_Close(st); }
-            bench_stream_row("CDLONNECK", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLONNECK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -4964,9 +5034,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLPIERCING_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5017,11 +5087,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLPIERCING_Close(st);
-            bench_stream_row("CDLPIERCING", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLPIERCING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLPIERCING_Close(st); }
-            bench_stream_row("CDLPIERCING", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLPIERCING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5031,9 +5101,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLRICKSHAWMAN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5084,11 +5154,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLRICKSHAWMAN_Close(st);
-            bench_stream_row("CDLRICKSHAWMAN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLRICKSHAWMAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLRICKSHAWMAN_Close(st); }
-            bench_stream_row("CDLRICKSHAWMAN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLRICKSHAWMAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5098,9 +5168,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLRISEFALL3METHODS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5151,11 +5221,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLRISEFALL3METHODS_Close(st);
-            bench_stream_row("CDLRISEFALL3METHODS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLRISEFALL3METHODS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLRISEFALL3METHODS_Close(st); }
-            bench_stream_row("CDLRISEFALL3METHODS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLRISEFALL3METHODS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5165,9 +5235,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLSEPARATINGLINES_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5218,11 +5288,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLSEPARATINGLINES_Close(st);
-            bench_stream_row("CDLSEPARATINGLINES", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLSEPARATINGLINES", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSEPARATINGLINES_Close(st); }
-            bench_stream_row("CDLSEPARATINGLINES", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLSEPARATINGLINES", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5232,9 +5302,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLSHOOTINGSTAR_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5285,11 +5355,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLSHOOTINGSTAR_Close(st);
-            bench_stream_row("CDLSHOOTINGSTAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLSHOOTINGSTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSHOOTINGSTAR_Close(st); }
-            bench_stream_row("CDLSHOOTINGSTAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLSHOOTINGSTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5299,9 +5369,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLSHORTLINE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5352,11 +5422,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLSHORTLINE_Close(st);
-            bench_stream_row("CDLSHORTLINE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLSHORTLINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSHORTLINE_Close(st); }
-            bench_stream_row("CDLSHORTLINE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLSHORTLINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5366,9 +5436,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLSPINNINGTOP_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5419,11 +5489,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLSPINNINGTOP_Close(st);
-            bench_stream_row("CDLSPINNINGTOP", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLSPINNINGTOP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSPINNINGTOP_Close(st); }
-            bench_stream_row("CDLSPINNINGTOP", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLSPINNINGTOP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5433,9 +5503,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLSTALLEDPATTERN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5486,11 +5556,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLSTALLEDPATTERN_Close(st);
-            bench_stream_row("CDLSTALLEDPATTERN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLSTALLEDPATTERN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSTALLEDPATTERN_Close(st); }
-            bench_stream_row("CDLSTALLEDPATTERN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLSTALLEDPATTERN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5500,9 +5570,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLSTICKSANDWICH_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5553,11 +5623,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLSTICKSANDWICH_Close(st);
-            bench_stream_row("CDLSTICKSANDWICH", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLSTICKSANDWICH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLSTICKSANDWICH_Close(st); }
-            bench_stream_row("CDLSTICKSANDWICH", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLSTICKSANDWICH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5567,9 +5637,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLTAKURI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5620,11 +5690,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLTAKURI_Close(st);
-            bench_stream_row("CDLTAKURI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLTAKURI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTAKURI_Close(st); }
-            bench_stream_row("CDLTAKURI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLTAKURI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5634,9 +5704,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLTASUKIGAP_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5687,11 +5757,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLTASUKIGAP_Close(st);
-            bench_stream_row("CDLTASUKIGAP", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLTASUKIGAP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTASUKIGAP_Close(st); }
-            bench_stream_row("CDLTASUKIGAP", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLTASUKIGAP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5701,9 +5771,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLTHRUSTING_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5754,11 +5824,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLTHRUSTING_Close(st);
-            bench_stream_row("CDLTHRUSTING", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLTHRUSTING", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTHRUSTING_Close(st); }
-            bench_stream_row("CDLTHRUSTING", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLTHRUSTING", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5768,9 +5838,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLTRISTAR_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5821,11 +5891,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLTRISTAR_Close(st);
-            bench_stream_row("CDLTRISTAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLTRISTAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLTRISTAR_Close(st); }
-            bench_stream_row("CDLTRISTAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLTRISTAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5835,9 +5905,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLUNIQUE3RIVER_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5888,11 +5958,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLUNIQUE3RIVER_Close(st);
-            bench_stream_row("CDLUNIQUE3RIVER", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLUNIQUE3RIVER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLUNIQUE3RIVER_Close(st); }
-            bench_stream_row("CDLUNIQUE3RIVER", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLUNIQUE3RIVER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5902,9 +5972,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLUPSIDEGAP2CROWS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -5955,11 +6025,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLUPSIDEGAP2CROWS_Close(st);
-            bench_stream_row("CDLUPSIDEGAP2CROWS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLUPSIDEGAP2CROWS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLUPSIDEGAP2CROWS_Close(st); }
-            bench_stream_row("CDLUPSIDEGAP2CROWS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLUPSIDEGAP2CROWS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -5969,9 +6039,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CDLXSIDEGAP3METHODS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -6022,11 +6092,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CDLXSIDEGAP3METHODS_Close(st);
-            bench_stream_row("CDLXSIDEGAP3METHODS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CDLXSIDEGAP3METHODS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CDLXSIDEGAP3METHODS_Close(st); }
-            bench_stream_row("CDLXSIDEGAP3METHODS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CDLXSIDEGAP3METHODS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6036,9 +6106,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CEIL_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -6086,11 +6156,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CEIL_Close(st);
-            bench_stream_row("CEIL", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CEIL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CEIL_Close(st); }
-            bench_stream_row("CEIL", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CEIL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6099,14 +6169,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CG_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_CG_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CG(t, t, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_CG(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6116,7 +6187,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CG_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CG_Open(&st, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_CG_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6150,11 +6221,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CG_Close(st);
-            bench_stream_row("CG", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CG", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CG_Close(st); }
-            bench_stream_row("CG", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CG", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6163,17 +6234,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CMF_Lookback(20);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        int lb = TA_CMF_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_volume[t] = g_volume[it & BENCH_MASK];
-                TA_CMF(t, t, g_rt_high, g_rt_low, g_rt_close, g_rt_volume, 20, &begIdx, &nb, g_outBuf0);
+                TA_CMF(t, t, g_rt_high, g_rt_low, g_rt_close, g_rt_volume, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6183,7 +6255,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CMF_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CMF_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, 20, &v0);
+        TA_RetCode orc = TA_CMF_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6217,11 +6289,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CMF_Close(st);
-            bench_stream_row("CMF", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CMF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CMF_Close(st); }
-            bench_stream_row("CMF", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CMF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6230,14 +6302,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CMO_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_CMO_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CMO(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_CMO(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6247,7 +6320,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CMO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CMO_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_CMO_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6281,11 +6354,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CMO_Close(st);
-            bench_stream_row("CMO", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CMO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CMO_Close(st); }
-            bench_stream_row("CMO", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CMO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6294,14 +6367,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CMOU_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_CMOU_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CMOU(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_CMOU(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6311,7 +6385,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CMOU_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CMOU_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_CMOU_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6345,11 +6419,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CMOU_Close(st);
-            bench_stream_row("CMOU", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CMOU", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CMOU_Close(st); }
-            bench_stream_row("CMOU", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CMOU", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6358,14 +6432,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_COPPOCK_Lookback(10, 11, 14);
-        if( lb < 0 ) lb = 0;
+        const int optInWMAPeriod = bench_opaque_int(10);
+        const int optInROC1Period = bench_opaque_int(11);
+        const int optInROC2Period = bench_opaque_int(14);
+        int lb = TA_COPPOCK_Lookback(optInWMAPeriod, optInROC1Period, optInROC2Period);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_COPPOCK(t, t, g_rt_close, 10, 11, 14, &begIdx, &nb, g_outBuf0);
+                TA_COPPOCK(t, t, g_rt_close, optInWMAPeriod, optInROC1Period, optInROC2Period, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6375,7 +6452,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_COPPOCK_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_COPPOCK_Open(&st, g_close, g_nPoints, 10, 11, 14, &v0);
+        TA_RetCode orc = TA_COPPOCK_Open(&st, g_close, g_nPoints, optInWMAPeriod, optInROC1Period, optInROC2Period, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6409,11 +6486,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_COPPOCK_Close(st);
-            bench_stream_row("COPPOCK", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("COPPOCK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_COPPOCK_Close(st); }
-            bench_stream_row("COPPOCK", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("COPPOCK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6422,15 +6499,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CORREL_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_CORREL_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_high[t] = g_high[it & BENCH_MASK];
-                TA_CORREL(t, t, g_rt_close, g_rt_high, 30, &begIdx, &nb, g_outBuf0);
+                TA_CORREL(t, t, g_rt_close, g_rt_high, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6440,7 +6518,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CORREL_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CORREL_Open(&st, g_close, g_high, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_CORREL_Open(&st, g_close, g_high, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6474,11 +6552,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CORREL_Close(st);
-            bench_stream_row("CORREL", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CORREL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CORREL_Close(st); }
-            bench_stream_row("CORREL", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CORREL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6488,9 +6566,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_COS_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -6538,11 +6616,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_COS_Close(st);
-            bench_stream_row("COS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("COS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_COS_Close(st); }
-            bench_stream_row("COS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("COS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6552,9 +6630,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_COSH_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -6602,11 +6680,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_COSH_Close(st);
-            bench_stream_row("COSH", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("COSH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_COSH_Close(st); }
-            bench_stream_row("COSH", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("COSH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6615,14 +6693,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CRSI_Lookback(3, 2, 100);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 3);
+        const int optInStreakPeriod = bench_opaque_int(2);
+        const int optInRankPeriod = bench_opaque_int(100);
+        int lb = TA_CRSI_Lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CRSI(t, t, g_rt_close, 3, 2, 100, &begIdx, &nb, g_outBuf0);
+                TA_CRSI(t, t, g_rt_close, optInTimePeriod, optInStreakPeriod, optInRankPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6632,7 +6713,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CRSI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CRSI_Open(&st, g_close, g_nPoints, 3, 2, 100, &v0);
+        TA_RetCode orc = TA_CRSI_Open(&st, g_close, g_nPoints, optInTimePeriod, optInStreakPeriod, optInRankPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6666,11 +6747,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CRSI_Close(st);
-            bench_stream_row("CRSI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CRSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CRSI_Close(st); }
-            bench_stream_row("CRSI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CRSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6679,14 +6760,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CTI_Lookback(20);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        int lb = TA_CTI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_CTI(t, t, g_rt_close, 20, &begIdx, &nb, g_outBuf0);
+                TA_CTI(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6696,7 +6778,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CTI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CTI_Open(&st, g_close, g_nPoints, 20, &v0);
+        TA_RetCode orc = TA_CTI_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6730,11 +6812,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CTI_Close(st);
-            bench_stream_row("CTI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CTI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CTI_Close(st); }
-            bench_stream_row("CTI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CTI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6744,9 +6826,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_CUMSUM_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -6794,11 +6876,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CUMSUM_Close(st);
-            bench_stream_row("CUMSUM", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CUMSUM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CUMSUM_Close(st); }
-            bench_stream_row("CUMSUM", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CUMSUM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6807,15 +6889,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_CVI_Lookback(10, 10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        const int optInROCPeriod = bench_opaque_int(10);
+        int lb = TA_CVI_Lookback(optInTimePeriod, optInROCPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_CVI(t, t, g_rt_high, g_rt_low, 10, 10, &begIdx, &nb, g_outBuf0);
+                TA_CVI(t, t, g_rt_high, g_rt_low, optInTimePeriod, optInROCPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6825,7 +6909,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_CVI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_CVI_Open(&st, g_high, g_low, g_nPoints, 10, 10, &v0);
+        TA_RetCode orc = TA_CVI_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, optInROCPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6859,11 +6943,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_CVI_Close(st);
-            bench_stream_row("CVI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("CVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_CVI_Close(st); }
-            bench_stream_row("CVI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("CVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6872,14 +6956,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_DEMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_DEMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_DEMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_DEMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -6889,7 +6974,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_DEMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_DEMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_DEMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -6923,11 +7008,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_DEMA_Close(st);
-            bench_stream_row("DEMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("DEMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_DEMA_Close(st); }
-            bench_stream_row("DEMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("DEMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -6937,9 +7022,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_DIV_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -6988,11 +7073,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_DIV_Close(st);
-            bench_stream_row("DIV", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("DIV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_DIV_Close(st); }
-            bench_stream_row("DIV", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("DIV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7001,15 +7086,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_DONCHIAN_Lookback(20);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        int lb = TA_DONCHIAN_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_DONCHIAN(t, t, g_rt_high, g_rt_low, 20, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_DONCHIAN(t, t, g_rt_high, g_rt_low, optInTimePeriod, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -7023,7 +7109,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_DONCHIAN_Open(&st, g_high, g_low, g_nPoints, 20, &v0, &v1, &v2);
+        TA_RetCode orc = TA_DONCHIAN_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7063,11 +7149,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_DONCHIAN_Close(st);
-            bench_stream_row("DONCHIAN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("DONCHIAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_DONCHIAN_Close(st); }
-            bench_stream_row("DONCHIAN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("DONCHIAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7076,14 +7162,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_DPO_Lookback(20);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        int lb = TA_DPO_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_DPO(t, t, g_rt_close, 20, &begIdx, &nb, g_outBuf0);
+                TA_DPO(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7093,7 +7180,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_DPO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_DPO_Open(&st, g_close, g_nPoints, 20, &v0);
+        TA_RetCode orc = TA_DPO_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7127,11 +7214,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_DPO_Close(st);
-            bench_stream_row("DPO", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("DPO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_DPO_Close(st); }
-            bench_stream_row("DPO", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("DPO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7140,16 +7227,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_DX_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_DX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_DX(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_DX(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7159,7 +7247,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_DX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_DX_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_DX_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7193,11 +7281,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_DX_Close(st);
-            bench_stream_row("DX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("DX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_DX_Close(st); }
-            bench_stream_row("DX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("DX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7206,15 +7294,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_EFI_Lookback(13);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 13);
+        int lb = TA_EFI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_volume[t] = g_volume[it & BENCH_MASK];
-                TA_EFI(t, t, g_rt_close, g_rt_volume, 13, &begIdx, &nb, g_outBuf0);
+                TA_EFI(t, t, g_rt_close, g_rt_volume, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7224,7 +7313,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_EFI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_EFI_Open(&st, g_close, g_volume, g_nPoints, 13, &v0);
+        TA_RetCode orc = TA_EFI_Open(&st, g_close, g_volume, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7258,11 +7347,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_EFI_Close(st);
-            bench_stream_row("EFI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("EFI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_EFI_Close(st); }
-            bench_stream_row("EFI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("EFI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7271,14 +7360,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_EMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_EMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_EMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_EMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7288,7 +7378,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_EMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_EMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_EMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7322,11 +7412,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_EMA_Close(st);
-            bench_stream_row("EMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("EMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_EMA_Close(st); }
-            bench_stream_row("EMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("EMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7335,14 +7425,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ER_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_ER_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ER(t, t, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_ER(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7352,7 +7443,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ER_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ER_Open(&st, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_ER_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7386,11 +7477,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ER_Close(st);
-            bench_stream_row("ER", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ER", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ER_Close(st); }
-            bench_stream_row("ER", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ER", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7399,16 +7490,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ERI_Lookback(13);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 13);
+        int lb = TA_ERI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ERI(t, t, g_rt_high, g_rt_low, g_rt_close, 13, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_ERI(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -7420,7 +7512,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ERI_Open(&st, g_high, g_low, g_close, g_nPoints, 13, &v0, &v1);
+        TA_RetCode orc = TA_ERI_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7457,11 +7549,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ERI_Close(st);
-            bench_stream_row("ERI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ERI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ERI_Close(st); }
-            bench_stream_row("ERI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ERI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7471,9 +7563,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_EXP_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -7521,11 +7613,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_EXP_Close(st);
-            bench_stream_row("EXP", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("EXP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_EXP_Close(st); }
-            bench_stream_row("EXP", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("EXP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7535,9 +7627,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_FLOOR_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -7585,11 +7677,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_FLOOR_Close(st);
-            bench_stream_row("FLOOR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("FLOOR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_FLOOR_Close(st); }
-            bench_stream_row("FLOOR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("FLOOR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7598,14 +7690,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_FOSC_Lookback(5);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 5);
+        int lb = TA_FOSC_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_FOSC(t, t, g_rt_close, 5, &begIdx, &nb, g_outBuf0);
+                TA_FOSC(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7615,7 +7708,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_FOSC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_FOSC_Open(&st, g_close, g_nPoints, 5, &v0);
+        TA_RetCode orc = TA_FOSC_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7649,11 +7742,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_FOSC_Close(st);
-            bench_stream_row("FOSC", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("FOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_FOSC_Close(st); }
-            bench_stream_row("FOSC", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("FOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7662,15 +7755,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_FRACTAL_Lookback(2, 2);
-        if( lb < 0 ) lb = 0;
+        const int optInLeftBars = bench_opaque_int(2);
+        const int optInRightBars = bench_opaque_int(2);
+        int lb = TA_FRACTAL_Lookback(optInLeftBars, optInRightBars);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_FRACTAL(t, t, g_rt_high, g_rt_low, 2, 2, &begIdx, &nb, g_outIntBuf0, g_outIntBuf1);
+                TA_FRACTAL(t, t, g_rt_high, g_rt_low, optInLeftBars, optInRightBars, &begIdx, &nb, g_outIntBuf0, g_outIntBuf1);
                 acc += (double)g_outIntBuf0[0];
                 acc += (double)g_outIntBuf1[0];
                 t++;
@@ -7682,7 +7777,7 @@ static void bench_stream_all(const char *filter, int iters) {
             int iv0 = 0;
             int iv1 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_FRACTAL_Open(&st, g_high, g_low, g_nPoints, 2, 2, &iv0, &iv1);
+        TA_RetCode orc = TA_FRACTAL_Open(&st, g_high, g_low, g_nPoints, optInLeftBars, optInRightBars, &iv0, &iv1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7719,11 +7814,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_FRACTAL_Close(st);
-            bench_stream_row("FRACTAL", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("FRACTAL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_FRACTAL_Close(st); }
-            bench_stream_row("FRACTAL", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("FRACTAL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7733,9 +7828,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_HA_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
@@ -7801,11 +7896,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HA_Close(st);
-            bench_stream_row("HA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HA_Close(st); }
-            bench_stream_row("HA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7814,14 +7909,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_HMA_Lookback(20);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        int lb = TA_HMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_HMA(t, t, g_rt_close, 20, &begIdx, &nb, g_outBuf0);
+                TA_HMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -7831,7 +7927,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_HMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_HMA_Open(&st, g_close, g_nPoints, 20, &v0);
+        TA_RetCode orc = TA_HMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -7865,11 +7961,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HMA_Close(st);
-            bench_stream_row("HMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HMA_Close(st); }
-            bench_stream_row("HMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7879,9 +7975,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_HT_DCPERIOD_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -7929,11 +8025,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HT_DCPERIOD_Close(st);
-            bench_stream_row("HT_DCPERIOD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HT_DCPERIOD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_DCPERIOD_Close(st); }
-            bench_stream_row("HT_DCPERIOD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HT_DCPERIOD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -7943,9 +8039,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_HT_DCPHASE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -7993,11 +8089,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HT_DCPHASE_Close(st);
-            bench_stream_row("HT_DCPHASE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HT_DCPHASE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_DCPHASE_Close(st); }
-            bench_stream_row("HT_DCPHASE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HT_DCPHASE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8007,9 +8103,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_HT_PHASOR_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -8062,11 +8158,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HT_PHASOR_Close(st);
-            bench_stream_row("HT_PHASOR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HT_PHASOR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_PHASOR_Close(st); }
-            bench_stream_row("HT_PHASOR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HT_PHASOR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8076,9 +8172,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_HT_SINE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -8131,11 +8227,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HT_SINE_Close(st);
-            bench_stream_row("HT_SINE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HT_SINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_SINE_Close(st); }
-            bench_stream_row("HT_SINE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HT_SINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8145,9 +8241,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_HT_TRENDLINE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -8195,11 +8291,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HT_TRENDLINE_Close(st);
-            bench_stream_row("HT_TRENDLINE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HT_TRENDLINE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_TRENDLINE_Close(st); }
-            bench_stream_row("HT_TRENDLINE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HT_TRENDLINE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8209,9 +8305,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_HT_TRENDMODE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -8259,11 +8355,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_HT_TRENDMODE_Close(st);
-            bench_stream_row("HT_TRENDMODE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("HT_TRENDMODE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_HT_TRENDMODE_Close(st); }
-            bench_stream_row("HT_TRENDMODE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("HT_TRENDMODE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8272,15 +8368,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_IMI_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_IMI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_IMI(t, t, g_rt_open, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_IMI(t, t, g_rt_open, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8290,7 +8387,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_IMI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_IMI_Open(&st, g_open, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_IMI_Open(&st, g_open, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8324,11 +8421,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_IMI_Close(st);
-            bench_stream_row("IMI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("IMI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_IMI_Close(st); }
-            bench_stream_row("IMI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("IMI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8337,14 +8434,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_KAMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_KAMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_KAMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_KAMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8354,7 +8452,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_KAMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_KAMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_KAMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8388,11 +8486,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_KAMA_Close(st);
-            bench_stream_row("KAMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("KAMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_KAMA_Close(st); }
-            bench_stream_row("KAMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("KAMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8401,16 +8499,19 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_KC_Lookback(20, 10, 2.000000000000000);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        const int optInATRPeriod = bench_opaque_int(10);
+        const double optInNbDev = bench_opaque_double(2.000000000000000);
+        int lb = TA_KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_KC(t, t, g_rt_high, g_rt_low, g_rt_close, 20, 10, 2.000000000000000, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_KC(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, optInATRPeriod, optInNbDev, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -8424,7 +8525,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_KC_Open(&st, g_high, g_low, g_close, g_nPoints, 20, 10, 2.000000000000000, &v0, &v1, &v2);
+        TA_RetCode orc = TA_KC_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, optInATRPeriod, optInNbDev, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8464,11 +8565,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_KC_Close(st);
-            bench_stream_row("KC", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("KC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_KC_Close(st); }
-            bench_stream_row("KC", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("KC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8477,16 +8578,21 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_KDJ_Lookback(9, 3, 13, 3, 13);
-        if( lb < 0 ) lb = 0;
+        const int optInFastK_Period = bench_opaque_int(9);
+        const int optInSlowK_Period = bench_opaque_int(3);
+        const int optInSlowK_MAType = bench_opaque_int(13);
+        const int optInSlowD_Period = bench_opaque_int(3);
+        const int optInSlowD_MAType = bench_opaque_int(13);
+        int lb = TA_KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_KDJ(t, t, g_rt_high, g_rt_low, g_rt_close, 9, 3, 13, 3, 13, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_KDJ(t, t, g_rt_high, g_rt_low, g_rt_close, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -8500,7 +8606,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_KDJ_Open(&st, g_high, g_low, g_close, g_nPoints, 9, 3, 13, 3, 13, &v0, &v1, &v2);
+        TA_RetCode orc = TA_KDJ_Open(&st, g_high, g_low, g_close, g_nPoints, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8540,11 +8646,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_KDJ_Close(st);
-            bench_stream_row("KDJ", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("KDJ", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_KDJ_Close(st); }
-            bench_stream_row("KDJ", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("KDJ", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8553,14 +8659,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_KURTOSIS_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_KURTOSIS_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_KURTOSIS(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_KURTOSIS(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8570,7 +8677,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_KURTOSIS_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_KURTOSIS_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_KURTOSIS_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8604,11 +8711,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_KURTOSIS_Close(st);
-            bench_stream_row("KURTOSIS", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("KURTOSIS", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_KURTOSIS_Close(st); }
-            bench_stream_row("KURTOSIS", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("KURTOSIS", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8617,14 +8724,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_LINEARREG_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_LINEARREG_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_LINEARREG(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_LINEARREG(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8634,7 +8742,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_LINEARREG_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8668,11 +8776,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_LINEARREG_Close(st);
-            bench_stream_row("LINEARREG", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("LINEARREG", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_Close(st); }
-            bench_stream_row("LINEARREG", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("LINEARREG", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8681,14 +8789,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_LINEARREG_ANGLE_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_LINEARREG_ANGLE_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_LINEARREG_ANGLE(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_LINEARREG_ANGLE(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8698,7 +8807,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_ANGLE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_ANGLE_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_LINEARREG_ANGLE_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8732,11 +8841,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_LINEARREG_ANGLE_Close(st);
-            bench_stream_row("LINEARREG_ANGLE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("LINEARREG_ANGLE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_ANGLE_Close(st); }
-            bench_stream_row("LINEARREG_ANGLE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("LINEARREG_ANGLE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8745,14 +8854,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_LINEARREG_INTERCEPT_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_LINEARREG_INTERCEPT(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_LINEARREG_INTERCEPT(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8762,7 +8872,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_INTERCEPT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_INTERCEPT_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_LINEARREG_INTERCEPT_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8796,11 +8906,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_LINEARREG_INTERCEPT_Close(st);
-            bench_stream_row("LINEARREG_INTERCEPT", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("LINEARREG_INTERCEPT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_INTERCEPT_Close(st); }
-            bench_stream_row("LINEARREG_INTERCEPT", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("LINEARREG_INTERCEPT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8809,14 +8919,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_LINEARREG_SLOPE_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_LINEARREG_SLOPE_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_LINEARREG_SLOPE(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_LINEARREG_SLOPE(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -8826,7 +8937,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_LINEARREG_SLOPE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_LINEARREG_SLOPE_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_LINEARREG_SLOPE_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -8860,11 +8971,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_LINEARREG_SLOPE_Close(st);
-            bench_stream_row("LINEARREG_SLOPE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("LINEARREG_SLOPE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_LINEARREG_SLOPE_Close(st); }
-            bench_stream_row("LINEARREG_SLOPE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("LINEARREG_SLOPE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8874,9 +8985,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_LN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -8924,11 +9035,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_LN_Close(st);
-            bench_stream_row("LN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("LN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_LN_Close(st); }
-            bench_stream_row("LN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("LN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -8938,9 +9049,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_LOG10_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -8988,11 +9099,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_LOG10_Close(st);
-            bench_stream_row("LOG10", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("LOG10", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_LOG10_Close(st); }
-            bench_stream_row("LOG10", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("LOG10", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9001,14 +9112,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MA_Lookback(30, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        const int optInMAType = bench_opaque_int(0);
+        int lb = TA_MA_Lookback(optInTimePeriod, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MA(t, t, g_rt_close, 30, 0, &begIdx, &nb, g_outBuf0);
+                TA_MA(t, t, g_rt_close, optInTimePeriod, optInMAType, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9018,7 +9131,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MA_Open(&st, g_close, g_nPoints, 30, 0, &v0);
+        TA_RetCode orc = TA_MA_Open(&st, g_close, g_nPoints, optInTimePeriod, optInMAType, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9052,11 +9165,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MA_Close(st);
-            bench_stream_row("MA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MA_Close(st); }
-            bench_stream_row("MA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9065,14 +9178,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MACD_Lookback(12, 26, 9);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(12);
+        const int optInSlowPeriod = bench_opaque_int(26);
+        const int optInSignalPeriod = bench_opaque_int(9);
+        int lb = TA_MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MACD(t, t, g_rt_close, 12, 26, 9, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_MACD(t, t, g_rt_close, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -9086,7 +9202,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MACD_Open(&st, g_close, g_nPoints, 12, 26, 9, &v0, &v1, &v2);
+        TA_RetCode orc = TA_MACD_Open(&st, g_close, g_nPoints, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9126,11 +9242,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MACD_Close(st);
-            bench_stream_row("MACD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MACD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MACD_Close(st); }
-            bench_stream_row("MACD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MACD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9139,14 +9255,20 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MACDEXT_Lookback(12, 0, 26, 0, 9, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(12);
+        const int optInFastMAType = bench_opaque_int(0);
+        const int optInSlowPeriod = bench_opaque_int(26);
+        const int optInSlowMAType = bench_opaque_int(0);
+        const int optInSignalPeriod = bench_opaque_int(9);
+        const int optInSignalMAType = bench_opaque_int(0);
+        int lb = TA_MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MACDEXT(t, t, g_rt_close, 12, 0, 26, 0, 9, 0, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_MACDEXT(t, t, g_rt_close, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -9160,7 +9282,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MACDEXT_Open(&st, g_close, g_nPoints, 12, 0, 26, 0, 9, 0, &v0, &v1, &v2);
+        TA_RetCode orc = TA_MACDEXT_Open(&st, g_close, g_nPoints, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9200,11 +9322,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MACDEXT_Close(st);
-            bench_stream_row("MACDEXT", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MACDEXT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MACDEXT_Close(st); }
-            bench_stream_row("MACDEXT", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MACDEXT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9213,14 +9335,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MACDFIX_Lookback(9);
-        if( lb < 0 ) lb = 0;
+        const int optInSignalPeriod = bench_opaque_int(9);
+        int lb = TA_MACDFIX_Lookback(optInSignalPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MACDFIX(t, t, g_rt_close, 9, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
+                TA_MACDFIX(t, t, g_rt_close, optInSignalPeriod, &begIdx, &nb, g_outBuf0, g_outBuf1, g_outBuf2);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 acc += g_outBuf2[0];
@@ -9234,7 +9357,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v1 = 0.0;
             double v2 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MACDFIX_Open(&st, g_close, g_nPoints, 9, &v0, &v1, &v2);
+        TA_RetCode orc = TA_MACDFIX_Open(&st, g_close, g_nPoints, optInSignalPeriod, &v0, &v1, &v2);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9274,11 +9397,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MACDFIX_Close(st);
-            bench_stream_row("MACDFIX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MACDFIX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MACDFIX_Close(st); }
-            bench_stream_row("MACDFIX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MACDFIX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9287,14 +9410,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MAMA_Lookback(0.500000000000000, 0.050000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInFastLimit = bench_opaque_double(0.500000000000000);
+        const double optInSlowLimit = bench_opaque_double(0.050000000000000);
+        int lb = TA_MAMA_Lookback(optInFastLimit, optInSlowLimit);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MAMA(t, t, g_rt_close, 0.500000000000000, 0.050000000000000, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_MAMA(t, t, g_rt_close, optInFastLimit, optInSlowLimit, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -9306,7 +9431,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAMA_Open(&st, g_close, g_nPoints, 0.500000000000000, 0.050000000000000, &v0, &v1);
+        TA_RetCode orc = TA_MAMA_Open(&st, g_close, g_nPoints, optInFastLimit, optInSlowLimit, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9343,11 +9468,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MAMA_Close(st);
-            bench_stream_row("MAMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MAMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MAMA_Close(st); }
-            bench_stream_row("MAMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MAMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9357,9 +9482,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_MARKETFI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -9409,11 +9534,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MARKETFI_Close(st);
-            bench_stream_row("MARKETFI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MARKETFI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MARKETFI_Close(st); }
-            bench_stream_row("MARKETFI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MARKETFI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9422,15 +9547,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MASSI_Lookback(9, 25);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(9);
+        const int optInSlowPeriod = bench_opaque_int(25);
+        int lb = TA_MASSI_Lookback(optInFastPeriod, optInSlowPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_MASSI(t, t, g_rt_high, g_rt_low, 9, 25, &begIdx, &nb, g_outBuf0);
+                TA_MASSI(t, t, g_rt_high, g_rt_low, optInFastPeriod, optInSlowPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9440,7 +9567,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MASSI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MASSI_Open(&st, g_high, g_low, g_nPoints, 9, 25, &v0);
+        TA_RetCode orc = TA_MASSI_Open(&st, g_high, g_low, g_nPoints, optInFastPeriod, optInSlowPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9474,11 +9601,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MASSI_Close(st);
-            bench_stream_row("MASSI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MASSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MASSI_Close(st); }
-            bench_stream_row("MASSI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MASSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9487,15 +9614,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MAVP_Lookback(2, 30, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInMinPeriod = bench_opaque_int(2);
+        const int optInMaxPeriod = bench_opaque_int(30);
+        const int optInMAType = bench_opaque_int(0);
+        int lb = TA_MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_periods[t] = g_periods[it & BENCH_MASK];
-                TA_MAVP(t, t, g_rt_close, g_rt_periods, 2, 30, 0, &begIdx, &nb, g_outBuf0);
+                TA_MAVP(t, t, g_rt_close, g_rt_periods, optInMinPeriod, optInMaxPeriod, optInMAType, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9505,7 +9635,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MAVP_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAVP_Open(&st, g_close, g_periods, g_nPoints, 2, 30, 0, &v0);
+        TA_RetCode orc = TA_MAVP_Open(&st, g_close, g_periods, g_nPoints, optInMinPeriod, optInMaxPeriod, optInMAType, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9539,11 +9669,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MAVP_Close(st);
-            bench_stream_row("MAVP", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MAVP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MAVP_Close(st); }
-            bench_stream_row("MAVP", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MAVP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9552,14 +9682,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MAX_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_MAX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MAX(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_MAX(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9569,7 +9700,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MAX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAX_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_MAX_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9603,11 +9734,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MAX_Close(st);
-            bench_stream_row("MAX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MAX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MAX_Close(st); }
-            bench_stream_row("MAX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MAX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9616,14 +9747,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MAXINDEX_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_MAXINDEX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MAXINDEX(t, t, g_rt_close, 30, &begIdx, &nb, g_outIntBuf0);
+                TA_MAXINDEX(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -9633,7 +9765,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MAXINDEX_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MAXINDEX_Open(&st, g_close, g_nPoints, 30, &iv0);
+        TA_RetCode orc = TA_MAXINDEX_Open(&st, g_close, g_nPoints, optInTimePeriod, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9667,11 +9799,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MAXINDEX_Close(st);
-            bench_stream_row("MAXINDEX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MAXINDEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MAXINDEX_Close(st); }
-            bench_stream_row("MAXINDEX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MAXINDEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9680,14 +9812,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MEDIAN_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_MEDIAN_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MEDIAN(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_MEDIAN(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9697,7 +9830,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MEDIAN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MEDIAN_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_MEDIAN_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9731,11 +9864,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MEDIAN_Close(st);
-            bench_stream_row("MEDIAN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MEDIAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MEDIAN_Close(st); }
-            bench_stream_row("MEDIAN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MEDIAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9745,9 +9878,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_MEDPRICE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -9796,11 +9929,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MEDPRICE_Close(st);
-            bench_stream_row("MEDPRICE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MEDPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MEDPRICE_Close(st); }
-            bench_stream_row("MEDPRICE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MEDPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9809,17 +9942,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MFI_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_MFI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_volume[t] = g_volume[it & BENCH_MASK];
-                TA_MFI(t, t, g_rt_high, g_rt_low, g_rt_close, g_rt_volume, 14, &begIdx, &nb, g_outBuf0);
+                TA_MFI(t, t, g_rt_high, g_rt_low, g_rt_close, g_rt_volume, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9829,7 +9963,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MFI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MFI_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_MFI_Open(&st, g_high, g_low, g_close, g_volume, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9863,11 +9997,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MFI_Close(st);
-            bench_stream_row("MFI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MFI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MFI_Close(st); }
-            bench_stream_row("MFI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MFI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9876,14 +10010,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MIDPOINT_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_MIDPOINT_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MIDPOINT(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_MIDPOINT(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9893,7 +10028,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MIDPOINT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MIDPOINT_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_MIDPOINT_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9927,11 +10062,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MIDPOINT_Close(st);
-            bench_stream_row("MIDPOINT", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MIDPOINT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MIDPOINT_Close(st); }
-            bench_stream_row("MIDPOINT", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MIDPOINT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -9940,15 +10075,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MIDPRICE_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_MIDPRICE_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_MIDPRICE(t, t, g_rt_high, g_rt_low, 14, &begIdx, &nb, g_outBuf0);
+                TA_MIDPRICE(t, t, g_rt_high, g_rt_low, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -9958,7 +10094,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MIDPRICE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MIDPRICE_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_MIDPRICE_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -9992,11 +10128,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MIDPRICE_Close(st);
-            bench_stream_row("MIDPRICE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MIDPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MIDPRICE_Close(st); }
-            bench_stream_row("MIDPRICE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MIDPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10005,14 +10141,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MIN_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_MIN_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MIN(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_MIN(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10022,7 +10159,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MIN_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MIN_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_MIN_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10056,11 +10193,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MIN_Close(st);
-            bench_stream_row("MIN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MIN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MIN_Close(st); }
-            bench_stream_row("MIN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MIN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10069,14 +10206,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MININDEX_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_MININDEX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MININDEX(t, t, g_rt_close, 30, &begIdx, &nb, g_outIntBuf0);
+                TA_MININDEX(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outIntBuf0);
                 acc += (double)g_outIntBuf0[0];
                 t++;
             }
@@ -10086,7 +10224,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MININDEX_Stream *st = NULL;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MININDEX_Open(&st, g_close, g_nPoints, 30, &iv0);
+        TA_RetCode orc = TA_MININDEX_Open(&st, g_close, g_nPoints, optInTimePeriod, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10120,11 +10258,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MININDEX_Close(st);
-            bench_stream_row("MININDEX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MININDEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MININDEX_Close(st); }
-            bench_stream_row("MININDEX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MININDEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10133,14 +10271,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MINMAX_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_MINMAX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MINMAX(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_MINMAX(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -10152,7 +10291,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINMAX_Open(&st, g_close, g_nPoints, 30, &v0, &v1);
+        TA_RetCode orc = TA_MINMAX_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10189,11 +10328,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MINMAX_Close(st);
-            bench_stream_row("MINMAX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MINMAX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MINMAX_Close(st); }
-            bench_stream_row("MINMAX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MINMAX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10202,14 +10341,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MINMAXINDEX_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_MINMAXINDEX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MINMAXINDEX(t, t, g_rt_close, 30, &begIdx, &nb, g_outIntBuf0, g_outIntBuf1);
+                TA_MINMAXINDEX(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outIntBuf0, g_outIntBuf1);
                 acc += (double)g_outIntBuf0[0];
                 acc += (double)g_outIntBuf1[0];
                 t++;
@@ -10221,7 +10361,7 @@ static void bench_stream_all(const char *filter, int iters) {
             int iv0 = 0;
             int iv1 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINMAXINDEX_Open(&st, g_close, g_nPoints, 30, &iv0, &iv1);
+        TA_RetCode orc = TA_MINMAXINDEX_Open(&st, g_close, g_nPoints, optInTimePeriod, &iv0, &iv1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10258,11 +10398,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MINMAXINDEX_Close(st);
-            bench_stream_row("MINMAXINDEX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MINMAXINDEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MINMAXINDEX_Close(st); }
-            bench_stream_row("MINMAXINDEX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MINMAXINDEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10271,16 +10411,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MINUS_DI_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_MINUS_DI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MINUS_DI(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_MINUS_DI(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10290,7 +10431,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MINUS_DI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINUS_DI_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_MINUS_DI_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10324,11 +10465,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MINUS_DI_Close(st);
-            bench_stream_row("MINUS_DI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MINUS_DI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MINUS_DI_Close(st); }
-            bench_stream_row("MINUS_DI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MINUS_DI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10337,15 +10478,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MINUS_DM_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_MINUS_DM_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_MINUS_DM(t, t, g_rt_high, g_rt_low, 14, &begIdx, &nb, g_outBuf0);
+                TA_MINUS_DM(t, t, g_rt_high, g_rt_low, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10355,7 +10497,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MINUS_DM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MINUS_DM_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_MINUS_DM_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10389,11 +10531,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MINUS_DM_Close(st);
-            bench_stream_row("MINUS_DM", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MINUS_DM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MINUS_DM_Close(st); }
-            bench_stream_row("MINUS_DM", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MINUS_DM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10402,14 +10544,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_MOM_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_MOM_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_MOM(t, t, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_MOM(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10419,7 +10562,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_MOM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_MOM_Open(&st, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_MOM_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10453,11 +10596,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MOM_Close(st);
-            bench_stream_row("MOM", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MOM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MOM_Close(st); }
-            bench_stream_row("MOM", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MOM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10467,9 +10610,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_MULT_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -10518,11 +10661,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_MULT_Close(st);
-            bench_stream_row("MULT", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("MULT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_MULT_Close(st); }
-            bench_stream_row("MULT", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("MULT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10531,16 +10674,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_NATR_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_NATR_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_NATR(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_NATR(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10550,7 +10694,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_NATR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_NATR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_NATR_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10584,11 +10728,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_NATR_Close(st);
-            bench_stream_row("NATR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("NATR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_NATR_Close(st); }
-            bench_stream_row("NATR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("NATR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10598,9 +10742,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_NVI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -10649,11 +10793,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_NVI_Close(st);
-            bench_stream_row("NVI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("NVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_NVI_Close(st); }
-            bench_stream_row("NVI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("NVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10663,9 +10807,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_OBV_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -10714,11 +10858,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_OBV_Close(st);
-            bench_stream_row("OBV", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("OBV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_OBV_Close(st); }
-            bench_stream_row("OBV", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("OBV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10727,14 +10871,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PERCENTB_Lookback(20, 2.000000000000000, 2.000000000000000, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        const double optInNbDevUp = bench_opaque_double(2.000000000000000);
+        const double optInNbDevDn = bench_opaque_double(2.000000000000000);
+        const int optInMAType = bench_opaque_int(0);
+        int lb = TA_PERCENTB_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_PERCENTB(t, t, g_rt_close, 20, 2.000000000000000, 2.000000000000000, 0, &begIdx, &nb, g_outBuf0);
+                TA_PERCENTB(t, t, g_rt_close, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10744,7 +10892,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PERCENTB_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PERCENTB_Open(&st, g_close, g_nPoints, 20, 2.000000000000000, 2.000000000000000, 0, &v0);
+        TA_RetCode orc = TA_PERCENTB_Open(&st, g_close, g_nPoints, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10778,11 +10926,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PERCENTB_Close(st);
-            bench_stream_row("PERCENTB", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PERCENTB", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PERCENTB_Close(st); }
-            bench_stream_row("PERCENTB", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PERCENTB", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10791,14 +10939,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PERCENTILE_Lookback(100, 50.000000000000000);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 100);
+        const double optInPercentile = bench_opaque_double(50.000000000000000);
+        int lb = TA_PERCENTILE_Lookback(optInTimePeriod, optInPercentile);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_PERCENTILE(t, t, g_rt_close, 100, 50.000000000000000, &begIdx, &nb, g_outBuf0);
+                TA_PERCENTILE(t, t, g_rt_close, optInTimePeriod, optInPercentile, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10808,7 +10958,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PERCENTILE_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PERCENTILE_Open(&st, g_close, g_nPoints, 100, 50.000000000000000, &v0);
+        TA_RetCode orc = TA_PERCENTILE_Open(&st, g_close, g_nPoints, optInTimePeriod, optInPercentile, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10842,11 +10992,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PERCENTILE_Close(st);
-            bench_stream_row("PERCENTILE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PERCENTILE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PERCENTILE_Close(st); }
-            bench_stream_row("PERCENTILE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PERCENTILE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10855,14 +11005,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PERCENTRANK_Lookback(100);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 100);
+        int lb = TA_PERCENTRANK_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_PERCENTRANK(t, t, g_rt_close, 100, &begIdx, &nb, g_outBuf0);
+                TA_PERCENTRANK(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10872,7 +11023,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PERCENTRANK_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PERCENTRANK_Open(&st, g_close, g_nPoints, 100, &v0);
+        TA_RetCode orc = TA_PERCENTRANK_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10906,11 +11057,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PERCENTRANK_Close(st);
-            bench_stream_row("PERCENTRANK", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PERCENTRANK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PERCENTRANK_Close(st); }
-            bench_stream_row("PERCENTRANK", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PERCENTRANK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10919,16 +11070,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PLUS_DI_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_PLUS_DI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_PLUS_DI(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_PLUS_DI(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -10938,7 +11090,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PLUS_DI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PLUS_DI_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_PLUS_DI_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -10972,11 +11124,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PLUS_DI_Close(st);
-            bench_stream_row("PLUS_DI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PLUS_DI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PLUS_DI_Close(st); }
-            bench_stream_row("PLUS_DI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PLUS_DI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -10985,15 +11137,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PLUS_DM_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_PLUS_DM_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_PLUS_DM(t, t, g_rt_high, g_rt_low, 14, &begIdx, &nb, g_outBuf0);
+                TA_PLUS_DM(t, t, g_rt_high, g_rt_low, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11003,7 +11156,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PLUS_DM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PLUS_DM_Open(&st, g_high, g_low, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_PLUS_DM_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11037,11 +11190,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PLUS_DM_Close(st);
-            bench_stream_row("PLUS_DM", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PLUS_DM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PLUS_DM_Close(st); }
-            bench_stream_row("PLUS_DM", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PLUS_DM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11050,14 +11203,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PPO_Lookback(12, 26, 1);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(12);
+        const int optInSlowPeriod = bench_opaque_int(26);
+        const int optInMAType = bench_opaque_int(1);
+        int lb = TA_PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_PPO(t, t, g_rt_close, 12, 26, 1, &begIdx, &nb, g_outBuf0);
+                TA_PPO(t, t, g_rt_close, optInFastPeriod, optInSlowPeriod, optInMAType, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11067,7 +11223,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PPO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PPO_Open(&st, g_close, g_nPoints, 12, 26, 1, &v0);
+        TA_RetCode orc = TA_PPO_Open(&st, g_close, g_nPoints, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11101,11 +11257,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PPO_Close(st);
-            bench_stream_row("PPO", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PPO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PPO_Close(st); }
-            bench_stream_row("PPO", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PPO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11115,9 +11271,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_PVI_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -11166,11 +11322,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PVI_Close(st);
-            bench_stream_row("PVI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PVI_Close(st); }
-            bench_stream_row("PVI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11179,14 +11335,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_PVO_Lookback(12, 26, 1);
-        if( lb < 0 ) lb = 0;
+        const int optInFastPeriod = bench_opaque_int(12);
+        const int optInSlowPeriod = bench_opaque_int(26);
+        const int optInMAType = bench_opaque_int(1);
+        int lb = TA_PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_volume[t] = g_volume[it & BENCH_MASK];
-                TA_PVO(t, t, g_rt_volume, 12, 26, 1, &begIdx, &nb, g_outBuf0);
+                TA_PVO(t, t, g_rt_volume, optInFastPeriod, optInSlowPeriod, optInMAType, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11196,7 +11355,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_PVO_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_PVO_Open(&st, g_volume, g_nPoints, 12, 26, 1, &v0);
+        TA_RetCode orc = TA_PVO_Open(&st, g_volume, g_nPoints, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11230,11 +11389,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PVO_Close(st);
-            bench_stream_row("PVO", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PVO", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PVO_Close(st); }
-            bench_stream_row("PVO", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PVO", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11244,9 +11403,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_PVT_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -11295,11 +11454,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_PVT_Close(st);
-            bench_stream_row("PVT", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("PVT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_PVT_Close(st); }
-            bench_stream_row("PVT", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("PVT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11308,15 +11467,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_QSTICK_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_QSTICK_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_open[t] = g_open[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_QSTICK(t, t, g_rt_open, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_QSTICK(t, t, g_rt_open, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11326,7 +11486,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_QSTICK_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_QSTICK_Open(&st, g_open, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_QSTICK_Open(&st, g_open, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11360,11 +11520,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_QSTICK_Close(st);
-            bench_stream_row("QSTICK", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("QSTICK", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_QSTICK_Close(st); }
-            bench_stream_row("QSTICK", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("QSTICK", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11373,14 +11533,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_RMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_RMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_RMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_RMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11390,7 +11551,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_RMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_RMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_RMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11424,11 +11585,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_RMA_Close(st);
-            bench_stream_row("RMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("RMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_RMA_Close(st); }
-            bench_stream_row("RMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("RMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11437,14 +11598,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ROC_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_ROC_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ROC(t, t, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_ROC(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11454,7 +11616,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROC_Open(&st, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_ROC_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11488,11 +11650,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ROC_Close(st);
-            bench_stream_row("ROC", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ROC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ROC_Close(st); }
-            bench_stream_row("ROC", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ROC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11501,14 +11663,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ROCP_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_ROCP_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ROCP(t, t, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_ROCP(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11518,7 +11681,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROCP_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROCP_Open(&st, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_ROCP_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11552,11 +11715,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ROCP_Close(st);
-            bench_stream_row("ROCP", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ROCP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ROCP_Close(st); }
-            bench_stream_row("ROCP", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ROCP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11565,14 +11728,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ROCR_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_ROCR_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ROCR(t, t, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_ROCR(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11582,7 +11746,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROCR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROCR_Open(&st, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_ROCR_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11616,11 +11780,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ROCR_Close(st);
-            bench_stream_row("ROCR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ROCR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ROCR_Close(st); }
-            bench_stream_row("ROCR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ROCR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11629,14 +11793,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ROCR100_Lookback(10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        int lb = TA_ROCR100_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ROCR100(t, t, g_rt_close, 10, &begIdx, &nb, g_outBuf0);
+                TA_ROCR100(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11646,7 +11811,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ROCR100_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ROCR100_Open(&st, g_close, g_nPoints, 10, &v0);
+        TA_RetCode orc = TA_ROCR100_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11680,11 +11845,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ROCR100_Close(st);
-            bench_stream_row("ROCR100", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ROCR100", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ROCR100_Close(st); }
-            bench_stream_row("ROCR100", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ROCR100", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11693,14 +11858,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_RSI_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_RSI_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_RSI(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_RSI(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11710,7 +11876,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_RSI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_RSI_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_RSI_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11744,11 +11910,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_RSI_Close(st);
-            bench_stream_row("RSI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("RSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_RSI_Close(st); }
-            bench_stream_row("RSI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("RSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11757,14 +11923,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_RVI_Lookback(14, 10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        const int optInStdDevPeriod = bench_opaque_int(10);
+        int lb = TA_RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_RVI(t, t, g_rt_close, 14, 10, &begIdx, &nb, g_outBuf0);
+                TA_RVI(t, t, g_rt_close, optInTimePeriod, optInStdDevPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11774,7 +11942,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_RVI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_RVI_Open(&st, g_close, g_nPoints, 14, 10, &v0);
+        TA_RetCode orc = TA_RVI_Open(&st, g_close, g_nPoints, optInTimePeriod, optInStdDevPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11808,11 +11976,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_RVI_Close(st);
-            bench_stream_row("RVI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("RVI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_RVI_Close(st); }
-            bench_stream_row("RVI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("RVI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11821,15 +11989,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_RVIR_Lookback(14, 10);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        const int optInStdDevPeriod = bench_opaque_int(10);
+        int lb = TA_RVIR_Lookback(optInTimePeriod, optInStdDevPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_RVIR(t, t, g_rt_high, g_rt_low, 14, 10, &begIdx, &nb, g_outBuf0);
+                TA_RVIR(t, t, g_rt_high, g_rt_low, optInTimePeriod, optInStdDevPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11839,7 +12009,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_RVIR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_RVIR_Open(&st, g_high, g_low, g_nPoints, 14, 10, &v0);
+        TA_RetCode orc = TA_RVIR_Open(&st, g_high, g_low, g_nPoints, optInTimePeriod, optInStdDevPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11873,11 +12043,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_RVIR_Close(st);
-            bench_stream_row("RVIR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("RVIR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_RVIR_Close(st); }
-            bench_stream_row("RVIR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("RVIR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11886,14 +12056,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_RVOL_Lookback(20);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 20);
+        int lb = TA_RVOL_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_volume[t] = g_volume[it & BENCH_MASK];
-                TA_RVOL(t, t, g_rt_volume, 20, &begIdx, &nb, g_outBuf0);
+                TA_RVOL(t, t, g_rt_volume, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11903,7 +12074,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_RVOL_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_RVOL_Open(&st, g_volume, g_nPoints, 20, &v0);
+        TA_RetCode orc = TA_RVOL_Open(&st, g_volume, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -11937,11 +12108,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_RVOL_Close(st);
-            bench_stream_row("RVOL", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("RVOL", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_RVOL_Close(st); }
-            bench_stream_row("RVOL", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("RVOL", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -11950,15 +12121,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_SAR_Lookback(0.020000000000000, 0.200000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInAcceleration = bench_opaque_double(0.020000000000000);
+        const double optInMaximum = bench_opaque_double(0.200000000000000);
+        int lb = TA_SAR_Lookback(optInAcceleration, optInMaximum);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_SAR(t, t, g_rt_high, g_rt_low, 0.020000000000000, 0.200000000000000, &begIdx, &nb, g_outBuf0);
+                TA_SAR(t, t, g_rt_high, g_rt_low, optInAcceleration, optInMaximum, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -11968,7 +12141,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SAR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SAR_Open(&st, g_high, g_low, g_nPoints, 0.020000000000000, 0.200000000000000, &v0);
+        TA_RetCode orc = TA_SAR_Open(&st, g_high, g_low, g_nPoints, optInAcceleration, optInMaximum, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12002,11 +12175,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SAR_Close(st);
-            bench_stream_row("SAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SAR_Close(st); }
-            bench_stream_row("SAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12015,15 +12188,23 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_SAREXT_Lookback(0.000000000000000, 0.000000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000);
-        if( lb < 0 ) lb = 0;
+        const double optInStartValue = bench_opaque_double(0.000000000000000);
+        const double optInOffsetOnReverse = bench_opaque_double(0.000000000000000);
+        const double optInAccelerationInitLong = bench_opaque_double(0.020000000000000);
+        const double optInAccelerationLong = bench_opaque_double(0.020000000000000);
+        const double optInAccelerationMaxLong = bench_opaque_double(0.200000000000000);
+        const double optInAccelerationInitShort = bench_opaque_double(0.020000000000000);
+        const double optInAccelerationShort = bench_opaque_double(0.020000000000000);
+        const double optInAccelerationMaxShort = bench_opaque_double(0.200000000000000);
+        int lb = TA_SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
-                TA_SAREXT(t, t, g_rt_high, g_rt_low, 0.000000000000000, 0.000000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, &begIdx, &nb, g_outBuf0);
+                TA_SAREXT(t, t, g_rt_high, g_rt_low, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -12033,7 +12214,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SAREXT_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SAREXT_Open(&st, g_high, g_low, g_nPoints, 0.000000000000000, 0.000000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, 0.020000000000000, 0.020000000000000, 0.200000000000000, &v0);
+        TA_RetCode orc = TA_SAREXT_Open(&st, g_high, g_low, g_nPoints, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12067,11 +12248,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SAREXT_Close(st);
-            bench_stream_row("SAREXT", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SAREXT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SAREXT_Close(st); }
-            bench_stream_row("SAREXT", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SAREXT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12081,9 +12262,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_SIN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -12131,11 +12312,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SIN_Close(st);
-            bench_stream_row("SIN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SIN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SIN_Close(st); }
-            bench_stream_row("SIN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SIN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12145,9 +12326,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_SINH_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -12195,11 +12376,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SINH_Close(st);
-            bench_stream_row("SINH", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SINH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SINH_Close(st); }
-            bench_stream_row("SINH", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SINH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12208,14 +12389,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_SMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_SMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_SMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_SMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -12225,7 +12407,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_SMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12259,11 +12441,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SMA_Close(st);
-            bench_stream_row("SMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SMA_Close(st); }
-            bench_stream_row("SMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12272,16 +12454,20 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_SMI_Lookback(13, 2, 25, 9);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 13);
+        const int optInFastPeriod = bench_opaque_int(2);
+        const int optInSlowPeriod = bench_opaque_int(25);
+        const int optInSignalPeriod = bench_opaque_int(9);
+        int lb = TA_SMI_Lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_SMI(t, t, g_rt_high, g_rt_low, g_rt_close, 13, 2, 25, 9, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_SMI(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -12293,7 +12479,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SMI_Open(&st, g_high, g_low, g_close, g_nPoints, 13, 2, 25, 9, &v0, &v1);
+        TA_RetCode orc = TA_SMI_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12330,11 +12516,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SMI_Close(st);
-            bench_stream_row("SMI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SMI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SMI_Close(st); }
-            bench_stream_row("SMI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SMI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12344,9 +12530,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_SQRT_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -12394,11 +12580,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SQRT_Close(st);
-            bench_stream_row("SQRT", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SQRT", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SQRT_Close(st); }
-            bench_stream_row("SQRT", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SQRT", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12407,14 +12593,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_STDDEV_Lookback(5, 1.000000000000000);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 5);
+        const double optInNbDev = bench_opaque_double(1.000000000000000);
+        int lb = TA_STDDEV_Lookback(optInTimePeriod, optInNbDev);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_STDDEV(t, t, g_rt_close, 5, 1.000000000000000, &begIdx, &nb, g_outBuf0);
+                TA_STDDEV(t, t, g_rt_close, optInTimePeriod, optInNbDev, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -12424,7 +12612,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_STDDEV_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STDDEV_Open(&st, g_close, g_nPoints, 5, 1.000000000000000, &v0);
+        TA_RetCode orc = TA_STDDEV_Open(&st, g_close, g_nPoints, optInTimePeriod, optInNbDev, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12458,11 +12646,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_STDDEV_Close(st);
-            bench_stream_row("STDDEV", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("STDDEV", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_STDDEV_Close(st); }
-            bench_stream_row("STDDEV", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("STDDEV", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12471,16 +12659,21 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_STOCH_Lookback(5, 3, 0, 3, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInFastK_Period = bench_opaque_int(5);
+        const int optInSlowK_Period = bench_opaque_int(3);
+        const int optInSlowK_MAType = bench_opaque_int(0);
+        const int optInSlowD_Period = bench_opaque_int(3);
+        const int optInSlowD_MAType = bench_opaque_int(0);
+        int lb = TA_STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_STOCH(t, t, g_rt_high, g_rt_low, g_rt_close, 5, 3, 0, 3, 0, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_STOCH(t, t, g_rt_high, g_rt_low, g_rt_close, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -12492,7 +12685,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STOCH_Open(&st, g_high, g_low, g_close, g_nPoints, 5, 3, 0, 3, 0, &v0, &v1);
+        TA_RetCode orc = TA_STOCH_Open(&st, g_high, g_low, g_close, g_nPoints, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12529,11 +12722,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_STOCH_Close(st);
-            bench_stream_row("STOCH", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("STOCH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_STOCH_Close(st); }
-            bench_stream_row("STOCH", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("STOCH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12542,16 +12735,19 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_STOCHF_Lookback(5, 3, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInFastK_Period = bench_opaque_int(5);
+        const int optInFastD_Period = bench_opaque_int(3);
+        const int optInFastD_MAType = bench_opaque_int(0);
+        int lb = TA_STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_STOCHF(t, t, g_rt_high, g_rt_low, g_rt_close, 5, 3, 0, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_STOCHF(t, t, g_rt_high, g_rt_low, g_rt_close, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -12563,7 +12759,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STOCHF_Open(&st, g_high, g_low, g_close, g_nPoints, 5, 3, 0, &v0, &v1);
+        TA_RetCode orc = TA_STOCHF_Open(&st, g_high, g_low, g_close, g_nPoints, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12600,11 +12796,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_STOCHF_Close(st);
-            bench_stream_row("STOCHF", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("STOCHF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_STOCHF_Close(st); }
-            bench_stream_row("STOCHF", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("STOCHF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12613,14 +12809,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_STOCHRSI_Lookback(14, 5, 3, 0);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        const int optInFastK_Period = bench_opaque_int(5);
+        const int optInFastD_Period = bench_opaque_int(3);
+        const int optInFastD_MAType = bench_opaque_int(0);
+        int lb = TA_STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_STOCHRSI(t, t, g_rt_close, 14, 5, 3, 0, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_STOCHRSI(t, t, g_rt_close, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -12632,7 +12832,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_STOCHRSI_Open(&st, g_close, g_nPoints, 14, 5, 3, 0, &v0, &v1);
+        TA_RetCode orc = TA_STOCHRSI_Open(&st, g_close, g_nPoints, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12669,11 +12869,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_STOCHRSI_Close(st);
-            bench_stream_row("STOCHRSI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("STOCHRSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_STOCHRSI_Close(st); }
-            bench_stream_row("STOCHRSI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("STOCHRSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12683,9 +12883,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_SUB_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -12734,11 +12934,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SUB_Close(st);
-            bench_stream_row("SUB", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SUB", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SUB_Close(st); }
-            bench_stream_row("SUB", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SUB", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12747,14 +12947,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_SUM_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_SUM_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_SUM(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_SUM(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -12764,7 +12965,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_SUM_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SUM_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_SUM_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12798,11 +12999,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SUM_Close(st);
-            bench_stream_row("SUM", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SUM", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SUM_Close(st); }
-            bench_stream_row("SUM", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SUM", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12811,16 +13012,18 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_SUPERTREND_Lookback(10, 3.000000000000000);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 10);
+        const double optInMultiplier = bench_opaque_double(3.000000000000000);
+        int lb = TA_SUPERTREND_Lookback(optInTimePeriod, optInMultiplier);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_SUPERTREND(t, t, g_rt_high, g_rt_low, g_rt_close, 10, 3.000000000000000, &begIdx, &nb, g_outBuf0, g_outIntBuf0);
+                TA_SUPERTREND(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, optInMultiplier, &begIdx, &nb, g_outBuf0, g_outIntBuf0);
                 acc += g_outBuf0[0];
                 acc += (double)g_outIntBuf0[0];
                 t++;
@@ -12832,7 +13035,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             int iv0 = 0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_SUPERTREND_Open(&st, g_high, g_low, g_close, g_nPoints, 10, 3.000000000000000, &v0, &iv0);
+        TA_RetCode orc = TA_SUPERTREND_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, optInMultiplier, &v0, &iv0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12869,11 +13072,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_SUPERTREND_Close(st);
-            bench_stream_row("SUPERTREND", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("SUPERTREND", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_SUPERTREND_Close(st); }
-            bench_stream_row("SUPERTREND", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("SUPERTREND", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12882,14 +13085,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_T3_Lookback(5, 0.700000000000000);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 5);
+        const double optInVFactor = bench_opaque_double(0.700000000000000);
+        int lb = TA_T3_Lookback(optInTimePeriod, optInVFactor);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_T3(t, t, g_rt_close, 5, 0.700000000000000, &begIdx, &nb, g_outBuf0);
+                TA_T3(t, t, g_rt_close, optInTimePeriod, optInVFactor, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -12899,7 +13104,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_T3_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_T3_Open(&st, g_close, g_nPoints, 5, 0.700000000000000, &v0);
+        TA_RetCode orc = TA_T3_Open(&st, g_close, g_nPoints, optInTimePeriod, optInVFactor, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -12933,11 +13138,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_T3_Close(st);
-            bench_stream_row("T3", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("T3", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_T3_Close(st); }
-            bench_stream_row("T3", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("T3", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -12947,9 +13152,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_TAN_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -12997,11 +13202,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TAN_Close(st);
-            bench_stream_row("TAN", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TAN", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TAN_Close(st); }
-            bench_stream_row("TAN", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TAN", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13011,9 +13216,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_TANH_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
@@ -13061,11 +13266,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TANH_Close(st);
-            bench_stream_row("TANH", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TANH", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TANH_Close(st); }
-            bench_stream_row("TANH", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TANH", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13074,14 +13279,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_TEMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_TEMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_TEMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_TEMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13091,7 +13297,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TEMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TEMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_TEMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13125,11 +13331,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TEMA_Close(st);
-            bench_stream_row("TEMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TEMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TEMA_Close(st); }
-            bench_stream_row("TEMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TEMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13139,9 +13345,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_TRANGE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -13191,11 +13397,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TRANGE_Close(st);
-            bench_stream_row("TRANGE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TRANGE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TRANGE_Close(st); }
-            bench_stream_row("TRANGE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TRANGE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13204,14 +13410,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_TRIMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_TRIMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_TRIMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_TRIMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13221,7 +13428,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TRIMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TRIMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_TRIMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13255,11 +13462,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TRIMA_Close(st);
-            bench_stream_row("TRIMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TRIMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TRIMA_Close(st); }
-            bench_stream_row("TRIMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TRIMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13268,14 +13475,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_TRIX_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_TRIX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_TRIX(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_TRIX(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13285,7 +13493,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TRIX_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TRIX_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_TRIX_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13319,11 +13527,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TRIX_Close(st);
-            bench_stream_row("TRIX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TRIX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TRIX_Close(st); }
-            bench_stream_row("TRIX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TRIX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13332,14 +13540,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_TSF_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_TSF_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_TSF(t, t, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_TSF(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13349,7 +13558,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TSF_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TSF_Open(&st, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_TSF_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13383,11 +13592,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TSF_Close(st);
-            bench_stream_row("TSF", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TSF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TSF_Close(st); }
-            bench_stream_row("TSF", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TSF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13396,14 +13605,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_TSI_Lookback(25, 13);
-        if( lb < 0 ) lb = 0;
+        const int optInFirstPeriod = bench_opaque_int(25);
+        const int optInSecondPeriod = bench_opaque_int(13);
+        int lb = TA_TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_TSI(t, t, g_rt_close, 25, 13, &begIdx, &nb, g_outBuf0);
+                TA_TSI(t, t, g_rt_close, optInFirstPeriod, optInSecondPeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13413,7 +13624,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_TSI_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_TSI_Open(&st, g_close, g_nPoints, 25, 13, &v0);
+        TA_RetCode orc = TA_TSI_Open(&st, g_close, g_nPoints, optInFirstPeriod, optInSecondPeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13447,11 +13658,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TSI_Close(st);
-            bench_stream_row("TSI", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TSI", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TSI_Close(st); }
-            bench_stream_row("TSI", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TSI", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13461,9 +13672,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_TYPPRICE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -13513,11 +13724,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_TYPPRICE_Close(st);
-            bench_stream_row("TYPPRICE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("TYPPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_TYPPRICE_Close(st); }
-            bench_stream_row("TYPPRICE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("TYPPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13526,16 +13737,19 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ULTOSC_Lookback(7, 14, 28);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod1 = bench_opaque_int(7);
+        const int optInTimePeriod2 = bench_opaque_int(14);
+        const int optInTimePeriod3 = bench_opaque_int(28);
+        int lb = TA_ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ULTOSC(t, t, g_rt_high, g_rt_low, g_rt_close, 7, 14, 28, &begIdx, &nb, g_outBuf0);
+                TA_ULTOSC(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13545,7 +13759,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ULTOSC_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ULTOSC_Open(&st, g_high, g_low, g_close, g_nPoints, 7, 14, 28, &v0);
+        TA_RetCode orc = TA_ULTOSC_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13579,11 +13793,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ULTOSC_Close(st);
-            bench_stream_row("ULTOSC", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ULTOSC", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ULTOSC_Close(st); }
-            bench_stream_row("ULTOSC", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ULTOSC", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13592,14 +13806,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_VAR_Lookback(5, 1.000000000000000);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 5);
+        const double optInNbDev = bench_opaque_double(1.000000000000000);
+        int lb = TA_VAR_Lookback(optInTimePeriod, optInNbDev);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_VAR(t, t, g_rt_close, 5, 1.000000000000000, &begIdx, &nb, g_outBuf0);
+                TA_VAR(t, t, g_rt_close, optInTimePeriod, optInNbDev, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13609,7 +13825,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_VAR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_VAR_Open(&st, g_close, g_nPoints, 5, 1.000000000000000, &v0);
+        TA_RetCode orc = TA_VAR_Open(&st, g_close, g_nPoints, optInTimePeriod, optInNbDev, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13643,11 +13859,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_VAR_Close(st);
-            bench_stream_row("VAR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("VAR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_VAR_Close(st); }
-            bench_stream_row("VAR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("VAR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13656,14 +13872,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_VHF_Lookback(28);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 28);
+        int lb = TA_VHF_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_VHF(t, t, g_rt_close, 28, &begIdx, &nb, g_outBuf0);
+                TA_VHF(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13673,7 +13890,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_VHF_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_VHF_Open(&st, g_close, g_nPoints, 28, &v0);
+        TA_RetCode orc = TA_VHF_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13707,11 +13924,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_VHF_Close(st);
-            bench_stream_row("VHF", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("VHF", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_VHF_Close(st); }
-            bench_stream_row("VHF", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("VHF", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13720,16 +13937,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_VORTEX_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_VORTEX_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_VORTEX(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0, g_outBuf1);
+                TA_VORTEX(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0, g_outBuf1);
                 acc += g_outBuf0[0];
                 acc += g_outBuf1[0];
                 t++;
@@ -13741,7 +13959,7 @@ static void bench_stream_all(const char *filter, int iters) {
             double v0 = 0.0;
             double v1 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_VORTEX_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0, &v1);
+        TA_RetCode orc = TA_VORTEX_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0, &v1);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13778,11 +13996,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_VORTEX_Close(st);
-            bench_stream_row("VORTEX", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("VORTEX", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_VORTEX_Close(st); }
-            bench_stream_row("VORTEX", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("VORTEX", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13792,9 +14010,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_VWAP_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -13845,11 +14063,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_VWAP_Close(st);
-            bench_stream_row("VWAP", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("VWAP", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_VWAP_Close(st); }
-            bench_stream_row("VWAP", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("VWAP", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13858,15 +14076,16 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_VWMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_VWMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
                 g_rt_volume[t] = g_volume[it & BENCH_MASK];
-                TA_VWMA(t, t, g_rt_close, g_rt_volume, 30, &begIdx, &nb, g_outBuf0);
+                TA_VWMA(t, t, g_rt_close, g_rt_volume, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -13876,7 +14095,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_VWMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_VWMA_Open(&st, g_close, g_volume, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_VWMA_Open(&st, g_close, g_volume, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -13910,11 +14129,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_VWMA_Close(st);
-            bench_stream_row("VWMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("VWMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_VWMA_Close(st); }
-            bench_stream_row("VWMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("VWMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13924,9 +14143,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_WAD_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -13976,11 +14195,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_WAD_Close(st);
-            bench_stream_row("WAD", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("WAD", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_WAD_Close(st); }
-            bench_stream_row("WAD", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("WAD", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -13990,9 +14209,9 @@ static void bench_stream_all(const char *filter, int iters) {
         size_t handle_bytes = 0;
         double acc = 0.0;
         int lb = TA_WCLPRICE_Lookback();
-        if( lb < 0 ) lb = 0;
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
@@ -14042,11 +14261,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_WCLPRICE_Close(st);
-            bench_stream_row("WCLPRICE", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("WCLPRICE", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_WCLPRICE_Close(st); }
-            bench_stream_row("WCLPRICE", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("WCLPRICE", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -14055,16 +14274,17 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_WILLR_Lookback(14);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 14);
+        int lb = TA_WILLR_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_high[t] = g_high[it & BENCH_MASK];
                 g_rt_low[t] = g_low[it & BENCH_MASK];
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_WILLR(t, t, g_rt_high, g_rt_low, g_rt_close, 14, &begIdx, &nb, g_outBuf0);
+                TA_WILLR(t, t, g_rt_high, g_rt_low, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -14074,7 +14294,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_WILLR_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_WILLR_Open(&st, g_high, g_low, g_close, g_nPoints, 14, &v0);
+        TA_RetCode orc = TA_WILLR_Open(&st, g_high, g_low, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -14108,11 +14328,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_WILLR_Close(st);
-            bench_stream_row("WILLR", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("WILLR", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_WILLR_Close(st); }
-            bench_stream_row("WILLR", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("WILLR", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -14121,14 +14341,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_WMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_WMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_WMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_WMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -14138,7 +14359,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_WMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_WMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_WMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -14172,11 +14393,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_WMA_Close(st);
-            bench_stream_row("WMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("WMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_WMA_Close(st); }
-            bench_stream_row("WMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("WMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -14185,14 +14406,15 @@ static void bench_stream_all(const char *filter, int iters) {
         int begIdx = 0, nb = 0;
         size_t handle_bytes = 0;
         double acc = 0.0;
-        int lb = TA_ZLEMA_Lookback(30);
-        if( lb < 0 ) lb = 0;
+        const int optInTimePeriod = bench_opaque_int(g_period > 0 ? g_period : 30);
+        int lb = TA_ZLEMA_Lookback(optInTimePeriod);
+        bench_rt_reserve((long long)lb + iters);
         for( int pass = 0; pass < 3; pass++ ) {
-            int t = lb;
+            int t = lb < 0 ? 0 : lb;
             long long t0 = get_nanotime();
             for( int it = 0; it < iters; it++ ) {
                 g_rt_close[t] = g_close[it & BENCH_MASK];
-                TA_ZLEMA(t, t, g_rt_close, 30, &begIdx, &nb, g_outBuf0);
+                TA_ZLEMA(t, t, g_rt_close, optInTimePeriod, &begIdx, &nb, g_outBuf0);
                 acc += g_outBuf0[0];
                 t++;
             }
@@ -14202,7 +14424,7 @@ static void bench_stream_all(const char *filter, int iters) {
         TA_ZLEMA_Stream *st = NULL;
             double v0 = 0.0;
         g_trk_reset(); g_ta_track = 1;
-        TA_RetCode orc = TA_ZLEMA_Open(&st, g_close, g_nPoints, 30, &v0);
+        TA_RetCode orc = TA_ZLEMA_Open(&st, g_close, g_nPoints, optInTimePeriod, &v0);
         g_ta_track = 0; handle_bytes = g_ta_live_bytes;
         if( orc == TA_SUCCESS && st ) {
             int blk = (iters >= 64) ? 32 : 1;
@@ -14236,11 +14458,11 @@ static void bench_stream_all(const char *filter, int iters) {
             }
             g_sink += (int)acc + nb;
             TA_ZLEMA_Close(st);
-            bench_stream_row("ZLEMA", best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
+            bench_stream_row("ZLEMA", orc, best_b/(double)iters, best_u/(double)iters, best_p/(double)npk, lb, handle_bytes);
         } else {
             g_sink += (int)acc + nb;
             if( st ) { g_ta_track = 0; TA_ZLEMA_Close(st); }
-            bench_stream_row("ZLEMA", best_b/(double)iters, -1.0, -1.0, lb, 0);
+            bench_stream_row("ZLEMA", orc, best_b/(double)iters, -1.0, -1.0, lb, 0);
         }
         fflush(stdout);
     }
@@ -14253,6 +14475,7 @@ int main(int argc, char *argv[]) {
     int n_iters = 500;
     int verify_corpus = 0;
     const char *func_filter = NULL;
+    g_corpus.refPeriod = 0;   /* 0 = derive after the loop */
     for( int i = 1; i < argc; i++ ) {
         if( strncmp(argv[i], "--points=", 9) == 0 )    n_points = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--iters=", 8) == 0 ) n_iters = atoi(argv[i]+8);
@@ -14260,6 +14483,7 @@ int main(int argc, char *argv[]) {
         /* Gate: exit non-zero if any function streams slower than this multiple
            of its batch@last cost. Stream-bench only, hence not in CORPUS_ARGS. */
         else if( strncmp(argv[i], "--min-ratio=", 12) == 0 ) g_min_ratio = atof(argv[i]+12);
+        else if( strncmp(argv[i], "--period=", 9) == 0 ) g_period = atoi(argv[i]+9);
         else if( strncmp(argv[i], "--shape=", 8) == 0 ) {
             g_corpus.shape = bench_shape_id(argv[i]+8);
             if( g_corpus.shape < 0 ) {
@@ -14285,30 +14509,15 @@ int main(int argc, char *argv[]) {
     if( n_points > MAX_POINTS ) n_points = MAX_POINTS;
     if( n_points < BENCH_MASK + 1 ) n_points = BENCH_MASK + 1; /* the bar feed indexes it & BENCH_MASK */
     if( n_iters < 1 ) n_iters = 1;
+    /* The trend/chop regime length is relative to the window under test. */
+    if( g_corpus.refPeriod <= 0 )
+        g_corpus.refPeriod = (g_period > 0) ? g_period : BENCH_CORPUS_PERIOD;
     /* After the loop, so the check runs at the n actually benchmarked
        regardless of where --points sits in argv. */
     if( verify_corpus ) return bench_corpus_selfcheck(n_points, &g_corpus) ? 1 : 0;
     generate_price_data(n_points);
-    /* Growing history for batch@last: one buffer sized to hold the whole run
-       (n_iters appended bars + lookback headroom) so it never recycles within a pass. */
-    g_rtCap = n_iters + 8192;
-    g_rt_open   = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_high   = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_low    = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_close  = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_volume = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_oi     = malloc(sizeof(double) * (size_t)g_rtCap);
-    g_rt_periods = malloc(sizeof(double) * (size_t)g_rtCap);
-    if( g_rtCap <= 0 || !g_rt_open || !g_rt_high || !g_rt_low || !g_rt_close || !g_rt_volume || !g_rt_oi || !g_rt_periods ) {
-        fprintf( stderr, "ta_bench_stream: allocation failed (try a smaller --iters)\n" );
-        return 1;
-    }
-    for( int i = 0; i < g_rtCap; i++ ) {
-        int j = i % g_nPoints;
-        g_rt_open[i]=g_open[j]; g_rt_high[i]=g_high[j]; g_rt_low[i]=g_low[j];
-        g_rt_close[i]=g_close[j]; g_rt_volume[i]=g_volume[j]; g_rt_oi[i]=g_oi[j];
-        g_rt_periods[i]=g_periods[j];
-    }
+    /* Growing history for batch@last, sized so it never recycles within a pass. */
+    bench_rt_reserve((long long)n_iters + 8192);
     bench_stream_all(func_filter, n_iters);
     int rc = bench_stream_summary();
     free(g_rt_open); free(g_rt_high); free(g_rt_low); free(g_rt_close); free(g_rt_volume); free(g_rt_oi); free(g_rt_periods);
