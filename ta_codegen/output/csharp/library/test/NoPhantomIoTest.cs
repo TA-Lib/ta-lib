@@ -69,7 +69,8 @@ namespace TALib.Test;
 /// this check either — the buffers are never tight enough for a phantom access
 /// to fall off the end of one.</para>
 ///
-/// <para>Two sweeps:</para>
+/// <para>Two sweeps, each run through the double and the float overload, which
+/// are separately transcribed bodies:</para>
 /// <list type="number">
 /// <item><description><b>Sub-lookback</b> — a range strictly shorter than the
 /// lookback, with <b>zero-length</b> buffers everywhere. That call is a
@@ -78,7 +79,7 @@ namespace TALib.Test;
 /// <item><description><b>Exact extent</b> — a range that <i>does</i> produce
 /// values, with each input sized to exactly <c>endIdx + 1</c> and each output to
 /// exactly the count the call reported. A read past <c>endIdx</c> or a write past
-/// the reported count is then out of range. This is what reaches the 31 functions
+/// the reported count is then out of range. This is what reaches the functions
 /// whose lookback is 0, for which no sub-lookback range exists.</description></item>
 /// </list>
 ///
@@ -90,7 +91,7 @@ namespace TALib.Test;
 /// one backend touches without changing what it produces shows up only here.</para>
 ///
 /// <para>The corpus comes from <see cref="FunctionCatalog"/> rather than
-/// reflection: it enumerates all 176 functions with their input kinds, price
+/// reflection: it enumerates every function with their input kinds, price
 /// components, parameter domains and output kinds, and
 /// <see cref="ParamHolder"/> binds the buffers. The <b>call</b> comes from
 /// <see cref="NoPhantomIoBinder"/>, this suite's own table of
@@ -99,6 +100,9 @@ namespace TALib.Test;
 /// empty included, before the body could touch it, which is a different (and
 /// separately tested) property; so does the catalogue's own thunk since #265,
 /// which is why this suite no longer goes through it.</para>
+///
+/// <para>The opener-message sweep is not a phantom-I/O check. It lives here
+/// because the binder is the one generated table of typed openers.</para>
 /// </remarks>
 public static class NoPhantomIoTest
 {
@@ -222,20 +226,8 @@ public static class NoPhantomIoTest
     /// <summary>
     /// Binds inputs of zero length and outputs of exactly one sentinel-filled element.
     /// </summary>
-    /// <remarks>Not zero-length outputs, which would be the sharper probe and which
-    /// Java uses: C#'s multi-output guard reads
-    /// <c>a.Overlaps(b) || (a.IsEmpty &amp;&amp; b.IsEmpty)</c>, and that second clause
-    /// rejects two empty output spans outright — a span carries no identity when it
-    /// has no elements, so the guard cannot tell "two distinct empty buffers" from
-    /// "the same buffer twice" and refuses. So all 14 multi-output functions answer
-    /// <c>BadParam</c> before their body runs, and no zero-length probe of them is
-    /// possible at all. (Java's guard is reference equality on the arrays, so two
-    /// distinct empty arrays pass there: this is a real difference in what the two
-    /// bindings accept, not a quirk of the probe.)
-    /// <para>One sentinel-filled element keeps both directions: a write at index 0
-    /// destroys the sentinel, and a write anywhere above it is out of range — so the
-    /// pair covers exactly what a zero-length buffer would, at the cost of needing
-    /// two things checked instead of one.</para></remarks>
+    /// <remarks>One sentinel-filled output element keeps both directions: a write at
+    /// index 0 destroys the sentinel, and a write anywhere above it is out of range.</remarks>
     private static (double[][] Real, int[][] Int) BindQuiet(FuncInfo f, ParamHolder call)
     {
         for (int slot = 0; slot < f.Inputs.Length; slot++)
@@ -403,8 +395,9 @@ public static class NoPhantomIoTest
 
     /* -------------------------------------------------- sweep 1: sub-lookback */
 
-    private static void SubLookbackSweep(Core core, IReadOnlyList<FuncInfo> catalog)
+    private static void SubLookbackSweep(Core core, IReadOnlyList<FuncInfo> catalog, bool single)
     {
+        string w = single ? "float" : "double";
         int probed = 0;
         int noSubLookbackRange = 0;
         int violations = 0;
@@ -432,7 +425,7 @@ public static class NoPhantomIoTest
             (double[][], int[][]) controlBuffers = BindQuiet(f, control);
             try
             {
-                RetCode rc = NoPhantomIoBinder.Invoke(f.Name, core, control, 0, d.Lookback, out OutRange _);
+                RetCode rc = NoPhantomIoBinder.Invoke(f.Name, core, control, 0, d.Lookback, single, out OutRange _);
                 if (AnySentinelGone(controlBuffers))
                 {
                     live.Add(f.Name);
@@ -459,7 +452,7 @@ public static class NoPhantomIoTest
                 }
                 else
                 {
-                    Violation($"{f.Name} at endIdx == lookback ({d.Lookback}) returned {rc} without "
+                    Violation($"{w} {f.Name} at endIdx == lookback ({d.Lookback}) returned {rc} without "
                         + "touching a buffer; a call that produces a value must read an input or "
                         + "write an output, so this sweep could not detect I/O for it");
                     violations++;
@@ -471,7 +464,7 @@ public static class NoPhantomIoTest
             }
             catch (Exception e)
             {
-                Violation($"{f.Name} at endIdx == lookback threw {e.GetType().Name}: {e.Message}");
+                Violation($"{w} {f.Name} at endIdx == lookback threw {e.GetType().Name}: {e.Message}");
                 violations++;
             }
 
@@ -498,10 +491,10 @@ public static class NoPhantomIoTest
                 ParamHolder call = f.CreateCall(core);
                 v.Bind(call);
                 (double[][], int[][]) buffers = BindQuiet(f, call);
-                string where = $"{f.Name}[{v.Label}] (lookback {v.Lookback}, endIdx {v.Lookback - 1})";
+                string where = $"{w} {f.Name}[{v.Label}] (lookback {v.Lookback}, endIdx {v.Lookback - 1})";
                 try
                 {
-                    RetCode rc = NoPhantomIoBinder.Invoke(f.Name, core, call, 0, v.Lookback - 1, out OutRange range);
+                    RetCode rc = NoPhantomIoBinder.Invoke(f.Name, core, call, 0, v.Lookback - 1, single, out OutRange range);
                     if (rc != RetCode.Success)
                     {
                         Violation($"{where} returned {rc}, expected Success");
@@ -527,15 +520,15 @@ public static class NoPhantomIoTest
         }
 
         Check(probed + noSubLookbackRange == catalog.Count,
-              $"sub-lookback: every function is probed or counted ({probed} + "
+              $"{w} sub-lookback: every function is probed or counted ({probed} + "
               + $"{noSubLookbackRange} vs {catalog.Count})");
         // No withholding list to subtract: exact equality against the catalogue,
         // which is strictly stronger than the size assertion it replaces (#267).
         Check(live.Count == catalog.Count,
-              $"sub-lookback: the detector is proved live for every function "
+              $"{w} sub-lookback: the detector is proved live for every function "
               + $"({live.Count} of {catalog.Count}; not proved "
               + $"{string.Join(", ", catalog.Select(f => f.Name).Except(live))})");
-        Console.WriteLine($"  sub-lookback: {probed} functions probed, {violations} violation(s), "
+        Console.WriteLine($"  {w} sub-lookback: {probed} functions probed, {violations} violation(s), "
             + $"{noSubLookbackRange} skipped (lookback 0, no sub-lookback range exists); "
             + $"{live.Count} detector control(s) fired");
     }
@@ -553,8 +546,9 @@ public static class NoPhantomIoTest
     /// to the lookback does not fire.</remarks>
     private static readonly (int Lo, int Hi)[] Ranges = [(0, 0), (0, 4), (3, 7)];
 
-    private static void ExactExtentSweep(Core core, IReadOnlyList<FuncInfo> catalog)
+    private static void ExactExtentSweep(Core core, IReadOnlyList<FuncInfo> catalog, bool single)
     {
+        string w = single ? "float" : "double";
         const int Pad = 16;
         int probes = 0;
         int violations = 0;
@@ -580,11 +574,11 @@ public static class NoPhantomIoTest
                     OutRange range;
                     try
                     {
-                        rc = NoPhantomIoBinder.Invoke(f.Name, core, loose, startIdx, endIdx, out range);
+                        rc = NoPhantomIoBinder.Invoke(f.Name, core, loose, startIdx, endIdx, single, out range);
                     }
                     catch (Exception e)
                     {
-                        Violation($"{f.Name}[{v.Label}] [{startIdx}..{endIdx}] threw on PADDED "
+                        Violation($"{w} {f.Name}[{v.Label}] [{startIdx}..{endIdx}] threw on PADDED "
                             + $"buffers ({Pad} spare elements): {e.GetType().Name}: {e.Message}");
                         violations++;
                         continue;
@@ -605,7 +599,7 @@ public static class NoPhantomIoTest
                     // then use it as the bound.
                     if (range.BegIdx != startIdx || range.Count != endIdx - startIdx + 1)
                     {
-                        Violation($"{f.Name}[{v.Label}] [{startIdx}..{endIdx}] reported begIdx "
+                        Violation($"{w} {f.Name}[{v.Label}] [{startIdx}..{endIdx}] reported begIdx "
                             + $"{range.BegIdx} and count {range.Count}, not the documented "
                             + $"{startIdx} and {endIdx - startIdx + 1}");
                         violations++;
@@ -620,11 +614,11 @@ public static class NoPhantomIoTest
                     reachedAtDefaults |= v.Label == "defaults";
                     try
                     {
-                        NoPhantomIoBinder.Invoke(f.Name, core, tight, startIdx, endIdx, out OutRange _);
+                        NoPhantomIoBinder.Invoke(f.Name, core, tight, startIdx, endIdx, single, out OutRange _);
                     }
                     catch (Exception e)
                     {
-                        Violation($"{f.Name}[{v.Label}] [{startIdx}..{endIdx}] with inputs of "
+                        Violation($"{w} {f.Name}[{v.Label}] [{startIdx}..{endIdx}] with inputs of "
                             + $"{endIdx + 1} and outputs of {range.Count} (the count it reported) "
                             + $"touched an element outside them: {e.GetType().Name}: {e.Message}");
                         violations++;
@@ -644,9 +638,9 @@ public static class NoPhantomIoTest
         // reached at its own defaults vector, on a range built from its own
         // lookback, so one that stops being reachable is red rather than quiet.
         Check(reached.Count == catalog.Count,
-              $"exact extent: every function is reached at its defaults ({reached.Count} of "
+              $"{w} exact extent: every function is reached at its defaults ({reached.Count} of "
               + $"{catalog.Count}; missing {string.Join(", ", catalog.Select(f => f.Name).Except(reached))})");
-        Console.WriteLine($"  exact extent: {probes} probes over {catalog.Count} functions, "
+        Console.WriteLine($"  {w} exact extent: {probes} probes over {catalog.Count} functions, "
             + $"{violations} violation(s)");
     }
 
@@ -657,8 +651,10 @@ public static class NoPhantomIoTest
     /// whole file rests on ever stopped firing — an exception caught too broadly, a
     /// buffer quietly resized, an argument bound wrong — the sweeps would all go
     /// green, and only these would go red.</remarks>
-    private static void TheProbesCanFail(Core core)
+    private static void TheProbesCanFail(Core core, bool single)
     {
+        void CheckAt(bool condition, string what) => Check(condition, (single ? "float: " : "double: ") + what);
+
         FuncInfo sma = FunctionCatalog.Default["SMA"];
         int lookback = sma.CreateCall(core).SetOptInput(0, 30).Lookback();
 
@@ -666,15 +662,15 @@ public static class NoPhantomIoTest
         ParamHolder quiet = sma.CreateCall(core);
         quiet.SetOptInput(0, 30);
         (double[][], int[][]) quietBuffers = BindQuiet(sma, quiet);
-        Check(NoPhantomIoBinder.Invoke("SMA", core, quiet, 0, lookback - 1, out OutRange empty) == RetCode.Success
-                  && empty.Count == 0 && !AnySentinelGone(quietBuffers),
-              "a sub-lookback range with zero-length inputs is a silent success");
+        CheckAt(NoPhantomIoBinder.Invoke("SMA", core, quiet, 0, lookback - 1, single, out OutRange empty) == RetCode.Success
+                    && empty.Count == 0 && !AnySentinelGone(quietBuffers),
+                "a sub-lookback range with zero-length inputs is a silent success");
 
         ParamHolder oneMore = sma.CreateCall(core);
         oneMore.SetOptInput(0, 30);
         BindQuiet(sma, oneMore);
-        Check(ThrowsOutOfRange(() => NoPhantomIoBinder.Invoke("SMA", core, oneMore, 0, lookback, out OutRange _)),
-              "one bar longer DOES read the input, so sweep 1 can detect a phantom read");
+        CheckAt(ThrowsOutOfRange(() => NoPhantomIoBinder.Invoke("SMA", core, oneMore, 0, lookback, single, out OutRange _)),
+                "one bar longer DOES read the input, so sweep 1 can detect a phantom read");
 
         // The other half of sweep 1's detector: an output written where none should
         // be. Sized correctly for the range but called one bar short of the lookback
@@ -685,16 +681,16 @@ public static class NoPhantomIoTest
         canary[0] = RealSentinel;
         writeProbe.SetInput(0, Series("inReal", lookback));
         writeProbe.SetOutput(0, canary);
-        NoPhantomIoBinder.Invoke("SMA", core, writeProbe, 0, lookback - 1, out OutRange _);
-        Check(canary[0] == RealSentinel,
-              "the sentinel survives a call that writes nothing, so it can report one that does");
+        NoPhantomIoBinder.Invoke("SMA", core, writeProbe, 0, lookback - 1, single, out OutRange _);
+        CheckAt(canary[0] == RealSentinel,
+                "the sentinel survives a call that writes nothing, so it can report one that does");
         ParamHolder writeProbe2 = sma.CreateCall(core);
         writeProbe2.SetOptInput(0, 30);
         writeProbe2.SetInput(0, Series("inReal", lookback + 1));
         writeProbe2.SetOutput(0, canary);
-        NoPhantomIoBinder.Invoke("SMA", core, writeProbe2, 0, lookback, out OutRange _);
-        Check(canary[0] != RealSentinel,
-              "a call that DOES write destroys the sentinel, so sweep 1 can detect a phantom write");
+        NoPhantomIoBinder.Invoke("SMA", core, writeProbe2, 0, lookback, single, out OutRange _);
+        CheckAt(canary[0] != RealSentinel,
+                "a call that DOES write destroys the sentinel, so sweep 1 can detect a phantom write");
 
         // 2. exact extent: the exact sizes pass, one element short in either
         //    direction throws. Proves BOTH bounds, not just the output one.
@@ -704,21 +700,59 @@ public static class NoPhantomIoTest
         ParamHolder exact = sma.CreateCall(core);
         exact.SetOptInput(0, 30);
         Bind(sma, exact, endIdx + 1, count);
-        Check(NoPhantomIoBinder.Invoke("SMA", core, exact, 0, endIdx, out OutRange full) == RetCode.Success
-                  && full.Count == count,
-              "exactly-sized input and output are enough for SMA");
+        CheckAt(NoPhantomIoBinder.Invoke("SMA", core, exact, 0, endIdx, single, out OutRange full) == RetCode.Success
+                    && full.Count == count,
+                "exactly-sized input and output are enough for SMA");
 
         ParamHolder shortOut = sma.CreateCall(core);
         shortOut.SetOptInput(0, 30);
         Bind(sma, shortOut, endIdx + 1, count - 1);
-        Check(ThrowsOutOfRange(() => NoPhantomIoBinder.Invoke("SMA", core, shortOut, 0, endIdx, out OutRange _)),
-              "an output one short of the count throws, so sweep 2 sees over-writes");
+        CheckAt(ThrowsOutOfRange(() => NoPhantomIoBinder.Invoke("SMA", core, shortOut, 0, endIdx, single, out OutRange _)),
+                "an output one short of the count throws, so sweep 2 sees over-writes");
 
         ParamHolder shortIn = sma.CreateCall(core);
         shortIn.SetOptInput(0, 30);
         Bind(sma, shortIn, endIdx, count);
-        Check(ThrowsOutOfRange(() => NoPhantomIoBinder.Invoke("SMA", core, shortIn, 0, endIdx, out OutRange _)),
-              "an input one short of endIdx+1 throws, so sweep 2 sees over-reads");
+        CheckAt(ThrowsOutOfRange(() => NoPhantomIoBinder.Invoke("SMA", core, shortIn, 0, endIdx, single, out OutRange _)),
+                "an input one short of endIdx+1 throws, so sweep 2 sees over-reads");
+    }
+
+    /// <summary>The float table reaches a body that reads <c>float</c>.</summary>
+    /// <remarks>Without it, a float table that bound the double overload would run
+    /// the double sweep twice and pass.</remarks>
+    private static void TheFloatTableCallsTheFloatBody(Core core)
+    {
+        double Identity(string name, bool single)
+        {
+            ParamHolder call = FunctionCatalog.Default[name].CreateCall(core);
+            if (name == "SMA")
+            {
+                call.SetOptInput(0, 1);
+                call.SetInput(0, new[] { 0.1 });
+            }
+            else
+            {
+                foreach ((PriceComponents bit, string _) in PriceLegs)
+                {
+                    if ((FunctionCatalog.Default[name].Inputs[0].Components & bit) != 0)
+                    {
+                        call.SetPriceInput(0, bit, new[] { 0.1 });
+                    }
+                }
+            }
+            var o = new double[1];
+            call.SetOutput(0, o);
+            RetCode rc = NoPhantomIoBinder.Invoke(name, core, call, 0, 0, single, out OutRange _);
+            return rc == RetCode.Success ? o[0] : double.NaN;
+        }
+
+        // One function per input kind the binder narrows: a real array, a price bundle.
+        foreach (string name in new[] { "SMA", "AVGPRICE" })
+        {
+            double wide = Identity(name, false), narrow = Identity(name, true);
+            Check(wide == 0.1 && narrow == (float)0.1,
+                  $"{name}: the double table keeps 0.1 and the float table narrows it (got {wide:R}, {narrow:R})");
+        }
     }
 
     private static bool ThrowsOutOfRange(Action body)
@@ -732,6 +766,83 @@ public static class NoPhantomIoTest
         {
             return IsOutOfRange(e);
         }
+    }
+
+    private static void NamesExactly(string table, IReadOnlyList<FuncInfo> want, IEnumerable<string> have)
+    {
+        string[] missing = want.Select(f => f.Name).Where(n => !have.Contains(n)).ToArray();
+        string[] extra = have.Where(n => !want.Any(f => f.Name == n)).ToArray();
+        Check(missing.Length == 0 && extra.Length == 0,
+              $"NoPhantomIoBinder.{table} names exactly the catalogue's {want.Count} function(s) "
+              + $"(missing: {string.Join(", ", missing)}; naming one that is gone: {string.Join(", ", extra)})");
+    }
+
+    /* ------------------------------------------ opener messages, by function */
+
+    /// <summary>Every opener's short-history rejection names the function called.</summary>
+    /// <remarks>One bar is too short for any opener with a non-zero lookback. A composed opener
+    /// that let its sub-stream reject first would report the sub-stream's name,
+    /// so that arm is a failure, not a variant.</remarks>
+    private static void OpenMessagesNameTheirOwnFunction(Core core, IReadOnlyList<FuncInfo> catalog)
+    {
+        int own = 0, noThrow = 0;
+        var substage = new List<string>();
+        var unexpected = new List<string>();
+
+        foreach (FuncInfo f in catalog)
+        {
+            if (!f.Flags.HasFlag(FuncFlags.Stream))
+            {
+                continue;
+            }
+
+            if (!NoPhantomIoBinder.Openers.TryGetValue(f.Name, out NoPhantomIoBinder.Opener? open))
+            {
+                unexpected.Add($"{f.Name}: no opener in the binder");
+                continue;
+            }
+
+            ParamHolder call = f.CreateCall(core);
+            Bind(f, call, 1, 1);
+            int lookback = f.CreateCall(core).Lookback();
+            try
+            {
+                open(core, call);
+                if (lookback > 0)
+                {
+                    unexpected.Add($"{f.Name}: accepted one bar despite lookback {lookback}");
+                }
+
+                noThrow++;
+            }
+            catch (InsufficientHistoryException e)
+            {
+                if (lookback == 0)
+                {
+                    unexpected.Add($"{f.Name}: rejected one bar despite lookback 0");
+                }
+                else if (e.Message.StartsWith(f.Name + " open: ", StringComparison.Ordinal))
+                {
+                    own++;
+                }
+                else
+                {
+                    substage.Add($"{f.Name} -> \"{e.Message}\"");
+                }
+            }
+            catch (Exception e)
+            {
+                unexpected.Add($"{f.Name} -> {e.GetType().Name}: {e.Message}");
+            }
+        }
+
+        Check(unexpected.Count == 0,
+              $"every opener rejects one bar as documented ({string.Join("; ", unexpected)})");
+        Check(substage.Count == 0,
+              $"no opener reports a sub-stage's name ({string.Join("; ", substage)})");
+        Check(noThrow > 0 && own > 0,
+              $"both arms exercised ({noThrow} zero-lookback, {own} throwing)");
+        Console.WriteLine($"  opener messages: {own} name their function, {noThrow} zero-lookback");
     }
 
     public static int Run()
@@ -755,18 +866,20 @@ public static class NoPhantomIoTest
         //
         // Both directions, because a call site for a function that is gone is a
         // stale entry the sweeps would never reach.
-        string[] missing = catalog.Select(f => f.Name)
-            .Where(n => !NoPhantomIoBinder.Thunks.ContainsKey(n)).ToArray();
-        string[] extra = NoPhantomIoBinder.Thunks.Keys
-            .Where(n => !catalog.Any(f => f.Name == n)).ToArray();
-        Check(missing.Length == 0 && extra.Length == 0,
-              $"NoPhantomIoBinder.g.cs names exactly the catalogue's {catalog.Count} function(s) "
-              + $"(missing a NAME_Impl call site: {string.Join(", ", missing)}; "
-              + $"naming one that is gone: {string.Join(", ", extra)})");
+        NamesExactly("Thunks", catalog, NoPhantomIoBinder.Thunks.Keys);
+        NamesExactly("FloatThunks", catalog, NoPhantomIoBinder.FloatThunks.Keys);
+        NamesExactly("Openers", catalog.Where(f => f.Flags.HasFlag(FuncFlags.Stream)).ToList(),
+                     NoPhantomIoBinder.Openers.Keys);
 
-        TheProbesCanFail(core);
-        SubLookbackSweep(core, catalog);
-        ExactExtentSweep(core, catalog);
+        TheFloatTableCallsTheFloatBody(core);
+        foreach (bool single in new[] { false, true })
+        {
+            TheProbesCanFail(core, single);
+            SubLookbackSweep(core, catalog, single);
+            ExactExtentSweep(core, catalog, single);
+        }
+
+        OpenMessagesNameTheirOwnFunction(core, catalog);
 
         // Once more against a non-zero unstable period, mirroring the pass in
         // NoPhantomIoTest.java. A dozen cores carry an explicit
@@ -782,7 +895,8 @@ public static class NoPhantomIoTest
         // lookback-versus-what-the-body-reads coupling every bug found here so far
         // has lived in.
         //
-        // Batch sweeps only: the control and streaming shapes do not move with it.
+        // Batch sweeps only, at both widths: the float body carries its own copy of
+        // every warm-up loop.
         Core unstable = Core.Builder().UnstablePeriod(FuncUnstId.ALL, 3).Build();
         int moved = 0;
         foreach (FuncInfo f in catalog)
@@ -801,8 +915,11 @@ public static class NoPhantomIoTest
         Check(moved > 0,
             $"a non-zero unstable period moves at least one lookback ({moved} of {catalog.Count})");
         Console.WriteLine($"  unstable period 3: {moved} of {catalog.Count} lookbacks move");
-        SubLookbackSweep(unstable, catalog);
-        ExactExtentSweep(unstable, catalog);
+        foreach (bool single in new[] { false, true })
+        {
+            SubLookbackSweep(unstable, catalog, single);
+            ExactExtentSweep(unstable, catalog, single);
+        }
 
         if (_failures == 0)
         {

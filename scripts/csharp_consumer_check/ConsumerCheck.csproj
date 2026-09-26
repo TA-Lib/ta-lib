@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Depends on the package the way a user does, so what it proves is the
+       packed TALib.dll's public surface: the suites and the server compile the
+       library sources, where an `internal` member is still reachable. Built
+       only by scripts/csharp_package_check.py. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Placeholders that restore nothing, so a run without -p fails. -->
+    <TalibId Condition="'$(TalibId)' == ''">unset</TalibId>
+    <TalibVersion Condition="'$(TalibVersion)' == ''">0.0.0-unset</TalibVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="$(TalibId)" Version="[$(TalibVersion)]" />
+  </ItemGroup>
+
+</Project>

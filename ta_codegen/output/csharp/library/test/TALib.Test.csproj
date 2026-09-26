@@ -2,12 +2,8 @@
 
   <!-- Hand-written test project; ta_codegen never opens this file.
 
-       Targets exactly what the shipped library targets, and the runner in
-       main.rs loops over whatever is declared here. Keeping the two in step is
-       the rule worth holding: the library briefly claimed net8.0;net10.0 while
-       every gate ran net10.0 alone, so one TFM was compiled and never once
-       executed. If a TFM is ever added back, add it in both files and the
-       runner picks it up with no further change.
+       Targets exactly what the shipped library targets: build-libraries
+       fails when the two sets differ, and runs the suites once per TFM.
 
        Compiles the library sources directly rather than referencing the built
        assembly, matching how the JSON-RPC server's csproj does it: same files,

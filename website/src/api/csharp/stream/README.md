@@ -32,7 +32,7 @@ using TALib;
 var core = Core.Default;
 
 // Seed with warm-up history (>= SmaLookback(period) + 1 bars).
-double[] history = /* ...your closing prices... */;
+double[] history = [ /* ...your closing prices... */ ];
 Core.SmaStream s = core.SmaOpen(history, 30);  // Value starts at the last history bar
 
 // Each time a bar closes:
@@ -79,7 +79,7 @@ These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN
 | `core.<Name>OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar |
 
 ```csharp
-double[] history = /* ...your closing prices... */;
+double[] history = [ /* ...your closing prices... */ ];
 var outReal = new double[history.Length];
 
 Core.SmaStream s = core.SmaOpenAndFill(history, 30, outReal);
@@ -142,6 +142,7 @@ Insufficient history is knowable in advance, so it need not be exceptional in yo
 The catalogue flags them, so you do not have to hardcode a list:
 
 ```csharp
+using TALib;
 using TALib.Metadata;
 
 foreach (var f in Core.Functions)

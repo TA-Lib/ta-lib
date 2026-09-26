@@ -1392,7 +1392,7 @@ fn build_libraries(backend_filter: Option<&str>) {
             }
             "csharp" => {
                 built += 1;
-                if !build_csharp_library(&root) {
+                if !build_csharp_library(&root, &bin_dir) {
                     failures += 1;
                 }
             }
@@ -2160,14 +2160,30 @@ fn collect_java_sources(
 /// so this step exists for what the server build cannot prove: the shipped
 /// csproj itself and its doc-comment gate — `GenerateDocumentationFile` +
 /// `TreatWarningsAsErrors` makes CS1591 an error, the C# analog of the Java
-/// `-Xdoclint` step. Then runs the hand-written suites. Returns `true` on
-/// success.
-fn build_csharp_library(root: &Path) -> bool {
+/// `-Xdoclint` step. Then compiles the doc examples against the built DLL and
+/// runs the hand-written suites. Returns `true` on success.
+fn build_csharp_library(root: &Path, bin_dir: &Path) -> bool {
     let lib_dir = root.join("ta_codegen/output/csharp/library");
     if !lib_dir.exists() {
         println!("  Building C# library... FAILED (no {})", lib_dir.display());
         return false;
     }
+
+    // The suites run once per test TFM, so a TFM only the library declares is
+    // packed and never executed.
+    let lib_tfms = csharp_tfms(&lib_dir.join("TALib.csproj"));
+    let test_tfms = csharp_tfms(&lib_dir.join("test/TALib.Test.csproj"));
+    let as_set = |v: &[String]| v.iter().cloned().collect::<std::collections::BTreeSet<_>>();
+    if lib_tfms.is_empty() || as_set(&lib_tfms) != as_set(&test_tfms) {
+        println!(
+            "  Checking C# target frameworks... FAILED (TALib.csproj declares [{}], \
+             test/TALib.Test.csproj [{}]; they must be the same set)",
+            lib_tfms.join(";"),
+            test_tfms.join(";")
+        );
+        return false;
+    }
+
     print!("  Building C# library... ");
     match std::process::Command::new("dotnet")
         .args(["build", "-c", "Release", "--nologo", "-v", "quiet"])
@@ -2184,17 +2200,263 @@ fn build_csharp_library(root: &Path) -> bool {
             return false;
         }
     }
-    run_csharp_tests(&lib_dir)
+    if !check_csharp_doc_examples(root, &lib_dir, &lib_tfms, bin_dir) {
+        return false;
+    }
+    run_csharp_tests(&lib_dir, &test_tfms)
+}
+
+/// Compile the C# examples a reader copies: `/// <code>` blocks in the shipped
+/// sources, and the `csharp` fences and `<pre>` programs of the package README
+/// and the website. Compiled against the built `TALib.dll`, not its sources, so
+/// an example calling a member that is not public fails here.
+///
+/// A snippet may use `core`, `close`, `outReal`, `history`, `newClose` and
+/// `formingClose` without declaring them; anything else it needs, it declares.
+/// One with no `using` gets `TALib` and `TALib.Metadata`; one with any gets
+/// only its own plus the implicit usings of a new project, so it compiles as
+/// pasted there.
+fn check_csharp_doc_examples(
+    root: &Path,
+    lib_dir: &Path,
+    tfms: &[String],
+    bin_dir: &Path,
+) -> bool {
+    let mut sources: Vec<std::path::PathBuf> = Vec::new();
+    collect_files(lib_dir, "cs", &["test", "bin", "obj"], &mut sources);
+    // Each extractor, and each C# page, must yield something, or it has
+    // stopped matching.
+    let must_yield: Vec<std::path::PathBuf> = vec![
+        lib_dir.join("README.md"),
+        root.join("website/src/api/csharp/README.md"),
+        root.join("website/src/api/csharp/stream/README.md"),
+    ];
+    let mut pages: Vec<std::path::PathBuf> = must_yield.clone();
+    collect_files(&root.join("website/src"), "md", &["node_modules", ".vuepress"], &mut pages);
+    sources.sort();
+    pages.sort();
+    pages.dedup();
+
+    let mut snippets: Vec<(String, String)> = Vec::new();
+    let mut found = [0usize; 3];
+    let rel = |p: &Path| p.strip_prefix(root).unwrap_or(p).display().to_string();
+    let read = |p: &Path| {
+        let text = std::fs::read_to_string(p);
+        if text.is_err() {
+            println!("  Checking C# doc examples... FAILED (cannot read {})", rel(p));
+        }
+        text.ok()
+    };
+    for path in &sources {
+        let Some(text) = read(path) else {
+            return false;
+        };
+        for (i, body) in extract_csharp_xml_code_blocks(&text).into_iter().enumerate() {
+            found[0] += 1;
+            snippets.push((format!("{}#{i}", rel(path)), body));
+        }
+    }
+    for path in &pages {
+        let Some(text) = read(path) else {
+            return false;
+        };
+        let (fences, pres) = extract_csharp_md_blocks(&text);
+        if must_yield.contains(path) && fences.is_empty() && pres.is_empty() {
+            println!("  Checking C# doc examples... FAILED (no example found in {})", rel(path));
+            return false;
+        }
+        found[1] += fences.len();
+        found[2] += pres.len();
+        for (i, body) in fences.into_iter().chain(pres).enumerate() {
+            snippets.push((format!("{}#{i}", rel(path)), body));
+        }
+    }
+
+    print!("  Checking C# doc examples ({})... ", snippets.len());
+    if found.contains(&0) {
+        println!(
+            "FAILED (found {} /// <code>, {} ```csharp and {} <pre> examples; \
+             an extractor is out of step)",
+            found[0], found[1], found[2]
+        );
+        return false;
+    }
+
+    for tfm in tfms {
+        let dll = lib_dir.join(format!("bin/Release/{tfm}/TALib.dll"));
+        let dir = bin_dir.join("ta_codegen_csharp_docex").join(tfm);
+        let _ = std::fs::remove_dir_all(&dir);
+        if std::fs::create_dir_all(&dir).is_err() {
+            println!("FAILED (cannot create {})", dir.display());
+            return false;
+        }
+        let csproj = format!(
+            "<Project Sdk=\"Microsoft.NET.Sdk\">\n\
+             \x20 <PropertyGroup>\n\
+             \x20   <TargetFramework>{tfm}</TargetFramework>\n\
+             \x20   <ImplicitUsings>enable</ImplicitUsings>\n\
+             \x20   <Nullable>enable</Nullable>\n\
+             \x20 </PropertyGroup>\n\
+             \x20 <ItemGroup>\n\
+             \x20   <Reference Include=\"{}\" />\n\
+             \x20 </ItemGroup>\n\
+             </Project>\n",
+            dll.display()
+        );
+        if write_if_changed(dir.join("DocExamples.csproj"), csproj).is_err() {
+            println!("FAILED (cannot write into {})", dir.display());
+            return false;
+        }
+        for (n, (origin, body)) in snippets.iter().enumerate() {
+            let mut usings: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+            let mut code = String::new();
+            for line in body.lines() {
+                let t = line.trim();
+                let directive = t.starts_with("using ") && t.ends_with(';');
+                if directive && !t.contains('(') && !t.contains('=') {
+                    usings.insert(t.to_string());
+                } else {
+                    code.push_str("        ");
+                    code.push_str(line);
+                    code.push('\n');
+                }
+            }
+            if usings.is_empty() {
+                usings = ["using TALib;", "using TALib.Metadata;"].map(String::from).into();
+            }
+            // Fields, not locals, so a snippet that declares its own shadows them legally.
+            let src = format!(
+                "{}\n\
+                 // From {origin}\n\
+                 internal static class DocExample{n}\n\
+                 {{\n\
+                 \x20   static TALib.Core core = TALib.Core.Default;\n\
+                 \x20   static double[] close = new double[300];\n\
+                 \x20   static double[] outReal = new double[300];\n\
+                 \x20   static double[] history = new double[300];\n\
+                 \x20   static double newClose = 100, formingClose = 100;\n\
+                 \x20   static void Snippet()\n\
+                 \x20   {{\n\
+                 {code}\
+                 \x20   }}\n\
+                 }}\n",
+                usings.into_iter().collect::<Vec<_>>().join("\n")
+            );
+            if write_if_changed(dir.join(format!("DocExample{n}.cs")), src).is_err() {
+                println!("FAILED (cannot write into {})", dir.display());
+                return false;
+            }
+        }
+        match std::process::Command::new("dotnet")
+            .args(["build", "-c", "Release", "--nologo", "-v", "quiet"])
+            .current_dir(&dir)
+            .output()
+        {
+            Ok(o) if o.status.success() => {}
+            Ok(o) => {
+                println!("FAILED ({tfm})");
+                for (n, (origin, _)) in snippets.iter().enumerate() {
+                    println!("    DocExample{n} = {origin}");
+                }
+                print!("{}", String::from_utf8_lossy(&o.stdout));
+                return false;
+            }
+            Err(e) => {
+                println!("FAILED (dotnet not found: {e})");
+                return false;
+            }
+        }
+    }
+    println!("OK");
+    true
+}
+
+/// Files with extension `ext` under `dir`, skipping directories named in `skip`.
+fn collect_files(dir: &Path, ext: &str, skip: &[&str], out: &mut Vec<std::path::PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+        if path.is_dir() {
+            if !skip.contains(&name.as_str()) {
+                collect_files(&path, ext, skip, out);
+            }
+        } else if path.extension().is_some_and(|e| e == ext) {
+            out.push(path);
+        }
+    }
+}
+
+fn unescape_xml(s: &str) -> String {
+    s.replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&amp;", "&")
+}
+
+/// The bodies of every `/// <code>` ... `/// </code>` block in `text`.
+fn extract_csharp_xml_code_blocks(text: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut cur: Option<Vec<String>> = None;
+    for line in text.lines() {
+        let Some(doc) = line.trim_start().strip_prefix("///") else {
+            continue;
+        };
+        let doc = doc.strip_prefix(' ').unwrap_or(doc);
+        match (cur.as_mut(), doc.trim()) {
+            (None, "<code>") => cur = Some(Vec::new()),
+            (Some(_), "</code>") => out.push(cur.take().unwrap_or_default().join("\n")),
+            (Some(buf), _) => buf.push(unescape_xml(doc)),
+            (None, _) => {}
+        }
+    }
+    out
+}
+
+/// A Markdown page's ```` ```csharp ```` fences, and its `<pre>` blocks that
+/// are programs (open with `using`) rather than signatures, tags stripped.
+fn extract_csharp_md_blocks(text: &str) -> (Vec<String>, Vec<String>) {
+    let tag = regex::Regex::new("<[^>]*>").expect("static regex");
+    let (mut fences, mut pres) = (Vec::new(), Vec::new());
+    let mut fence: Option<Vec<&str>> = None;
+    let mut pre: Option<Vec<String>> = None;
+    for line in text.lines() {
+        let mut rest = line;
+        if fence.is_none() && pre.is_none() {
+            if line.trim() == "```csharp" {
+                fence = Some(Vec::new());
+                continue;
+            }
+            let Some((_, after)) = line.split_once("<pre>") else {
+                continue;
+            };
+            pre = Some(Vec::new());
+            rest = after;
+        }
+        if let Some(buf) = fence.as_mut() {
+            if line.trim() == "```" {
+                fences.push(fence.take().unwrap_or_default().join("\n"));
+            } else {
+                buf.push(line);
+            }
+        } else if let Some(buf) = pre.as_mut() {
+            let (head, done) = rest.split_once("</pre>").map_or((rest, false), |(h, _)| (h, true));
+            buf.push(unescape_xml(&tag.replace_all(head, "")));
+            if done {
+                let body = pre.take().unwrap_or_default().join("\n");
+                if body.trim_start().starts_with("using ") {
+                    pres.push(body);
+                }
+            }
+        }
+    }
+    (fences, pres)
 }
 
 /// Run the hand-written C# suites, once per target framework.
-///
-/// The TFM list is read from the test csproj rather than hardcoded, and the
-/// loop runs every entry. Today that is just `net10.0`, so the loop looks like
-/// overhead — it is not. The library briefly declared `net8.0;net10.0` while
-/// every gate exercised net10.0 alone, which is precisely the failure this
-/// shape prevents: a TFM that is claimed but never run is a promise nobody
-/// checked. Add a TFM to both csprojs and it is executed here automatically.
 ///
 /// A missing RUNTIME for a declared TFM is reported as SKIPPED rather than
 /// failing the build: `dotnet build` only needs the reference assemblies, which
@@ -2205,17 +2467,10 @@ fn build_csharp_library(root: &Path) -> bool {
 /// Skipping them ALL is a failure, though. The tolerance above is "the others
 /// still ran"; with the library on a single TFM there are no others, so one
 /// skip would mean the suite reported success having executed nothing.
-fn run_csharp_tests(lib_dir: &Path) -> bool {
+fn run_csharp_tests(lib_dir: &Path, tfms: &[String]) -> bool {
     let test_dir = lib_dir.join("test");
     if !test_dir.exists() {
         println!("  Running C# tests... FAILED (no {})", test_dir.display());
-        return false;
-    }
-
-    // Parsed from the test csproj so this cannot drift from what is built.
-    let tfms = csharp_test_tfms(&test_dir);
-    if tfms.is_empty() {
-        println!("  Running C# tests... FAILED (no TargetFrameworks in the test csproj)");
         return false;
     }
 
@@ -2237,7 +2492,7 @@ fn run_csharp_tests(lib_dir: &Path) -> bool {
     }
 
     let mut ran = 0;
-    for tfm in &tfms {
+    for tfm in tfms {
         print!("  Running C# tests ({tfm})... ");
         let out = std::process::Command::new("dotnet")
             .args(["run", "-c", "Release", "--no-build", "-f", tfm])
@@ -2285,12 +2540,13 @@ fn run_csharp_tests(lib_dir: &Path) -> bool {
     true
 }
 
-/// The `<TargetFrameworks>` (or singular `<TargetFramework>`) of the C# test
-/// project, in declaration order.
-fn csharp_test_tfms(test_dir: &Path) -> Vec<String> {
-    let Ok(text) = std::fs::read_to_string(test_dir.join("TALib.Test.csproj")) else {
+/// The `<TargetFrameworks>` (or singular `<TargetFramework>`) of a csproj, in
+/// declaration order, ignoring XML comments.
+fn csharp_tfms(csproj: &Path) -> Vec<String> {
+    let Ok(text) = std::fs::read_to_string(csproj) else {
         return Vec::new();
     };
+    let text = regex::Regex::new("(?s)<!--.*?-->").expect("static regex").replace_all(&text, "");
     for (open, close) in [
         ("<TargetFrameworks>", "</TargetFrameworks>"),
         ("<TargetFramework>", "</TargetFramework>"),

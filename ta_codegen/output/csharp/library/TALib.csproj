@@ -12,8 +12,8 @@
        the one thing this port must not do.
 
        The API floor is net8.0 (FrozenDictionary). Adding that TFM means
-       adding it to test/TALib.Test.csproj and a .NET 8 runtime to every CI job
-       that runs the suites; a TFM no suite executes ships unchecked.
+       adding a .NET 8 runtime to every CI job that runs the suites: a TFM with
+       no runtime is reported SKIPPED and the job still passes.
 
        TreatWarningsAsErrors + GenerateDocumentationFile makes CS1591 (missing
        XML doc on a public member) an error — the C# analog of the Java

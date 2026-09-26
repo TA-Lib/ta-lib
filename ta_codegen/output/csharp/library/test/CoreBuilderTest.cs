@@ -46,7 +46,11 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
 
 namespace TALib.Test;
 
@@ -410,6 +414,80 @@ public static class CoreBuilderTest
             "overriding a setting never mutates the shared defaults");
     }
 
+    /// <summary>Necessary for the thread-safety promise, not sufficient: a
+    /// <c>readonly</c> array field can still be written through.</summary>
+    private static void CoreIsSealedWithReadonlyFields()
+    {
+        Check(typeof(Core).IsSealed, "Core is sealed");
+        Check(typeof(CoreBuilder).IsSealed, "CoreBuilder is sealed");
+
+        FieldInfo[] fields = typeof(Core).GetFields(
+            BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        string[] writable = fields.Where(f => !f.IsLiteral && !f.IsInitOnly).Select(f => f.Name).ToArray();
+        Check(writable.Length == 0, $"every Core field is readonly (writable: [{string.Join(",", writable)}])");
+        Check(fields.Count(f => !f.IsStatic) >= 2, "the field walk sees Core's instance fields");
+    }
+
+    /// <summary>One Core shared by many threads, with no synchronization,
+    /// produces the single-threaded values bit for bit.</summary>
+    private static void SharedAcrossThreads()
+    {
+        var input = new double[500];
+        for (int i = 0; i < input.Length; i++)
+        {
+            input[i] = 100.0 + 10.0 * Math.Sin(i / 7.0) + 3.0 * Math.Cos(i / 3.0);
+        }
+        Core shared = Core.Builder().UnstablePeriod(FuncUnstId.RSI, 4).Build();
+        var reference = new double[input.Length];
+        OutRange refRange = shared.Rsi(0, input.Length - 1, input, 14, reference);
+
+        const int threads = 8;
+        var problems = new ConcurrentQueue<string>();
+        using var start = new ManualResetEventSlim(false);
+        var workers = new Thread[threads];
+        for (int t = 0; t < threads; t++)
+        {
+            workers[t] = new Thread(() =>
+            {
+                try
+                {
+                    start.Wait();
+                    for (int rep = 0; rep < 50; rep++)
+                    {
+                        var output = new double[input.Length];
+                        OutRange r = shared.Rsi(0, input.Length - 1, input, 14, output);
+                        if (r != refRange)
+                        {
+                            problems.Enqueue($"range diverged: {r} != {refRange}");
+                            return;
+                        }
+                        for (int i = 0; i < r.Count; i++)
+                        {
+                            if (BitConverter.DoubleToInt64Bits(output[i]) != BitConverter.DoubleToInt64Bits(reference[i]))
+                            {
+                                problems.Enqueue($"value diverged at {i}");
+                                return;
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    problems.Enqueue(e.ToString());
+                }
+            });
+            workers[t].Start();
+        }
+        start.Set();
+        foreach (Thread w in workers)
+        {
+            w.Join();
+        }
+        Check(!refRange.IsEmpty && refRange.BegIdx == new Core().RsiLookback(14) + 4,
+            "the threaded check computed something, on the tuned Core");
+        Check(problems.IsEmpty, $"{threads} threads sharing one Core agree bitwise [{string.Join("; ", problems)}]");
+    }
+
     /// <summary>Runs every check in this suite.</summary>
     /// <returns>0 when they all pass, 1 otherwise.</returns>
     public static int Run()
@@ -433,6 +511,8 @@ public static class CoreBuilderTest
         ARejectedCandleSettingWritesNothing();
         RestoreCandleDefaultUndoesAnOverride();
         BuiltCoreDoesNotAliasTheBuildersCandles();
+        CoreIsSealedWithReadonlyFields();
+        SharedAcrossThreads();
 
         if (_failures == 0)
         {

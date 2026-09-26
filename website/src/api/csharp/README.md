@@ -97,7 +97,7 @@ For example, here is how to calculate a 30-day simple moving average (SMA) of da
 
 var core = Core.Default;
 
-double[] close = /* ...your closing prices... */;
+double[] close = [ /* ...your closing prices... */ ];
 var outReal = new double[close.Length];
 
 OutRange r = core.Sma(
@@ -162,6 +162,7 @@ A batch call may allocate managed scratch, sized by a period (MFI, ULTOSC) or, f
 `TALib.Metadata.FunctionCatalog` describes every function at run time and calls it without naming it at compile time — the C# equivalent of C's [abstraction layer](/api/#abstract). It exists because a span cannot be boxed: the API cannot be invoked through `MethodInfo.Invoke`, so calling a function chosen at run time needs a typed path instead of reflection — which is also faster.
 
 ```csharp
+using TALib;
 using TALib.Metadata;
 
 foreach (var f in Core.Functions.Where(f => f.Flags.HasFlag(FuncFlags.Candlestick)))

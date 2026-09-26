@@ -102,7 +102,8 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, dir: &Path)
     println!("  C# phantom-I/O binder -> {} ({} functions)", test_dir.display(), rows.len());
 }
 
-/// The phantom-I/O probe's own binder: one `<N>_Impl` call site per function.
+/// The phantom-I/O probe's own binder: one `<N>_Impl` call site per function and
+/// input width, plus each streaming function's public opener.
 ///
 /// **Why the probe needs one at all.** Its subject is what a *body* touches, so
 /// it must reach the numerics tier — and it must do so without borrowing the
@@ -135,12 +136,13 @@ using TALib.Metadata;
 namespace TALib.Test;
 
 /// <summary>
-/// <c>NoPhantomIoTest</c>'s own binder: one call site per function, each naming
-/// <c>NAME_Impl</c> — the transcribed numerics and nothing above them.
+/// <c>NoPhantomIoTest</c>'s own binder: one call site per function and input
+/// width, each naming <c>NAME_Impl</c> (the transcribed numerics and nothing above
+/// them), and one typed call of each streaming function's <c>Open</c>.
 /// </summary>
 /// <remarks>
-/// <para>The probe's subject is what a <i>body</i> touches, so it names the
-/// body — and it brings its own call site rather than borrowing
+/// <para>The phantom probe's subject is what a <i>body</i> touches, so its batch
+/// call sites name the body, and it brings its own call site rather than borrowing
 /// <see cref="ParamHolder.TryCall"/>, whose thunks call the public entry
 /// point like C's frames and Java's Dispatch. Sharing one would make a test's
 /// reach decide which tier the shipped metadata API calls (issue #265).</para>
@@ -172,11 +174,11 @@ internal static class NoPhantomIoBinder
     /// calling, and an unbound slot faulting is a fixture bug the sweeps should
     /// see rather than a code they should read.</para></remarks>
     internal static RetCode Invoke(string name, Core core, ParamHolder call,
-                                   int startIdx, int endIdx, out OutRange range)
+                                   int startIdx, int endIdx, bool single, out OutRange range)
     {
         try
         {
-            CallOutcome outcome = Thunks[name](core, call, startIdx, endIdx);
+            CallOutcome outcome = (single ? FloatThunks : Thunks)[name](core, call, startIdx, endIdx);
             range = new OutRange(outcome.BegIdx, outcome.Count);
             return outcome.Code;
         }
@@ -187,33 +189,79 @@ internal static class NoPhantomIoBinder
         }
     }
 
-    /// <summary>One thunk per catalogued function, by name.</summary>
-    internal static readonly Dictionary<string, Thunk> Thunks = new(StringComparer.Ordinal)
+    /// <summary>A copy of <paramref name="a"/> at <c>float</c> width and the same length.</summary>
+    private static float[] Narrow(double[] a)
     {
+        var f = new float[a.Length];
+        for (int i = 0; i < a.Length; i++)
+        {
+            f[i] = (float)a[i];
+        }
+
+        return f;
+    }
+
+    /// <summary>Opens one function's stream over the bound inputs and parameters.</summary>
+    internal delegate object Opener(Core core, ParamHolder c);
+
 "#,
     );
 
-    for r in rows {
-        let def = by_name[r.name.as_str()];
-        let mut args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
-        args.extend(input_arg_exprs(r));
-        args.extend(opt_arg_exprs(def));
-        args.push("out int b".into());
-        args.push("out int n".into());
-        for (k, out) in r.outputs.iter().enumerate() {
-            args.push(match out.kind {
-                OutputKind::Real => format!("c.RealOut({k})"),
-                OutputKind::Integer => format!("c.IntOut({k})"),
-            });
+    for (table, single, doc) in [
+        ("Thunks", false, "One thunk per catalogued function, by name."),
+        (
+            "FloatThunks",
+            true,
+            "The same call sites on the <c>float</c> overload, a separately transcribed body.",
+        ),
+    ] {
+        let _ = writeln!(s, "    /// <summary>{doc}</summary>");
+        let _ = writeln!(
+            s,
+            "    internal static readonly Dictionary<string, Thunk> {table} = new(StringComparer.Ordinal)\n    {{"
+        );
+        for r in rows {
+            let def = by_name[r.name.as_str()];
+            let mut args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
+            args.extend(input_arg_exprs(r, single));
+            args.extend(opt_arg_exprs(def));
+            args.push("out int b".into());
+            args.push("out int n".into());
+            for (k, out) in r.outputs.iter().enumerate() {
+                args.push(match out.kind {
+                    OutputKind::Real => format!("c.RealOut({k})"),
+                    OutputKind::Integer => format!("c.IntOut({k})"),
+                });
+            }
+            let _ = writeln!(s, "        [\"{}\"] = static (core, c, startIdx, endIdx) =>", r.name);
+            s.push_str("        {\n");
+            let _ = writeln!(s, "            RetCode rc = core.{}Impl(", super::common::pascal_words(&r.name));
+            let _ = writeln!(s, "                {});", args.join(", "));
+            s.push_str("            return new CallOutcome(rc, b, n);\n");
+            s.push_str("        },\n");
         }
-        let _ = writeln!(s, "        [\"{}\"] = static (core, c, startIdx, endIdx) =>", r.name);
-        s.push_str("        {\n");
-        let _ = writeln!(s, "            RetCode rc = core.{}Impl(", super::common::pascal_words(&r.name));
-        let _ = writeln!(s, "                {});", args.join(", "));
-        s.push_str("            return new CallOutcome(rc, b, n);\n");
-        s.push_str("        },\n");
+        s.push_str("    };\n\n");
     }
 
+    s.push_str("    /// <summary>Each streaming function's public opener, by name.</summary>\n");
+    s.push_str(
+        "    internal static readonly Dictionary<string, Opener> Openers = new(StringComparer.Ordinal)\n    {\n",
+    );
+    for r in rows {
+        let def = by_name[r.name.as_str()];
+        if !def.streaming {
+            continue;
+        }
+        let mut args = input_arg_exprs(r, false);
+        args.extend(opt_arg_exprs(def));
+        let _ = writeln!(
+            s,
+            "        [\"{}\"] = static (core, c) => core.{}Open({}),",
+            r.name,
+            super::common::pascal_words(&r.name),
+            args.join(", ")
+        );
+    }
     s.push_str("    };\n}\n");
     s
 }
@@ -825,7 +873,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     );
 
     let mut call_args: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
-    call_args.extend(input_arg_exprs(r));
+    call_args.extend(input_arg_exprs(r, false));
     call_args.extend(opt_args);
     for (k, out) in r.outputs.iter().enumerate() {
         call_args.push(match out.kind {
@@ -857,16 +905,17 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
 /// The argument expressions for a function's required inputs. A price bundle is
 /// unfolded here — by *naming* each component, never by indexing — using the
 /// signature order the row carries.
-fn input_arg_exprs(r: &FuncRow) -> Vec<String> {
+fn input_arg_exprs(r: &FuncRow, single: bool) -> Vec<String> {
+    let real = |e: String| if single { format!("Narrow({e})") } else { e };
     let mut args = Vec::new();
     for (slot, inp) in r.inputs.iter().enumerate() {
         match inp.kind {
             InputKind::Price => {
                 for c in &inp.signature_components {
-                    args.push(format!("c.Price({slot}, PriceComponents.{})", component_member(*c)));
+                    args.push(real(format!("c.Price({slot}, PriceComponents.{})", component_member(*c))));
                 }
             }
-            InputKind::Real => args.push(format!("c.Series({slot})")),
+            InputKind::Real => args.push(real(format!("c.Series({slot})"))),
             InputKind::Integer => args.push(format!("c.IntSeries({slot})")),
         }
     }
