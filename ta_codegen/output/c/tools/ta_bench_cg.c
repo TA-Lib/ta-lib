@@ -180,6 +180,7 @@
 #include "ta_NATR.c"
 #include "ta_NVI.c"
 #include "ta_OBV.c"
+#include "ta_PERCENTB.c"
 #include "ta_PERCENTILE.c"
 #include "ta_PERCENTRANK.c"
 #include "ta_PLUS_DI.c"
@@ -2840,6 +2841,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("OBV %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "PERCENTB") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_PERCENTB(0, g_nPoints - 1, g_close, 20, 2.000000000000000, 2.000000000000000, 0, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("PERCENTB %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "PERCENTILE") ) {

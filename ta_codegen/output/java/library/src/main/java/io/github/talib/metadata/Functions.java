@@ -275,6 +275,7 @@ public final class Functions {
       put(m, f_NATR());
       put(m, f_NVI());
       put(m, f_OBV());
+      put(m, f_PERCENTB());
       put(m, f_PERCENTILE());
       put(m, f_PERCENTRANK());
       put(m, f_PLUS_DI());
@@ -2842,6 +2843,39 @@ public final class Functions {
             new InputInfo(InputType.PRICE, "inPriceV", 0x00000010)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_PERCENTB() {
+      return new FuncInfo(
+         "PERCENTB", "Volatility Indicators", "Bollinger Bands %B", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInNbDevUp", 0x00000000,
+               "Deviations up", "Deviation multiplier for upper band", 2.0,
+               -3e37, 3e37, 2, -2.0, 2.0, 0.2,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInNbDevDn", 0x00000000,
+               "Deviations down", "Deviation multiplier for lower band", 2.0,
+               -3e37, 3e37, 2, -2.0, 2.0, 0.2,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInMAType", 0x00000000,
+               "MA Type", "Type of Moving Average", 0.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA")
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

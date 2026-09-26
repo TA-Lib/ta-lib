@@ -13699,6 +13699,94 @@ fn legs_OBV(r: &mut Report) {
     r.legs_done("OBV", 2);
 }
 
+const V_PERCENTB: &[(&str, i32, f64, f64, MAType)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("minimums", 2i32, -3e37f64, -3e37f64, MAType::DEFAULT),
+    ("optInMAType=SMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::SMA),
+    ("optInMAType=SMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::SMA),
+    ("optInMAType=EMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::EMA),
+    ("optInMAType=EMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::EMA),
+    ("optInMAType=WMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::WMA),
+    ("optInMAType=WMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::WMA),
+    ("optInMAType=DEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEMA),
+    ("optInMAType=DEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEMA),
+    ("optInMAType=TEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TEMA),
+    ("optInMAType=TEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TEMA),
+    ("optInMAType=TRIMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TRIMA),
+    ("optInMAType=TRIMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::TRIMA),
+    ("optInMAType=KAMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::KAMA),
+    ("optInMAType=KAMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::KAMA),
+    ("optInMAType=MAMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::MAMA),
+    ("optInMAType=MAMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::MAMA),
+    ("optInMAType=T3", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::T3),
+    ("optInMAType=T3, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::T3),
+    ("optInMAType=HMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::HMA),
+    ("optInMAType=HMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::HMA),
+    ("optInMAType=DISABLED", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DISABLED),
+    ("optInMAType=DISABLED, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DISABLED),
+    ("optInMAType=DEFAULT", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("optInMAType=DEFAULT, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::DEFAULT),
+    ("optInMAType=ZLEMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
+    ("optInMAType=ZLEMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::ZLEMA),
+    ("optInMAType=RMA", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+    ("optInMAType=RMA, periods doubled", 40i32, Core::REAL_DEFAULT, Core::REAL_DEFAULT, MAType::RMA),
+];
+
+fn sub_PERCENTB(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) in V_PERCENTB {
+        let Ok(lb) = core.percentb_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) else { continue; };
+        r.control("PERCENTB", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.percentb_impl(0, lb, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("PERCENTB", label); continue; }
+        r.quiet("PERCENTB", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.percentb_impl(0, lb - 1, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_PERCENTB(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInNbDevUp = Core::REAL_DEFAULT;
+    let optInNbDevDn = Core::REAL_DEFAULT;
+    let optInMAType = MAType::DEFAULT;
+    let Ok(lb) = core.percentb_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) else { r.no_legs("PERCENTB"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PERCENTB", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.percentb_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("PERCENTB", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.percentb_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("PERCENTB", 1);
+}
+
 const V_PERCENTILE: &[(&str, i32, f64)] = &[
     ("defaults", i32::MIN, Core::REAL_DEFAULT),
     ("minimums", 2i32, 0.0f64),
@@ -17659,6 +17747,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("NATR", sub_NATR, legs_NATR),
     ("NVI", sub_NVI, legs_NVI),
     ("OBV", sub_OBV, legs_OBV),
+    ("PERCENTB", sub_PERCENTB, legs_PERCENTB),
     ("PERCENTILE", sub_PERCENTILE, legs_PERCENTILE),
     ("PERCENTRANK", sub_PERCENTRANK, legs_PERCENTRANK),
     ("PLUS_DI", sub_PLUS_DI, legs_PLUS_DI),
@@ -17750,7 +17839,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 208, "probe count");
+    assert_eq!(PROBES.len(), 209, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

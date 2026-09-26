@@ -60,7 +60,7 @@
  *     2. Integer series, bitwise, against Num and Den formed in long long: a
  *        walk, and its first differences, which reach Den == 0 and Den < 0 on
  *        their own. Periods 2 to 100, then 1000, 10000 and 100000.
- *     3. Goldens from code TA-Lib did not write, and the exact value.
+ *     3. Goldens: the exact value, from code that never runs TA-Lib.
  *     4. Edge windows through the batch call, TA_CG_OpenAndFill and a stream's
  *        Peek and Update, bitwise across the three.
  *     5. CG(-X) == CG(X).
@@ -130,8 +130,6 @@
 /* Leg 4's decimal flats: their partial sums round, so -(n+1)/2 is not exact. */
 #define CG_FLAT_REL 1e-12
 
-#define CG_U ( DBL_EPSILON / 2.0 )
-
 enum { CG_CLOSE, CG_MED, CG_NEGCLOSE, CG_MOM1, CG_TICK100, CG_STEPFLAT, CG_SPIKE, CG_LONG,
        CG_FLAT7, CG_FLAT2M60, CG_FLAT01, CG_FLAT12345, CG_ZERO, CG_NEGZERO, CG_ALT, CG_EPS,
        CG_E112, CG_IMPNEW2, CG_IMPOLD2, CG_IMPNEW10, CG_IMPOLD10, CG_ZEROSUM, CG_NEGSUM,
@@ -175,7 +173,12 @@ static const double cgExactDen[2]  = { 1125899906842624.0, -1125899906842623.0 }
  *   pine   : Pine ta.cog on PyneCore 6.8.14: O(1) running sums, never
  *            re-anchored, and no period above 5000.
  *
- * NAN: the arm does not compute that bar, or sits outside the gate there.
+ * pandas, ts and pine are provenance, not compared: the capture froze a value
+ * only within its gate of exact, ts as ts - (n+1) in double, and pandasAbs,
+ * tsAbs and pineAbs in cgGoldens are each arm's largest distance over the
+ * group from the unrounded ratio, printed to 2 significant digits (not a
+ * bound). NAN: the arm does not compute that bar, or sits outside the gate
+ * there.
  *
  * TOLERANCE, exact: |got - exact| <= tol, the row's last column:
  * 1e-12*|exact| + 3nu(W + |exact|S)/|Den| over the window, rounded up, with
@@ -183,12 +186,7 @@ static const double cgExactDen[2]  = { 1125899906842624.0, -1125899906842623.0 }
  * recursive summation in any order plus the divide; on a same-sign window it
  * is 6nu relative. tol == 0 compares with ==: every partial sum of the window
  * is exact, so only the divide rounds, and an exact 0 has no pinned sign.
- *
- * TOLERANCE, arms: |got - arm| <= tol + armAbs + u|exact|, ts compared as
- * ts - (n+1) in double. armAbs is the arm's largest distance over the group
- * from the unrounded ratio, so the exact column's own rounding is the third
- * term. Worst measured: TA_CG 0.02 of tol, an arm 0.05 of its gate
- * (pine, close-n2).
+ * Worst measured: 0.02 of tol.
  */
 typedef struct { int bar; double exact, pandas, ts, pine, tol; } CgRow;
 
@@ -960,7 +958,6 @@ static int g_cgIntCmp;
 static int g_cgIntDen0;
 static int g_cgIntDenNeg;
 static int g_cgGoldenCmp;
-static int g_cgArmCmp;
 static int g_cgEdgeCmp;
 static int g_cgNegCmp;
 static int g_cgAliasCmp;
@@ -1011,7 +1008,6 @@ static ErrorNumber test_cg_all( void )
       { "Den == 0",         702, &g_cgIntDen0    },
       { "Den < 0",       144605, &g_cgIntDenNeg  },
       { "golden exact",     418, &g_cgGoldenCmp  },
-      { "golden arms",     1105, &g_cgArmCmp     },
       { "edges",             69, &g_cgEdgeCmp    },
       { "negation",      312048, &g_cgNegCmp     },
       { "in-place",      312048, &g_cgAliasCmp   },
@@ -1022,7 +1018,7 @@ static ErrorNumber test_cg_all( void )
    ErrorNumber err;
    unsigned int k;
 
-   g_cgDiffCmp = g_cgIntCmp = g_cgIntDen0 = g_cgIntDenNeg = g_cgGoldenCmp = g_cgArmCmp = 0;
+   g_cgDiffCmp = g_cgIntCmp = g_cgIntDen0 = g_cgIntDenNeg = g_cgGoldenCmp = 0;
    g_cgEdgeCmp = g_cgNegCmp = g_cgAliasCmp = g_cgLocalCmp = g_cgNanCmp = g_cgParamCmp = 0;
 
    err = test_cg_differential();
@@ -1338,13 +1334,11 @@ static ErrorNumber test_cg_integer( void )
 /* (3) */
 static ErrorNumber test_cg_goldens( void )
 {
-   static const char *armName[3] = { "pandas-ta-classic 0.6.52", "trading-signals 8.3.0",
-                                     "PyneCore 6.8.14 ta.cog" };
    static double out[CG_CAP];
    TA_RetCode retCode;
    TA_Integer beg, nb;
    ErrorNumber err;
-   int k, r, a;
+   int k, r;
 
    for( k = 0; k < NB_CG_GOLDENS; k++ )
    {
@@ -1363,8 +1357,6 @@ static ErrorNumber test_cg_goldens( void )
       for( r = 0; r < g->nbRows; r++ )
       {
          const CgRow *row = &g->rows[r];
-         const double arm[3]    = { row->pandas, row->ts - (double)( g->n + 1 ), row->pine };
-         const double armAbs[3] = { g->pandasAbs, g->tsAbs, g->pineAbs };
          double got;
 
          if( row->bar < beg || row->bar - beg >= nb )
@@ -1384,22 +1376,6 @@ static ErrorNumber test_cg_goldens( void )
                     g->tag, row->bar, got, row->exact, fabs( got - row->exact ), row->tol,
                     row->tol == 0.0 ? ", exact sums: only the divide rounds" : "" );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-         }
-
-         for( a = 0; a < 3; a++ )
-         {
-            const double bound = row->tol + armAbs[a] + CG_U * fabs( row->exact );
-
-            if( isnan( arm[a] ) )
-               continue;
-            g_cgArmCmp++;
-            if( !( fabs( got - arm[a] ) <= bound ) )
-            {
-               printf( "CG golden Fail [%s] at bar %d: got %.17g, %s gives %.17g%s "
-                       "(|diff| %.3g over %.3g)\n", g->tag, row->bar, got, armName[a],
-                       arm[a], a == 1 ? " after - (n+1)" : "", fabs( got - arm[a] ), bound );
-               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-            }
          }
       }
 

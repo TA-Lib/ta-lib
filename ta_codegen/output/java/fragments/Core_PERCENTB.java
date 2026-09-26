@@ -9,13 +9,13 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  092526 MF,CC  First version (issue #447).
+ *  092526 MF,CC  First version (issue #449).
  */
 
-/* Using bbw_ALT1 for TA_ALT={BATCH,JAVA} */
+/* Using percentb_ALT1 for TA_ALT={BATCH,JAVA} */
 
    /**
-    * Number of leading input bars {@link Core#bbw} consumes before it can
+    * Number of leading input bars {@link Core#percentb} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -33,7 +33,7 @@
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int bbwLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   public int percentbLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
@@ -56,28 +56,33 @@
       return bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) ;
 
    }
-   RetCode bbwImpl( int startIdx,
-                    int endIdx,
-                    double inReal[],
-                    int optInTimePeriod,
-                    double optInNbDevUp,
-                    double optInNbDevDn,
-                    MAType optInMAType,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode percentbImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         double optInNbDevUp,
+                         double optInNbDevDn,
+                         MAType optInMAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       RetCode retCode;
       int i = 0;
       MInteger maBegIdx = new MInteger();
       MInteger maNbElement = new MInteger();
-      int offset = 0;
+      MInteger xBegIdx = new MInteger();
+      MInteger xNbElement = new MInteger();
+      int offsetMA = 0;
+      int offsetX = 0;
       double middle = 0;
       double deviation = 0;
       double tempReal = 0;
       double upper = 0;
       double lower = 0;
-      double[] tempBuffer;
+      double den = 0;
+      double[] tempMA;
+      double[] tempX;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -105,6 +110,7 @@
       if( optInMAType == MAType.SMA ) {
          double[] _mid = new double[256];
          double[] _var = new double[256];
+         double[] _x = new double[256];
          double maTotal;
          double shift;
          double varTotal1;
@@ -118,7 +124,6 @@
          int _j;
          int _k;
          int _t;
-         int _zero;
          int _outIdx;
          int _tileEnd;
          int _trailingIdx;
@@ -158,8 +163,8 @@
                _tileEnd = endIdx;
             }
             _t = 0;
-            _zero = 0;
             do {
+               _x[_t] = inReal[_i];
                maTotal += inReal[_i];
                _tempReal = inReal[_i] - shift;
                varTotal1 += _tempReal;
@@ -169,9 +174,6 @@
                meanValue1 = varTotal1 * _invPeriod;
                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                _mid[_t] = maTotal / optInTimePeriod;
-               if( _mid[_t] == 0.0 ) {
-                  _zero = 1;
-               }
                maTotal -= inReal[_trailingIdx];
                _tempReal = inReal[_trailingIdx] - shift;
                varTotal1 -= _tempReal;
@@ -227,9 +229,11 @@
                for( _k = 0; _k < _t; _k += 1 ) {
                   middle = _mid[_k];
                   tempReal = Math.sqrt(_var[_k]) * optInNbDevUp;
-                  upper = middle + tempReal;
+                  upper = tempReal + middle;
                   lower = middle - tempReal;
-                  _var[_k] = (upper - lower) / middle;
+                  den = upper - lower;
+                  _var[_k] = (_x[_k] - lower) / den;
+                  _mid[_k] = den;
                }
             } else {
                for( _k = 0; _k < _t; _k += 1 ) {
@@ -237,14 +241,14 @@
                   deviation = Math.sqrt(_var[_k]);
                   upper = Math.fma(deviation, optInNbDevUp, middle);
                   lower = middle - deviation * optInNbDevDn;
-                  _var[_k] = (upper - lower) / middle;
+                  den = upper - lower;
+                  _var[_k] = (_x[_k] - lower) / den;
+                  _mid[_k] = den;
                }
             }
-            if( _zero != 0 ) {
-               for( _k = 0; _k < _t; _k += 1 ) {
-                  if( _mid[_k] == 0.0 ) {
-                     _var[_k] = 0.0;
-                  }
+            for( _k = 0; _k < _t; _k += 1 ) {
+               if( _mid[_k] == 0.0 ) {
+                  _var[_k] = 0.5;
                }
             }
             /* outReal may be inReal: a tile is written only after its last read. */
@@ -255,70 +259,88 @@
          outBegIdx.value = startIdx;
          return RetCode.SUCCESS ;
       }
-      if( bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
+      if( percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      OutRange _xr0 = ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer);
+      tempMA = new double[(int)((endIdx - startIdx + 1) * 1)];
+      tempX = new double[(int)((endIdx - startIdx + 1) * 1)];
+      OutRange _xr0 = ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
       maBegIdx.value = _xr0.begIdx();
       maNbElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = var(maBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outReal);
-      outBegIdx.value = _xr1.begIdx();
-      outNBElement.value = _xr1.count();
+      OutRange _xr1 = ma(maBegIdx.value, endIdx, inReal, 1, optInMAType, tempX);
+      xBegIdx.value = _xr1.begIdx();
+      xNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      offset = maNbElement.value - outNBElement.value;
-      if( offset != 0 ) {
-         System.arraycopy(tempBuffer, offset, tempBuffer, 0, outNBElement.value * 1);
+      OutRange _xr2 = var(maBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx.value = _xr2.begIdx();
+      outNBElement.value = _xr2.count();
+      retCode = RetCode.SUCCESS;
+      offsetMA = maNbElement.value - outNBElement.value;
+      if( offsetMA != 0 ) {
+         System.arraycopy(tempMA, offsetMA, tempMA, 0, outNBElement.value * 1);
+      }
+      offsetX = xNbElement.value - outNBElement.value;
+      if( offsetX != 0 ) {
+         System.arraycopy(tempX, offsetX, tempX, 0, outNBElement.value * 1);
       }
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            middle = tempBuffer[i];
+            middle = tempMA[i];
             tempReal = Math.sqrt(outReal[i]) * optInNbDevUp;
-            upper = middle + tempReal;
+            upper = tempReal + middle;
             lower = middle - tempReal;
-            outReal[i] = (upper - lower) / middle;
+            den = upper - lower;
+            outReal[i] = (tempX[i] - lower) / den;
+            tempMA[i] = den;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            middle = tempBuffer[i];
+            middle = tempMA[i];
             deviation = Math.sqrt(outReal[i]);
             upper = Math.fma(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
-            outReal[i] = (upper - lower) / middle;
+            den = upper - lower;
+            outReal[i] = (tempX[i] - lower) / den;
+            tempMA[i] = den;
          }
       }
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         if( tempBuffer[i] == 0.0 ) {
-            outReal[i] = 0.0;
+         if( tempMA[i] == 0.0 ) {
+            outReal[i] = 0.5;
          }
       }
       return RetCode.SUCCESS ;
    }
-   RetCode bbwImpl( int startIdx,
-                    int endIdx,
-                    float inReal[],
-                    int optInTimePeriod,
-                    double optInNbDevUp,
-                    double optInNbDevDn,
-                    MAType optInMAType,
-                    MInteger outBegIdx,
-                    MInteger outNBElement,
-                    double outReal[] )
+   RetCode percentbImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         double optInNbDevUp,
+                         double optInNbDevDn,
+                         MAType optInMAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       RetCode retCode;
       int i = 0;
       MInteger maBegIdx = new MInteger();
       MInteger maNbElement = new MInteger();
-      int offset = 0;
+      MInteger xBegIdx = new MInteger();
+      MInteger xNbElement = new MInteger();
+      int offsetMA = 0;
+      int offsetX = 0;
       double middle = 0;
       double deviation = 0;
       double tempReal = 0;
       double upper = 0;
       double lower = 0;
-      double[] tempBuffer;
+      double den = 0;
+      double[] tempMA;
+      double[] tempX;
       if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
          return RetCode.OUT_OF_RANGE_START_INDEX ;
       }
@@ -346,6 +368,7 @@
       if( optInMAType == MAType.SMA ) {
          double[] _mid = new double[256];
          double[] _var = new double[256];
+         double[] _x = new double[256];
          double maTotal;
          double shift;
          double varTotal1;
@@ -359,7 +382,6 @@
          int _j;
          int _k;
          int _t;
-         int _zero;
          int _outIdx;
          int _tileEnd;
          int _trailingIdx;
@@ -399,8 +421,8 @@
                _tileEnd = endIdx;
             }
             _t = 0;
-            _zero = 0;
             do {
+               _x[_t] = (double)inReal[_i];
                maTotal += (double)inReal[_i];
                _tempReal = (double)inReal[_i] - shift;
                varTotal1 += _tempReal;
@@ -410,9 +432,6 @@
                meanValue1 = varTotal1 * _invPeriod;
                variance = varTotal2 * _invPeriod - meanValue1 * meanValue1;
                _mid[_t] = maTotal / optInTimePeriod;
-               if( _mid[_t] == 0.0 ) {
-                  _zero = 1;
-               }
                maTotal -= (double)inReal[_trailingIdx];
                _tempReal = (double)inReal[_trailingIdx] - shift;
                varTotal1 -= _tempReal;
@@ -468,9 +487,11 @@
                for( _k = 0; _k < _t; _k += 1 ) {
                   middle = _mid[_k];
                   tempReal = Math.sqrt(_var[_k]) * optInNbDevUp;
-                  upper = middle + tempReal;
+                  upper = tempReal + middle;
                   lower = middle - tempReal;
-                  _var[_k] = (upper - lower) / middle;
+                  den = upper - lower;
+                  _var[_k] = (_x[_k] - lower) / den;
+                  _mid[_k] = den;
                }
             } else {
                for( _k = 0; _k < _t; _k += 1 ) {
@@ -478,14 +499,14 @@
                   deviation = Math.sqrt(_var[_k]);
                   upper = Math.fma(deviation, optInNbDevUp, middle);
                   lower = middle - deviation * optInNbDevDn;
-                  _var[_k] = (upper - lower) / middle;
+                  den = upper - lower;
+                  _var[_k] = (_x[_k] - lower) / den;
+                  _mid[_k] = den;
                }
             }
-            if( _zero != 0 ) {
-               for( _k = 0; _k < _t; _k += 1 ) {
-                  if( _mid[_k] == 0.0 ) {
-                     _var[_k] = 0.0;
-                  }
+            for( _k = 0; _k < _t; _k += 1 ) {
+               if( _mid[_k] == 0.0 ) {
+                  _var[_k] = 0.5;
                }
             }
             System.arraycopy(_var, 0, outReal, _outIdx, _t * 1);
@@ -495,68 +516,80 @@
          outBegIdx.value = startIdx;
          return RetCode.SUCCESS ;
       }
-      if( bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
+      if( percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.SUCCESS ;
       }
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      OutRange _xr0 = ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer);
+      tempMA = new double[(int)((endIdx - startIdx + 1) * 1)];
+      tempX = new double[(int)((endIdx - startIdx + 1) * 1)];
+      OutRange _xr0 = ma(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempMA);
       maBegIdx.value = _xr0.begIdx();
       maNbElement.value = _xr0.count();
       retCode = RetCode.SUCCESS;
-      OutRange _xr1 = var(maBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outReal);
-      outBegIdx.value = _xr1.begIdx();
-      outNBElement.value = _xr1.count();
+      OutRange _xr1 = ma(maBegIdx.value, endIdx, inReal, 1, optInMAType, tempX);
+      xBegIdx.value = _xr1.begIdx();
+      xNbElement.value = _xr1.count();
       retCode = RetCode.SUCCESS;
-      offset = maNbElement.value - outNBElement.value;
-      if( offset != 0 ) {
-         System.arraycopy(tempBuffer, offset, tempBuffer, 0, outNBElement.value * 1);
+      OutRange _xr2 = var(maBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx.value = _xr2.begIdx();
+      outNBElement.value = _xr2.count();
+      retCode = RetCode.SUCCESS;
+      offsetMA = maNbElement.value - outNBElement.value;
+      if( offsetMA != 0 ) {
+         System.arraycopy(tempMA, offsetMA, tempMA, 0, outNBElement.value * 1);
+      }
+      offsetX = xNbElement.value - outNBElement.value;
+      if( offsetX != 0 ) {
+         System.arraycopy(tempX, offsetX, tempX, 0, outNBElement.value * 1);
       }
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            middle = tempBuffer[i];
+            middle = tempMA[i];
             tempReal = Math.sqrt(outReal[i]) * optInNbDevUp;
-            upper = middle + tempReal;
+            upper = tempReal + middle;
             lower = middle - tempReal;
-            outReal[i] = (upper - lower) / middle;
+            den = upper - lower;
+            outReal[i] = (tempX[i] - lower) / den;
+            tempMA[i] = den;
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            middle = tempBuffer[i];
+            middle = tempMA[i];
             deviation = Math.sqrt(outReal[i]);
             upper = Math.fma(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
-            outReal[i] = (upper - lower) / middle;
+            den = upper - lower;
+            outReal[i] = (tempX[i] - lower) / den;
+            tempMA[i] = den;
          }
       }
       for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         if( tempBuffer[i] == 0.0 ) {
-            outReal[i] = 0.0;
+         if( tempMA[i] == 0.0 ) {
+            outReal[i] = 0.5;
          }
       }
       return RetCode.SUCCESS ;
    }
    /**
-    * Bollinger BandWidth: the distance between the upper and lower Bollinger
-    * Bands, normalised by the middle band. Low values mark contracting
-    * volatility, the setup John Bollinger calls the Squeeze; high values mark
-    * expanding volatility.
+    * Bollinger Bands %B: where the input sits relative to its Bollinger Bands,
+    * 0 at the lower band and 1 at the upper band. Values below 0 or above 1
+    * mean the input is outside the bands.
     * <p>Formula and more info at <a
-    * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
+    * href="https://ta-lib.org/functions/percentb">ta-lib.org/functions/percentb</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is four times the window's coefficient of variation: its standard deviation divided by its mean.</li>
-    * <li>The two deviation multipliers enter only through their sum.</li>
-    * <li>The result is a ratio; multiply by 100 to read it as a percentage of the middle band.</li>
+    * <li>An input on the middle band reads {@code optInNbDevDn / (optInNbDevUp + optInNbDevDn)}: 0.5 with equal multipliers.</li>
+    * <li>With a simple moving average and both multipliers equal to k, %B = 0.5 + z / (2k), where z is the z-score of the input in its window.</li>
+    * <li>The result is a ratio; multiply by 100 to read it as a percentage.</li>
     * <li>Any {@code optInMAType} other than SMA is a TA-Lib generalisation, as it is for BBANDS: the deviation stays the population standard deviation about the simple mean.</li>
-    * <li>Wherever the middle band is not 0, BBW is bit for bit {@code (upper - lower) / middle} computed from BBANDS' own outputs.</li>
+    * <li>PERCENTB is bit for bit {@code (inReal - lower) / (upper - lower)} computed from BBANDS' own outputs, and 0.5 wherever those two bands are equal.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#bbwLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#percentbLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -571,9 +604,10 @@
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
-    * @param outReal Width of the bands as a fraction of the middle band. Must
-    *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    * @param outReal Position of the input between the lower band (0) and the
+    *        upper band (1) Must hold at least
+    *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -589,48 +623,46 @@
     *        written, so a rejected call leaves every buffer untouched.
     *
     * @see Core#bbands
-    * @see Core#percentb
-    * @see Core#stddev
-    * @see Core#natr
+    * @see Core#bbw
+    * @see Core#stochf
     */
-   public OutRange bbw( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        double optInNbDevUp,
-                        double optInNbDevDn,
-                        MAType optInMAType,
-                        double outReal[] )
+   public OutRange percentb( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             double optInNbDevUp,
+                             double optInNbDevDn,
+                             MAType optInMAType,
+                             double outReal[] )
    {
-      requireIndexRange("BBW", startIdx, endIdx);
-      requireArgument("BBW", "optInMAType", optInMAType);
-      int guardStart = clampedStart("BBW", startIdx, bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      requireIndexRange("PERCENTB", startIdx, endIdx);
+      requireArgument("PERCENTB", "optInMAType", optInMAType);
+      int guardStart = clampedStart("PERCENTB", startIdx, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-      requireLength("BBW", "inReal", inReal, guardInLen);
-      requireLength("BBW", "outReal", outReal, guardOutLen);
+      requireLength("PERCENTB", "inReal", inReal, guardInLen);
+      requireLength("PERCENTB", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = bbwImpl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = percentbImpl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
-         throw failure("BBW", retCode);
+         throw failure("PERCENTB", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Bollinger BandWidth: the distance between the upper and lower Bollinger
-    * Bands, normalised by the middle band. Low values mark contracting
-    * volatility, the setup John Bollinger calls the Squeeze; high values mark
-    * expanding volatility.
+    * Bollinger Bands %B: where the input sits relative to its Bollinger Bands,
+    * 0 at the lower band and 1 at the upper band. Values below 0 or above 1
+    * mean the input is outside the bands.
     * <p>Formula and more info at <a
-    * href="https://ta-lib.org/functions/bbw">ta-lib.org/functions/bbw</a>.
+    * href="https://ta-lib.org/functions/percentb">ta-lib.org/functions/percentb</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>With Bollinger's settings (a simple moving average and two deviations on each side) BBW is four times the window's coefficient of variation: its standard deviation divided by its mean.</li>
-    * <li>The two deviation multipliers enter only through their sum.</li>
-    * <li>The result is a ratio; multiply by 100 to read it as a percentage of the middle band.</li>
+    * <li>An input on the middle band reads {@code optInNbDevDn / (optInNbDevUp + optInNbDevDn)}: 0.5 with equal multipliers.</li>
+    * <li>With a simple moving average and both multipliers equal to k, %B = 0.5 + z / (2k), where z is the z-score of the input in its window.</li>
+    * <li>The result is a ratio; multiply by 100 to read it as a percentage.</li>
     * <li>Any {@code optInMAType} other than SMA is a TA-Lib generalisation, as it is for BBANDS: the deviation stays the population standard deviation about the simple mean.</li>
-    * <li>Wherever the middle band is not 0, BBW is bit for bit {@code (upper - lower) / middle} computed from BBANDS' own outputs.</li>
+    * <li>PERCENTB is bit for bit {@code (inReal - lower) / (upper - lower)} computed from BBANDS' own outputs, and 0.5 wherever those two bands are equal.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -638,8 +670,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range that ends before {@link Core#bbwLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range that ends before {@link Core#percentbLookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -654,9 +686,10 @@
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
-    * @param outReal Width of the bands as a fraction of the middle band. Must
-    *        hold at least {@code endIdx - max(startIdx, bbwLookback(...)) + 1} values,
-    *        the count the call produces (none when that is not positive).
+    * @param outReal Position of the input between the lower band (0) and the
+    *        upper band (1) Must hold at least
+    *        {@code endIdx - max(startIdx, percentbLookback(...)) + 1} values, the
+    *        count the call produces (none when that is not positive).
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -672,40 +705,41 @@
     *        written, so a rejected call leaves every buffer untouched.
     *
     * @see Core#bbands
-    * @see Core#percentb
-    * @see Core#stddev
-    * @see Core#natr
+    * @see Core#bbw
+    * @see Core#stochf
     */
-   public OutRange bbw( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        double optInNbDevUp,
-                        double optInNbDevDn,
-                        MAType optInMAType,
-                        double outReal[] )
+   public OutRange percentb( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             double optInNbDevUp,
+                             double optInNbDevDn,
+                             MAType optInMAType,
+                             double outReal[] )
    {
-      requireIndexRange("BBW", startIdx, endIdx);
-      requireArgument("BBW", "optInMAType", optInMAType);
-      int guardStart = clampedStart("BBW", startIdx, bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      requireIndexRange("PERCENTB", startIdx, endIdx);
+      requireArgument("PERCENTB", "optInMAType", optInMAType);
+      int guardStart = clampedStart("PERCENTB", startIdx, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       int guardInLen = endIdx + 1;
       int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-      requireLength("BBW", "inReal", inReal, guardInLen);
-      requireLength("BBW", "outReal", outReal, guardOutLen);
+      requireLength("PERCENTB", "inReal", inReal, guardInLen);
+      requireLength("PERCENTB", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = bbwImpl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = percentbImpl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.SUCCESS ) {
-         throw failure("BBW", retCode);
+         throw failure("PERCENTB", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
 /**** Streaming API *****/
 
+/* Using percentb_ALT2 for TA_ALT={STREAM,ALL_LANGUAGES} */
+
    /**
-    * A live BBW stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#bbw} over the same series.
-    * Open with {@link Core#bbwOpen}; there is no close — the handle is
+    * A live PERCENTB stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#percentb} over the same series.
+    * Open with {@link Core#percentbOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code clone} must not race with an {@code update} on
@@ -716,7 +750,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class BbwStream {
+   public static final class PercentbStream {
       private Core core;
       private int optInTimePeriod;
       private double optInNbDevUp;
@@ -728,12 +762,12 @@
       private int outRangeBegIdx;
       private int outRangeCount;
 
-      private BbwStream( Core core ) { this.core = core; }
+      private PercentbStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
-       * <p>It is what {@link Core#bbw} reports over the same bars: the
+       * <p>It is what {@link Core#percentb} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count — a rejected one
        * changes nothing, and neither does {@code peek} — and
@@ -760,11 +794,11 @@
        */
       public void advance() {
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
-            throw failure("BBW advance", RetCode.OUT_OF_RANGE_END_INDEX);
+            throw failure("PERCENTB advance", RetCode.OUT_OF_RANGE_END_INDEX);
          this.outRangeCount++;
       }
 
-      private BbwStream( BbwStream other ) {
+      private PercentbStream( PercentbStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDevUp = other.optInNbDevUp;
@@ -797,10 +831,10 @@
        */
       public double update( double inReal ) {
          if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
-            throw failure("BBW update", RetCode.OUT_OF_RANGE_END_INDEX);
+            throw failure("PERCENTB update", RetCode.OUT_OF_RANGE_END_INDEX);
          if( !Double.isFinite(inReal) )
-            throw nonFiniteBar("BBW update", "inReal");
-         core.bbwStepImpl(this, inReal);
+            throw nonFiniteBar("PERCENTB update", "inReal");
+         core.percentbStepImpl(this, inReal);
          this.outRangeCount++;
          return this.cur_outReal;
       }
@@ -815,36 +849,41 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw nonFiniteBar("BBW peek", "inReal");
-         BbwStream sp = this;
+            throw nonFiniteBar("PERCENTB peek", "inReal");
+         PercentbStream sp = this;
+         double den = 0.0;
          double deviation = 0.0;
          double lower = 0.0;
          double middle = 0.0;
          double tempReal = 0.0;
          double upper = 0.0;
-         double cur_tempBuffer = 0.0;
+         double cur_tempX = 0.0;
+         double cur_tempMA = 0.0;
          double cur_outReal = 0.0;
+         cur_tempX = inReal;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
-         cur_tempBuffer = sp.sub0.peek(inReal);
+         cur_tempMA = sp.sub0.peek(inReal);
          cur_outReal = sp.sub1.peek(inReal);
          /* Combine map (batch tail, per bar). */
          if( sp.optInNbDevUp == sp.optInNbDevDn ) {
-            middle = cur_tempBuffer;
+            middle = cur_tempMA;
             tempReal = Math.sqrt(cur_outReal) * sp.optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            cur_outReal = (upper - lower) / middle;
-            if( middle == 0.0 ) {
-               cur_outReal = 0.0;
+            den = upper - lower;
+            cur_outReal = (cur_tempX - lower) / den;
+            if( den == 0.0 ) {
+               cur_outReal = 0.5;
             }
          } else {
-            middle = cur_tempBuffer;
+            middle = cur_tempMA;
             deviation = Math.sqrt(cur_outReal);
             upper = Math.fma(deviation, sp.optInNbDevUp, middle);
             lower = middle - deviation * sp.optInNbDevDn;
-            cur_outReal = (upper - lower) / middle;
-            if( middle == 0.0 ) {
-               cur_outReal = 0.0;
+            den = upper - lower;
+            cur_outReal = (cur_tempX - lower) / den;
+            if( den == 0.0 ) {
+               cur_outReal = 0.5;
             }
          }
          return cur_outReal;
@@ -872,48 +911,57 @@
        * @return an independent stream at the same bar
        */
       @Override
-      public BbwStream clone() {
-         return new BbwStream(this);
+      public PercentbStream clone() {
+         return new PercentbStream(this);
       }
    }
-   private void bbwStepImpl( BbwStream sp, double inReal )
+   private void percentbStepImpl( PercentbStream sp, double inReal )
    {
+      double den = 0.0;
       double deviation = 0.0;
       double lower = 0.0;
       double middle = 0.0;
       double tempReal = 0.0;
       double upper = 0.0;
-      double cur_tempBuffer = 0.0;
+      double cur_tempX = 0.0;
+      double cur_tempMA = 0.0;
       double cur_outReal = 0.0;
+      cur_tempX = inReal;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
-      cur_tempBuffer = sp.sub0.update(inReal);
+      cur_tempMA = sp.sub0.update(inReal);
       cur_outReal = sp.sub1.update(inReal);
       /* Combine map (batch tail, per bar). */
       if( sp.optInNbDevUp == sp.optInNbDevDn ) {
-         middle = cur_tempBuffer;
+         middle = cur_tempMA;
          tempReal = Math.sqrt(cur_outReal) * sp.optInNbDevUp;
          upper = middle + tempReal;
          lower = middle - tempReal;
-         cur_outReal = (upper - lower) / middle;
-         if( middle == 0.0 ) {
-            cur_outReal = 0.0;
+         den = upper - lower;
+         cur_outReal = (cur_tempX - lower) / den;
+         if( den == 0.0 ) {
+            cur_outReal = 0.5;
          }
       } else {
-         middle = cur_tempBuffer;
+         middle = cur_tempMA;
          deviation = Math.sqrt(cur_outReal);
          upper = Math.fma(deviation, sp.optInNbDevUp, middle);
          lower = middle - deviation * sp.optInNbDevDn;
-         cur_outReal = (upper - lower) / middle;
-         if( middle == 0.0 ) {
-            cur_outReal = 0.0;
+         den = upper - lower;
+         cur_outReal = (cur_tempX - lower) / den;
+         if( den == 0.0 ) {
+            cur_outReal = 0.5;
          }
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode bbwOpenImpl( BbwStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode percentbOpenImpl( PercentbStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       RetCode retCode;
       int i = 0;
+      int lookbackTotal = 0;
+      int firstIdx = 0;
+      int today = 0;
+      int outIdx = 0;
       MInteger maBegIdx = new MInteger();
       MInteger maNbElement = new MInteger();
       int offset = 0;
@@ -922,7 +970,9 @@
       double tempReal = 0;
       double upper = 0;
       double lower = 0;
-      double[] tempBuffer;
+      double den = 0;
+      double[] tempMA;
+      double[] tempX;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -954,24 +1004,32 @@
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
       }
-      if( historyLen < bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
+      if( historyLen < percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
-      if( bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
+      lookbackTotal = percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      firstIdx = startIdx;
+      if( firstIdx < lookbackTotal ) {
+         firstIdx = lookbackTotal;
+      }
+      if( firstIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY ;
       }
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      /* Before the variance: it may be written over inReal. */
+      tempX = new double[(int)((endIdx - firstIdx + 1) * 1)];
+      tempMA = new double[(int)((endIdx - startIdx + 1) * 1)];
+      outIdx = 0;
+      today = firstIdx;
+      while( today <= endIdx ) {
+         tempX[outIdx++] = inReal[today];
+         today += 1;
+      }
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      MaStream sub0 = maOpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, maBegIdx, maNbElement, tempBuffer);
+      MaStream sub0 = maOpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, maBegIdx, maNbElement, tempMA);
       retCode = RetCode.SUCCESS;
-      /* From the moving average's begIdx, as TA_BBANDS enters its deviation:
-       * the variance's shift and reseed schedule are anchored on its start.
-       */
       /* Sub-stream 1: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       VarStream sub1 = varOpenAndFillInternal(inReal, maBegIdx.value, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
@@ -979,24 +1037,26 @@
       offset = maNbElement.value - outNBElement.value;
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            middle = tempBuffer[i + offset];
+            middle = tempMA[i + offset];
             tempReal = Math.sqrt(sc_outReal[i]) * optInNbDevUp;
             upper = middle + tempReal;
             lower = middle - tempReal;
-            sc_outReal[i] = (upper - lower) / middle;
-            if( middle == 0.0 ) {
-               sc_outReal[i] = 0.0;
+            den = upper - lower;
+            sc_outReal[i] = (tempX[i] - lower) / den;
+            if( den == 0.0 ) {
+               sc_outReal[i] = 0.5;
             }
          }
       } else {
          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            middle = tempBuffer[i + offset];
+            middle = tempMA[i + offset];
             deviation = Math.sqrt(sc_outReal[i]);
             upper = Math.fma(deviation, optInNbDevUp, middle);
             lower = middle - deviation * optInNbDevDn;
-            sc_outReal[i] = (upper - lower) / middle;
-            if( middle == 0.0 ) {
-               sc_outReal[i] = 0.0;
+            den = upper - lower;
+            sc_outReal[i] = (tempX[i] - lower) / den;
+            if( den == 0.0 ) {
+               sc_outReal[i] = 0.5;
             }
          }
       }
@@ -1004,6 +1064,7 @@
       if( outNBElement.value < 1 ) {
          return RetCode.INSUFFICIENT_HISTORY;
       }
+      /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInNbDevUp = optInNbDevUp;
       sp.optInNbDevDn = optInNbDevDn;
@@ -1013,44 +1074,44 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.SUCCESS;
    }
-   /* bbwOpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   BbwStream bbwOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   /* percentbOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PercentbStream percentbOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      BbwStream sp = new BbwStream(this);
-      RetCode retCode = bbwOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1);
+      PercentbStream sp = new PercentbStream(this);
+      RetCode retCode = percentbOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw insufficientHistory("BBW openAndFill", inReal.length, startIdx, bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+         throw insufficientHistory("PERCENTB openAndFill", inReal.length, startIdx, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       }
-      throw streamFailure("BBW openAndFill", retCode);
+      throw streamFailure("PERCENTB openAndFill", retCode);
    }
-   /* Internal startIdx-anchored open behind bbwOpen (composition seam). */
-   BbwStream bbwOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   /* Internal startIdx-anchored open behind percentbOpen (composition seam). */
+   PercentbStream percentbOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
-      BbwStream sp = new BbwStream(this);
+      PercentbStream sp = new PercentbStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = bbwOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
+      RetCode retCode = percentbOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, sink_outReal, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.SUCCESS ) {
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
-         throw insufficientHistory("BBW open", inReal.length, startIdx, bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+         throw insufficientHistory("PERCENTB open", inReal.length, startIdx, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       }
-      throw streamFailure("BBW open", retCode);
+      throw streamFailure("PERCENTB open", retCode);
    }
    /**
-    * Open a live BBW stream over the warm-up history; the handle's
+    * Open a live PERCENTB stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#bbw} at that bar.
-    * <p>The history must hold at least {@code bbwLookback(...) + 1} bars
+    * to {@link Core#percentb} at that bar.
+    * <p>The history must hold at least {@code percentbLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE}, {@link Core#REAL_DEFAULT} and
@@ -1060,35 +1121,35 @@
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
     */
-   public BbwStream bbwOpen( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   public PercentbStream percentbOpen( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
-      requireArgument("BBW open", "inReal", inReal);
-      requireHistory("BBW open", inReal.length);
-      requireArgument("BBW open", "optInMAType", optInMAType);
-      return bbwOpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      requireArgument("PERCENTB open", "inReal", inReal);
+      requireHistory("PERCENTB open", inReal.length);
+      requireArgument("PERCENTB open", "optInMAType", optInMAType);
+      return percentbOpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
    /**
-    * {@link Core#bbwOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#bbw} over the whole history in the same single pass
+    * {@link Core#percentbOpen} that also fills the output array(s) bit-identically
+    * to {@link Core#percentb} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values — both checked before anything is
     * written, so an undersized array is an {@link IllegalArgumentException}
     * naming it rather than a fault from inside the fill.
     * <p>The range written is on the returned handle:
-    * {@link BbwStream#outRange()}.
+    * {@link PercentbStream#outRange()}.
     */
-   public BbwStream bbwOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double outReal[] )
+   public PercentbStream percentbOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double outReal[] )
    {
-      requireArgument("BBW openAndFill", "inReal", inReal);
-      requireHistory("BBW openAndFill", inReal.length);
-      requireArgument("BBW openAndFill", "optInMAType", optInMAType);
-      int guardOutLen = openFillCount("BBW openAndFill", inReal.length, bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
-      requireLength("BBW openAndFill", "outReal", outReal, guardOutLen);
+      requireArgument("PERCENTB openAndFill", "inReal", inReal);
+      requireHistory("PERCENTB openAndFill", inReal.length);
+      requireArgument("PERCENTB openAndFill", "optInMAType", optInMAType);
+      int guardOutLen = openFillCount("PERCENTB openAndFill", inReal.length, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+      requireLength("PERCENTB openAndFill", "outReal", outReal, guardOutLen);
       if( (Object)outReal == (Object)inReal ) {
-         throw streamFailure("BBW openAndFill", RetCode.BAD_PARAM);
+         throw streamFailure("PERCENTB openAndFill", RetCode.BAD_PARAM);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return bbwOpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
+      return percentbOpenAndFillInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
    }

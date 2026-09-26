@@ -41,7 +41,7 @@ Bollinger BandWidth, Bollinger Band Width, Bollinger Bands Width, BandWidth
 
 ## See Also
 
-BBANDS · STDDEV · NATR
+BBANDS · PERCENTB · STDDEV · NATR
 
 ## References
 

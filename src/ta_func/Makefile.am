@@ -158,6 +158,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_NATR.c \
 	ta_NVI.c \
 	ta_OBV.c \
+	ta_PERCENTB.c \
 	ta_PERCENTILE.c \
 	ta_PERCENTRANK.c \
 	ta_PLUS_DI.c \

@@ -6578,6 +6578,54 @@ static TA_RetCode TA_OBV_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_OBV[] = { TA_VIN_REAL, TA_VIN_VOLUME };
 static const int TA_VOutIsInt_OBV[] = { 0 };
 
+static TA_RetCode TA_PERCENTB_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PERCENTB(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PERCENTB_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_PERCENTB(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_PERCENTB[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_PERCENTB[] = { 0 };
+static const TA_VOptSpec TA_VOpt_PERCENTB[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
+   { "optInNbDevUp", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
+   { "optInNbDevDn", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 13.0, 0.0 },
+};
+
 static TA_RetCode TA_PERCENTILE_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -9101,6 +9149,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      2, TA_VIn_NVI, 0, NULL, 1, TA_VOutIsInt_NVI, 0 },
    { "OBV", TA_OBV_VFrameD, TA_OBV_VFrameS,
      2, TA_VIn_OBV, 0, NULL, 1, TA_VOutIsInt_OBV, 0 },
+   { "PERCENTB", TA_PERCENTB_VFrameD, TA_PERCENTB_VFrameS,
+     1, TA_VIn_PERCENTB, 4, TA_VOpt_PERCENTB, 1, TA_VOutIsInt_PERCENTB, 0 },
    { "PERCENTILE", TA_PERCENTILE_VFrameD, TA_PERCENTILE_VFrameS,
      1, TA_VIn_PERCENTILE, 2, TA_VOpt_PERCENTILE, 1, TA_VOutIsInt_PERCENTILE, 0 },
    { "PERCENTRANK", TA_PERCENTRANK_VFrameD, TA_PERCENTRANK_VFrameS,
@@ -9209,6 +9259,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 208
+#define TA_VARIANT_TABLE_SIZE 209
 
 #endif /* TA_VARIANT_FRAME_H */

@@ -224,6 +224,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [CVI](/functions/cvi.md) — Chaikin's Volatility
 - [MASSI](/functions/massi.md) — Mass Index
 - [NATR](/functions/natr.md) — Normalized Average True Range
+- [PERCENTB](/functions/percentb.md) — Bollinger Bands %B
 - [RVI](/functions/rvi.md) — Relative Volatility Index
 - [RVIR](/functions/rvir.md) — Relative Volatility Index, refined high/low form
 - [TRANGE](/functions/trange.md) — True Range

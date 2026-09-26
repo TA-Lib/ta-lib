@@ -3498,6 +3498,32 @@ unsigned int TA_OBV_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_OBV_Lookback( );
 }
+TA_RetCode TA_PERCENTB_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_PERCENTB(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInNbDevUp*/
+               params->optIn[2].data.optInReal, /* optInNbDevDn*/
+               (TA_MAType)params->optIn[3].data.optInInteger, /* optInMAType*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_PERCENTB_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_PERCENTB_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal, /* optInNbDevUp*/
+                    params->optIn[2].data.optInReal, /* optInNbDevDn*/
+                    (TA_MAType)params->optIn[3].data.optInInteger /* optInMAType*/ );
+}
 TA_RetCode TA_PERCENTILE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

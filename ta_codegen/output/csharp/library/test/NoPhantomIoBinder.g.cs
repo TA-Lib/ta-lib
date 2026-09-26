@@ -1049,6 +1049,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["PERCENTB"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.PercentbImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["PERCENTILE"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.PercentileImpl(
@@ -2302,6 +2308,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), Narrow(c.Price(1, PriceComponents.Volume)), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["PERCENTB"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.PercentbImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["PERCENTILE"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.PercentileImpl(
@@ -2780,6 +2792,7 @@ internal static class NoPhantomIoBinder
         ["NATR"] = static (core, c) => core.NatrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["NVI"] = static (core, c) => core.NviOpen(c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume)),
         ["OBV"] = static (core, c) => core.ObvOpen(c.Series(0), c.Price(1, PriceComponents.Volume)),
+        ["PERCENTB"] = static (core, c) => core.PercentbOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
         ["PERCENTILE"] = static (core, c) => core.PercentileOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1)),
         ["PERCENTRANK"] = static (core, c) => core.PercentrankOpen(c.Series(0), c.IntOpt(0)),
         ["PLUS_DI"] = static (core, c) => core.PlusDiOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),

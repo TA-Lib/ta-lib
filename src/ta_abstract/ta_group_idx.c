@@ -195,6 +195,7 @@ extern const TA_FuncDef TA_DEF_MULT;
 extern const TA_FuncDef TA_DEF_NATR;
 extern const TA_FuncDef TA_DEF_NVI;
 extern const TA_FuncDef TA_DEF_OBV;
+extern const TA_FuncDef TA_DEF_PERCENTB;
 extern const TA_FuncDef TA_DEF_PERCENTILE;
 extern const TA_FuncDef TA_DEF_PERCENTRANK;
 extern const TA_FuncDef TA_DEF_PLUS_DI;
@@ -320,6 +321,7 @@ const TA_FuncDef *TA_PerGroupFunc_3[] = {
 &TA_DEF_CVI,
 &TA_DEF_MASSI,
 &TA_DEF_NATR,
+&TA_DEF_PERCENTB,
 &TA_DEF_RVI,
 &TA_DEF_RVIR,
 &TA_DEF_TRANGE,

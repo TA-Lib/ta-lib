@@ -352,6 +352,8 @@ pub enum FuncId {
     NVI,
     /// On Balance Volume — [`Core::obv`](crate::Core::obv).
     OBV,
+    /// Bollinger Bands %B — [`Core::percentb`](crate::Core::percentb).
+    PERCENTB,
     /// Percentile (nearest rank) — [`Core::percentile`](crate::Core::percentile).
     PERCENTILE,
     /// Percent Rank — [`Core::percentrank`](crate::Core::percentrank).
@@ -462,7 +464,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 208;
+    pub const COUNT: usize = 209;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -789,7 +791,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 208] = [
+static FUNC_TABLE: [FuncInfo; 209] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2496,6 +2498,17 @@ static FUNC_TABLE: [FuncInfo; 208] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::PERCENTB,
+        name: "PERCENTB",
+        group: Group::VolatilityIndicators,
+        hint: "Bollinger Bands %B",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDevUp", display_name: "Deviations up", hint: "Deviation multiplier for upper band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInNbDevDn", display_name: "Deviations down", hint: "Deviation multiplier for lower band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), ], default: 0 } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::PERCENTILE,
         name: "PERCENTILE",
         group: Group::StatisticFunctions,
@@ -3251,6 +3264,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "NATR" => FuncId::NATR,
         "NVI" => FuncId::NVI,
         "OBV" => FuncId::OBV,
+        "PERCENTB" => FuncId::PERCENTB,
         "PERCENTILE" => FuncId::PERCENTILE,
         "PERCENTRANK" => FuncId::PERCENTRANK,
         "PLUS_DI" => FuncId::PLUS_DI,
@@ -3716,6 +3730,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::NATR => self.core.natr_lookback(self.int_opt[0]),
             FuncId::NVI => self.core.nvi_lookback(),
             FuncId::OBV => self.core.obv_lookback(),
+            FuncId::PERCENTB => self.core.percentb_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], MAType::try_from(self.int_opt[3])?),
             FuncId::PERCENTILE => self.core.percentile_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::PERCENTRANK => self.core.percentrank_lookback(self.int_opt[0]),
             FuncId::PLUS_DI => self.core.plus_di_lookback(self.int_opt[0]),
@@ -5679,6 +5694,17 @@ impl<'a> ParamHolder<'a> {
                 let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.obv(start_idx, end_idx, i0, i1_4, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::PERCENTB => {
+                let e3 = MAType::try_from(self.int_opt[3])?;
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.percentb(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

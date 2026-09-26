@@ -13520,6 +13520,109 @@ TA_LIB_API TA_RetCode TA_OBV_Advance( TA_OBV_Stream *stream );
 TA_LIB_API TA_RetCode TA_OBV_Clone( const TA_OBV_Stream *stream, TA_OBV_Stream **clone );
 
 /*
+ * TA_PERCENTB - Bollinger Bands %B
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * optInNbDevUp:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
+ *    Deviation multiplier for upper band
+ * 
+ * optInNbDevDn:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
+ *    Deviation multiplier for lower band
+ * 
+ * optInMAType:
+ *    Type of Moving Average
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_PERCENTB( int    startIdx,
+                                   int    endIdx,
+                                              const double inReal[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                              double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                              TA_MAType     optInMAType,
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_PERCENTB( int    startIdx,
+                                     int    endIdx,
+                                                const float  inReal[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                                double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                                TA_MAType     optInMAType,
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
+
+TA_LIB_API int TA_PERCENTB_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                              double        optInNbDevUp, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                              double        optInNbDevDn, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                              TA_MAType     optInMAType );
+
+
+/*
+ * Streaming API for TA_PERCENTB: incremental per-bar evaluation.
+ */
+typedef struct TA_PERCENTB_Stream TA_PERCENTB_Stream;
+
+TA_LIB_API TA_RetCode TA_PERCENTB_Open( TA_PERCENTB_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PERCENTB_Update( TA_PERCENTB_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PERCENTB_Peek( const TA_PERCENTB_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_PERCENTB_Close( TA_PERCENTB_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_PERCENTB( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_PERCENTB_OpenAndFill( TA_PERCENTB_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_PERCENTB_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_PERCENTB_Value( const TA_PERCENTB_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_PERCENTB reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_PERCENTB_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_PERCENTB_OutRange( const TA_PERCENTB_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_PERCENTB_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_PERCENTB_Advance( TA_PERCENTB_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_PERCENTB_Clone( const TA_PERCENTB_Stream *stream, TA_PERCENTB_Stream **clone );
+
+/*
  * TA_PERCENTILE - Percentile (nearest rank)
  * 
  * Input  = double

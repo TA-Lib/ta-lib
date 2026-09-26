@@ -52,7 +52,7 @@
  *   bands TA_BBANDS returns, and +0.0 where the middle band is 0.
  *
  *   Legs:
- *     1. Goldens from code TA-Lib did not write, and the exact value.
+ *     1. Goldens: the exact value, from code that never runs TA-Lib.
  *     2. Composition: bitwise equal to (U - L) / M over TA_BBANDS' outputs
  *        at every MA type, deviation pair, startIdx and unstable period, and
  *        TA_S_BBW against TA_S_BBANDS. Only this leg sees a change that moves
@@ -145,11 +145,14 @@ static double bbwWalk[BBW_WALK_N], bbwNegWalk[BBW_WALK_N];
  *   lean  : LEAN 2.5.18090 (commit 5b0c9975d3189efe4353e5071374b77ab9681bdb)
  *           BollingerBands(n, k, type).BandWidth, System.Decimal, in percent.
  *
- * NAN: the arm does not compute that bar, or sits outside the capture's gate
- * there. Pine (PyneCore 6.8.14) and pandas-ta-classic 0.6.52 were compared and
- * are not frozen: Pine's q/n - m^2 deviation misses narrow bands by up to
- * 8.5e7 times the gate, and pandas-ta-classic adds float epsilon to every width
- * of a series once one width is 0.
+ * ts, ta4j and lean are provenance, not compared: the capture froze a value
+ * only within its arm gate of exact, and tsAbs, ta4jAbs and leanAbs in
+ * bbwGoldens are each arm's largest distance from exact over the group, in
+ * the ratio unit, printed to 3 significant digits (not a bound). NAN: the
+ * arm does not compute that bar, or sits outside that gate there. Pine (PyneCore 6.8.14) and pandas-ta-classic 0.6.52 were
+ * compared and are not frozen: Pine's q/n - m^2 deviation misses narrow bands
+ * by up to 8.5e7 times the gate, and pandas-ta-classic adds float epsilon to
+ * every width of a series once one width is 0.
  *
  * TOLERANCE, exact: |got - exact| <= tol, the row's last column:
  * rel*|exact| + 8u*(|U|+|L|)/|M| on the exact bands, rounded up, rel = 1e-12
@@ -161,10 +164,6 @@ static double bbwWalk[BBW_WALK_N], bbwNegWalk[BBW_WALK_N];
  * Measured on EVERY bar of every group, not only the rows below, with the
  * capture's exact arithmetic: the worst is 0.40 of the bound (dema-n20, bar
  * 168), 0.37 at n = 2, 0.21 at n = 5 and 0.06 at n = 100000.
- *
- * TOLERANCE, arms: tol plus the arm's largest distance from exact over the
- * group (tsAbs, ta4jAbs, leanAbs in bbwGoldens), in percent for ta4j and LEAN:
- * |got*100 - arm| <= 100*(tol + armAbs). Worst measured: 0.36 of that.
  */
 typedef struct { int bar; double exact, ts, ta4j, lean, tol; int mid0; } BbwRow;
 
@@ -807,7 +806,6 @@ static const struct { TA_FuncUnstId id; TA_MAType maType; } bbwUnst[] = {
 #define NB_BBW_UNST ((int)(sizeof(bbwUnst)/sizeof(bbwUnst[0])))
 
 static int g_bbwGoldenCmp;
-static int g_bbwArmCmp;
 static int g_bbwDiffCmp;
 static int g_bbwDiffMid0;
 static int g_bbwFloatCmp;
@@ -855,7 +853,6 @@ static ErrorNumber test_bbw_all( void )
 {
    static const struct { const char *leg; int want; const int *got; } cov[] = {
       { "golden exact",        359, &g_bbwGoldenCmp   },
-      { "golden arms",         653, &g_bbwArmCmp      },
       { "composition",    45112402, &g_bbwDiffCmp     },
       { "middle == 0",      140020, &g_bbwDiffMid0    },
       { "float tier",        25912, &g_bbwFloatCmp    },
@@ -869,7 +866,7 @@ static ErrorNumber test_bbw_all( void )
    ErrorNumber err;
    unsigned int c;
 
-   g_bbwGoldenCmp = g_bbwArmCmp = g_bbwDiffCmp = g_bbwDiffMid0 = g_bbwFloatCmp = 0;
+   g_bbwGoldenCmp = g_bbwDiffCmp = g_bbwDiffMid0 = g_bbwFloatCmp = 0;
    g_bbwIdentCmp = g_bbwLookbackCmp = g_bbwAliasCmp = g_bbwAnchorCmp = 0;
    g_bbwParamCmp = g_bbwDegenCmp = 0;
 
@@ -1031,13 +1028,7 @@ static ErrorNumber test_bbw_goldens( void )
       for( r = 0; r < g->nbRows; r++ )
       {
          const BbwRow *row = &g->rows[r];
-         static const char *armName[3] = { "trading-signals 8.3.0", "ta4j 0.22.6",
-                                           "LEAN 2.5.18090" };
-         const double arm[3]    = { row->ts, row->ta4j, row->lean };
-         const double scale[3]  = { 1.0, 100.0, 100.0 };
-         const double armAbs[3] = { g->tsAbs, g->ta4jAbs, g->leanAbs };
          double got;
-         int a;
 
          if( row->bar < beg || row->bar - beg >= nb )
          {
@@ -1057,21 +1048,6 @@ static ErrorNumber test_bbw_goldens( void )
                     g->tag, row->bar, got, row->exact, fabs( got - row->exact ), row->tol,
                     row->mid0 ? ", middle == 0 is +0.0" : ( row->tol == 0.0 ? ", bitwise" : "" ) );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-         }
-
-         for( a = 0; a < 3; a++ )
-         {
-            if( isnan( arm[a] ) )
-               continue;
-            g_bbwArmCmp++;
-            if( !( fabs( got * scale[a] - arm[a] ) <= scale[a] * ( row->tol + armAbs[a] ) ) )
-            {
-               printf( "BBW golden Fail [%s] at bar %d: got %.17g, %s gives %.17g%s "
-                       "(|diff| %.3g over %.3g)\n", g->tag, row->bar, got, armName[a],
-                       arm[a], scale[a] == 1.0 ? "" : " percent",
-                       fabs( got * scale[a] - arm[a] ) / scale[a], row->tol + armAbs[a] );
-               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-            }
          }
       }
 

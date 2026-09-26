@@ -77,7 +77,7 @@ Bollinger BandWidth, Bollinger Band Width, Bollinger Bands Width, BandWidth
 
 ## See Also
 
-[BBANDS](/functions/bbands.md) · [STDDEV](/functions/stddev.md) · [NATR](/functions/natr.md)
+[BBANDS](/functions/bbands.md) · [PERCENTB](/functions/percentb.md) · [STDDEV](/functions/stddev.md) · [NATR](/functions/natr.md)
 
 ## References
 

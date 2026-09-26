@@ -1442,6 +1442,15 @@ TA_RetCode TA_OBV_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_OBV_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_PERCENTB_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_PERCENTB_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_PERCENTILE_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

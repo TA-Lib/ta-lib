@@ -19,6 +19,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CTI: Correlation Trend Indicator (#430)
   - KURTOSIS: Rolling Excess Kurtosis (#433)
   - MEDIAN: Rolling Median (#432)
+  - PERCENTB: Bollinger Bands %B, where the input sits relative to the bands (#449)
   - RVIR: Relative Volatility Index, 1995 refined form (#416)
 
 ### Faster

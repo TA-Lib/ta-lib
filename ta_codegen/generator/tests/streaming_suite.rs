@@ -1885,22 +1885,27 @@ fn composed_sub_call_destination_funcs() {
         if !f.streaming {
             continue;
         }
-        let Ok(streaming::StreamPlan::Composed(cp)) = streaming::validate_streamable(&f, &lk) else {
-            continue;
-        };
         let outs: Vec<String> = f.outputs.iter().map(|o| o.name.clone()).collect();
-        if cp
-            .subs
-            .iter()
-            .any(|s| s.dsts.iter().any(|d| outs.contains(d)))
-        {
+        // The body each backend streams from: a STREAM alternate replaces the
+        // base in the languages it claims.
+        let writes_own_output = ir::ALL_LANGS.iter().any(|&lang| {
+            let resolved = f.resolved_for(lang);
+            let Ok(streaming::StreamPlan::Composed(cp)) = streaming::validate_streamable(&resolved, &lk)
+            else {
+                return false;
+            };
+            cp.subs
+                .iter()
+                .any(|s| s.dsts.iter().any(|d| outs.contains(d)))
+        });
+        if writes_own_output {
             found.push(name.to_uppercase());
         }
     }
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 13] = [
+    let expected: [(&str, &str); 14] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
         ("BBW", "as KDJ -- var is handed outBegIdx/outNBElement themselves and BBW returns them \
@@ -1921,6 +1926,11 @@ fn composed_sub_call_destination_funcs() {
                  delegates to stoch_lookback, so the two anchors agree by construction too"),
         ("MACDEXT", "the body RUNTIME-CHECKS the premise (outNbElement1 == endIdx-startIdx+1+lookbackSignal) \
                  and bails otherwise, so signal count == N_MACDEXT"),
+        ("PERCENTB", "as BBW, in the STREAM alternate every backend streams from -- its var \
+                 writes outReal and is handed outBegIdx/outNBElement themselves, and PERCENTB \
+                 returns them unmodified. Entered at the MA's begIdx its count is endIdx - \
+                 max(startIdx, ma_lookback, var_lookback) + 1, which is PERCENTB's final count \
+                 because percentb_lookback delegates to bbands_lookback"),
         ("PPO", "as APO -- the slow/fast swap is the precondition"),
         ("PVO", "as APO -- the slow/fast swap is the precondition"),
         ("RVIR", "as KDJ -- the low leg is handed outBegIdx/outNBElement themselves and RVIR \

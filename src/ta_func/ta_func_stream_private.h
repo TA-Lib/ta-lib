@@ -170,6 +170,7 @@ struct TA_MULT_Stream;
 struct TA_NATR_Stream;
 struct TA_NVI_Stream;
 struct TA_OBV_Stream;
+struct TA_PERCENTB_Stream;
 struct TA_PERCENTILE_Stream;
 struct TA_PERCENTRANK_Stream;
 struct TA_PLUS_DI_Stream;
@@ -378,6 +379,7 @@ TA_RetCode TA_MULT_OpenInternal( struct TA_MULT_Stream **stream, const double in
 TA_RetCode TA_NATR_OpenInternal( struct TA_NATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_NVI_OpenInternal( struct TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_OBV_OpenInternal( struct TA_OBV_Stream **stream, const double inReal[], const double inVolume[], int startIdx, int historyLen, double *outReal );
+TA_RetCode TA_PERCENTB_OpenInternal( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outReal );
 TA_RetCode TA_PERCENTILE_OpenInternal( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, double *outReal );
 TA_RetCode TA_PERCENTRANK_OpenInternal( struct TA_PERCENTRANK_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_PLUS_DI_OpenInternal( struct TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
@@ -587,6 +589,7 @@ TA_RetCode TA_MULT_OpenAndFillInternal( struct TA_MULT_Stream **stream, const do
 TA_RetCode TA_NATR_OpenAndFillInternal( struct TA_NATR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_NVI_OpenAndFillInternal( struct TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_OBV_OpenAndFillInternal( struct TA_OBV_Stream **stream, const double inReal[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_PERCENTB_OpenAndFillInternal( struct TA_PERCENTB_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PERCENTILE_OpenAndFillInternal( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PERCENTRANK_OpenAndFillInternal( struct TA_PERCENTRANK_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PLUS_DI_OpenAndFillInternal( struct TA_PLUS_DI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );

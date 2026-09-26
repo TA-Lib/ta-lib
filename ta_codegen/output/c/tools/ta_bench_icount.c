@@ -8156,6 +8156,57 @@ static void icount_OBV(int iters) {
     g_sink += (int)acc + outNBElement;
 }
 
+static void icount_PERCENTB(int iters) {
+    const char *nm = "PERCENTB";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_PERCENTB_Stream *st = NULL;
+    TA_PERCENTB_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_PERCENTB(0, g_nPoints - 1, g_close, 20, 2.000000000000000, 2.000000000000000, 0, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("PERCENTB/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_PERCENTB_OpenAndFill(&stf, g_close, g_nPoints, 20, 2.000000000000000, 2.000000000000000, 0, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("PERCENTB/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_PERCENTB_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_PERCENTB_Open(&st, g_close, g_nPoints, 20, 2.000000000000000, 2.000000000000000, 0, &v0);
+    ICOUNT_DUMP("PERCENTB/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_PERCENTB_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("PERCENTB/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_PERCENTB_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("PERCENTB/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_PERCENTB_Close(st);
+    g_sink += (int)acc + outNBElement;
+}
+
 static void icount_PERCENTILE(int iters) {
     const char *nm = "PERCENTILE";
     int outBegIdx = 0, outNBElement = 0;
@@ -11045,6 +11096,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "NATR") ) { icount_NATR(iters); fflush(stdout); }
     if( func_matches(filter, "NVI") ) { icount_NVI(iters); fflush(stdout); }
     if( func_matches(filter, "OBV") ) { icount_OBV(iters); fflush(stdout); }
+    if( func_matches(filter, "PERCENTB") ) { icount_PERCENTB(iters); fflush(stdout); }
     if( func_matches(filter, "PERCENTILE") ) { icount_PERCENTILE(iters); fflush(stdout); }
     if( func_matches(filter, "PERCENTRANK") ) { icount_PERCENTRANK(iters); fflush(stdout); }
     if( func_matches(filter, "PLUS_DI") ) { icount_PLUS_DI(iters); fflush(stdout); }

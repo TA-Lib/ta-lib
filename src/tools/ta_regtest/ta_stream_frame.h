@@ -6289,6 +6289,48 @@ static TA_RetCode TA_OBV_SFrameClose( void *stream )
    return TA_OBV_Close( (TA_OBV_Stream *)stream );
 }
 
+static TA_RetCode TA_PERCENTB_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PERCENTB_Open(
+               (TA_PERCENTB_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PERCENTB_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PERCENTB_OpenAndFill(
+               (TA_PERCENTB_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInNbDevUp */,
+               optIn[2] /* optInNbDevDn */,
+               (TA_MAType)(int)optIn[3] /* optInMAType */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PERCENTB_SFrameClose( void *stream )
+{
+   return TA_PERCENTB_Close( (TA_PERCENTB_Stream *)stream );
+}
+
 static TA_RetCode TA_PERCENTILE_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8658,6 +8700,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_NVI, 0, NULL, 1, TA_VOutIsInt_NVI },
    { "OBV", TA_OBV_SFrameOpen, TA_OBV_SFrameFill, TA_OBV_SFrameClose,
      2, TA_VIn_OBV, 0, NULL, 1, TA_VOutIsInt_OBV },
+   { "PERCENTB", TA_PERCENTB_SFrameOpen, TA_PERCENTB_SFrameFill, TA_PERCENTB_SFrameClose,
+     1, TA_VIn_PERCENTB, 4, TA_VOpt_PERCENTB, 1, TA_VOutIsInt_PERCENTB },
    { "PERCENTILE", TA_PERCENTILE_SFrameOpen, TA_PERCENTILE_SFrameFill, TA_PERCENTILE_SFrameClose,
      1, TA_VIn_PERCENTILE, 2, TA_VOpt_PERCENTILE, 1, TA_VOutIsInt_PERCENTILE },
    { "PERCENTRANK", TA_PERCENTRANK_SFrameOpen, TA_PERCENTRANK_SFrameFill, TA_PERCENTRANK_SFrameClose,
@@ -8766,6 +8810,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 208
+#define TA_STREAM_TABLE_SIZE 209
 
 #endif /* TA_STREAM_FRAME_H */

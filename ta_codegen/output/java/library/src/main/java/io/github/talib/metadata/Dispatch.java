@@ -521,6 +521,9 @@ final class Dispatch {
          case "OBV":
             return core.obv(
                startIdx, endIdx, h.realInput(0), h.price(1, 4), h.realOutput(0));
+         case "PERCENTB":
+            return core.percentb(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3), h.realOutput(0));
          case "PERCENTILE":
             return core.percentile(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
@@ -1001,6 +1004,8 @@ final class Dispatch {
             return core.nviLookback();
          case "OBV":
             return core.obvLookback();
+         case "PERCENTB":
+            return core.percentbLookback(h.intOpt(0), h.realOpt(1), h.realOpt(2), h.maTypeOpt(3));
          case "PERCENTILE":
             return core.percentileLookback(h.intOpt(0), h.realOpt(1));
          case "PERCENTRANK":

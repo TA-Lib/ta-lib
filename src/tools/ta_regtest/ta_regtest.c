@@ -946,6 +946,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_crsi,      "CRSI" );
    DO_TEST( test_func_bbw,       "BBW" );
    DO_TEST( test_func_cg,        "CG" );
+   DO_TEST( test_func_percentb,  "PERCENTB" );
    DO_TEST( test_func_percentile, "PERCENTILE" );
    DO_TEST( test_func_cvi,       "CVI" );
    DO_TEST( test_func_massi,     "MASSI" );

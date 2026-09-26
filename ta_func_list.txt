@@ -153,6 +153,7 @@ MULT                Vector Arithmetic Mult
 NATR                Normalized Average True Range
 NVI                 Negative Volume Index
 OBV                 On Balance Volume
+PERCENTB            Bollinger Bands %B
 PERCENTILE          Percentile (nearest rank)
 PERCENTRANK         Percent Rank
 PLUS_DI             Plus Directional Indicator
