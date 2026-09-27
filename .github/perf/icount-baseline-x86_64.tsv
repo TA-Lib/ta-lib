@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	9042bc97891f4593a3e820f93a97a3e287e03f50
-#generated	2026-09-26T09:38:46Z
+#commit	72f93ecede7569b31edc4400e0a5408684e8077a
+#generated	2026-09-27T19:29:21Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -436,8 +436,8 @@ CEIL	update	0	57357
 CG	batch	0	1399476
 CG	open	0	1379753
 CG	openfill	0	1399774
-CG	peek	0	218128
-CG	update	0	183810
+CG	peek	0	112656
+CG	update	0	162830
 CMF	batch	0	999865
 CMF	open	0	1060246
 CMF	openfill	0	1080229
@@ -608,7 +608,7 @@ KAMA	open	0	1259011
 KAMA	openfill	0	1259005
 KAMA	peek	0	83979
 KAMA	update	0	130061
-KC	batch	0	691508
+KC	batch	0	691424
 KC	open	0	1053224
 KC	openfill	0	1051024
 KC	peek	0	184333
