@@ -1885,7 +1885,7 @@ static const int cgExPeriods[6] = { 2, 3, 10, 14, 57, 1000 };
 static void cg_build_exact_series( void )
 {
    double v;
-   int i, j, run;
+   int i, j, run, e;
 
    ta_test_ref_lcg_seed( 0x4530u );
    for( i = 0; i < CGX_N; i += 10 )
@@ -1902,10 +1902,10 @@ static void cg_build_exact_series( void )
       v = pow( 10.0, 8.0 * ta_test_ref_lcg_sym() );
       cgEx[CGX_MIXED][i] = ta_test_ref_lcg_sym() < 0.0 ? -v : v;
       cgEx[CGX_SLIDE][i] = ldexp( 1.5 + 0.5 * ta_test_ref_lcg_sym(), -( ( i % 200 ) / 4 ) );
-      cgEx[CGX_WIDE][i]  = ldexp( 1.0 + floor( 1048576.0 * ( 0.5 + ta_test_ref_lcg_half() ) ) / 1048576.0,
-                                  (int)( 60.0 * ta_test_ref_lcg_sym() ) );
-      cgEx[CGX_NEARMAX][i] = ( 0.75 + 0.25 * ta_test_ref_lcg_sym() ) * 1.7e308
-                             * ( ta_test_ref_lcg_sym() < 0.8 ? 1.0 : -1.0 );
+      e = (int)( 60.0 * ta_test_ref_lcg_sym() );
+      cgEx[CGX_WIDE][i]  = ldexp( 1.0 + floor( 1048576.0 * ( 0.5 + ta_test_ref_lcg_half() ) ) / 1048576.0, e );
+      v = 0.75 + 0.25 * ta_test_ref_lcg_sym();
+      cgEx[CGX_NEARMAX][i] = v * 1.7e308 * ( ta_test_ref_lcg_sym() < 0.8 ? 1.0 : -1.0 );
       v = ta_test_ref_lcg_sym();
       cgEx[CGX_SUBNORM][i] = v < 0.0 ? ldexp( floor( 1.0e9 * v ), -1074 )
                                      : ( v < 0.5 ? 0.0 : 4.0 * DBL_MIN * v );

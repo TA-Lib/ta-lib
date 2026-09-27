@@ -150,6 +150,10 @@ int ta_test_ref_window_is_constant( const double *v, int s, int period );
  * written against different ranges and their measured tolerances depend on the
  * exact sequence. Callers re-seed before each block, so sharing the state is
  * safe as long as no two blocks interleave -- none do.
+ *
+ * At most one draw per full expression: C leaves the order of two draws in
+ * one expression to the compiler, so gcc and clang would build different
+ * series.
  * -------------------------------------------------------------------------*/
 void   ta_test_ref_lcg_seed( unsigned int seed );
 double ta_test_ref_lcg_sym( void );    /* uniform [-1.0, 1.0)  */
