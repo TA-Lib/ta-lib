@@ -55,6 +55,9 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  071626 MF,CC  Initial version (#119).
     *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
+    *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
+    *                two running sums, no intermediate buffer, no allocation.
+    *                Bit-identical.
     */
    /// <summary>
    /// Number of leading input bars <c>Pvo</c> consumes before it can produce its
@@ -157,6 +160,116 @@ public partial class Core
       if( MaLookback(MaxGt(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
+         return RetCode.Success ;
+      }
+      if( optInMAType == MAType.SMA ) {
+         /* SMA fast path: the fast window is the newest optInFastPeriod bars of the
+          * slow one, so ONE pass over the input serves both moving averages - two
+          * running sums, no intermediate buffer and no allocation, where the general
+          * path below makes two passes and allocates the fast MA in full.
+          *
+          * Bit-identical to that path. Each sum sees exactly the add/subtract
+          * sequence TA_SMA gives it at its own period, starting from its own first
+          * output bar - which is why the fast sum is walked alone over the bars the
+          * slow MA does not reach (its running total is path-dependent, so arriving
+          * at the first output bar by a shorter route would change the low bits) -
+          * and each quotient is formed as sma.c forms it: the total AFTER adding the
+          * new bar and BEFORE dropping the trailing one, divided by the period.
+          *
+          * SMA is one of the windowed types, so the dead-window rule of #454 applies
+          * here too: _zeroRun is the same counter the general path keeps, warmed over
+          * the same bars (which are the bars the slow sum is seeded from) and held at
+          * the slow lookback once the window is dead.
+          *
+          * inVolume may alias outReal, as it may in the general path. outReal[_outIdx]
+          * is written at bar _i with _outIdx <= _i-optInSlowPeriod+1 <= both trailing
+          * indices, and every read of bar _i happens before that write, so no bar is
+          * overwritten before its last read.
+          *
+          * Every read is inside [0, endIdx]: the guard above leaves the slow
+          * lookback no greater than endIdx, and the public tier rejects
+          * endIdx < startIdx, so _slowStart <= endIdx and the seeding loops stop
+          * one bar below it. There is nothing left for an empty-output arm to
+          * catch, which is why this path has none.
+          */
+         double _fastTotal;
+         double _slowTotal;
+         double _fastValue;
+         double _slowValue;
+         double _slowMA;
+         int _i;
+         int _j;
+         int _outIdx;
+         int _fastStart;
+         int _slowStart;
+         int _fastTrailing;
+         int _slowTrailing;
+         int _slowLookback;
+         int _zeroRun;
+         /* Make sure slow is really slower than the fast period! if not, swap... */
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _fastStart = optInFastPeriod - 1;
+         if( _fastStart < startIdx ) {
+            _fastStart = startIdx;
+         }
+         _slowStart = optInSlowPeriod - 1;
+         if( _slowStart < startIdx ) {
+            _slowStart = startIdx;
+         }
+         _fastTrailing = _fastStart - (optInFastPeriod - 1);
+         _fastTotal = 0.0;
+         for( _j = _fastTrailing; _j < _fastStart; _j += 1 ) {
+            _fastTotal += inVolume[_j];
+         }
+         /* One loop seeds the slow sum and warms the dead-window counter: the bars
+          * it walks, [_slowStart-_slowLookback, _slowStart), are exactly the ones
+          * the general path warms _zeroRun over.
+          */
+         _slowLookback = optInSlowPeriod - 1;
+         _zeroRun = 0;
+         _slowTrailing = _slowStart - _slowLookback;
+         _slowTotal = 0.0;
+         for( _j = _slowTrailing; _j < _slowStart; _j += 1 ) {
+            _slowTotal += inVolume[_j];
+            _zeroRun = (Math.Abs(inVolume[_j]) <= 0.0) ? _zeroRun + 1 : 0;
+         }
+         /* The bars the fast MA has and the slow one does not: advance the fast sum
+          * alone. No output, but the sum must arrive at _slowStart along the same
+          * path TA_SMA would have taken.
+          */
+         for( _i = _fastStart; _i < _slowStart; _i += 1 ) {
+            _fastTotal += inVolume[_i];
+            _fastTotal -= inVolume[_fastTrailing];
+            _fastTrailing += 1;
+         }
+         _outIdx = 0;
+         for( _i = _slowStart; _i <= endIdx; _i += 1 ) {
+            _zeroRun = (Math.Abs(inVolume[_i]) <= 0.0) ? _zeroRun + 1 : 0;
+            _fastTotal += inVolume[_i];
+            _fastValue = _fastTotal;
+            _fastTotal -= inVolume[_fastTrailing];
+            _fastTrailing += 1;
+            _slowTotal += inVolume[_i];
+            _slowValue = _slowTotal;
+            _slowTotal -= inVolume[_slowTrailing];
+            _slowTrailing += 1;
+            _slowMA = _slowValue / (double)optInSlowPeriod;
+            if( _zeroRun > _slowLookback ) {
+               _zeroRun = _slowLookback;
+               outReal[_outIdx] = 0.0;
+            } else if( !((-0.00000000000001 < _slowMA) && (_slowMA < 0.00000000000001)) ) {
+               outReal[_outIdx] = (_fastValue / (double)optInFastPeriod - _slowMA) / _slowMA * 100.0;
+            } else {
+               outReal[_outIdx] = 0.0;
+            }
+            _outIdx += 1;
+         }
+         outBegIdx = _slowStart;
+         outNBElement = _outIdx;
          return RetCode.Success ;
       }
       /* Allocate an intermediate buffer. */
@@ -274,6 +387,78 @@ public partial class Core
       if( MaLookback(MaxGt(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
+         return RetCode.Success ;
+      }
+      if( optInMAType == MAType.SMA ) {
+         double _fastTotal;
+         double _slowTotal;
+         double _fastValue;
+         double _slowValue;
+         double _slowMA;
+         int _i;
+         int _j;
+         int _outIdx;
+         int _fastStart;
+         int _slowStart;
+         int _fastTrailing;
+         int _slowTrailing;
+         int _slowLookback;
+         int _zeroRun;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _fastStart = optInFastPeriod - 1;
+         if( _fastStart < startIdx ) {
+            _fastStart = startIdx;
+         }
+         _slowStart = optInSlowPeriod - 1;
+         if( _slowStart < startIdx ) {
+            _slowStart = startIdx;
+         }
+         _fastTrailing = _fastStart - (optInFastPeriod - 1);
+         _fastTotal = 0.0;
+         for( _j = _fastTrailing; _j < _fastStart; _j += 1 ) {
+            _fastTotal += (double)inVolume[_j];
+         }
+         _slowLookback = optInSlowPeriod - 1;
+         _zeroRun = 0;
+         _slowTrailing = _slowStart - _slowLookback;
+         _slowTotal = 0.0;
+         for( _j = _slowTrailing; _j < _slowStart; _j += 1 ) {
+            _slowTotal += (double)inVolume[_j];
+            _zeroRun = (Math.Abs((double)inVolume[_j]) <= 0.0) ? _zeroRun + 1 : 0;
+         }
+         for( _i = _fastStart; _i < _slowStart; _i += 1 ) {
+            _fastTotal += (double)inVolume[_i];
+            _fastTotal -= (double)inVolume[_fastTrailing];
+            _fastTrailing += 1;
+         }
+         _outIdx = 0;
+         for( _i = _slowStart; _i <= endIdx; _i += 1 ) {
+            _zeroRun = (Math.Abs((double)inVolume[_i]) <= 0.0) ? _zeroRun + 1 : 0;
+            _fastTotal += (double)inVolume[_i];
+            _fastValue = _fastTotal;
+            _fastTotal -= (double)inVolume[_fastTrailing];
+            _fastTrailing += 1;
+            _slowTotal += (double)inVolume[_i];
+            _slowValue = _slowTotal;
+            _slowTotal -= (double)inVolume[_slowTrailing];
+            _slowTrailing += 1;
+            _slowMA = _slowValue / (double)optInSlowPeriod;
+            if( _zeroRun > _slowLookback ) {
+               _zeroRun = _slowLookback;
+               outReal[_outIdx] = 0.0;
+            } else if( !((-0.00000000000001 < _slowMA) && (_slowMA < 0.00000000000001)) ) {
+               outReal[_outIdx] = (_fastValue / (double)optInFastPeriod - _slowMA) / _slowMA * 100.0;
+            } else {
+               outReal[_outIdx] = 0.0;
+            }
+            _outIdx += 1;
+         }
+         outBegIdx = _slowStart;
+         outNBElement = _outIdx;
          return RetCode.Success ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];

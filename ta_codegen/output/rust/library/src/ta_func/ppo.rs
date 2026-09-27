@@ -59,6 +59,9 @@
  *                offset index (offset = fastNb - *outNBElement). Bit-identical,
  *                streamable, and index-safe; the TA_IS_ZERO guard is unchanged.
  *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
+ *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
+ *                two running sums, no intermediate buffer, no allocation.
+ *                Bit-identical.
  */
 
 // Import types from parent module
@@ -169,6 +172,133 @@ impl Core {
         if self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType).unwrap_or(usize::MAX) > endIdx {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
+            return RetCode::Success;
+        }
+        if optInMAType == MAType::SMA {
+            // SMA fast path: the fast window is the newest optInFastPeriod bars of the
+            // slow one, so ONE pass over the input serves both moving averages - two
+            // running sums, no intermediate buffer and no allocation, where the general
+            // path below makes two passes and allocates the fast MA in full.
+            //
+            // Bit-identical to that path. Each sum sees exactly the add/subtract
+            // sequence TA_SMA gives it at its own period, starting from its own first
+            // output bar - which is why the fast sum is walked alone over the bars the
+            // slow MA does not reach (its running total is path-dependent, so arriving
+            // at the first output bar by a shorter route would change the low bits) -
+            // and each quotient is formed as sma.c forms it: the total AFTER adding the
+            // new bar and BEFORE dropping the trailing one, divided by the period.
+            //
+            // SMA is one of the windowed types, so the dead-window rule of #454 applies
+            // here too: _zeroRun is the same counter the general path keeps, warmed over
+            // the same bars (which are the bars the slow sum is seeded from) and held at
+            // the slow lookback once the window is dead.
+            //
+            // inReal may alias outReal, as it may in the general path. outReal[_outIdx]
+            // is written at bar _i with _outIdx <= _i-optInSlowPeriod+1 <= both trailing
+            // indices, and every read of bar _i happens before that write, so no bar is
+            // overwritten before its last read.
+            //
+            // Every read is inside [0, endIdx]: the guard above leaves the slow
+            // lookback no greater than endIdx, and the public tier rejects
+            // endIdx < startIdx, so _slowStart <= endIdx and the seeding loops stop
+            // one bar below it. There is nothing left for an empty-output arm to
+            // catch, which is why this path has none.
+            let mut _fastTotal: f64 = 0.0_f64;
+            let mut _slowTotal: f64 = 0.0_f64;
+            let mut _fastValue: f64 = 0.0_f64;
+            let mut _slowValue: f64 = 0.0_f64;
+            let mut _slowMA: f64 = 0.0_f64;
+            let mut _i: usize = 0_usize;
+            let mut _j: usize = 0_usize;
+            let mut _outIdx: usize = 0_usize;
+            let mut _fastStart: usize = 0_usize;
+            let mut _slowStart: usize = 0_usize;
+            let mut _fastTrailing: usize = 0_usize;
+            let mut _slowTrailing: usize = 0_usize;
+            let mut _slowLookback: usize = 0_usize;
+            let mut _zeroRun: usize = 0_usize;
+            // Make sure slow is really slower than the fast period! if not, swap...
+            if optInSlowPeriod < optInFastPeriod {
+                tempInteger = (optInSlowPeriod) as usize;
+                optInSlowPeriod = optInFastPeriod;
+                optInFastPeriod = (tempInteger) as i32;
+            }
+            _fastStart = (optInFastPeriod - 1) as usize;
+            if _fastStart < startIdx {
+                _fastStart = startIdx;
+            }
+            _slowStart = (optInSlowPeriod - 1) as usize;
+            if _slowStart < startIdx {
+                _slowStart = startIdx;
+            }
+            _fastTrailing = _fastStart - (((optInFastPeriod - 1)) as usize);
+            _fastTotal = 0.0;
+            _j = _fastTrailing;
+            if _j < _fastStart {
+                let _wn: usize = _fastStart - _j;
+                let _w0 = &inReal[_j..][.._wn];
+                for _wk in 0.._wn {
+                    _fastTotal += _w0[_wk];
+                    _j += 1;
+                }
+            }
+            // One loop seeds the slow sum and warms the dead-window counter: the bars
+            // it walks, [_slowStart-_slowLookback, _slowStart), are exactly the ones
+            // the general path warms _zeroRun over.
+            _slowLookback = (optInSlowPeriod - 1) as usize;
+            _zeroRun = 0;
+            _slowTrailing = _slowStart - _slowLookback;
+            _slowTotal = 0.0;
+            _j = _slowTrailing;
+            if _j < _slowStart {
+                let _wn: usize = _slowStart - _j;
+                let _w0 = &inReal[_j..][.._wn];
+                for _wk in 0.._wn {
+                    _slowTotal += _w0[_wk];
+                    _zeroRun = (if (_w0[_wk]).abs() <= 0.0 { _zeroRun + 1 } else { 0 });
+                    _j += 1;
+                }
+            }
+            // The bars the fast MA has and the slow one does not: advance the fast sum
+            // alone. No output, but the sum must arrive at _slowStart along the same
+            // path TA_SMA would have taken.
+            _i = _fastStart;
+            if _i < _slowStart {
+                let _wn: usize = _slowStart - _i;
+                let _w0 = &inReal[_fastTrailing..][.._wn];
+                let _w1 = &inReal[_i..][.._wn];
+                for _wk in 0.._wn {
+                    _fastTotal += _w1[_wk];
+                    _fastTotal -= _w0[_wk];
+                    _fastTrailing += 1;
+                    _i += 1;
+                }
+            }
+            _outIdx = 0;
+            for _i in (_slowStart as usize)..(endIdx as usize) + 1 {
+                _zeroRun = (if (inReal[_i]).abs() <= 0.0 { _zeroRun + 1 } else { 0 });
+                _fastTotal += inReal[_i];
+                _fastValue = _fastTotal;
+                _fastTotal -= inReal[_fastTrailing];
+                _fastTrailing += 1;
+                _slowTotal += inReal[_i];
+                _slowValue = _slowTotal;
+                _slowTotal -= inReal[_slowTrailing];
+                _slowTrailing += 1;
+                _slowMA = _slowValue / (optInSlowPeriod as f64);
+                if _zeroRun > _slowLookback {
+                    _zeroRun = _slowLookback;
+                    outReal[_outIdx] = 0.0;
+                } else if !((_slowMA).abs() < 1e-14) {
+                    outReal[_outIdx] = (_fastValue / (optInFastPeriod as f64) - _slowMA) / _slowMA * 100.0;
+                } else {
+                    outReal[_outIdx] = 0.0;
+                }
+                _outIdx += 1;
+            }
+            _i = (endIdx as usize) + 1;
+            (*outBegIdx) = _slowStart;
+            (*outNBElement) = _outIdx;
             return RetCode::Success;
         }
         // Allocate an intermediate buffer.

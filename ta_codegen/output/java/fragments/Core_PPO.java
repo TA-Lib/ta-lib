@@ -17,6 +17,9 @@
  *                offset index (offset = fastNb - *outNBElement). Bit-identical,
  *                streamable, and index-safe; the TA_IS_ZERO guard is unchanged.
  *  092726 MF,CC  0 on a slow window of zero bars for the windowed MA types (#454).
+ *  092826 MF,CC  #459 fuse the fast and slow SMA into one pass over the input:
+ *                two running sums, no intermediate buffer, no allocation.
+ *                Bit-identical.
  */
 
    /**
@@ -110,6 +113,116 @@
       if( maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      if( optInMAType == MAType.SMA ) {
+         /* SMA fast path: the fast window is the newest optInFastPeriod bars of the
+          * slow one, so ONE pass over the input serves both moving averages - two
+          * running sums, no intermediate buffer and no allocation, where the general
+          * path below makes two passes and allocates the fast MA in full.
+          *
+          * Bit-identical to that path. Each sum sees exactly the add/subtract
+          * sequence TA_SMA gives it at its own period, starting from its own first
+          * output bar - which is why the fast sum is walked alone over the bars the
+          * slow MA does not reach (its running total is path-dependent, so arriving
+          * at the first output bar by a shorter route would change the low bits) -
+          * and each quotient is formed as sma.c forms it: the total AFTER adding the
+          * new bar and BEFORE dropping the trailing one, divided by the period.
+          *
+          * SMA is one of the windowed types, so the dead-window rule of #454 applies
+          * here too: _zeroRun is the same counter the general path keeps, warmed over
+          * the same bars (which are the bars the slow sum is seeded from) and held at
+          * the slow lookback once the window is dead.
+          *
+          * inReal may alias outReal, as it may in the general path. outReal[_outIdx]
+          * is written at bar _i with _outIdx <= _i-optInSlowPeriod+1 <= both trailing
+          * indices, and every read of bar _i happens before that write, so no bar is
+          * overwritten before its last read.
+          *
+          * Every read is inside [0, endIdx]: the guard above leaves the slow
+          * lookback no greater than endIdx, and the public tier rejects
+          * endIdx < startIdx, so _slowStart <= endIdx and the seeding loops stop
+          * one bar below it. There is nothing left for an empty-output arm to
+          * catch, which is why this path has none.
+          */
+         double _fastTotal;
+         double _slowTotal;
+         double _fastValue;
+         double _slowValue;
+         double _slowMA;
+         int _i;
+         int _j;
+         int _outIdx;
+         int _fastStart;
+         int _slowStart;
+         int _fastTrailing;
+         int _slowTrailing;
+         int _slowLookback;
+         int _zeroRun;
+         /* Make sure slow is really slower than the fast period! if not, swap... */
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _fastStart = optInFastPeriod - 1;
+         if( _fastStart < startIdx ) {
+            _fastStart = startIdx;
+         }
+         _slowStart = optInSlowPeriod - 1;
+         if( _slowStart < startIdx ) {
+            _slowStart = startIdx;
+         }
+         _fastTrailing = _fastStart - (optInFastPeriod - 1);
+         _fastTotal = 0.0;
+         for( _j = _fastTrailing; _j < _fastStart; _j += 1 ) {
+            _fastTotal += inReal[_j];
+         }
+         /* One loop seeds the slow sum and warms the dead-window counter: the bars
+          * it walks, [_slowStart-_slowLookback, _slowStart), are exactly the ones
+          * the general path warms _zeroRun over.
+          */
+         _slowLookback = optInSlowPeriod - 1;
+         _zeroRun = 0;
+         _slowTrailing = _slowStart - _slowLookback;
+         _slowTotal = 0.0;
+         for( _j = _slowTrailing; _j < _slowStart; _j += 1 ) {
+            _slowTotal += inReal[_j];
+            _zeroRun = (Math.abs(inReal[_j]) <= 0.0) ? _zeroRun + 1 : 0;
+         }
+         /* The bars the fast MA has and the slow one does not: advance the fast sum
+          * alone. No output, but the sum must arrive at _slowStart along the same
+          * path TA_SMA would have taken.
+          */
+         for( _i = _fastStart; _i < _slowStart; _i += 1 ) {
+            _fastTotal += inReal[_i];
+            _fastTotal -= inReal[_fastTrailing];
+            _fastTrailing += 1;
+         }
+         _outIdx = 0;
+         for( _i = _slowStart; _i <= endIdx; _i += 1 ) {
+            _zeroRun = (Math.abs(inReal[_i]) <= 0.0) ? _zeroRun + 1 : 0;
+            _fastTotal += inReal[_i];
+            _fastValue = _fastTotal;
+            _fastTotal -= inReal[_fastTrailing];
+            _fastTrailing += 1;
+            _slowTotal += inReal[_i];
+            _slowValue = _slowTotal;
+            _slowTotal -= inReal[_slowTrailing];
+            _slowTrailing += 1;
+            _slowMA = _slowValue / (double)optInSlowPeriod;
+            if( _zeroRun > _slowLookback ) {
+               _zeroRun = _slowLookback;
+               outReal[_outIdx] = 0.0;
+            } else if( !((-0.00000000000001 < _slowMA) && (_slowMA < 0.00000000000001)) ) {
+               outReal[_outIdx] = (_fastValue / (double)optInFastPeriod - _slowMA) / _slowMA * 100.0;
+            } else {
+               outReal[_outIdx] = 0.0;
+            }
+            _outIdx += 1;
+         }
+         outBegIdx.value = _slowStart;
+         outNBElement.value = _outIdx;
          return RetCode.SUCCESS ;
       }
       /* Allocate an intermediate buffer. */
@@ -220,6 +333,78 @@
       if( maLookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
+         return RetCode.SUCCESS ;
+      }
+      if( optInMAType == MAType.SMA ) {
+         double _fastTotal;
+         double _slowTotal;
+         double _fastValue;
+         double _slowValue;
+         double _slowMA;
+         int _i;
+         int _j;
+         int _outIdx;
+         int _fastStart;
+         int _slowStart;
+         int _fastTrailing;
+         int _slowTrailing;
+         int _slowLookback;
+         int _zeroRun;
+         if( optInSlowPeriod < optInFastPeriod ) {
+            tempInteger = optInSlowPeriod;
+            optInSlowPeriod = optInFastPeriod;
+            optInFastPeriod = tempInteger;
+         }
+         _fastStart = optInFastPeriod - 1;
+         if( _fastStart < startIdx ) {
+            _fastStart = startIdx;
+         }
+         _slowStart = optInSlowPeriod - 1;
+         if( _slowStart < startIdx ) {
+            _slowStart = startIdx;
+         }
+         _fastTrailing = _fastStart - (optInFastPeriod - 1);
+         _fastTotal = 0.0;
+         for( _j = _fastTrailing; _j < _fastStart; _j += 1 ) {
+            _fastTotal += (double)inReal[_j];
+         }
+         _slowLookback = optInSlowPeriod - 1;
+         _zeroRun = 0;
+         _slowTrailing = _slowStart - _slowLookback;
+         _slowTotal = 0.0;
+         for( _j = _slowTrailing; _j < _slowStart; _j += 1 ) {
+            _slowTotal += (double)inReal[_j];
+            _zeroRun = (Math.abs((double)inReal[_j]) <= 0.0) ? _zeroRun + 1 : 0;
+         }
+         for( _i = _fastStart; _i < _slowStart; _i += 1 ) {
+            _fastTotal += (double)inReal[_i];
+            _fastTotal -= (double)inReal[_fastTrailing];
+            _fastTrailing += 1;
+         }
+         _outIdx = 0;
+         for( _i = _slowStart; _i <= endIdx; _i += 1 ) {
+            _zeroRun = (Math.abs((double)inReal[_i]) <= 0.0) ? _zeroRun + 1 : 0;
+            _fastTotal += (double)inReal[_i];
+            _fastValue = _fastTotal;
+            _fastTotal -= (double)inReal[_fastTrailing];
+            _fastTrailing += 1;
+            _slowTotal += (double)inReal[_i];
+            _slowValue = _slowTotal;
+            _slowTotal -= (double)inReal[_slowTrailing];
+            _slowTrailing += 1;
+            _slowMA = _slowValue / (double)optInSlowPeriod;
+            if( _zeroRun > _slowLookback ) {
+               _zeroRun = _slowLookback;
+               outReal[_outIdx] = 0.0;
+            } else if( !((-0.00000000000001 < _slowMA) && (_slowMA < 0.00000000000001)) ) {
+               outReal[_outIdx] = (_fastValue / (double)optInFastPeriod - _slowMA) / _slowMA * 100.0;
+            } else {
+               outReal[_outIdx] = 0.0;
+            }
+            _outIdx += 1;
+         }
+         outBegIdx.value = _slowStart;
+         outNBElement.value = _outIdx;
          return RetCode.SUCCESS ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
